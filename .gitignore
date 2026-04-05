@@ -1,0 +1,41 @@
+# Quartus build directories (large, reproducible)
+work/
+work_route/
+work_verify/
+work_tcl.qpf
+work_tcl.qsf
+
+# Collected RBF files (~300 MB, reproducible via fuzzing)
+results/rbf/
+
+# SQLite WAL/SHM (temporary journal files)
+results/*.sqlite-wal
+results/*.sqlite-shm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Quartus generated files
+*.sof
+*.pof
+*.jdi
+*.pin
+*.summary
+*.done
+*.qws
+db/
+incremental_db/
+output_files/
