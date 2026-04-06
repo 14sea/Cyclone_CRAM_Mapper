@@ -6,8 +6,9 @@ Given calibrated minterm patterns at a position (X, Y, N), this module can:
 3. Verify the XOR-linear encoding
 
 Routing codec (RouteCodec) reads/writes switch states from/to RBF using CRAM address models:
-- C4 column wires (I=0)
-- R4 row wires (9 mapped I-indices)
+- C4 column wires (I=0 formula + 24 per-(X,I) lookups for I≠0)
+- R4 row wires (18 mapped I-indices)
+- R24 long row wires (I=0, fixed byte offset)
 - LOCAL_INTERCONNECT LAB input muxes
 
 Usage:
@@ -38,6 +39,37 @@ _LAB_CRAM_END = {
     25: 0x3c32b, 26: 0x3dfe1, 28: 0x4ecf1, 29: 0x509a7, 31: 0x54313,
 }
 _C4_SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
+
+# C4 I≠0: per-(X, I) fixed byte offsets — no universal formula.
+# Key: (wire_x, i_index) -> absolute RBF byte offset.
+# The byte is FIXED for all Y values; only bp changes with Y (same formula as I=0).
+# Mapped via baseline-diff method (c4_mapper.py, 2026-04-06).
+_C4_FIXED_OFFSETS = {
+    (9, 1): 0x13633,    # 5/5 Y hit
+    (9, 10): 0x15216,   # 5/6 Y hit
+    (9, 12): 0x15217,   # 5/6 Y hit
+    (9, 20): 0x15073,   # 2/2 Y hit
+    (10, 9): 0x15217,   # 2/2 Y hit
+    (10, 12): 0x14c59,  # 6/6 Y hit
+    (13, 3): 0x1a695,   # 3/5 Y hit
+    (13, 7): 0x1a767,   # 2/2 Y hit
+    (13, 8): 0x1a838,   # 2/3 Y hit
+    (15, 1): 0x2cf89,   # 5/6 Y hit
+    (16, 1): 0x2dbd6,   # 5/6 Y hit
+    (16, 15): 0x2d1fe,  # 2/2 Y hit
+    (22, 3): 0x37957,   # 2/2 Y hit (shares offset with I=12)
+    (22, 12): 0x37957,  # 5/6 Y hit (shares offset with I=3)
+    (22, 23): 0x36a92,  # 3/3 Y hit
+    (25, 1): 0x3d950,   # 4/6 Y hit
+    (25, 3): 0x3cdd4,   # 3/3 Y hit (shares offset with I=12)
+    (25, 12): 0x3cdd4,  # 5/6 Y hit (shares offset with I=3)
+    (25, 14): 0x3cf79,  # 2/2 Y hit
+    (28, 9): 0x4f6c8,   # 2/2 Y hit
+    (28, 10): 0x50317,  # 5/5 Y hit
+    (29, 10): 0x512ad,  # 2/3 Y hit
+    (29, 23): 0x50dc1,  # 2/2 Y hit
+    (30, 9): 0x52f62,   # 3/3 Y hit
+}
 
 # --- R4 address model constants ---
 
@@ -160,7 +192,7 @@ class RouteCodec:
     """Read routing switch states from RBF using CRAM address models.
 
     Supports four wire types:
-    - C4: column wires (I=0 only), CRAM bits at LAB_CRAM_END + SLOT_BASE
+    - C4: column wires — I=0 via formula, I≠0 via per-(X,I) lookup
     - R4: row wires (18 mapped I-indices), CRAM bits in previous LAB column
     - R24: long row wires (I=0), CRAM bits in prev column, fixed byte offset
     - LOCAL_INTERCONNECT: LAB input muxes, CRAM bits in self column
@@ -169,15 +201,17 @@ class RouteCodec:
     for switches that differ between the design RBF and the zero baseline.
     """
 
-    # Y positions where C4 wires can exist
-    C4_Y_RANGE = list(range(1, 22))
+    # Y positions where C4 wires can exist (valid LAB Y + boundary positions)
+    C4_Y_RANGE = LAB_Y
 
     def read_c4(self, rbf_data, zero_data):
-        """Read active C4 I=0 switches.
+        """Read active C4 switches (I=0 via formula, I≠0 via lookup).
 
         Returns list of (wire_name, byte_offset, bit_pos) for active switches.
         """
         active = []
+
+        # C4 I=0: universal formula
         for x in LAB_X:
             if x not in _LAB_CRAM_END:
                 continue
@@ -188,6 +222,16 @@ class RouteCodec:
                     continue
                 if (rbf_data[offset] >> bp) & 1 != (zero_data[offset] >> bp) & 1:
                     active.append((f"C4_X{x}_Y{y}_N0_I0", offset, bp))
+
+        # C4 I≠0: per-(X, I) fixed byte offsets
+        for (wx, ii), byte_off in _C4_FIXED_OFFSETS.items():
+            if byte_off >= len(rbf_data) or byte_off >= len(zero_data):
+                continue
+            for y in self.C4_Y_RANGE:
+                _, _, bp = _cram_group_bit(y)
+                if (rbf_data[byte_off] >> bp) & 1 != (zero_data[byte_off] >> bp) & 1:
+                    active.append((f"C4_X{wx}_Y{y}_N0_I{ii}", byte_off, bp))
+
         return active
 
     # R4 wire X range: includes non-LAB positions (gaps between LAB columns)

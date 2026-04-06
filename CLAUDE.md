@@ -87,15 +87,17 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 - Universal formula across all 22 LAB columns
 - Applies to C4_X{x}_Y{y}_N0_I0 where x ∈ LAB_X
 
-**I≠0 (NO universal formula — per-wire lookup required):**
-- 774 routing paths collected, 24 C4 I-indices observed (I=0..23, I=48, I=51)
-- I=12 most common non-I=0 (38 wires at 6 columns), verified at X=10 and X=22
-- CRAM pair index and position-within-pair vary across columns for same I-index
-- Pair-diff statistical analysis gives 60-100% accuracy per wire
-- Some I-indices (I=3) produce false positives in pair-diff — requires fresh RBF verification
-- Verified I=10 at X=10: off=4008/pair=19/pos=18 (Y=11) and off=1445/pair=6/pos=185 (Y=7)
-- Verified I=12 at X=22: off=4804/pair=22/pos=184 (Y=13) and off=3125/pair=14/pos=185 (Y=9)
-- Switch polarity varies: some bits SET when active (1=ON), others CLEARED (0=ON)
+**I≠0 (per-(X,I) fixed-byte lookup — 24 mappings, 11 I-indices):**
+- C4 I≠0 uses **fixed byte offsets** (like R24) — byte is the same for all Y, only bp varies
+- Pair/position within column **varies per column** — no universal formula
+- 24 per-(X,I) mappings found via baseline-diff (c4_mapper.py, 2026-04-06):
+  - I=1: X=9,15,16,25 | I=3: X=13,22,25 | I=7: X=13 | I=8: X=13
+  - I=9: X=10,28,30 | I=10: X=9,28,29 | I=12: X=9,10,22,25
+  - I=14: X=25 | I=15: X=16 | I=20: X=9 | I=23: X=22,29
+- I=3 and I=12 **share the same byte** at X=22 and X=25 (indistinguishable)
+- pos is always 184 or 185 (data byte positions within 210-byte period)
+- Non-LAB columns (X=9,15,30) have large pair numbers (58-382) due to wider CRAM
+- RouteCodec reads both I=0 (formula) and I≠0 (lookup) in read_c4()
 
 ### R4 Switch CRAM Address Model (18 I-indices mapped)
 ```python
