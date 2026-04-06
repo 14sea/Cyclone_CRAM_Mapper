@@ -48,11 +48,16 @@ _R4_BASE_PREV = {
     0:  (3423, 3842),   # delta=419, verified X12,X19,X31
     1:  (3431, 3850),   # delta=419, verified X4,X18,X23
     2:  (3431, 3851),   # delta=420, verified prev=X4,X6,X10,X24,X28 (misses near M9K)
+    3:  (3474, 3895),   # delta=421, cross-Y 3 cols (2026-04-06)
     4:  (3423, 3842),   # delta=419, verified X9,X14,X29 (same BASE as I=0)
     7:  (3414, 3835),   # delta=421, verified prev=X22 (same BASE as I=10)
     10: (3414, 3835),   # delta=421, verified X13,X18,X25
+    11: (3378, 3585),   # delta=207, cross-Y 2 cols (2026-04-06)
+    12: (3597, 3806),   # delta=209, cross-Y 2 cols (2026-04-06)
+    13: (3577, 3786),   # delta=209, cross-Y 3 cols (same BASE as I=15, 2026-04-06)
     14: (3191, 3191),   # pair2 TBD — only pair1 confirmed across 3 Y positions
     15: (3577, 3786),   # delta=209, verified prev=X12,X16,X24 (misses at X10,X19,X28)
+    16: (3629, 3835),   # delta=206, cross-Y 2 cols (2026-04-06)
     17: (2802, 3223),   # delta=421, verified prev=X13,X17,X21,X25 (64% — misses near M9K)
     18: (4057, 4267),   # delta=210, verified X4,X7
     20: (2791, 3001),   # delta=210, verified prev=X6,X11 (40% — some wires use diff scheme)
@@ -78,9 +83,9 @@ for _i in range(len(LAB_X)):
         _COL_WIDTH[_x] = 7350
         _NEXT_LAB[_x] = _x + 2  # approximate
 
-# Unmapped I-indices — column assignment unclear
-# I=12,16: partial data, not confirmed universal
-# I=3,6,19,21,23,27: stored in non-LAB CRAM (M9K/DSP blocks)
+# Unmapped I-indices — need more routing data or non-standard column handling
+# I=6,21,26: tentative (1 col only), I=8,9,23,28: insufficient data
+# I=19,27: likely stored in non-LAB CRAM (M9K/DSP blocks)
 
 # --- LOCAL_INTERCONNECT address model constants ---
 
