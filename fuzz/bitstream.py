@@ -87,6 +87,15 @@ for _i in range(len(LAB_X)):
 # I=6,21,26: tentative (1 col only), I=8,9,23,28: insufficient data
 # I=19,27: likely stored in non-LAB CRAM (M9K/DSP blocks)
 
+# --- R24 address model constants ---
+
+# R24 switches: in PREV LAB column, FIXED byte offset (no slot/group byte adjustment)
+# Only bp changes with Y: bp = (6-group) if slot==2 else (7-group)
+# Each entry is a list of fixed offsets from col_start (= COLUMN_BASE[prev_x] - 136)
+_R24_FIXED_OFFSETS = {
+    0: [3124, 2705],  # pair-diff 66%/61%, 5-6 wx columns (2026-04-06)
+}
+
 # --- LOCAL_INTERCONNECT address model constants ---
 
 # Pair activation patterns by I-index
@@ -150,9 +159,10 @@ def _r4_addr(base_val, y):
 class RouteCodec:
     """Read routing switch states from RBF using CRAM address models.
 
-    Supports three wire types:
+    Supports four wire types:
     - C4: column wires (I=0 only), CRAM bits at LAB_CRAM_END + SLOT_BASE
-    - R4: row wires (9 mapped I-indices), CRAM bits in previous LAB column
+    - R4: row wires (18 mapped I-indices), CRAM bits in previous LAB column
+    - R24: long row wires (I=0), CRAM bits in prev column, fixed byte offset
     - LOCAL_INTERCONNECT: LAB input muxes, CRAM bits in self column
 
     Each read method returns a list of (wire_name, byte_offset, bit_pos) tuples
@@ -234,6 +244,69 @@ class RouteCodec:
                             if (rbf_data[offset] >> bp) & 1 != (zero_data[offset] >> bp) & 1:
                                 active.append((f"R4_X{wx}_Y{y}_N0_I{i_idx}", offset, bp))
         return active
+
+    # R24 wire X range (same as R4 plus wider)
+    R24_X_RANGE = list(range(3, 34))
+
+    def read_r24(self, rbf_data, zero_data):
+        """Read active R24 switches.
+
+        R24 uses FIXED byte offsets in prev column (no slot/group byte adjustment).
+        Only bp changes with Y: bp = (6-group) if slot==2 else (7-group).
+
+        Returns list of (wire_name, byte_offset, bit_pos) for active switches.
+        """
+        active = []
+        for i_idx, offsets in _R24_FIXED_OFFSETS.items():
+            for wx in self.R24_X_RANGE:
+                prev_x = self._prev_lab_x(wx)
+                if prev_x is None or prev_x not in COLUMN_BASE:
+                    continue
+                col_start = COLUMN_BASE[prev_x] - 136
+
+                for y in LAB_Y:
+                    group, slot, bp = _cram_group_bit(y)
+                    for fixed_off in offsets:
+                        offset = col_start + fixed_off
+                        if offset < 0 or offset >= len(rbf_data):
+                            continue
+                        if (rbf_data[offset] >> bp) & 1 != (zero_data[offset] >> bp) & 1:
+                            active.append((f"R24_X{wx}_Y{y}_N0_I{i_idx}", offset, bp))
+        return active
+
+    def write_r24(self, rbf_data, zero_data, wx, y, i_idx=0, value=True):
+        """Set/clear an R24 switch.
+
+        Sets ALL fixed-offset bits for the given I-index.
+
+        Args:
+            rbf_data: bytes of the RBF to modify
+            zero_data: bytes of the zero-mask baseline RBF
+            wx: wire X coordinate (3-33)
+            y: LAB Y coordinate
+            i_idx: I-index (default 0, must be in _R24_FIXED_OFFSETS)
+            value: True to activate, False to deactivate
+
+        Returns:
+            Modified RBF as bytes
+        """
+        if i_idx not in _R24_FIXED_OFFSETS:
+            raise ValueError(f"R24 I-index {i_idx} not mapped")
+        if y not in LAB_Y:
+            raise ValueError(f"Y={y} not a valid LAB Y coordinate")
+
+        prev_x = self._prev_lab_x(wx)
+        if prev_x is None or prev_x not in COLUMN_BASE:
+            raise ValueError(f"No valid prev LAB column for wx={wx}")
+
+        col_start = COLUMN_BASE[prev_x] - 136
+        group, slot, bp = _cram_group_bit(y)
+
+        result = bytearray(rbf_data)
+        for fixed_off in _R24_FIXED_OFFSETS[i_idx]:
+            offset = col_start + fixed_off
+            self._set_bit(result, zero_data, offset, bp, value)
+        return bytes(result)
 
     def read_local_interconnect(self, rbf_data, zero_data):
         """Read active LOCAL_INTERCONNECT switches.
@@ -426,6 +499,9 @@ class RouteCodec:
             elif sw_type == 'r4':
                 data = self.write_r4(data, zero_data, sw['wx'], sw['y'],
                                      sw['i_idx'], sw.get('value', True))
+            elif sw_type == 'r24':
+                data = self.write_r24(data, zero_data, sw['wx'], sw['y'],
+                                      sw.get('i_idx', 0), sw.get('value', True))
             elif sw_type == 'li':
                 data = self.write_local_interconnect(data, zero_data, sw['lx'],
                                                      sw['ly'], sw['i_idx'],
@@ -447,13 +523,15 @@ class RouteCodec:
             dict mapping wire type to list of (wire_name, byte_offset, bit_pos)
         """
         if wire_types is None:
-            wire_types = {'c4', 'r4', 'li'}
+            wire_types = {'c4', 'r4', 'r24', 'li'}
 
         result = {}
         if 'c4' in wire_types:
             result['c4'] = self.read_c4(rbf_data, zero_data)
         if 'r4' in wire_types:
             result['r4'] = self.read_r4(rbf_data, zero_data)
+        if 'r24' in wire_types:
+            result['r24'] = self.read_r24(rbf_data, zero_data)
         if 'li' in wire_types:
             result['li'] = self.read_local_interconnect(rbf_data, zero_data)
         return result

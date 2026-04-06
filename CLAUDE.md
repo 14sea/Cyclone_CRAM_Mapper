@@ -97,7 +97,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 - Verified I=12 at X=22: off=4804/pair=22/pos=184 (Y=13) and off=3125/pair=14/pos=185 (Y=9)
 - Switch polarity varies: some bits SET when active (1=ON), others CLEARED (0=ON)
 
-### R4 Switch CRAM Address Model (13 I-indices mapped)
+### R4 Switch CRAM Address Model (18 I-indices mapped)
 ```python
 # prev_lab_x = largest LAB_X value < wx (works for non-LAB wire X too)
 prev_col_start = COLUMN_BASE[prev_lab_x] - 136
@@ -138,10 +138,30 @@ R4_BASE_PREV = {
 - R4 wires exist at non-LAB X coordinates (X=5,9,14,15,20,27,30,32,33) — 31% of all R4 wires
 - **Sub-region model for 2× columns**: columns ≥14700 bytes split into two 7350-byte halves; right-side wires use BASE+7350
 - I=3,6,19,21,23,27 stored in **non-LAB CRAM** (M9K/DSP blocks)
-- **RouteCodec now has write methods**: write_c4(), write_r4(), write_local_interconnect(), apply_routing()
+- **RouteCodec**: read/write for C4, R4, R24, LOCAL_INTERCONNECT, apply_routing()
 - Huge columns (X13=76230, X26=68880) need M9K/DSP sub-region mapping
-- 37 unique R4 I-indices observed in STA data; ~20 still unmapped
+- 37 unique R4 I-indices observed in STA data; ~19 still unmapped
 - 774 routing paths collected, parallel compilation at ~4s/target
+
+### R24 Switch CRAM Address Model (I=0 mapped — 66% pair-diff accuracy)
+```python
+# R24 uses FIXED byte offsets — NO slot/group byte adjustment
+# Only bp changes with Y (same formula as C4/R4)
+prev_col_start = COLUMN_BASE[prev_lab_x] - 136
+group = (y - 2) // 3
+slot = (y - 2) % 3
+bp = (6 - group) if slot == 2 else (7 - group)
+
+# Fixed offsets from col_start:
+R24_I0_OFFSETS = [3124, 2705]  # primary, secondary (delta=419)
+byte = prev_col_start + offset  # no +3*group or slot adjustment!
+```
+- R24 switches in **PREV LAB column** (same as R4)
+- **No slot/group byte offset** — simpler than R4/C4 (only bp varies with Y)
+- Multiple Y values sharing the same bp produce ambiguous reads
+- Primary offset: rel=3124 (pair 14, pos 184), 5-6 wx columns verified
+- Secondary offset: rel=2705 (pair 12, pos 185), delta=419
+- 7 unique R24 I-indices observed; only I=0 (73% of wires) mapped
 
 ### LOCAL_INTERCONNECT CRAM Address Model (VERIFIED — 70% cross-validation, 22 columns)
 ```python
@@ -198,11 +218,18 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 
 Codec-generated RBFs are bit-identical to Quartus in CRAM cells (header/CRC differ).
 
+### End-to-End Hardware Verification (2026-04-06)
+- Codec `write_tt` → openFPGALoader flash → AX301 hardware behavior confirmed
+- AND (0x8888): LED ON default, any key → OFF (active-low keys on AX301)
+- XOR (0x6996): LED OFF default, single key → ON, both → OFF
+- Codec vs Quartus: **0 CRAM diffs**, 14 header/CRC diffs (harmless)
+- Pin mapping: A=KEY2 (PIN_E16), B=KEY3 (PIN_M16), Q=LED0 (PIN_G15)
+
 ## Tools
 
 - **Quartus 21.1 Lite**: `$HOME/intelFPGA_lite/21.1/quartus/bin/`
 - **RBF generation**: `quartus_cpf -c -o bitstream_compression=off` (NEVER use sof2rbf.py)
-- **Programming**: `openFPGALoader -c usb-blaster`
+- **Programming**: `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader -c usb-blaster`
 - **Hardware**: 黑金 AX301, EP4CE6F17C8, USB-Blaster JTAG
 
 ## EP4CE6 Chip Geometry
