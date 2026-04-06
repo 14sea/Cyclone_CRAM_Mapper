@@ -47,7 +47,7 @@ FPGA（Field-Programmable Gate Array，现场可编程门阵列）是一种可�
 - **Quartus Prime 21.1 Lite Edition**：Intel 免费提供的 FPGA 开发工具
   - 安装路径：`~/intelFPGA_lite/21.1/quartus/bin/`
   - 用到的命令行工具：`quartus_map`（综合）、`quartus_fit`（布局布线）、`quartus_asm`（生成 .sof）、`quartus_cpf`（转换为 .rbf）、`quartus_sta`（静态时序分析）
-- **openFPGALoader**：开源的 FPGA 编程工具（烧写比特流到板子上）
+- **openFPGALoader**：开源的 FPGA 编程工具（烧写比特流到板子上）；使用 `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader`，系统自带版本无法识别 EP4CE6 的 IDCODE
 - **Python 3**：fuzzing 脚本全部用 Python 编写
 - **SQLite**：存储实验结果的数据库
 
@@ -668,7 +668,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 
 这个模型使用和 LUT TT 完全相同的 slot/group 编码框架（因为它们共享同一套 CRAM 地址空间），只是基地址不同。
 
-#### R4 开关 CRAM 地址模型（13 个 I-index 已映射）
+#### R4 开关 CRAM 地址模型（18 个 I-index 已映射）
 
 R4 行导线的开关比 C4 更复杂，每个 R4 "I-index" 有独立的基地址 (BASE)：
 
@@ -699,11 +699,16 @@ else:  # slot == 2
 | 0 | 3423 | 3842 | 419 | 多列验证 |
 | 1 | 3431 | 3850 | 419 | 多列验证 |
 | 2 | 3431 | 3851 | 420 | prev=X4,X6,X10,X24,X28 |
+| 3 | 3474 | 3895 | 421 | 3 个 Y 值，跨列 |
 | 4 | 3423 | 3842 | 419 | 同 I=0 |
 | 7 | 3414 | 3835 | 421 | 同 I=10 |
 | 10 | 3414 | 3835 | 421 | 多列验证 |
+| 11 | 3378 | 3585 | 207 | 2 个 Y 值 |
+| 12 | 3597 | 3806 | 209 | 2 个 Y 值 |
+| 13 | 3577 | 3786 | 209 | 同 I=15 |
 | 14 | 3191 | 待定 | ? | pair1 验证，pair2 未确认 |
 | 15 | 3577 | 3786 | 209 | prev=X12,X16,X24 |
+| 16 | 3629 | 3835 | 206 | 2 个 Y 值 |
 | 17 | 2802 | 3223 | 421 | 5 列验证 |
 | 18 | 4057 | 4267 | 210 | 2 列验证 |
 | 20 | 2791 | 3001 | 210 | 部分列有效 |
@@ -752,6 +757,40 @@ SLOT_OFFSET = {0: 67, 1: -70, 2: 0}   # 和 R4 相同的偏移
    | 每块前 2 | 0,1,4,5,8 | I=4,17,27 |
 
 3. **Pair 0 和 4 是万能 pair**：无论 I-index 是什么，这两个 pair 总是被激活。
+
+#### R24 开关 CRAM 地址模型（I=0 已映射）
+
+R24 行导线跨约 24 列。它的开关使用**固定字节偏移**模型——比 R4 更简单：
+
+```python
+# R24_X{wx}_Y{wy}_N0_I0 的 CRAM 地址
+prev_lab_x = max(x for x in LAB_X if x < wx)
+prev_col_start = COLUMN_BASE[prev_lab_x] - 136
+
+group = (wy - 2) // 3
+slot = (wy - 2) % 3
+bp = (6 - group) if slot == 2 else (7 - group)   # 与 R4/C4 相同的 bp 公式
+
+# 固定字节偏移——不需要 slot/group 的字节调整：
+R24_I0_OFFSETS = [3124, 2705]   # 主（pair 14, pos 184），辅（pair 12, pos 185）
+byte = prev_col_start + offset  # 不管 Y 是多少，字节地址都一样！
+```
+
+**与 R4 的关键区别**：字节地址是**固定的**——不同 Y 值映射到同一个字节，只有 `bp` 随 Y 变化。这意味着同一 group 内的多个 Y 值会产生读取歧义。
+
+- R24 开关在**前一列 (PREV column)**（与 R4 相同）
+- 主 pair：rel=3124（pair 14, pos 184）；辅：rel=2705（pair 12, pos 185），delta=419
+- 通过 pair-diff 验证了 5-6 个 wx 列，准确率约 66%
+- 观测到 7 个不同的 R24 I-index，仅 I=0（占 73% 的 R24 线网）已映射
+
+#### C16 开关分析（尚未映射）
+
+C16 列导线跨约 16 行。初步分析表明其编码与 C4/R4 **根本不同**：
+
+- pair 边界字节（pos=209/0）显示**多 bit 变化**，而非单 bit 开关
+- 不同列之间的 XOR 模式不一致——无通用 slot/group 公式
+- 使用 C16 的路径噪声大（每条路径含 3-6 条 R4、2-5 条 C4 线），隔离困难
+- 可能需要逐线查表，或完全不同的方法论
 
 #### C4 I!=0 开关（无通用公式）
 
@@ -819,9 +858,28 @@ python3 analyze.py write_tt zero.rbf 0x6996 output.rbf 10 10 0
 ```
 
 **验证结果**：
-- **CRAM 区域完全一致**（bit-identical with Quartus output）
-- 仅在文件头/CRC 部分有 16 个 bit 差异（Quartus 元数据，不影响配置）
+- **CRAM 区域完全一致**（与 Quartus 输出逐 bit 相同）
+- 仅在文件头/CRC 部分有 14-16 个 bit 差异（Quartus 元数据，不影响配置）
 - 已验证的 mask：0x0000, 0x0001, 0x8888, 0x6996, 0xFFFF, 0xAAAA, 0x5555, 0xDEAD 等共 10 种
+
+**端到端硬件验证（2026-04-06）**：
+
+编解码器已在实物硬件（黑金 AX301 开发板, EP4CE6F17C8）上验证：
+
+```
+1. Codec write_tt(zero_baseline, mask=0x8888) → e2e_codec_and.rbf
+2. 烧写 FPGA：openFPGALoader -c usb-blaster e2e_codec_and.rbf
+3. 硬件行为：默认 LED 亮（按键浮空为高），按 KEY2 或 KEY3 → LED 灭
+   （正确：A & B，AX301 按键低电平有效）
+
+4. Codec write_tt(zero_baseline, mask=0x6996) → e2e_codec_xor.rbf
+5. 烧写 FPGA：openFPGALoader -c usb-blaster e2e_codec_xor.rbf
+6. 硬件行为：按单个键 → LED 亮，同时按两个键 → 灭（正确：A ^ B）
+```
+
+编解码器生成的 RBF 产生了**完全正确的逻辑行为**——无需经过 Quartus，比特流编解码器端到端工作正常。
+
+注意：AX301 的按键是**低电平有效**（未按=逻辑 1，按下=逻辑 0）。正确的 openFPGALoader 路径为 `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader`（系统自带版本无法识别 EP4CE6 的 IDCODE）。
 
 ### 布线开关读写（新功能）
 
@@ -867,9 +925,11 @@ codec.apply_routing("output.rbf")  # 保存修改后的 RBF
 
 **当前覆盖率**：
 - C4 I=0：100%（63 条线全部正确）
-- R4：13/37 个 I-index 已映射（~77% 的直接验证准确率）
+- R4：18/37 个 I-index 已映射（~90.5% 线网覆盖率，~77% 直接验证准确率）
+- R24 I=0：固定字节模型已映射（~66% 的 pair-diff 准确率），覆盖 73% 的 R24 线网
 - LOCAL_INTERCONNECT：~70% 交叉验证准确率
-- C4 I≠0、C16、R24：尚未编入编解码器
+- C4 I≠0：无通用公式，只能逐线查表
+- C16：尚未映射（本质上是多 bit 编码，方法论不同）
 
 ---
 

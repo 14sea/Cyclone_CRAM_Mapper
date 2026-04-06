@@ -47,7 +47,7 @@ Once we reverse-engineer the bitstream format we can:
 - **Quartus Prime 21.1 Lite Edition**: Intel's free FPGA development tool
   - Installation path: `~/intelFPGA_lite/21.1/quartus/bin/`
   - Command-line tools used: `quartus_map` (synthesis), `quartus_fit` (place & route), `quartus_asm` (generate .sof), `quartus_cpf` (convert to .rbf), `quartus_sta` (static timing analysis)
-- **openFPGALoader**: open-source FPGA programming tool (flashes bitstream to board)
+- **openFPGALoader**: open-source FPGA programming tool (flashes bitstream to board); use `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader` — the system version does not recognize the EP4CE6 IDCODE
 - **Python 3**: all fuzzing scripts are written in Python
 - **SQLite**: database for storing experiment results
 
@@ -669,7 +669,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 
 This model uses exactly the same slot/group encoding framework as LUT TT (since they share the same CRAM address space), just with different base addresses.
 
-#### R4 Switch CRAM Address Model (13 I-indices Mapped)
+#### R4 Switch CRAM Address Model (18 I-indices Mapped)
 
 R4 row-wire switches are more complex than C4 — each R4 "I-index" has an independent BASE address:
 
@@ -700,11 +700,16 @@ else:  # slot == 2
 | 0 | 3423 | 3842 | 419 | Multiple columns |
 | 1 | 3431 | 3850 | 419 | Multiple columns |
 | 2 | 3431 | 3851 | 420 | prev=X4,X6,X10,X24,X28 |
+| 3 | 3474 | 3895 | 421 | 3 Y values, cross-col |
 | 4 | 3423 | 3842 | 419 | Same as I=0 |
 | 7 | 3414 | 3835 | 421 | Same as I=10 |
 | 10 | 3414 | 3835 | 421 | Multiple columns |
+| 11 | 3378 | 3585 | 207 | 2 Y values |
+| 12 | 3597 | 3806 | 209 | 2 Y values |
+| 13 | 3577 | 3786 | 209 | Same as I=15 |
 | 14 | 3191 | TBD | ? | pair1 verified, pair2 unconfirmed |
 | 15 | 3577 | 3786 | 209 | prev=X12,X16,X24 |
+| 16 | 3629 | 3835 | 206 | 2 Y values |
 | 17 | 2802 | 3223 | 421 | 5 columns verified |
 | 18 | 4057 | 4267 | 210 | 2 columns verified |
 | 20 | 2791 | 3001 | 210 | Partial columns |
@@ -753,6 +758,40 @@ SLOT_OFFSET = {0: 67, 1: -70, 2: 0}   # same offsets as R4
    | First 2 per block | 0,1,4,5,8 | I=4,17,27 |
 
 3. **Pairs 0 and 4 are universal**: Regardless of I-index, these two pairs are always activated.
+
+#### R24 Switch CRAM Address Model (I=0 Mapped)
+
+R24 row wires span ~24 columns. Their switches use a **fixed byte offset** model — simpler than R4:
+
+```python
+# CRAM address for R24_X{wx}_Y{wy}_N0_I0
+prev_lab_x = max(x for x in LAB_X if x < wx)
+prev_col_start = COLUMN_BASE[prev_lab_x] - 136
+
+group = (wy - 2) // 3
+slot = (wy - 2) % 3
+bp = (6 - group) if slot == 2 else (7 - group)   # same bp formula as R4/C4
+
+# Fixed byte offsets — NO slot/group byte adjustment:
+R24_I0_OFFSETS = [3124, 2705]   # primary (pair 14, pos 184), secondary (pair 12, pos 185)
+byte = prev_col_start + offset  # same byte regardless of Y!
+```
+
+**Key difference from R4**: The byte address is **fixed** per pair — multiple Y values map to the same byte with only `bp` varying. This means reads are ambiguous if multiple Y values share the same `bp` (which happens when they're in the same group).
+
+- R24 switches are in the **PREV LAB column** (same as R4)
+- Primary pair: rel=3124 (pair 14, pos 184); secondary: rel=2705 (pair 12, pos 185), delta=419
+- 5–6 wx columns verified at 66% accuracy via pair-diff
+- 7 unique R24 I-indices observed; only I=0 (73% of wires) mapped
+
+#### C16 Switch Analysis (Not Yet Mapped)
+
+C16 column wires span ~16 rows. Preliminary analysis shows their encoding is **fundamentally different** from C4/R4:
+
+- Pair boundary bytes (pos=209/0) show **multi-bit changes**, not single-bit switches
+- XOR patterns across columns are inconsistent — no universal slot/group formula
+- Routes using C16 are noisy (3–6 R4, 2–5 C4 wires per path), making isolation difficult
+- Likely requires per-wire lookup table or a completely different methodology
 
 #### C4 I≠0 Switches (No Universal Formula)
 
@@ -822,8 +861,27 @@ python3 analyze.py write_tt zero.rbf 0x6996 output.rbf 10 10 0
 
 **Verification results**:
 - **CRAM region is bit-identical** to Quartus output
-- Only 16 bits differ in the header/CRC section (Quartus metadata; does not affect configuration)
+- Only 14–16 bits differ in the header/CRC section (Quartus metadata; does not affect configuration)
 - Verified masks: 0x0000, 0x0001, 0x8888, 0x6996, 0xFFFF, 0xAAAA, 0x5555, 0xDEAD, and more — 10 masks total
+
+**End-to-end hardware verification (2026-04-06)**:
+
+The codec was verified on physical hardware (Heijin AX301 board, EP4CE6F17C8):
+
+```
+1. Codec write_tt(zero_baseline, mask=0x8888) → e2e_codec_and.rbf
+2. Flash to FPGA: openFPGALoader -c usb-blaster e2e_codec_and.rbf
+3. Hardware behavior: LED ON by default (keys floating high),
+   press KEY2 or KEY3 → LED OFF (correct A & B with active-low inputs)
+
+4. Codec write_tt(zero_baseline, mask=0x6996) → e2e_codec_xor.rbf
+5. Flash to FPGA: openFPGALoader -c usb-blaster e2e_codec_xor.rbf
+6. Hardware behavior: press either key → LED ON, both keys → LED OFF (correct A ^ B)
+```
+
+The codec-generated RBF produces **exactly the expected logic behavior** — the bitstream codec works correctly end-to-end without going through Quartus.
+
+Note: AX301 buttons are **active-low** (unpressed = logic 1, pressed = logic 0). The correct openFPGALoader path is `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader`.
 
 ### Routing Switch Read/Write (New)
 
@@ -869,9 +927,11 @@ codec.apply_routing("output.rbf")  # save modified RBF
 
 **Current coverage**:
 - C4 I=0: 100% (all 63 wires correct)
-- R4: 13/37 I-indices mapped (~77% direct-verification accuracy)
+- R4: 18/37 I-indices mapped (~90.5% wire coverage, ~77% direct-verification accuracy)
+- R24 I=0: mapped with fixed-byte model (~66% pair-diff accuracy), 73% of R24 wires
 - LOCAL_INTERCONNECT: ~70% cross-validation accuracy
-- C4 I≠0, C16, R24: not yet encoded in codec
+- C4 I≠0: no universal formula, per-wire lookup only
+- C16: not yet mapped (fundamentally different multi-bit encoding)
 
 ---
 
