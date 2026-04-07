@@ -864,6 +864,14 @@ class RouteCodec:
         if n_cells > RouteCodec.LI_MAX_CELLS_PER_LAB:
             return "invalid", f"{n_cells} cells > {RouteCodec.LI_MAX_CELLS_PER_LAB}"
 
+        # Edge mode: even pairs only (P0,P2,P4,P6 or subset), all base 0,
+        # no P8. Observed at top/bottom-row LABs (Y2, Y21) where the LI
+        # MUX has fewer routing options. Calibrated against Quartus's
+        # own (10,10)→(10,2) baseline (2026-04-07).
+        if 8 not in pair_map and all(p % 2 == 0 and bs == {0}
+                                      for p, bs in pair_map.items()):
+            return "edge_even_b0", None
+
         # P8 anchor: must be present with exactly one base
         if 8 not in pair_map:
             return "invalid", "missing P8 tail anchor"
