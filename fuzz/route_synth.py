@@ -252,10 +252,15 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     })
 
     # Source-side LE driver MUX: P8B0 + P8B1 at the source LAB.
-    # Discovered via L2 diff (2026-04-07): every Quartus reference RBF for
-    # a routed signal contains exactly these two cells at the src LAB.
-    # Without them the LE output cannot reach the global routing network.
-    if not need.same_lab:
+    # Quartus emits this for vertical hops AND horizontal hops ≥2 LAB,
+    # but NOT for adjacent +1/-1 horizontal hops, which appear to use a
+    # direct LE→LE link bypassing the source-side LI MUX entirely.
+    # Confirmed via L2 mining (2026-04-07).
+    needs_driver = (
+        not need.same_lab and
+        not (need.ddy == 0 and abs(need.ddx) <= 1)
+    )
+    if needs_driver:
         ops.append({
             "type": "li",
             "lx": need.sx,
