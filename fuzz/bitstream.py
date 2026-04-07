@@ -8,7 +8,7 @@ Given calibrated minterm patterns at a position (X, Y, N), this module can:
 
 Routing codec (RouteCodec) reads/writes switch states from/to RBF using CRAM address models:
 - C4 column wires (I=0 formula + 24 per-(X,I) lookups for I≠0)
-- R4 row wires (18 mapped I-indices)
+- R4 row wires (25 of 37 mapped I-indices)
 - R24 long row wires (I=0, fixed byte offset)
 - LOCAL_INTERCONNECT LAB input muxes
 
@@ -275,7 +275,7 @@ class RouteCodec:
 
     Supports four wire types:
     - C4: column wires — I=0 via formula, I≠0 via per-(X,I) lookup
-    - R4: row wires (18 mapped I-indices), CRAM bits in previous LAB column
+    - R4: row wires (25 of 37 mapped I-indices), CRAM bits in previous LAB column
     - R24: long row wires (I=0), CRAM bits in prev column, fixed byte offset
     - LOCAL_INTERCONNECT: LAB input muxes, CRAM bits in self column
 
