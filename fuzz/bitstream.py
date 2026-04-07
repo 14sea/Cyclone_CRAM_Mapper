@@ -946,6 +946,14 @@ class RouteCodec:
                                       for p, bs in pair_map.items()):
             return "edge_even_b0", None
 
+        # edge_even_b0 variant WITH P8 tail (also base 0). Observed at
+        # top-row destinations like (22,2) reached from interior (22,12)
+        # source — δ green island. Strict subset of edge_even_b0 cells
+        # plus a base-0 P8 anchor; classified separately so the envelope
+        # remains explicit and the writer doesn't emit a paired-mode P0.
+        if all(p % 2 == 0 and bs == {0} for p, bs in pair_map.items()):
+            return "edge_even_b0_p8", None
+
         # P8 anchor: must be present with exactly one base
         if 8 not in pair_map:
             return "invalid", "missing P8 tail anchor"
