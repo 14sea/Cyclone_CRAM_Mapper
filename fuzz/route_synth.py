@@ -172,6 +172,21 @@ def plan_hops(need: Need) -> list[Hop]:
 # ----------------------------------------------------------------------
 
 _LI_VARIANT_TABLE = None
+_R4_IINDEX_TABLE = None
+
+
+def _load_r4_iindex_table():
+    global _R4_IINDEX_TABLE
+    if _R4_IINDEX_TABLE is None:
+        import json
+        from pathlib import Path
+        p = Path(__file__).resolve().parent.parent / "results" / "r4_iindex_table.json"
+        if p.exists():
+            raw = json.loads(p.read_text())
+            _R4_IINDEX_TABLE = {k: [tuple(c) for c in v] for k, v in raw.items()}
+        else:
+            _R4_IINDEX_TABLE = {}
+    return _R4_IINDEX_TABLE
 
 
 def _load_variant_table():
@@ -227,11 +242,21 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     from bitstream import RouteCodec
     codec = RouteCodec()
     ops: list[dict] = []
+
+    # Per-route exact R4 (wx,y,i_idx) lookup mined from lits_pair corpus
+    # (r4_iindex_mine.py). When present, this replaces the plan's R4 hops
+    # AND the universal launch driver with Quartus's exact cell list.
+    r4_table = _load_r4_iindex_table()
+    r4_key = f"{need.sx},{need.sy},{need.dx},{need.dy},{need.dst_port}"
+    r4_exact = r4_table.get(r4_key)
+
     for hop in plan:
         wx, wy = _hop_landing_coords(hop)
         if hop.type == "C4":
             ops.append({"type": "c4", "x": wx, "y": wy, "i_idx": hop.i_index})
         elif hop.type == "R4":
+            if r4_exact is not None:
+                continue  # exact table will emit R4 below
             ops.append({"type": "r4", "wx": wx, "y": wy, "i_idx": hop.i_index})
         elif hop.type == "R24":
             # Sniper mode: pick the single fixed offset Quartus would use
@@ -281,11 +306,13 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
                         (0x1121a, 2), (0x1121a, 3)):
             ops.append({"type": "raw", "offset": off, "bp": bp, "value": True})
 
-    # Universal source-side R4 launch driver: R4_X{sx+1}_Y{sy} I=1 + I=2.
-    # Mined from lits_pair corpus (r4_iindex_mine.py, 2026-04-07): present
-    # in every inter-LAB route regardless of direction (vertical, horizontal,
-    # short, long), so emit unconditionally for non-same-LAB needs.
-    if not need.same_lab:
+    # Per-route R4 cells: prefer exact-table match, else universal launch.
+    if r4_exact is not None:
+        for wx, wy, ii in r4_exact:
+            ops.append({"type": "r4", "wx": wx, "y": wy, "i_idx": ii})
+    elif not need.same_lab:
+        # Universal source-side R4 launch driver: R4_X{sx+1}_Y{sy} I=1 + I=2
+        # Mined as 100% across lits_pair corpus (r4_iindex_mine.py).
         launch_wx = _lab_step_to_x(need.sx, 1)
         for ii in (1, 2):
             ops.append({"type": "r4", "wx": launch_wx, "y": need.sy, "i_idx": ii})
