@@ -1,21 +1,72 @@
-MIT License
+EP4CE6 Bitstream Reverse Engineering — Dual License
+=====================================================
+
+As of 2026-04-07, this project uses a dual-license scheme, replacing the
+previous MIT license. The choice is deliberate: the purpose of this
+work is to keep FPGA toolchain research in hacker hands, not to hand
+Altera/Intel a free patch to close the holes we pried open.
+
+----------------------------------------------------------------------
+(1) CODE — GNU General Public License v3.0 or later (GPL-3.0-or-later)
+----------------------------------------------------------------------
+
+All source code in this repository is licensed under GPL-3.0-or-later.
+This includes, without limitation:
+
+  * fuzz/**/*.py       (fuzzing pipeline, codecs, analysis tools)
+  * fuzz/**/*.v        (Verilog generators and jailbreak scanners)
+  * fuzz/**/*.tcl      (Quartus driver scripts)
+  * any future C/C++/Rust implementations of the RouteCodec / LutCodec
+
+The full license text is at LICENSES/GPL-3.0-or-later.txt. Every source
+file should carry the SPDX identifier:
+
+    SPDX-License-Identifier: GPL-3.0-or-later
+
+The practical consequence: if you link, fork, or vendor this code into
+another project (including a commercial Quartus replacement, or Altera's
+own toolchain), **your project must be released under GPLv3 as well**,
+with full source. Static linking, dynamic linking, and the GPL's usual
+derived-work rules apply.
+
+----------------------------------------------------------------------
+(2) DOCUMENTATION, FINDINGS & METHODOLOGY
+    — Creative Commons Attribution-ShareAlike 4.0 International
+----------------------------------------------------------------------
+
+All prose, diagrams, tables, reverse-engineering reports, memory files,
+and documentation in this repository are licensed under CC BY-SA 4.0.
+This includes, without limitation:
+
+  * README.md, README_zh.md
+  * CLAUDE.md
+  * results/FINDINGS.md (and any future reports)
+  * any blog posts, slide decks, or papers derived from this work
+
+The full license text is at LICENSES/CC-BY-SA-4.0.txt.
+
+The practical consequence: if you cite, excerpt, or reuse any of the
+CRAM models, the C4/R4/LI address formulas, the CE6→CE10 jailbreak
+findings, the RBF CRC specification, or the XOR-chain dead-cell
+scanning methodology in a paper, tutorial, talk, or independent work,
+you must (a) credit this repository, and (b) release your derivative
+work under CC BY-SA 4.0 (or a later compatible version). Knowledge
+about this silicon stays open.
+
+----------------------------------------------------------------------
+Scope notes
+----------------------------------------------------------------------
+
+* Bitstream data files (*.rbf, *.sof, *.sqlite) are raw hardware
+  telemetry, not creative works; no license is asserted over them.
+  Redistribution is subject to Altera/Intel's original bitstream terms,
+  which are not granted by this repository.
+
+* Quartus-generated intermediate files in work/ and results/rbf/ are
+  not covered and should not be redistributed from this repository.
+
+* The AX301 pin map, XOR-chain scanner methodology, and all novel
+  CRAM/routing models described in README.md are original research by
+  the project authors and fall under the CC BY-SA 4.0 grant above.
 
 Copyright (c) 2026 Claude and 14sea
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.

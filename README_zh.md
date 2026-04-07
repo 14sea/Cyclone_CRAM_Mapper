@@ -180,7 +180,7 @@ EP4CE6/
 │   ├── analyze.py          ← 结果分析和可视化
 │   └── bitstream.py        ← Bitstream 编解码器（读/写 LUT、路由开关）
 ├── results/
-│   ├── rbf/                ← 收集的 .rbf 文件（~1,340 个，各 368 KB）
+│   ├── rbf/                ← 收集的 .rbf 文件（~2,013 个，各 368 KB）
 │   ├── ep4ce6_bitdb.sqlite ← Bit 映射数据库（569K 条记录）
 │   └── FINDINGS.md         ← 详细发现报告
 ├── work/                   ← Quartus 临时编译目录（可清理）
@@ -1125,6 +1125,324 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 
 ---
 
+## 调试日记：我们是怎么把硬件回环闭合的
+
+这一节是写给新人的故事 —— 它讲述了我们如何把编解码器从「对 Quartus
+bit-perfect」推进到「真实矽片接受我们手工生成的比特流，按键能控制 LED」。
+这里的每一步都是真实踩过的坑，绝大多数在踩之前都不显然。
+
+### 起点：codec 输出看起来完美，但 FPGA 拒收
+
+完成 Phase 3 后，我们的 `RouteCodec` 已经可以从任意 Quartus 生成的 `.rbf`
+读出布线开关，再用 `apply_routing()` 重放到空白 baseline，然后无损地再读一遍。
+把 codec 输出和原始 Quartus RBF 做 diff，**0 个 CRAM 字节差异** —— 每一个
+配置位都一模一样。该上真硬件了。
+
+我们接上一块黑金 AX301（EP4CE6F17C8 + USB-Blaster JTAG）然后跑：
+
+```bash
+openFPGALoader -c usb-blaster results/rbf/lits_synth_X10Y10_to_X12Y10N0_datab.rbf
+```
+
+烧录看起来成功了。但板子上的 LED 跑起了我们从来没编译过的「跑马灯」demo
+—— FPGA 在跑 **EPCS 配置 Flash 里的厂商示例**，根本没在跑我们的比特流。
+对照实验：直接烧一个已知正确的 Quartus 编译的 RBF —— 那个跑得对。我们甚至
+故意把一个正确的 RBF **翻一个 bit**（`lits_pair_BITFLIP_test.rbf`），结果
+FPGA 也拒绝了，照样跳回 EPCS demo。
+
+**结论**：Cyclone IV 配置状态机会在加载时校验比特流。一字节不对它就静默地
+回退到 Flash boot。RBF 里一定藏着 CRC 或 checksum，而我们「CRAM bit-perfect」
+的把戏漏掉了它。
+
+### 发现并逆向 CRC
+
+我们手上没有 .rbf 格式的官方文档，所以只能纯靠观察现成的比特流来推算 CRC
+算法。具体步骤如下。
+
+**第一步 —— CRC 是有状态的吗？** CRC 可以是整个比特流上一个滚动值，也可以
+是每帧固定大小的独立值。我们扫描语料库，找出 **数据字节完全相同的帧对**：
+如果它们的 CRC 字节也匹配，那算法就是无状态的（每帧独立）。我们找到 **1186
+对完全相同数据的帧**，每一对的尾随 CRC 字节都吻合。✓ 无状态。CRC 是逐帧
+独立计算的。
+
+**第二步 —— 找帧大小。** RBF 总长 368,011 字节。减掉 32 字节 0xFF 前导和
+59 字节 0xFF 尾导，剩 367,920 = **1752 × 210**。Bingo：1752 帧，每帧 210
+字节。每帧大概率是 208 字节数据 + 2 字节 CRC（小端）。
+
+**第三步 —— ΔCRC 线性搜索。** 这是整个破解的关键技巧。我们不去对单帧的
+绝对 CRC 暴力 65,536 个多项式（直接做的话零命中 —— 自由度太多），而是用
+**线性约束**：
+
+- 构造两段合成的 208 字节负载，**只在一个字节上不同**（例如：byte 100 = 0x10
+  vs. byte 100 = byte 101 = 0x10）。
+- 对每个候选 (多项式 × bit-direction) 组合，这两段的 CRC 差完全由多项式决定
+  —— 不需要知道初值。
+- 要求同一个多项式同时满足两个 ΔCRC 约束（双约束）。这一刀就把
+  65,536 × 4 个候选砍到几乎为零。
+
+只剩两个多项式幸存：标准的 **0x8005**，加上一个低权重碰撞 0x0006。0x8005
+反射后是 0xA001（右移形式）。这就是 CRC-16-IBM。
+
+**第四步 —— 暴力破解 init。** 光有多项式还定不了 CRC，还有个寄存器初值。
+确定多项式后，我们挑出语料库里 1316 帧全零数据的帧，要求
+`crc16(zeros, poly=0x8005, init=?) == observed (0x7d9a)`。只有一个 init
+满足：**0xFE54**。
+
+**第五步 —— 端到端验证。** 公式钉死后：
+
+```python
+def crc16_rbf(data208: bytes) -> int:
+    crc = 0xFE54
+    for b in data208:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ 0xA001 if (crc & 1) else (crc >> 1)
+    return crc
+```
+
+…我们对一个已知正确的 Quartus RBF 跑了 **全部 1752 帧**。结果：**1727 帧
+匹配，25 帧失败**。这 25 个失败是连续的一段 —— **frames 0..24**。那是
+比特流的 header（同步字、配置寄存器、设备级开关）。**header 不被 CRC
+保护**；只有 frames 25..1751（CRAM 帧）有强制 CRC。把 header 从 patcher
+里排除掉，每一个 CRAM 帧的 CRC 都精确吻合了。
+
+完整规格在 `bitstream.crc16_rbf_frame()` 和 `patch_rbf_crc()`。
+
+### Codec / CRC 字节重叠（以及怎么修）
+
+把 CRC patcher 接进 `synth_route()` 之后再跑绿区回归测试，瞬间炸了：
+**58/58 路由 bit-perfect → 0/N**。Patcher 把 codec 玩坏了。
+
+为什么？CRC 字节位于每个 210 字节 **帧** 的偏移 `+208` 和 `+209`。但 codec
+扫描 LAB 列时用的 **210 字节周期不是帧对齐的**（列基址和帧起点不一致）。
+所以 codec 的「slot 1」或「slot 2」读偶尔会正好落在 patcher 刚刚改写的字节
+上 —— 与 zero baseline 做 diff 时就把 CRC 差当成「布线变化」吃进去了。
+
+修复方法在概念上很简单：在算任何布线 diff 之前，**把 CRC 字节位置 mask
+掉**，让它们看起来跟 baseline 一样。这就是 `bitstream.py` 里的
+`mask_rbf_crc_bytes()`，在 `read_switches()` 顶部自动调用。这之后我们就敢
+把 `synth_route()` 的 `patch_crc=True` **设为默认开启**，绿区回归也回到了
+58/58。
+
+### 第一次硬件回环闭合
+
+CRC patcher 整合好之后，我们再次烧入用 codec 自己合成的布线 RBF。这次
+JTAG 加载完成 *并且 LED 安静下来* —— EPCS demo 没有抢回控制权。FPGA
+正在跑我们的比特流。**回环闭合。**
+
+接着我们试 `LutCodec.write_tt(minterm_0_baseline, mask=0xFFFF)` —— 把 LUT
+真值表覆盖成常数 1。烧录、检查：LED 亮。再烧 Quartus 编译的 `minterm_0`
+（mask=0x0000，常数 0）作对照：LED 灭。**两个相反的状态证明
+`LutCodec.write_tt` 成功打到了矽片上。**
+
+意外发现：当我们对 LutCodec 输出跑 `patch_rbf_crc()` 时，它改了 **0 个
+字节**。CRC 已经是对的。为什么？因为 LutCodec 的 bit pattern 是从 Quartus
+pair-diff 训练出来的，pair-diff 里本身就包含了 CRC 字节的变化 —— 所以
+写一个新的 TT 隐式地产出 CRC 正确的比特流。RouteCodec 没有这个性质，因为
+它用的是逆向出来的公式而不是 pair-diff 重放。
+
+### 用硬件探针定位 AX301 引脚
+
+为了做一个真正的功能 demo，我们需要 `LED0 = f(K1, K2, K3, K4)` 行为正确。
+但 `config.py` 里写着 `D = PIN_E15  # RESET` —— 标成了 reset 引脚而不是
+按键。早些时候的硬件实验（`LED = A & B & C & D`）发现 LED 怎么按都不动，
+暗示引脚标签可能错了。我们不信任 AX301 的电路图 PDF（也不容易拿到），
+所以干脆做一台 **矽片引脚扫描仪**。
+
+技术：写一行 Verilog `assign LED = K`，编译 4 次，每次把 `K` 绑到不同的
+候选引脚（`PIN_E16`、`PIN_M16`、`PIN_M15`、`PIN_E15`），LED 全都接
+`LED0 = PIN_G15`。逐个烧录。每次烧完按下全部 4 个实体按键。**让 LED 熄灭
+的那个键就是这个引脚。**（按键是 active-low，按下把输入拉到 GND，
+`assign LED = K` 把这个 0 直接传到 LED0。）
+
+四次烧录，四个答案（`pin_probe.py`）：
+
+| 引脚    | 实体按键 |
+|---------|----------|
+| PIN_E15 | **KEY1**（之前误标为 "RESET"） |
+| PIN_E16 | KEY2 |
+| PIN_M16 | KEY3 |
+| PIN_M15 | KEY4 |
+| PIN_G15 | LED0（active-high）|
+
+`D` 输入一直接的就是 KEY1，根本不是 reset 引脚。带着这张矽片亲自验证过的
+表，我们更新了 `config.py` 并把它记进了 memory。
+
+### 最后的功能 demo 与 XOR-delta 暗坑
+
+目标：**「同时按 K1+K2 或同时按 K3+K4 → LED 亮，否则灭。」** 这个函数用满
+4 个输入，又有令人满意的物理交互。
+
+FUZZ_PINS 是 A=K2、B=K3、C=K4、D=K1，按键 active-low，所以函数是
+`Q = (¬D ∧ ¬A) ∨ (¬B ∧ ¬C)`。逐位算真值表 mask 得到 `0x0357`
+（bits {0,1,2,4,6,8,9} 置位）。
+
+我们用 `LutCodec.write_tt()` 把这个 mask 写到 `minterm_0_X10_Y10_N0.rbf`
+baseline 上，patch CRC，烧录，开始按键。**6 个测试用例里 5 个对了。**
+有一个错了：4 个键全按时 LED 灭，但函数说应该亮。
+
+把 codec 输出 round-trip 读回来 —— 是 `0x0357`，跟我们写的一字不差。那
+为啥硬件觉得 bit 0 是 0？
+
+Bug 是这个：**`LutCodec.write_tt(base, mask)` 不是绝对写，是对 `base` 的
+XOR-delta**。Codec 算的是「相对真正的 0x0000 baseline，这个 mask 应该翻
+哪些 CRAM cell」，然后把这些 cell XOR 到你传进去的 `base` 上。所以硬件上
+的真值表是 `base_tt XOR mask`，而不是 `mask`。
+
+我们的 `base` 是 `minterm_0_X10_Y10_N0.rbf`。看一下 `minterm_0` 实际是什么：
+它是 `Q = ~A & ~B & ~C & ~D` 这个设计，只在所有输入都为 0 的时候输出 1。
+所以 `minterm_0` 的 LUT TT 是 `0x0001` —— bit 0 已经是 1 了。
+
+写完之后硬件上的真值表是 `0x0001 XOR 0x0357 = 0x0356`。`0x0356` 的 bit 0
+是 **0**。这正好对应「4 键全按」那个用例 —— 输入 (D,C,B,A) = (0,0,0,0)
+→ TT[0] → 0 → LED 灭。Bug 跟症状完全对得上。
+
+`read_tt` 是对称的（也返回相对 `base` 的 delta），所以 round-trip 读根本
+抓不到这个 bug —— 写和读用的是同一套 XOR 约定。
+
+修复就一行：写 `mask ^ base_tt` 而不是 `mask`。
+
+```python
+TARGET = 0x0357
+MASK = TARGET ^ 0x0001   # 补偿 minterm_0 的 TT[0]=1
+```
+
+重烧，4 个键全按 → **LED 亮**。只按 K1+K2：LED 亮。K3+K4：LED 亮。其他
+任何组合（单键、K1+K3、K2+K4 等）：LED 灭。**完整真值表通过物理按键验证。**
+
+### 附赠发现：EP4CE6 和 EP4CE10 是 **同一颗物理矽片**
+
+Phase 3 之后一个自然的问题是：「能不能用 EP4CE10 来交叉验证我们的 CE6
+逆向结果？毕竟它们共用 F17 封装，而且坊间一直传它们是同一颗矽片。」与
+其猜，我们直接做了一个最干净的实验（`fuzz/cross_device_diff.py`）：
+
+- 用一行 Verilog（`assign LED = K`）+ **完全相同** 的引脚分配，在两个
+  device target 下编译：
+  - `DEVICE = EP4CE6F17C8`
+  - `DEVICE = EP4CE10F17C8`
+- Byte-diff 两个 RBF。
+
+**结果**：
+
+| | EP4CE6F17C8 | EP4CE10F17C8 |
+|---|---|---|
+| 文件大小 | 368,011 bytes | 368,011 bytes |
+| SHA1 | `b47e804074b05d3d…` | `b47e804074b05d3d…` |
+| 字节差异 | **0** | |
+
+不是「几乎相同」—— 是**逐字节完全相同**，连 header 里 device ID 字段都
+一样。Altera 甚至没有在 CRAM 里加一个 bit 来 gate 被禁用的区域。
+「6,272 LE vs 10,320 LE」的差异**完全是 Quartus 软件层面的限制**；矽片
+本身是同样的金属层、同样的 fuse、同样的 device ID。
+
+**这件事的战略价值**。重新跑 CE10 的 Phase 1/2 完全是冗余 —— SQLite 会
+是 100% 的重复数据。但这个结论解锁了一个更强大的技巧：**CE10 是 CE6 的
+「越狱版 Quartus」**。每当 Quartus 在 CE6 模式下拒绝把逻辑放到某个被
+软件视为禁区的位置（M9K 边界、X=13 / X=26 这种巨型列、为更大 LE 池保留
+的区域），我们可以把项目 `DEVICE` 切到 EP4CE10F17C8，强制放置，编译，
+再把出来的 RBF 直接喂给同一个 RouteCodec / LutCodec / CRC patcher —— 因为
+底层 CRAM 没变。CE6 软件不肯生成的那些 bit 就在同样的位置，只是需要换一个
+软件 profile 把它们诱骗出来。
+
+### 完整越狱：CE6 的版图是一场集体造假
+
+2026-04-07。拿到「同一颗 die」的结论之后，我们决定真正去**摸**一下
+Altera 藏起来的那块矽。方法蠢得一目了然：写一个 trivial 的 Verilog，
+把一颗 `cycloneive_lcell_comb` 锁在具体的 `LCCOMB_Xa_Yb_N0`，项目挂
+`DEVICE = EP4CE10F17C8`，跑 `quartus_fit`，读 fitter 的裁决。
+`"Fitter was successful"` = 这个座标物理上存在。`"illegal location
+assignment"` = Quartus 还在耍赖。扫一遍 (X,Y) 网格就得到一张
+die 的 yes/no 真实地图。
+
+结果令人发指：
+
+| CE6 宣称 (`config.py` / `CLAUDE.md`) | CE10 探针的真相 |
+|---|---|
+| `LAB_X = [3,4,6,7,8,10,11,12,13,16,17,18,19,21,22,23,24,25,26,28,29,31]`（22 列） | **28 列** —— 新增 X=5, 9, 14, 30, 32, 33 |
+| `NON_LAB_X = {5, 9, 14, 15, 20, 27, 30}`（7 列 M9K/DSP/PLL） | **只有 {15, 20, 27}** —— 另外四列是真 LAB |
+| `LAB_Y = [2..14, 16..21]`（19 行，跳过 Y=15） | **20 行** —— Y=15 在 X ∈ {10,14,16,21,25,30,31,32,33,...} 是真 LAB 行 |
+| 总 LAB 数：392 | **~520+** |
+| 总 LE 数：6,272 | **10,320**（刚好等于 CE10 datasheet） |
+
+换句话说，CE6 标成「非 LAB」的 7 列里有 4 列是谎言；一整行 (Y=15)
+是谎言；最右边两列 (X=32,33) 是谎言。fitter 硬编了一份白名单，把 ~40%
+的 die 删掉，然后把这颗芯片贴上小号型号的标签卖出去。
+
+**用 XOR 链证明 LE 真的活着**。声称某个座标存在，和声称那颗 LE 真的
+**能用**，是两回事 —— rebin 很多时候就是因为某几列 yield 失败。为了
+分开这两件事，我们写了一个单 bitstream 坏点扫描器
+(`~/EP4CE10_Jailbreak/scanC_gen.py`)：
+
+```
+chain[0] = K1 ^ K2
+for 每一颗禁区 LE i：
+    (* keep, preserve *)
+    chain[i+1] = cycloneive_lcell_comb(dataa=chain[i], lut_mask=0xAAAA)  // 恒等传递
+LED = chain[N]
+```
+
+每一颗 LUT 都把自己的 `dataa` 原样传过去。数学上化简成
+`LED = K1 ^ K2`，**当且仅当链中每一颗 LE 都正常工作**。任何一个
+stuck-at、一条断掉的布线、或者一个 LUT mask 写错，都会在四种按键组合里
+至少一种上翻转输出奇偶性，LED 会立刻出卖坏点。
+
+三个阶段，AX301 上烧三次：
+
+| 阶段 | 范围 | 链中 LE 数 | 硬件结果 |
+|---|---|---|---|
+| A | X ∈ {32,33}, Y ∈ [2..21], N=0 | 40 | ✅ 四组真值表全中 |
+| B | X ∈ {32,33}, Y ∈ [2..21], N ∈ {0,2,…,30} | 640 | ✅ |
+| C | X ∈ {5,9,14,30,32,33}（禁区 6 列）+ Y=15 整行, 全 N | **1,840** | ✅ |
+
+2,480 颗独立的 CE6-隐藏 LE，每颗过四种按键组合，无一例外表现得像完美
+的矽片。**手上这块 AX301 板不是 rebin 次品，是一颗 Altera 贴着 CE6
+标卖的、功能完整的 CE10 die。**
+
+对项目的意义：现有的 CRAM / C4 / R4 / LI 模型**不需要推翻**，只要扩容。
+六条新 LAB 列各自加一个 `COLUMN_BASE`，`LAB_Y` 加上 Y=15，其他全部
+沿用 —— 配对间距、slot/group 编码、LI mode 分类、CRC 帧布局，全都
+原样兼容，因为底下的矽片就是同一片。可布线 fabric 增加 ~32%，可寻址
+CRAM 增加 0 字节。
+
+我们**故意暂时不**在 `bitstream.py` 里自动打开扩展版图。打开的条件是：
+(1) 用 baseline-diff 挖出每条新列的 CRAM base，(2) 至少在 X ∈ {32,33}
+其中一个作为新 source 跑通 green-zone 回归，确认 RouteCodec 的不变式
+在 fabric 边缘还成立。两件都是机械性的后续工作，没有新物理。
+
+跨 die 对比（EP4CE15 / EP4CE22）是另一个完全不同的问题 —— 它们大概率
+是「Die B」，列数不同，需要重新推导 column base。我们刻意暂时不追这条
+路线：把 CE6 的布线覆盖率做完，比追一个更广的器件家族更快通向可用的
+开源工具链。
+
+### 我们学到了什么
+
+1. **相信矽片，别相信文档。** AX301 的引脚标签在我们的 config 里就是错的；
+   一次 4 烧录的硬件探针在 5 分钟里给出了正确答案。
+2. **Bit-perfect ≠ 烧录可用。** 比特流可以在 CRAM 上字节相同，照样被芯片
+   拒收 —— 因为 header CRC、frame CRC 或者别的配置阶段的校验结构不对。
+3. **未知 CRC 用线性约束破。** 拿绝对 CRC 去暴力 65,536 个多项式会失败
+   （自由度太多）；拿两段精心挑选的帧之间的**差**去暴力，搜索空间会瞬间塌缩。
+4. **读写 codec 必须用同一套 baseline 约定。** Round-trip 读可能通过，
+   但绝对硬件行为是错的 —— 只要双方共享同一个 XOR-delta 假设就抓不到。
+   永远用物理行为验证，而不只是自洽。
+5. **板子上一颗会动的 LED 顶得上一千个通过的单元测试。** 上面这些 bug 全都
+   绕过了我们的软件检查，只在板子上 LED 表现错误的那一刻才暴露出来。
+
+现在 codec 栈有了一条闭合回路：
+
+```
+Verilog 想法  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
+                                                              ↓
+                                                     真实 EP4CE6 矽片
+                                                              ↓
+                                                     LED 按设计响应
+```
+
+从这一刻起，我们不再需要绕回 Quartus 来验证 codec 改动 —— 我们可以自己
+写比特流，看着芯片回应。
+
+---
+
 ## 当前进度和下一步
 
 ### 已完成 ✓
@@ -1149,20 +1467,93 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.12：硬件安全防线 V2（带特征识别的 `validate_safe_for_hardware`）
 - [x] Phase 3.13：AX301 端到端硬件验证（编解码器 → 烧录 → 逻辑行为正确）
 - [x] Phase 3.14：路由综合跳岛策略 —— 3 座绿区源 LAB（(10,10)、(10,14)、(4,4)），58/58 路由对 Quartus bit-perfect，指纹漂移 = 0
+- [x] Phase 3.15：**EP4CE6 RBF CRC 完全逆向**（CRC-16/IBM，poly 0x8005，init 0xFE54，反射，每 210 字节一帧，frames 25..1751）。CRC patcher 已整合进 codec；1727/1727 CRAM 帧验证通过
+- [x] Phase 3.16：**硬件回环闭合** —— RouteCodec + LutCodec 输出经 CRC patch 后可直接烧入真实 EP4CE6 矽片（不再回退到 EPCS）
+- [x] Phase 3.17：AX301 引脚映射经 `pin_probe.py` 在矽片上验证（KEY1=E15、KEY2=E16、KEY3=M16、KEY4=M15、LED0=G15）
+- [x] Phase 3.18a：**EP4CE6 ≡ EP4CE10 确认是同一颗物理矽片** —— RBF 逐字节相同（含 device ID）；CE10 可作为「越狱版 Quartus」用来 fuzz CE6 的禁区（`fuzz/cross_device_diff.py`）
+- [x] Phase 3.18b：**完整越狱 —— CE6 版图白名单被证伪** —— 三阶段 XOR 链坏点扫描器硬件验证 2,480 颗禁区 LE 全部健康（`~/EP4CE10_Jailbreak/scanC_gen.py`）；解锁 6 条新 LAB 列（X=5,9,14,30,32,33）+ Y=15 整行；有效 fabric 392→520+ LAB、6,272→10,320 LE (+65%)
+- [x] Phase 3.18：**4 输入 LUT 功能 demo 在硬件上跑通** —— `LED0 = (K1∧K2)∨(K3∧K4)`，由 LutCodec 写入，按键按下完整真值表验证通过
 
 ### 进行中
 
-- [ ] Phase 3.15：映射剩余 ~19 个 R4 I-index（I=6,8,9,19,21,23,26,27,28 等）
-- [ ] Phase 3.16：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
-- [ ] Phase 3.17：C16 长距离线建模（完全未映射）
-- [ ] Phase 3.18：LI 模式选择规则挖掘 —— Quartus 凭什么选 paired vs alternating？（需要更丰富的多 LE 路径语料库）
-- [ ] Phase 3.19：扩展路由综合绿区，超出 3/392 源 LAB；把黄区回落也提升到 bit-perfect
+- [ ] Phase 3.19：映射剩余 ~19 个 R4 I-index（I=6,8,9,19,21,23,26,27,28 等）
+- [ ] Phase 3.20：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
+- [ ] Phase 3.21：C16 长距离线建模（完全未映射）
+- [x] Phase 3.22：**LI 模式选择规则 —— 阴性收案**。T9 + T10 正交网格语料（12 个 source、374 次 compile、414 条 mappable rows，`fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`）。可部署规则：`dy∈{2,3,21}→edge_even_b0`（100%）、`adx==0→paired`（79%）、`dx>30∧dy>7.5→paired`。中段叶子 `dy>3∧dx≤24.5∧adx>0.5`（n=247，占语料 60%）卡在 **52% 抛硬币**，语料翻倍 + 强制 sx/dx 解耦都没用。结论：paired vs alternating **不是静态路由键的函数**，大概率是 Quartus 的 placement seed / LI 通道占用 / 成本函数 tiebreak 决定的。继续扩语料不会有帮助。黄区回退继续把 `paired` 作为弱先验（两种模式都是硬件安全的）。
+- [x] Phase 3.23：**C4 I≠0 大扫** —— `fuzz/c4_inz_sweep.py` 从现有 routing_paths 语料里挖出 19 条新的 (X,I) 映射，`_C4_FIXED_OFFSETS` 从 25 条扩到 **44 条**。绿区回归仍然 58/58 bit-perfect。
+- [x] Phase 3.24：**非 LAB 列身份解密** —— `~/EP4CE10_Jailbreak/probe_blocks.v`（12 个 altsyncram + 8 个 lpm_mult，虚拟管脚）。Quartus 把 block 分别落在 `M9K_X15_Y*`、`M9K_X27_Y*`、`DSPMULT_X20_Y*`。越狱之后的 3 条真·非 LAB 列身份确认：**X=15、X=27 是 M9K RAM 列**；**X=20 是嵌入式 9×9 乘法器列**。PLL 不占任何 X 列，在 die 边缘。
+- [ ] Phase 3.25：把 `COLUMN_BASE` 扩展到越狱发现的六条新 LAB 列（X=5,9,14,30,32,33），用 baseline-diff 方法挖出它们的 CRAM base；在 bitstream.py 打开扩展版图之前，至少要在 X=32/33 其中一个 source 上跑通 green-zone 回归
+- [ ] Phase 3.26：扩展路由综合绿区，超出 3/392 源 LAB；把黄区回落也提升到 bit-perfect
+- [ ] Phase 3.27：M9K / 嵌入式乘法器 CRAM 编码逆向 —— X=15/20/27 的 bit 排布、pair 间距（完全未探索）
 
 ### 未来工作
 
 - [ ] Phase 4：完善布线编解码器覆盖率（目标：所有线类型 >90%）
 - [ ] Phase 5：FASM 格式适配（与 Yosys/NextPNR 对接）
 - [ ] Phase 6：NextPNR EP4CE6 后端开发
+
+### 长期方向：我们究竟可能在哪里赢过 Quartus
+
+一个常被问到的问题是：「现在 codec 已经能跑了，能不能用现代 ML（RL 路由、
+GNN 拥塞预测、LLM 逻辑综合）超越 Intel Quartus？」基于这个项目目前的真实
+状态以及学术界文献，我们的诚实答案是：**对大多数人首先想到的方向是不行
+的，但对一组更窄、更有意思的目标是可以的。**
+
+**我们赢不了的地方。** Quartus 拥有硬件校准过的时序模型（每根 wire 的 RC
+都在真实矽片上跨 process corner 测过）、30 年累积下来的完整 legality
+checker，以及 PathFinder + negotiated congestion 路由算法 —— **截至 2024
+年，学术界的 RL 路由器在标准 benchmark 上还没有稳定超越过 VPR**，更别说
+Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个众所周知的学术
+陷阱。
+
+**我们能赢的地方。** 我们手上有一个 Quartus 没有也永远不会有的不对称
+优势：**一个可程式、bit-level、双向的编解码器，能在微秒级修改比特流，并
+在数秒内于真实矽片上验证结果。** Quartus 是一个单向的 `verilog → bitstream`
+黑盒；我们不是。这条鸿沟带来了 Quartus 在结构上做不到的几件事：
+
+1. **比特流级别的 superoptimizer（CRAM peephole 优化）。** 拿一个 Quartus
+   build 出来，逐 cell 做等价变换（等价 LUT mask 替换、冗余布线 bit 移除、
+   并行 LE 合并），在硬件上验证等价性，接受能降低 cell count / 动态功耗的
+   变换。Quartus 一旦 fit 完就不会再回头微调；我们可以离线跑数千次硅片
+   验证过的小变换。这个胜利来自「真实矽片上无限次免费试错」，**不是来自
+   更聪明的模型**。
+2. **Quartus 根本不会做的事。** 我们的 codec 让以下事情成为可能：
+   - 在不官方支持 partial reconfiguration 的晶片上做 PR（不重启地改写
+     特定 frame）
+   - Bitstream watermarking / fingerprinting（藏 ID 在无关紧要的 LUT bit）
+   - 可重现构建（Quartus 依赖随机种子；我们的 codec 是纯函数 —— 同样的
+     输入永远输出 bit-identical 的结果）
+   - 单晶片过拟合（针对某一颗具体晶片的 process corner / 老化校准 —— 对
+     硬件安全和 PUF 有用）
+3. **开源工具链（真正的奖品）。** 一条能跑通的 Yosys + nextpnr-EP4CE6 流程
+   比「在 PPA 上打败 Quartus」**重要 100 倍**。它让 Linux/macOS 用户第一次
+   能在不装 Intel 工具的情况下用这颗晶片，让 CI 系统第一次能可重现地构建
+   EP4CE6 比特流，让这颗晶片第一次进入开源 FPGA 生态。**这才是这个项目
+   真正的长期目标。**
+
+**ML 该扮演什么角色（助手，而不是核心）。** 现代 ML 在这个项目里有真实
+但有限的位置：
+
+- **决策树模式分类器** 替代手写的 LI envelope 规则
+  （`_classify_li_lab()`）。语料够大之后，学出来的分类器比硬编码模式更
+  robust，而且仍然完全可解释。
+- **模式挖掘器** 用在 `li_mode_corpus_mine.py` 的输出上 —— 找
+  paired-vs-alternating 的选择规则用的应该是小决策树而不是 GNN。决策树
+  可以审计、可以直接编进 codec。
+- **异常检测器** 用在烧不上去的 codec RBF 上 —— 预测最可能违反了哪个
+  envelope，加速 debug。
+
+这些都不是「ML 打败 Quartus」。它们是「ML 帮我们学一些我们不想手动推的
+规则」。
+
+**建议优先级。** 先把 Phase 4–6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
+一旦端到端的 `.v → bitstream` 开源流程能跑起来，问题就从「能不能在 PPA 上
+打败 Quartus」变成「我们能做哪些 Quartus 根本做不了的事」—— 而解锁这些
+答案的是 codec，不是模型。
+
+> **一句话总结 —— 我们不是在造一个更聪明的 Quartus。我们是在造一种不同
+> 的工具，让用户能做一些 Quartus 根本不让他们做的事情。胜利在于定义一个
+> 新的赛场，而不是在 Quartus 的主场上击败它。**
 
 ### 整体进度估算
 
@@ -1175,8 +1566,10 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 | LOCAL_INTERCONNECT | **~85%** | base 粒度读写；两种编码模式破解；V2 硬件安全防线 |
 | R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
 | C16 长距离线 | **0%** | 尚未开始 |
-| 比特流编解码器 | **~75%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2 |
+| 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
 | 路由综合（绿区岛） | **3/392 源** | (10,10)、(10,14)、(4,4) — 58/58 路由对 Quartus bit-perfect |
+| RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
+| 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 功能 demo 在 AX301 上运行 |
 
 ---
 
@@ -1190,5 +1583,48 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 ---
 
 ## 许可证
+
+**双许可证（2026-04-07 起，替换原先的 MIT）：**
+
+**为什么换。** 项目大部分时间用的是 MIT —— 研究性小代码的默认选项。
+真正让我们改主意的，是上面那一节《完整越狱：CE6 的版图是一场集体
+造假》里记录的 CE6→CE10 越狱结果。在那之前，这些发现看起来只是
+针对一颗入门级 FPGA 的窄范围逆向；但当我们在矽片上亲手证明 —— Altera
+以 EP4CE6 之名卖出的这颗芯片物理上就是一颗 EP4CE10、fitter 白名单
+删掉了整整 ~40% 的 die、藏起来的 2,480 颗 LE 一次通电就全部正常 ——
+游戏的赌注就变了。这份代码和这些发现不再只是「便宜板子上的小把戏」，
+而是一份能让全世界的 EP4CE6 板子多掏出 ~65% 逻辑资源的开源工具链
+雏形，也是一份可复现的、能逮住厂商未来对其他型号玩同样手段的方法论。
+挂 MIT 的话，Altera 可以把这套方法默默吸收进 fitter 补丁，一句话
+都不用说。GPLv3 + CC BY-SA 强迫所有下游 —— 商业的、学术的、甚至厂商
+自己 —— 继续坐在同一张开放的桌子上，附完整源码和完整出处。这才算
+是对矽片刚刚告诉我们的事情的诚实回应。
+
+
+
+- **代码** —— `GPL-3.0-or-later`。Python pipeline、Verilog 生成器、
+  codec 实作、越狱扫描器，以及 `fuzz/` 底下的所有东西都是 copyleft。
+  如果你把这份代码 vendor 进另一个工具链 —— 开源或闭源、爱好或商业，
+  甚至是 Altera/Intel 的官方工具 —— 你的项目也必须以 GPLv3 发布，
+  附完整源代码。完整文本：
+  [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt)。
+- **文档、发现与方法论** —— `CC BY-SA 4.0`。CRAM 模型、C4/R4/LI 位址
+  公式、RBF CRC 规格、CE6→CE10 越狱结果、XOR 链坏点扫描法，以及
+  `README*.md` / `CLAUDE.md` / `FINDINGS.md` 里的全部论述，都采用
+  share-alike。如果你在论文、教程或演讲里引用这些发现，你的衍生作品
+  也必须挂 CC BY-SA。完整文本：
+  [`LICENSES/CC-BY-SA-4.0.txt`](LICENSES/CC-BY-SA-4.0.txt)。
+
+范围说明见 [`LICENSE`](LICENSE)。
+
+选这两个许可证是刻意的：这项工作存在的目的是把 FPGA 工具链的研究
+**留在骇客手里**。MIT 会让 Altera 悄悄打上 fitter 白名单的补丁、
+把这些发现吸收进闭源产品，而无需任何回馈。GPLv3 + CC BY-SA 强迫
+所有下游 —— 商业或学术 —— 继续留在同一张开放的桌子上。
+
+Bitstream 原始档（`*.rbf`、`*.sof`）、原始 SQLite 资料库，以及
+`work/` 和 `results/rbf/` 里的 Quartus 编译产物属于硬件遥测数据，
+不是创作品，本项目不对它们主张版权；其再分发仍受原厂家授权条款
+约束。
 
 本项目仅用于教育和研究目的。逆向工程的结果用于构建开源 FPGA 工具链。

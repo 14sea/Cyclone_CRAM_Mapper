@@ -21,6 +21,12 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Claude local settings (skills are tracked, settings are not)
+.claude/settings.local.json
+
+# Mining run logs
+results/*.log
+
 # Editor
 *.swp
 *.swo

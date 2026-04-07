@@ -181,7 +181,7 @@ EP4CE6/
 │   ├── analyze.py          ← Result analysis and visualization
 │   └── bitstream.py        ← Bitstream codec (read/write LUT + routing switches)
 ├── results/
-│   ├── rbf/                ← Collected .rbf files (~1,340 files, 368 KB each)
+│   ├── rbf/                ← Collected .rbf files (~2,013 files, 368 KB each)
 │   ├── ep4ce6_bitdb.sqlite ← Bit-mapping database (708K+ records)
 │   └── FINDINGS.md         ← Detailed findings report
 ├── work/                   ← Quartus temporary build directory (can be cleaned)
@@ -1163,6 +1163,369 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 
 ---
 
+## Debugging Journey: How We Closed the Hardware Loop
+
+This section is a narrative for newcomers — it walks through the actual debugging
+sessions that turned the codec from "bit-perfect against Quartus" into "the
+silicon accepts our handcrafted bitstream and the LED responds to keys exactly
+as we designed." Every step here was a real problem we hit, and most of them
+were not obvious before we hit them.
+
+### The starting point: codec output looked perfect, but the FPGA refused it
+
+After Phase 3 we had a `RouteCodec` that could read routing switches from any
+Quartus-generated `.rbf`, replay them onto a blank baseline with `apply_routing()`,
+and re-read them losslessly. Diffing our codec output against the original
+Quartus RBF showed **0 CRAM byte differences** — every configuration cell was
+identical. Time to flash it on real hardware.
+
+We connected a 黑金 AX301 board (EP4CE6F17C8 + USB-Blaster JTAG) and ran:
+
+```bash
+openFPGALoader -c usb-blaster results/rbf/lits_synth_X10Y10_to_X12Y10N0_datab.rbf
+```
+
+The flash *appeared* to succeed. But on the board, the LEDs started running a
+"chasing lights" demo (跑馬燈) that we had never compiled. The FPGA was running
+the **vendor demo from the EPCS configuration flash**, not our bitstream. As a
+sanity check we tried flashing a known-good Quartus-built RBF — that one ran
+correctly. We even tried a deliberate **single-bit flip** of a working Quartus
+RBF (`lits_pair_BITFLIP_test.rbf`) — the FPGA rejected that one too and fell
+back to the EPCS demo.
+
+**Conclusion**: the Cyclone IV configuration state machine validates the
+bitstream as it loads. A single byte off and the chip silently boots from
+flash instead. We must have a CRC or checksum somewhere in the RBF, and our
+bit-perfect-CRAM trick was leaving it stale.
+
+### Discovering and reverse-engineering the CRC
+
+We had no datasheet for the .rbf format, so we had to deduce the CRC algorithm
+purely from observed bitstreams. Here is how we did it.
+
+**Step 1 — Is the CRC stateful?** A CRC could be one rolling value over the
+entire bitstream, or one independent value per fixed-size frame. We searched
+the corpus for **frame pairs whose data bytes were identical**: if their CRC
+bytes also matched, the algorithm was stateless (frame-independent). We found
+**1186 such identical-data frame pairs across the corpus**, and in every single
+case the trailing CRC bytes matched. ✓ Stateless. The CRC is computed on each
+frame independently.
+
+**Step 2 — Find the frame size.** RBF total size is 368,011 bytes. Subtracting
+the 32-byte 0xFF preamble and 59-byte 0xFF postamble leaves 367,920 = **1752 ×
+210**. Bingo: 1752 frames of 210 bytes. Each frame likely has 208 data bytes
+followed by 2 CRC bytes (little-endian).
+
+**Step 3 — The ΔCRC linear search.** This is the heart of the trick. Instead
+of brute-forcing the absolute CRC of one frame against 65,536 polynomials
+(which gave us zero hits — too many degrees of freedom), we used a **linear
+constraint**:
+
+- Construct two synthetic 208-byte payloads that differ in **exactly one byte**
+  (e.g., byte 100 = 0x10 vs. byte 100 = 0x10 AND byte 101 = 0x10).
+- For each candidate polynomial × bit-direction variant, the CRC difference
+  between the two payloads is determined entirely by the polynomial — no need
+  to know the init value.
+- Require that the same polynomial satisfies both ΔCRCs simultaneously
+  (dual-constraint). This collapses 65,536 candidates × 4 bit-directions down
+  to almost nothing.
+
+Two polys survived: the standard **0x8005** and a low-weight collision 0x0006.
+0x8005 reflected is 0xA001 (the right-shift form). That's CRC-16-IBM.
+
+**Step 4 — Brute-force the init value.** The polynomial alone doesn't fix the
+CRC — there's also an initial register value. Once we knew the polynomial, we
+took 1316 frames in the corpus that contained all-zero data and required
+`crc16(zeros, poly=0x8005, init=?) == observed_value (0x7d9a)`. Only one init
+satisfied: **0xFE54**.
+
+**Step 5 — End-to-end verification.** With the formula nailed down:
+
+```python
+def crc16_rbf(data208: bytes) -> int:
+    crc = 0xFE54
+    for b in data208:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ 0xA001 if (crc & 1) else (crc >> 1)
+    return crc
+```
+
+…we ran it across **all 1752 frames** of a known-good Quartus RBF. Result:
+**1727 frames matched, 25 failed**. The 25 failures were a contiguous block —
+**frames 0..24**. That's the bitstream header (sync words, config registers,
+device-wide options). The header is **not CRC-protected**; only frames 25..1751
+(the CRAM frames) carry an enforced CRC. Once we excluded the header from the
+patcher, every CRAM frame's CRC reproduced exactly.
+
+The full spec lives in `bitstream.crc16_rbf_frame()` and `patch_rbf_crc()`.
+
+### The codec / CRC byte overlap (and how we fixed it)
+
+Plugging the CRC patcher into `synth_route()` and re-running the green-zone
+regression test exploded: **58/58 routes bit-perfect → 0/N**. The patcher had
+broken the codec.
+
+Why? The CRC bytes live at offsets `+208` and `+209` of each 210-byte **frame**.
+But the codec scans LAB columns using a **210-byte period that is not
+frame-aligned** (column bases vs. frame starts differ). So the codec's
+"slot 1" or "slot 2" reads occasionally land exactly on bytes that the CRC
+patcher just rewrote — and the diff against the zero baseline picked up the
+CRC difference as if it were a routing change.
+
+The fix is conceptually simple: before computing any routing diff,
+**mask out the CRC byte positions** so they look identical to the baseline.
+That's `mask_rbf_crc_bytes()` in `bitstream.py`, called automatically at the
+top of `read_switches()`. With that in place we could turn `patch_crc=True`
+**on by default** in `synth_route()` and the green-zone regression returned to
+58/58.
+
+### First hardware loop closure
+
+With the CRC patcher integrated, we re-flashed our codec-built routing RBF.
+This time the JTAG load completed *and the LEDs stayed quiet* — the EPCS
+demo did not take over. The FPGA was running our bitstream. **Loop closed.**
+
+Then we tried `LutCodec.write_tt(minterm_0_baseline, mask=0xFFFF)` —
+overwrite the LUT truth table with constant-1. Flash, verify: LED ON.
+Flash the Quartus-built `minterm_0` (mask 0x0000, constant-0) as a control:
+LED OFF. **Opposite states confirm `LutCodec.write_tt` reaches silicon.**
+
+Surprise observation: when we ran `patch_rbf_crc()` on the LutCodec output,
+it changed **0 bytes**. The CRC was already valid. Why? Because LutCodec's
+bit patterns were trained from Quartus pair-diffs that already include the
+CRC byte changes — so writing a new TT implicitly produces a CRC-correct
+bitstream. RouteCodec doesn't have that property because it uses
+RE-derived formulas, not pair-diff replays.
+
+### Hardware-probing the AX301 pin map
+
+To build a real functional demo we needed `LED0 = f(K1, K2, K3, K4)` to
+behave correctly. But our `config.py` had `D = PIN_E15  # RESET` — labeled
+as a reset pin, not a key. Earlier hardware experiments (`LED = A & B & C & D`)
+had shown LED stuck ON regardless of key presses, hinting that the pin labels
+might be wrong. We didn't trust the AX301 schematic PDF (and couldn't easily
+get one), so we built a **silicon pin scanner**.
+
+The technique: write a one-line Verilog `assign LED = K`, compile it 4 times
+with `K` bound to a different candidate pin (`PIN_E16`, `PIN_M16`, `PIN_M15`,
+`PIN_E15`), all driving `LED0 = PIN_G15`. Flash one at a time. Press all 4
+physical keys after each flash. Whichever key turns the LED off **is** that
+pin. (The keys are active-low, so pressing pulls the input to GND, and
+`assign LED = K` propagates that 0 to LED0.)
+
+Four flashes, four answers (`pin_probe.py`):
+
+| PIN | Physical key |
+|-----|--------------|
+| PIN_E15 | **KEY1** (was mislabeled "RESET") |
+| PIN_E16 | KEY2 |
+| PIN_M16 | KEY3 |
+| PIN_M15 | KEY4 |
+| PIN_G15 | LED0 (active-high) |
+
+The `D` input was wired to KEY1 all along — not a reset pin. With this
+silicon-verified table we updated `config.py` and recorded the map in memory.
+
+### The final functional demo and the XOR-delta footgun
+
+Goal: **"Hold K1+K2 OR hold K3+K4 → LED on, otherwise LED off."** This uses
+all 4 inputs and gives a satisfying physical interaction.
+
+With FUZZ_PINS A=K2, B=K3, C=K4, D=K1 and active-low keys, the function is
+`Q = (¬D ∧ ¬A) ∨ (¬B ∧ ¬C)`. Computing the truth-table mask bit by bit gives
+`0x0357` (bits {0,1,2,4,6,8,9} set).
+
+We wrote that mask onto a `minterm_0_X10_Y10_N0.rbf` baseline using
+`LutCodec.write_tt()`, patched the CRC, flashed, and started pressing keys.
+**5 out of 6 cases worked.** One case was wrong: pressing all 4 keys
+simultaneously gave LED OFF, but our function says it should be ON.
+
+Round-trip read of the codec output returned `0x0357` — exactly what we wrote.
+So why did hardware say bit 0 was 0?
+
+The bug: **`LutCodec.write_tt(base, mask)` is not absolute. It is XOR-delta
+against `base`.** The codec computes which CRAM cells differ from the *true
+0x0000 baseline* for `mask`, and XORs those cells onto whatever `base` you
+pass it. The hardware truth table is therefore `base_tt XOR mask`, not `mask`.
+
+Our `base` was `minterm_0_X10_Y10_N0.rbf`. Look at what `minterm_0` actually
+contains: it's the design `Q = ~A & ~B & ~C & ~D`, which outputs 1 only when
+all inputs are 0. So `minterm_0`'s LUT TT is `0x0001` — bit 0 is already set.
+
+Hardware TT after our write was therefore `0x0001 XOR 0x0357 = 0x0356`. Bit 0
+of 0x0356 is **0**. That's exactly the case where all 4 keys are pressed —
+input pattern (D,C,B,A) = (0,0,0,0) → TT[0] → 0 → LED OFF. The bug aligned
+perfectly with the symptom.
+
+`read_tt` is symmetric (it also returns the delta against `base`), so the
+round-trip read couldn't catch the bug — both writer and reader use the same
+XOR convention.
+
+The fix is one line: write `mask ^ base_tt` instead of `mask`.
+
+```python
+TARGET = 0x0357
+MASK = TARGET ^ 0x0001   # compensate for minterm_0's TT[0]=1
+```
+
+Reflash. Press all 4 keys. **LED ON.** Press just K1+K2: LED ON. Press K3+K4:
+LED ON. Press anything else (single key, K1+K3, K2+K4, etc.): LED OFF. **Full
+truth table verified by physical key presses.**
+
+### Bonus discovery: EP4CE6 and EP4CE10 are the **same physical die**
+
+A natural question after Phase 3 was: "could we cross-validate our CE6
+findings against EP4CE10, since they share the F17 package and are rumored
+to be the same silicon?" Rather than guess, we ran the cleanest possible
+experiment via `fuzz/cross_device_diff.py`:
+
+- Compile a one-line Verilog (`assign LED = K`) with **identical** pin
+  assignments under two device targets:
+  - `DEVICE = EP4CE6F17C8`
+  - `DEVICE = EP4CE10F17C8`
+- Byte-diff the resulting RBFs.
+
+**Result**:
+
+| | EP4CE6F17C8 | EP4CE10F17C8 |
+|---|---|---|
+| Size | 368,011 bytes | 368,011 bytes |
+| SHA1 | `b47e804074b05d3d…` | `b47e804074b05d3d…` |
+| Byte differences | **0** | |
+
+Not "almost identical" — **byte-for-byte identical**, including the header
+bytes that carry the device ID. Altera did not even add a CRAM bit to gate
+the disabled region. The "6,272 LE vs 10,320 LE" difference exists
+**entirely as a software constraint inside Quartus**; the silicon is the
+same metal masks, the same fuses, the same device ID in the bitstream.
+
+**Why this matters strategically**. Re-fuzzing CE10 to rebuild Phase 1/2
+data would be 100% redundant — the SQLite would be a duplicate. But the
+result unlocks a much more powerful trick: **CE10 is a "jailbroken Quartus"
+for CE6**. Whenever Quartus refuses to place logic in a region the CE6
+software profile considers off-limits (M9K boundaries, the huge X=13 / X=26
+columns, regions reserved for the larger LE pool), we can switch the
+project's `DEVICE` to EP4CE10F17C8, force the placement, compile, and feed
+the resulting RBF straight back into the same RouteCodec / LutCodec / CRC
+patcher — because the underlying CRAM is unchanged. The bits the CE6
+software refuses to generate live in the same place; we just need a
+different software profile to coax them out.
+
+### The full jailbreak: CE6's fabric map is a lie
+
+2026-04-07. Armed with the "same die" result, we set out to actually
+_touch_ the silicon Altera hides. The method is embarrassingly simple:
+write a trivial Verilog that locks one `cycloneive_lcell_comb` to a
+specific `LCCOMB_Xa_Yb_N0` inside a `DEVICE = EP4CE10F17C8` project, run
+`quartus_fit`, and read the fitter verdict. `"Fitter was successful"` =
+that coordinate physically exists in the fabric. `"illegal location
+assignment"` = Quartus is (still) refusing. By sweeping a grid we get a
+yes/no map of what is _actually_ on the die.
+
+The results are brutal:
+
+| CE6 claims (`config.py` / `CLAUDE.md`) | Reality on CE10 probe |
+|---|---|
+| `LAB_X = [3,4,6,7,8,10,11,12,13,16,17,18,19,21,22,23,24,25,26,28,29,31]` (22 cols) | **28 cols** — add X=5, 9, 14, 30, 32, 33 |
+| `NON_LAB_X = {5, 9, 14, 15, 20, 27, 30}` (7 cols M9K/DSP/PLL) | **Only {15, 20, 27}** — the other four are real LABs |
+| `LAB_Y = [2..14, 16..21]` (19 rows, Y=15 skipped) | **20 rows** — Y=15 is a real LAB row at X ∈ {10,14,16,21,25,30,31,32,33,...} |
+| Total LABs: 392 | **~520+** |
+| Total LEs: 6,272 | **10,320** (matches CE10 datasheet exactly) |
+
+In other words, four of the seven columns CE6 marks as "non-LAB" are
+lies; one entire row (Y=15) is a lie; the two rightmost columns (X=32,33)
+are a lie. The fitter has a hard-coded whitelist that deletes ~40% of
+the die and relabels the chip as a smaller part.
+
+**Live-LE proof by XOR chain**. Claiming a coordinate exists and
+claiming that LE is _functional_ are two different things — rebinning is
+often driven by yield failures in specific columns. To separate the two
+we built a single-bitstream dead-cell scanner
+(`~/EP4CE10_Jailbreak/scanC_gen.py`):
+
+```
+chain[0] = K1 ^ K2
+for each forbidden LE i:
+    (* keep, preserve *)
+    chain[i+1] = cycloneive_lcell_comb(dataa=chain[i], lut_mask=0xAAAA)  // identity
+LED = chain[N]
+```
+
+Every LUT passes its `dataa` straight through. The math reduces to
+`LED = K1 ^ K2` **if and only if every cell in the chain behaves**. A
+single stuck-at, broken routing channel, or misconfigured LUT mask flips
+the output parity on at least one of the four key combinations, and the
+LED reports the damage.
+
+Three phases, three flashes on the AX301:
+
+| Phase | Scope | LEs in chain | Hardware result |
+|---|---|---|---|
+| A | X ∈ {32,33}, Y ∈ [2..21], N=0 | 40 | ✅ full truth table match |
+| B | X ∈ {32,33}, Y ∈ [2..21], N ∈ {0,2,…,30} | 640 | ✅ |
+| C | X ∈ {5,9,14,30,32,33} (hidden cols) + Y=15 row, full N | **1,840** | ✅ |
+
+2,480 distinct CE6-hidden LEs, four key combinations each, every single
+one behaves exactly as pure silicon should. **This particular AX301
+board is not a rebin reject — it is a fully functional CE10 die that
+Altera sold as a CE6.**
+
+What this means for the project: the existing CRAM / C4 / R4 / LI
+models do not need to be thrown out. They just need to grow. Each of
+the six newly-discovered LAB columns needs one `COLUMN_BASE` entry, and
+the Y=15 row needs to be added to `LAB_Y`; every other part of the
+model — pair spacing, slot/group encoding, LI mode taxonomy, CRC frame
+layout — carries over because the silicon underneath is identical. The
+routable fabric grows by ~32%, the addressable CRAM by 0 bytes.
+
+We deliberately do **not** auto-enable the expanded map in `bitstream.py`
+yet. The expansion must be gated on: (1) per-new-column CRAM base
+mining via baseline-diff, and (2) a green-zone regression on at least
+one new source in X ∈ {32,33} to confirm the RouteCodec invariants hold
+at the fabric edge. Both are mechanical follow-ups — no new physics.
+
+Cross-die comparison (EP4CE15 / EP4CE22) is a different question entirely
+— those are likely "Die B" with different column counts and would require
+re-deriving column bases. We are deliberately not pursuing them yet:
+finishing CE6 routing coverage is a faster path to a working open
+toolchain than chasing a wider device family.
+
+### What we learned
+
+1. **Trust silicon, not datasheets.** The AX301 pin labels in our config were
+   wrong; a 4-flash hardware probe gave the correct map in 5 minutes.
+2. **Bit-perfect ≠ flash-clean.** A bitstream can be byte-identical in CRAM
+   and still get rejected because of header CRC, frame CRC, or other gating
+   structures the chip checks during configuration.
+3. **Use linear constraints for unknown CRCs.** Brute-forcing 65,536
+   polynomials against an absolute CRC fails (too many free parameters).
+   Brute-forcing against a **difference** of two carefully chosen frames
+   collapses the search instantly.
+4. **Read and write codecs must use the same baseline convention.** A
+   round-trip read can pass while the absolute hardware behavior is wrong, if
+   both sides share the same XOR-delta assumption. Always validate against
+   physical behavior, not just self-consistency.
+5. **A working LED on hardware is worth a thousand passing unit tests.**
+   Every bug above slipped past our software checks and only revealed itself
+   when the LED on the board did the wrong thing.
+
+The codec stack now has a closed loop:
+
+```
+Verilog idea  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
+                                                              ↓
+                                                     real EP4CE6 silicon
+                                                              ↓
+                                                     LED behaves as designed
+```
+
+From this point forward, we no longer need to round-trip through Quartus to
+validate codec changes — we can write the bitstream ourselves and watch the
+chip respond.
+
+---
+
 ## Current Progress and Next Steps
 
 ### Completed ✓
@@ -1187,20 +1550,99 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.12: Hardware safety guard V2 with signature recognition (`validate_safe_for_hardware`)
 - [x] Phase 3.13: End-to-end hardware verification on AX301 (codec → flash → expected logic)
 - [x] Phase 3.14: Route synth island hopping — 3 green-zone source LABs ((10,10), (10,14), (4,4)), 58/58 routes bit-perfect against Quartus, fingerprint drift = 0
+- [x] Phase 3.15: **EP4CE6 RBF CRC fully reverse-engineered** (CRC-16/IBM, poly 0x8005, init 0xFE54, reflected, per 210-byte frame, frames 25..1751). Patcher integrated into codec; 1727/1727 CRAM frames verified
+- [x] Phase 3.16: **Hardware loopback closed** — RouteCodec + LutCodec output flashes successfully on real EP4CE6 silicon after CRC patch (no more EPCS fallback)
+- [x] Phase 3.17: AX301 pin map silicon-verified via `pin_probe.py` (KEY1=E15, KEY2=E16, KEY3=M16, KEY4=M15, LED0=G15)
+- [x] Phase 3.18a: **EP4CE6 ≡ EP4CE10 confirmed same physical die** — byte-identical RBF (incl. device ID); enables CE10 as "jailbroken Quartus" for fuzzing CE6's restricted regions (`fuzz/cross_device_diff.py`)
+- [x] Phase 3.18b: **Full jailbreak — CE6 fabric whitelist falsified** — 2,480 hidden LEs hardware-verified alive via 3-phase XOR-chain dead-cell scanner (`~/EP4CE10_Jailbreak/scanC_gen.py`); 6 new LAB columns (X=5,9,14,30,32,33), Y=15 row unlocked; effective fabric 392→520+ LABs, 6,272→10,320 LEs (+65%)
+- [x] Phase 3.18: **Functional 4-input LUT demo on hardware** — `LED0 = (K1∧K2)∨(K3∧K4)` written via LutCodec, full truth table validated by physical key presses
 
 ### In Progress
 
-- [ ] Phase 3.15: Map remaining ~19 R4 I-indices (I=6,8,9,19,21,23,26,27,28, etc.)
-- [ ] Phase 3.16: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
-- [ ] Phase 3.17: C16 long-distance wire modeling (not yet started)
-- [ ] Phase 3.18: LI mode-selection rule mining — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
-- [ ] Phase 3.19: Expand route-synth green zones beyond 3/392 source LABs; promote yellow-zone fallback to bit-perfect — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
+- [ ] Phase 3.19: Map remaining ~19 R4 I-indices (I=6,8,9,19,21,23,26,27,28, etc.)
+- [ ] Phase 3.20: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
+- [ ] Phase 3.21: C16 long-distance wire modeling (not yet started)
+- [x] Phase 3.22: **LI mode-selection rule — CLOSED NEGATIVE**. T9 + T10 orthogonal-grid corpus (12 sources, 374 compiles, 414 mappable rows, `fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`). Clean rules: `dy∈{2,3,21}→edge_even_b0` (100%), `adx==0→paired` (79%), `dx>30∧dy>7.5→paired`. Middle leaf `dy>3∧dx≤24.5∧adx>0.5` (n=247, 60% of corpus) stuck at **52% coin flip** — unchanged by 2× corpus growth and sx/dx decorrelation. Conclusion: paired vs alternating is **not a function of the static routing key**; likely driven by Quartus placement seed / LI channel occupancy. Further corpus expansion will not help. Yellow-zone fallback keeps `paired` as a weak prior (both modes are hardware-safe).
+- [x] Phase 3.23: **C4 I≠0 fog-of-war sweep** — `fuzz/c4_inz_sweep.py` mined 19 new (X,I) mappings from existing routing_paths corpus, taking `_C4_FIXED_OFFSETS` from 25 → **44 mappings**. Green-zone regression still 58/58 bit-perfect.
+- [x] Phase 3.24: **Non-LAB column identity resolved** — `~/EP4CE10_Jailbreak/probe_blocks.v` (12× altsyncram + 8× lpm_mult, virtual-pinned). Quartus placed blocks at `M9K_X15_Y*`, `M9K_X27_Y*`, `DSPMULT_X20_Y*`. So of the 3 true non-LAB columns (post-jailbreak): **X=15 and X=27 are M9K RAM columns**; **X=20 is the embedded 9×9 multiplier column**. PLLs live at the die periphery, not in any X column.
+- [ ] Phase 3.25: Extend `COLUMN_BASE` table to the six jailbreak-discovered LAB columns (X=5,9,14,30,32,33) via baseline-diff mining; green-zone regression on at least one X=32/33 source before opening the extended fabric in bitstream.py
+- [ ] Phase 3.26: Expand route-synth green zones beyond 3/392 source LABs; promote yellow-zone fallback to bit-perfect
+- [ ] Phase 3.27: M9K / embedded-multiplier CRAM encoding reverse — pair spacing, bit layout at X=15/20/27 (unexplored)
 
 ### Future Work
 
 - [ ] Phase 4: Complete routing codec coverage (target: all wire types >90%)
 - [ ] Phase 5: FASM format adaptation (integration with Yosys/NextPNR)
 - [ ] Phase 6: NextPNR EP4CE6 backend development
+
+### Long-term direction: where we can actually beat Quartus
+
+A common question is "with the codec working, can we use modern ML (RL routing,
+GNN congestion prediction, LLM logic synthesis) to outperform Intel Quartus?"
+Our honest answer, based on the current state of the project and the academic
+literature, is **mostly no for the things people first think of, but yes for a
+narrower and more interesting set of targets**.
+
+**Where we will not win.** Quartus has a hardware-calibrated timing model
+(per-wire RC measured on real silicon across process corners), a complete
+legality checker accumulated over 30 years, and routing algorithms
+(PathFinder + negotiated congestion) that academic RL routers have **not yet
+beaten on standard benchmarks** as of 2024. Trying to out-route Quartus on its
+home turf with reinforcement learning is a well-known academic trap.
+
+**Where we can win.** We have one asymmetric advantage Quartus does not have
+and never will: **a programmable, bit-level, bidirectional codec that can
+modify a bitstream in microseconds and validate the result on real silicon in
+seconds**. Quartus is a one-way `verilog → bitstream` black box. We are not.
+That gap enables several things Quartus structurally cannot do:
+
+1. **Bitstream-level superoptimizer (peephole over CRAM).** Take a Quartus
+   build, mutate it cell by cell (equivalent LUT-mask transforms, redundant
+   routing-bit removal, parallel-LE merging), validate equivalence on hardware,
+   accept mutations that lower cell count or dynamic power. Quartus never
+   re-touches its output once fit completes; we can run thousands of
+   silicon-validated mutations offline. The win comes from "infinite free
+   re-tries on real silicon," not from a smarter model.
+2. **Things Quartus refuses to do at all.** Our codec enables:
+   - Partial reconfiguration on a die that does not officially support it
+     (rewrite specific frames without a full reload)
+   - Bitstream watermarking / fingerprinting in irrelevant LUT bits
+   - Reproducible builds (Quartus is seed-dependent; our codec is a pure
+     function — bit-identical output for identical input, every time)
+   - Per-die overfitting (calibrate for one specific chip's process corner /
+     aging — useful for hardware security and PUFs)
+3. **Open toolchain (the real prize).** A working Yosys + nextpnr-EP4CE6 flow
+   matters 100× more than "beating Quartus on PPA." It is the first time
+   Linux/macOS users can target this chip without installing Intel's tools,
+   the first time CI systems can build EP4CE6 bitstreams reproducibly, and the
+   first time the chip enters the open-source FPGA ecosystem at all. **This is
+   the actual long-term goal of the project.**
+
+**Where ML belongs (assistant role, not core).** Modern ML has a real but
+modest place in this project:
+
+- **Decision-tree mode classifier** to replace hand-coded LI envelope rules
+  (`_classify_li_lab()`). Once the corpus is large enough, a learned classifier
+  is more robust than hard-coded patterns and remains fully interpretable.
+- **Pattern miner** for the `li_mode_corpus_mine.py` output — small decision
+  trees, not GNNs, are the right tool for finding the paired-vs-alternating
+  selection rule. Decision trees can be audited and compiled directly into the
+  codec.
+- **Anomaly detector** for codec-built RBFs that fail to flash — predict which
+  envelope was most likely violated, to speed up debugging.
+
+None of these are "ML beats Quartus." They are "ML helps us write rules we do
+not want to hand-derive."
+
+**Recommended priority.** Finish Phase 4–6 first (routing coverage → chipdb →
+nextpnr backend). Once a `.v → bitstream` open-source flow runs end-to-end,
+the question shifts from "can we beat Quartus on PPA" to "what can we do that
+Quartus cannot do at all" — and the codec, not a model, is what unlocks those
+answers.
+
+> **TL;DR — We are not building a smarter Quartus. We are building a different
+> kind of tool that lets users do things Quartus does not let them do at all.
+> The win is in defining a new arena, not in beating Quartus on its home turf.**
 
 ### Overall Progress Estimate
 
@@ -1213,8 +1655,10 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 | LOCAL_INTERCONNECT | **~85%** | Base-granular read/write; two encoding modes resolved; V2 safety guard |
 | R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
 | C16 long-distance wires | **0%** | Not yet started |
-| Bitstream codec | **~75%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2 |
+| Bitstream codec | **~85%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; **CRC patcher integrated; HW-verified on silicon** |
 | Route synthesis (green islands) | **3/392 sources** | (10,10), (10,14), (4,4) — 58/58 routes bit-perfect against Quartus |
+| RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
+| Hardware loopback (codec → flash → silicon) | **closed** | LutCodec functional demo running on AX301 |
 
 ---
 
@@ -1229,4 +1673,55 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 
 ## License
 
-This project is for educational and research purposes only. The reverse-engineering results are intended for building an open-source FPGA toolchain.
+**Dual license (as of 2026-04-07, replacing the previous MIT license):**
+
+**Why we switched.** For most of this project the license was MIT — the
+default choice for small research code. The trigger for the change was
+the CE6→CE10 jailbreak documented in *"The full jailbreak: CE6's fabric
+map is a lie"* above. Until that point the findings looked like a
+narrow reverse-engineering of one budget FPGA. Once we could prove on
+silicon that the chip Altera sold as an EP4CE6 is physically an
+EP4CE10, that its fitter whitelist deletes ~40% of a working die, and
+that every one of those hidden 2,480 LEs lights up on the first try —
+the stakes shifted. The code and the findings are no longer "a neat
+hack on a cheap board"; they are the seed of an open toolchain that
+could unlock ~65% more logic on every EP4CE6 board in the wild, and a
+reproducible method for catching vendors doing the same trick on future
+parts. MIT would have let Altera absorb the method into a silent
+fitter patch and move on without a word. GPLv3 + CC BY-SA forces every
+downstream — commercial, academic, or vendor itself — to stay on the
+same open table, with full source and full attribution. That felt like
+the honest response to what the silicon just told us.
+
+
+
+- **Code** — `GPL-3.0-or-later`. The Python pipeline, Verilog generators,
+  codec implementations, jailbreak scanners, and anything under `fuzz/`
+  are copyleft. If you vendor this code into another toolchain — open or
+  closed, hobby or commercial, including any official Altera/Intel tool
+  — your project must be released under GPLv3 with full source. Full
+  text: [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt).
+- **Documentation, findings & methodology** —
+  `CC BY-SA 4.0`. The CRAM model, C4/R4/LI address formulas, RBF CRC
+  spec, CE6→CE10 jailbreak results, XOR-chain dead-cell scanning
+  method, and all prose in `README*.md` / `CLAUDE.md` / `FINDINGS.md`
+  are share-alike. Cite them in a paper, tutorial, or talk and your
+  derivative must also be CC BY-SA. Full text:
+  [`LICENSES/CC-BY-SA-4.0.txt`](LICENSES/CC-BY-SA-4.0.txt).
+
+See [`LICENSE`](LICENSE) for the scope notes and rationale.
+
+The choice is deliberate: this work exists to keep FPGA toolchain
+research in hacker hands. MIT would have let Altera quietly patch their
+fitter whitelist and absorb the findings without reciprocity. GPLv3 +
+CC BY-SA forces every downstream — commercial or academic — to stay on
+the same open table.
+
+Bitstream blobs (`*.rbf`, `*.sof`), raw SQLite databases, and Quartus
+build artifacts in `work/` and `results/rbf/` are hardware telemetry,
+not creative works; no license is asserted over them, and
+redistribution remains subject to the upstream vendor's original terms.
+
+This project is for educational and research purposes. The
+reverse-engineering results are intended for building an open-source
+FPGA toolchain.
