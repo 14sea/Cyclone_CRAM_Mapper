@@ -367,9 +367,16 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     return ops
 
 
-def synth_route(base_rbf: bytes, src, dst) -> tuple[bytes, dict]:
-    """Top-level entry. Returns (output_rbf, debug_info)."""
-    from bitstream import RouteCodec
+def synth_route(base_rbf: bytes, src, dst, patch_crc: bool = False) -> tuple[bytes, dict]:
+    """Top-level entry. Returns (output_rbf, debug_info).
+
+    patch_crc: If True, recompute CRAM frame CRCs so the FPGA accepts the
+    bitstream when flashed via JTAG. Disabled by default because CRC bytes
+    happen to fall on positions the routing readers scan, which would break
+    bit-perfect comparisons against unpatched Quartus output. Always set
+    True for any RBF you intend to flash to real hardware.
+    """
+    from bitstream import RouteCodec, patch_rbf_crc
     need = parse_need(src, dst)
     plan = plan_hops(need)
     li = pick_li_envelope(need)
@@ -381,6 +388,12 @@ def synth_route(base_rbf: bytes, src, dst) -> tuple[bytes, dict]:
     # Stage 5 — L1 validation: round-trip + hardware safety
     codec.validate_safe_for_hardware(out, base_rbf)
     sw = codec.read_switches(out, base_rbf)
+
+    # Stage 6 — Optional CRC patch (only when targeting hardware flash).
+    # Without this the Cyclone IV config state machine rejects the load and
+    # falls back to EPCS Flash boot. See ep4ce6_rbf_crc memory + commit log.
+    if patch_crc:
+        out = patch_rbf_crc(out)
 
     debug = {"need": need, "plan": plan, "li_mode": li[0], "ops": ops, "read_back": sw}
     return out, debug

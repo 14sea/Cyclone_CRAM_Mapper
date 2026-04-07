@@ -144,6 +144,42 @@ _LI_FIRST2 = {4, 17, 27}
 _LI_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
 
+# === EP4CE6 RBF CRC-16 (reverse-engineered 2026-04-07) =====================
+# Reflected CRC-16-IBM (poly 0x8005 → right-shift 0xA001), init 0xFE54.
+# Each 210-byte frame: 208 data bytes + 2 CRC bytes (LE: low at +208, high +209).
+# Frames 0..24 are bitstream header (no CRC). Frames 25..1751 are CRAM.
+# Without CRC patching the FPGA rejects loaded RBFs and falls back to EPCS.
+
+CRC_FRAME_SIZE = 210
+CRC_DATA_SIZE = 208
+CRC_FIRST_CRAM_FRAME = 25
+CRC_LAST_FRAME = 1751
+CRC_PREAMBLE = 32
+CRC_INIT = 0xFE54
+CRC_POLY_REFLECTED = 0xA001  # bitrev(0x8005)
+
+
+def crc16_rbf_frame(data: bytes) -> int:
+    """CRC of one 208-byte RBF frame. Returns 16-bit int (low byte stored first)."""
+    crc = CRC_INIT
+    for b in data:
+        crc ^= b
+        for _ in range(8):
+            crc = (crc >> 1) ^ CRC_POLY_REFLECTED if (crc & 1) else (crc >> 1)
+    return crc
+
+
+def patch_rbf_crc(rbf: bytes) -> bytes:
+    """Recompute CRC for every CRAM frame (25..1751). No-op on Quartus output."""
+    buf = bytearray(rbf)
+    for n in range(CRC_FIRST_CRAM_FRAME, CRC_LAST_FRAME + 1):
+        s = CRC_PREAMBLE + n * CRC_FRAME_SIZE
+        c = crc16_rbf_frame(bytes(buf[s:s + CRC_DATA_SIZE]))
+        buf[s + CRC_DATA_SIZE] = c & 0xFF
+        buf[s + CRC_DATA_SIZE + 1] = (c >> 8) & 0xFF
+    return bytes(buf)
+
+
 def _li_active_pairs(i_idx):
     """Return list of active 210-byte pair indices for a LOCAL_INTERCONNECT I-index."""
     if i_idx in _LI_ALL9:
