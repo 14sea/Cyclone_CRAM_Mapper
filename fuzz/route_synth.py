@@ -268,18 +268,18 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
             "pair_bases": [(8, 0), (8, 1)],
         })
 
-    # Universal source-column R24 broadcast hold: R24_X{sx-1}_I0 and
-    # R24_X{sx}_I0 across all Y rows EXCEPT the rows the route itself
-    # uses near sy. Mined from lits_pair corpus (broadcast_mine.py,
-    # 2026-04-07): 23/23 routes, exact same Y-set every time.
-    # Limitation: corpus has only sy=10, so the Y-set is hard-coded for
-    # that case. Generalize once multi-sy lits_pair samples exist.
-    if not need.same_lab and need.sy == 10:
-        bcast_ys = (2, 3, 4, 5, 6, 13, 14, 16, 17, 18, 19, 21)
-        for bx in (need.sx - 1, need.sx):
-            if bx in LAB_X or bx in (need.sx - 1, need.sx):
-                for by in bcast_ys:
-                    ops.append({"type": "r24", "wx": bx, "y": by, "i_idx": 0})
+    # Universal source-column R24 broadcast hold: 5 raw bits identical
+    # across all 23 lits_pair routes (broadcast_mine.py, 2026-04-07).
+    # The 5 bits live at 2 bytes in prev_x=8's column and the codec reader
+    # expands them into ~24 wire names (different (wx,y) → same physical
+    # bit). The pri/sec choice differs from R24_OFFSET_TABLE because
+    # broadcast and routing use opposite halves of the same physical pair.
+    # Limitation: hard-coded for sx=10, sy=10. Need multi-(sx,sy) corpus
+    # to generalize the offset formula.
+    if not need.same_lab and need.sx == 10 and need.sy == 10:
+        for off, bp in ((0x11077, 1), (0x11077, 6), (0x11077, 7),
+                        (0x1121a, 2), (0x1121a, 3)):
+            ops.append({"type": "raw", "offset": off, "bp": bp, "value": True})
 
     # Universal source-side R4 launch driver: R4_X{sx+1}_Y{sy} I=1 + I=2.
     # Mined from lits_pair corpus (r4_iindex_mine.py, 2026-04-07): present

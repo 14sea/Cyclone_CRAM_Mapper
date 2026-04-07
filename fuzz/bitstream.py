@@ -403,6 +403,7 @@ class RouteCodec:
         Returns list of (wire_name, byte_offset, bit_pos) for active switches.
         """
         active = []
+        seen = set()  # dedupe: pri+sec offsets both reading active = same wire
         for i_idx, offsets in _R24_FIXED_OFFSETS.items():
             for wx in self.R24_X_RANGE:
                 prev_x = self._prev_lab_x(wx)
@@ -417,6 +418,10 @@ class RouteCodec:
                         if offset < 0 or offset >= len(rbf_data):
                             continue
                         if (rbf_data[offset] >> bp) & 1 != (zero_data[offset] >> bp) & 1:
+                            key = (wx, y, i_idx)
+                            if key in seen:
+                                continue
+                            seen.add(key)
                             active.append((f"R24_X{wx}_Y{y}_N0_I{i_idx}", offset, bp))
         return active
 
