@@ -122,6 +122,8 @@ _R4_BASE_PREV = {
     21: (2786, 3207),   # delta=421, cross-Y 2 cols prev=X13(wide),X22 (2026-04-06)
     25: (2762, 2972),   # delta=210, verified X4,X8
     27: (2754, 2964),   # delta=210, cross-Y 1 col prev=X26 wide (2026-04-06)
+    23: (3588, 3588),   # pair2 TBD, mapped 2026-04-07 via r4_mapper2
+    26: (7210, 6791),   # delta=419, mapped 2026-04-07 via r4_mapper2
 }
 _R4_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
