@@ -268,6 +268,19 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
             "pair_bases": [(8, 0), (8, 1)],
         })
 
+    # Universal source-column R24 broadcast hold: R24_X{sx-1}_I0 and
+    # R24_X{sx}_I0 across all Y rows EXCEPT the rows the route itself
+    # uses near sy. Mined from lits_pair corpus (broadcast_mine.py,
+    # 2026-04-07): 23/23 routes, exact same Y-set every time.
+    # Limitation: corpus has only sy=10, so the Y-set is hard-coded for
+    # that case. Generalize once multi-sy lits_pair samples exist.
+    if not need.same_lab and need.sy == 10:
+        bcast_ys = (2, 3, 4, 5, 6, 13, 14, 16, 17, 18, 19, 21)
+        for bx in (need.sx - 1, need.sx):
+            if bx in LAB_X or bx in (need.sx - 1, need.sx):
+                for by in bcast_ys:
+                    ops.append({"type": "r24", "wx": bx, "y": by, "i_idx": 0})
+
     # Universal source-side R4 launch driver: R4_X{sx+1}_Y{sy} I=1 + I=2.
     # Mined from lits_pair corpus (r4_iindex_mine.py, 2026-04-07): present
     # in every inter-LAB route regardless of direction (vertical, horizontal,
