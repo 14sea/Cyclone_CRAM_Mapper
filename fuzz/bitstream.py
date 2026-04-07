@@ -736,6 +736,15 @@ class RouteCodec:
             return "empty", None
 
         n_cells = sum(len(bs) for bs in pair_map.values())
+
+        # Source-side LE driver mode: exactly {(8,0), (8,1)} and nothing else.
+        # Discovered via L2 diff (2026-04-07): every routed signal in a real
+        # Quartus RBF activates these two cells at the source LAB. They are
+        # the LE→routing-network output driver MUX, NOT a destination LI
+        # envelope. Recognized as a third valid mode so writers can emit it.
+        if set(pair_map.keys()) == {8} and pair_map[8] == {0, 1}:
+            return "driver", None
+
         if n_cells > RouteCodec.LI_MAX_CELLS_PER_LAB:
             return "invalid", f"{n_cells} cells > {RouteCodec.LI_MAX_CELLS_PER_LAB}"
 

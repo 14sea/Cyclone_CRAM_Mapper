@@ -201,6 +201,18 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
         "ly": need.dy,
         "pair_bases": cells,
     })
+
+    # Source-side LE driver MUX: P8B0 + P8B1 at the source LAB.
+    # Discovered via L2 diff (2026-04-07): every Quartus reference RBF for
+    # a routed signal contains exactly these two cells at the src LAB.
+    # Without them the LE output cannot reach the global routing network.
+    if not need.same_lab:
+        ops.append({
+            "type": "li",
+            "lx": need.sx,
+            "ly": need.sy,
+            "pair_bases": [(8, 0), (8, 1)],
+        })
     return ops
 
 
