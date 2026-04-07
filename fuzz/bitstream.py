@@ -324,10 +324,20 @@ class RouteCodec:
                             active.append((f"R24_X{wx}_Y{y}_N0_I{i_idx}", offset, bp))
         return active
 
-    def write_r24(self, rbf_data, zero_data, wx, y, i_idx=0, value=True):
+    def write_r24(self, rbf_data, zero_data, wx, y, i_idx=0, value=True,
+                  cells=None):
         """Set/clear an R24 switch.
 
-        Sets ALL fixed-offset bits for the given I-index.
+        By default ('shotgun' mode) sets ALL fixed-offset bits for the given
+        I-index — this matches read_r24's full envelope but over-activates
+        compared to Quartus, which usually flips only ONE of the two
+        primary/secondary offsets per wire.
+
+        For bit-perfect replay (e.g. transplanting Quartus routing), pass
+        `cells=[(off, bp), ...]` to constrain the write to a specific subset
+        of the candidate (offset, bp) pairs. Only candidates that appear in
+        `cells` are actually flipped; the rest are left untouched. This lets
+        callers feed in the exact set returned by read_r24.
 
         Args:
             rbf_data: bytes of the RBF to modify
@@ -336,6 +346,7 @@ class RouteCodec:
             y: LAB Y coordinate
             i_idx: I-index (default 0, must be in _R24_FIXED_OFFSETS)
             value: True to activate, False to deactivate
+            cells: optional iterable of (byte_offset, bit_pos) — sniper mode
 
         Returns:
             Modified RBF as bytes
@@ -351,10 +362,13 @@ class RouteCodec:
 
         col_start = COLUMN_BASE[prev_x] - 136
         group, slot, bp = _cram_group_bit(y)
+        whitelist = set(cells) if cells is not None else None
 
         result = bytearray(rbf_data)
         for fixed_off in _R24_FIXED_OFFSETS[i_idx]:
             offset = col_start + fixed_off
+            if whitelist is not None and (offset, bp) not in whitelist:
+                continue
             self._set_bit(result, zero_data, offset, bp, value)
         return bytes(result)
 
