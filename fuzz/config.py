@@ -25,8 +25,15 @@ POSTAMBLE_BYTES = 59  # 0xFF postamble
 # LAB X coordinates (22 values, from fitter report)
 LAB_X = [3, 4, 6, 7, 8, 10, 11, 12, 13, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 28, 29, 31]
 
-# LAB Y coordinates (18 values)
+# LAB Y coordinates — CE6 fitter whitelist (18 values, Y=15 and Y=20
+# excluded). The CRAM address formula `cram_ctrl_addr` already extrapolates
+# correctly to group=4 (Y=15) — silicon-validated 2026-04-07 by HW-flashing
+# LCCOMB_X10_Y15_N0 mask 0x8888: predicted ctrl bytes at 0x13F5E (pair 0)
+# and 0x142A6 (pair 4) matched the Quartus RBF byte-for-byte, bp=2 confirmed.
+# Y=15 is therefore opt-in via JAILBREAK_LAB_Y rather than being added to
+# the default whitelist (preserves CE6-safe defaults for existing code).
 LAB_Y = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 21]
+JAILBREAK_LAB_Y = [15]  # ghost row, group=4 in slot/group encoding
 
 # LE N indices within a LAB (16 values, even numbers)
 LE_N = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
