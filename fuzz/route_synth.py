@@ -173,27 +173,33 @@ def plan_hops(need: Need) -> list[Hop]:
 
 _LI_VARIANT_TABLE = None
 _R4_IINDEX_TABLE = None
-_FP_10_10 = None
+_FP_SNAPSHOTS = {}  # (sx,sy) -> {fingerprint, per_route_delta}
 
 
+def _load_fp(sx, sy):
+    """Load a green-zone source-fingerprint snapshot if it exists."""
+    if (sx, sy) in _FP_SNAPSHOTS:
+        return _FP_SNAPSHOTS[(sx, sy)]
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent.parent / "results" / f"fingerprint_{sx}_{sy}.json"
+    if p.exists():
+        raw = json.loads(p.read_text())
+        snap = {
+            "fingerprint": [tuple(c) for c in raw["fingerprint"]],
+            "per_route_delta": {
+                k: [tuple(c) for c in v] for k, v in raw["per_route_delta"].items()
+            },
+        }
+    else:
+        snap = None
+    _FP_SNAPSHOTS[(sx, sy)] = snap
+    return snap
+
+
+# Backward-compat alias used by existing tests
 def _load_fp_10_10():
-    """Load the (10,10) source-fingerprint snapshot."""
-    global _FP_10_10
-    if _FP_10_10 is None:
-        import json
-        from pathlib import Path
-        p = Path(__file__).resolve().parent.parent / "results" / "fingerprint_10_10.json"
-        if p.exists():
-            raw = json.loads(p.read_text())
-            _FP_10_10 = {
-                "fingerprint": [tuple(c) for c in raw["fingerprint"]],
-                "per_route_delta": {
-                    k: [tuple(c) for c in v] for k, v in raw["per_route_delta"].items()
-                },
-            }
-        else:
-            _FP_10_10 = {"fingerprint": [], "per_route_delta": {}}
-    return _FP_10_10
+    return _load_fp(10, 10) or {"fingerprint": [], "per_route_delta": {}}
 
 
 def _load_r4_iindex_table():
@@ -270,8 +276,11 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     # emit fingerprint ∪ per_route_delta as raw cells. Bypasses
     # everything below for these routes.
     # ================================================================
-    if (need.sx, need.sy) == (10, 10) and not need.same_lab:
-        fp = _load_fp_10_10()
+    if not need.same_lab:
+        fp = _load_fp(need.sx, need.sy)
+    else:
+        fp = None
+    if fp is not None:
         key = f"{need.dx},{need.dy},{need.dst_port}"
         if key in fp["per_route_delta"]:
             seen = set()
