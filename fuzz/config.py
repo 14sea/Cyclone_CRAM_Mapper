@@ -46,7 +46,22 @@ COLUMN_BASE = {
     21: 0x34A64, 22: 0x3671A, 23: 0x383D0, 24: 0x3A086,
     25: 0x3BD3C, 26: 0x3D9F2,
     28: 0x4E702, 29: 0x503B8, 31: 0x53D24,
+    # Phase 3.25 jailbreak columns (CE6-illegal, CE10-legal, silicon-verified
+    # via XOR identity-chain scan; bases mined 2026-04-07 via
+    # jb_column_base_mine.py with mask 0x0000/0xFFFF pair-diff under
+    # DEVICE=EP4CE10F17C8). All six lie on the universal 7350-byte stride.
+    5:  0x0B04C,
+    9:  0x12324,
+    14: 0x1B2B2,
+    30: 0x5206E,
+    32: 0x559DA,
+    33: 0x57690,
 }
+# CE6 fitter whitelist — the original 22 LAB_X. Use this when staying inside
+# CE6-legal placements. The COLUMN_BASE dict above is the *physical* map and
+# includes the 6 jailbreak columns; LAB_X stays narrow on purpose so existing
+# code keeps its CE6-safe defaults.
+JAILBREAK_LAB_X = [5, 9, 14, 30, 32, 33]
 PAIR_SPACING = 210
 DATA_OFFSET = 184   # Fixed position of data bytes within 210-byte period (from period_start)
 SLOT_BASE = {0: 136, 1: 0, 2: 70}
