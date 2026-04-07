@@ -1,0 +1,341 @@
+{
+  "background_wire_count": 12,
+  "samples": [
+    {
+      "dx": 10,
+      "dy": 4,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 41,
+      "r4_clean": 15,
+      "total_hops": 56,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 10,
+      "dy": 5,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 22,
+      "r4_clean": 15,
+      "total_hops": 37,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 10,
+      "dy": 7,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 13,
+      "r4_clean": 12,
+      "total_hops": 25,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 10,
+      "dy": 8,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 16,
+      "r4_clean": 11,
+      "total_hops": 27,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 10,
+      "dy": 11,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 35,
+      "r4_clean": 9,
+      "total_hops": 44,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 10,
+      "dy": 13,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 23,
+      "r4_clean": 26,
+      "total_hops": 49,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 10,
+      "dy": 14,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 26,
+      "r4_clean": 20,
+      "total_hops": 46,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 3,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 11,
+      "r4_clean": 19,
+      "total_hops": 30,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 4,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 16,
+      "r4_clean": 10,
+      "total_hops": 26,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 6,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 0,
+      "r4_clean": 13,
+      "total_hops": 13,
+      "parity_pred": "A",
+      "match": "\u2713"
+    },
+    {
+      "dx": 7,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 11,
+      "r4_clean": 13,
+      "total_hops": 24,
+      "parity_pred": "P",
+      "match": "\u2717"
+    },
+    {
+      "dx": 8,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 26,
+      "r4_clean": 10,
+      "total_hops": 36,
+      "parity_pred": "P",
+      "match": "\u2717"
+    },
+    {
+      "dx": 11,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 36,
+      "r4_clean": 7,
+      "total_hops": 43,
+      "parity_pred": "A",
+      "match": "\u2713"
+    },
+    {
+      "dx": 12,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 1,
+      "r4_clean": 12,
+      "total_hops": 13,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 13,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 36,
+      "r4_clean": 20,
+      "total_hops": 56,
+      "parity_pred": "P",
+      "match": "\u2717"
+    },
+    {
+      "dx": 16,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 14,
+      "r4_clean": 17,
+      "total_hops": 31,
+      "parity_pred": "A",
+      "match": "\u2717"
+    },
+    {
+      "dx": 21,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 13,
+      "r4_clean": 13,
+      "total_hops": 26,
+      "parity_pred": "P",
+      "match": "\u2717"
+    },
+    {
+      "dx": 22,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 27,
+      "r4_clean": 31,
+      "total_hops": 58,
+      "parity_pred": "P",
+      "match": "\u2717"
+    },
+    {
+      "dx": 24,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 1,
+      "r4_clean": 19,
+      "total_hops": 20,
+      "parity_pred": "P",
+      "match": "\u2713"
+    },
+    {
+      "dx": 28,
+      "dy": 10,
+      "mode": "alternating",
+      "wires": null,
+      "src_cells": [
+        [
+          8,
+          0
+        ],
+        [
+          8,
+          1
+        ]
+      ],
+      "c4_clean": 13,
+      "r4_clean": 20,
+      "total_hops": 33,
+      "parity_pred": "A",
+      "match": "\u2713"
+    },
+    {
+      "dx": 31,
+      "dy": 10,
+      "mode": "paired",
+      "wires": null,
+      "src_cells": [],
+      "c4_clean": 31,
+      "r4_clean": 30,
+      "total_hops": 61,
+      "parity_pred": "A",
+      "match": "\u2717"
+    }
+  ],
+  "src_cells_to_modes": {
+    "()": {
+      "paired": 8,
+      "alternating": 5
+    },
+    "((8, 0), (8, 1))": {
+      "paired": 5,
+      "alternating": 3
+    }
+  },
+  "parity_match": 9,
+  "total": 21
+}

@@ -1,0 +1,557 @@
+{
+  "source": "fuzz/li_mode_rbf_mine.py",
+  "n_samples": 21,
+  "ambiguous": 14,
+  "no_hop": 2,
+  "cross_tab": {
+    "paired": {
+      "C4_I0": 3
+    },
+    "alternating": {
+      "C4_I0": 2
+    }
+  },
+  "samples": [
+    {
+      "dst_x": 10,
+      "dst_y": 4,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y4N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 3,
+          "i": 9
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 4,
+          "i": 12
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 5,
+          "i": 12
+        },
+        {
+          "type": "R24",
+          "wx": 9,
+          "wy": 4,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 10,
+          "wy": 4,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 11,
+          "wy": 4,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 14,
+          "wy": 4,
+          "i": 0
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 5,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y5N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R24",
+          "wx": 9,
+          "wy": 5,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 10,
+          "wy": 5,
+          "i": 0
+        },
+        {
+          "type": "R4",
+          "wx": 10,
+          "wy": 5,
+          "i": 6
+        },
+        {
+          "type": "R4",
+          "wx": 10,
+          "wy": 5,
+          "i": 8
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 5,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 5,
+          "i": 2
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 5,
+          "i": 3
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 7,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y7N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 6,
+          "i": 12
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 8,
+          "i": 0
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 8,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y8N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 7,
+          "i": 12
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 8,
+          "i": 12
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 11,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y11N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 11,
+          "i": 9
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 12,
+          "i": 0
+        },
+        {
+          "type": "C4",
+          "wx": 10,
+          "wy": 12,
+          "i": 9
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 13,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y13N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R24",
+          "wx": 9,
+          "wy": 13,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 10,
+          "wy": 13,
+          "i": 0
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 13,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 13,
+          "i": 2
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 10,
+      "dst_y": 14,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X10Y14N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R24",
+          "wx": 9,
+          "wy": 14,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 10,
+          "wy": 14,
+          "i": 0
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 3,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X3Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R4",
+          "wx": 4,
+          "wy": 10,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 4,
+          "wy": 10,
+          "i": 2
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 4,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X4Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R4",
+          "wx": 5,
+          "wy": 10,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 5,
+          "wy": 10,
+          "i": 2
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 6,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X6Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R4",
+          "wx": 6,
+          "wy": 10,
+          "i": 18
+        },
+        {
+          "type": "R4",
+          "wx": 7,
+          "wy": 10,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 7,
+          "wy": 10,
+          "i": 2
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 7,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X7Y10N0_datab.rbf",
+      "candidates": [],
+      "status": "no_hop"
+    },
+    {
+      "dst_x": 8,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X8Y10N0_datab.rbf",
+      "candidates": [],
+      "status": "no_hop"
+    },
+    {
+      "dst_x": 11,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X11Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 10,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 10,
+          "i": 2
+        },
+        {
+          "type": "R4",
+          "wx": 11,
+          "wy": 10,
+          "i": 12
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 12,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X12Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 12,
+          "wy": 11,
+          "i": 0
+        }
+      ],
+      "status": "ok",
+      "last_hop": {
+        "type": "C4",
+        "i": 0,
+        "wx": 12,
+        "wy": 11
+      }
+    },
+    {
+      "dst_x": 13,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X13Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 13,
+          "wy": 10,
+          "i": 7
+        },
+        {
+          "type": "C4",
+          "wx": 13,
+          "wy": 11,
+          "i": 0
+        },
+        {
+          "type": "C4",
+          "wx": 13,
+          "wy": 11,
+          "i": 7
+        },
+        {
+          "type": "R4",
+          "wx": 13,
+          "wy": 10,
+          "i": 11
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 16,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X16Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 16,
+          "wy": 11,
+          "i": 0
+        }
+      ],
+      "status": "ok",
+      "last_hop": {
+        "type": "C4",
+        "i": 0,
+        "wx": 16,
+        "wy": 11
+      }
+    },
+    {
+      "dst_x": 21,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X21Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 21,
+          "wy": 11,
+          "i": 0
+        }
+      ],
+      "status": "ok",
+      "last_hop": {
+        "type": "C4",
+        "i": 0,
+        "wx": 21,
+        "wy": 11
+      }
+    },
+    {
+      "dst_x": 22,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X22Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 22,
+          "wy": 10,
+          "i": 23
+        },
+        {
+          "type": "C4",
+          "wx": 22,
+          "wy": 11,
+          "i": 23
+        },
+        {
+          "type": "R24",
+          "wx": 23,
+          "wy": 10,
+          "i": 0
+        },
+        {
+          "type": "R4",
+          "wx": 23,
+          "wy": 10,
+          "i": 1
+        },
+        {
+          "type": "R4",
+          "wx": 23,
+          "wy": 10,
+          "i": 2
+        }
+      ],
+      "status": "ambiguous"
+    },
+    {
+      "dst_x": 24,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X24Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 24,
+          "wy": 11,
+          "i": 0
+        }
+      ],
+      "status": "ok",
+      "last_hop": {
+        "type": "C4",
+        "i": 0,
+        "wx": 24,
+        "wy": 11
+      }
+    },
+    {
+      "dst_x": 28,
+      "dst_y": 10,
+      "mode": "alternating",
+      "rbf": "lits_pair_X10Y10_to_X28Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 28,
+          "wy": 11,
+          "i": 0
+        }
+      ],
+      "status": "ok",
+      "last_hop": {
+        "type": "C4",
+        "i": 0,
+        "wx": 28,
+        "wy": 11
+      }
+    },
+    {
+      "dst_x": 31,
+      "dst_y": 10,
+      "mode": "paired",
+      "rbf": "lits_pair_X10Y10_to_X31Y10N0_datab.rbf",
+      "candidates": [
+        {
+          "type": "C4",
+          "wx": 31,
+          "wy": 11,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 32,
+          "wy": 10,
+          "i": 0
+        },
+        {
+          "type": "R24",
+          "wx": 33,
+          "wy": 10,
+          "i": 0
+        }
+      ],
+      "status": "ambiguous"
+    }
+  ]
+}

@@ -28,7 +28,8 @@ from config import (
 )
 from verilog_gen import (
     gen_lut4, gen_lut4_primitive, gen_empty,
-    gen_two_luts_primitive, gen_two_luts_single_input,
+    gen_two_luts_primitive, gen_two_luts_single_input, gen_two_luts_pinned_clocked,
+    gen_two_luts_single_input_clocked,
     gen_single_lut_primitive_extra_inputs,
 )
 from qsf_gen import gen_qsf, make_lccomb
@@ -627,6 +628,48 @@ def compile_route_pair_single_input(tag: str, x1: int, y1: int, n1: int,
     """
     ensure_dirs()
     verilog = gen_two_luts_single_input(mask1, mask2, connect_port=connect_port)
+    placement = {
+        "lut1": make_lccomb(x1, y1, n1),
+        "lut2": make_lccomb(x2, y2, n2),
+    }
+    qsf = gen_route_qsf(placement, seed=seed)
+    out = rbf_path(tag)
+    return compile_and_export(tag, verilog, qsf, rbf_output=out)
+
+
+def compile_route_pair_single_input_clocked(
+        tag: str, x1: int, y1: int, n1: int,
+        x2: int, y2: int, n2: int,
+        connect_port: str = "datab",
+        mask1: int = 0x8888, mask2: int = 0xAAAA,
+        seed: int = 1) -> tuple[str | None, float, str]:
+    """Clocked variant of compile_route_pair_single_input.
+
+    Identical placement and lut1/lut2 wiring; adds a CLK port and registers Q.
+    Used to give Quartus' STA a real timing arc for routing extraction.
+    """
+    ensure_dirs()
+    verilog = gen_two_luts_single_input_clocked(mask1, mask2, connect_port=connect_port)
+    placement = {
+        "lut1": make_lccomb(x1, y1, n1),
+        "lut2": make_lccomb(x2, y2, n2),
+    }
+    qsf = gen_route_qsf(placement, seed=seed)
+    out = rbf_path(tag)
+    return compile_and_export(tag, verilog, qsf, rbf_output=out)
+
+
+def compile_route_pair_pinned_clocked(
+        tag: str, x1: int, y1: int, n1: int,
+        x2: int, y2: int, n2: int,
+        connect_port: str = "datab",
+        mask1: int = 0x8888, mask2: int = 0xAAAA,
+        seed: int = 1) -> tuple[str | None, float, str]:
+    """Pinned + clocked variant: lut2 unused inputs from real pins E,F,G,
+    Q registered. Eliminates 1'b0 constant routing AND keeps lut1/lut2 in
+    the STA timing graph."""
+    ensure_dirs()
+    verilog = gen_two_luts_pinned_clocked(mask1, mask2, connect_port=connect_port)
     placement = {
         "lut1": make_lccomb(x1, y1, n1),
         "lut2": make_lccomb(x2, y2, n2),

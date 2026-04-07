@@ -207,6 +207,118 @@ endmodule
 """
 
 
+def gen_two_luts_single_input_clocked(mask1: int, mask2: int,
+                                      connect_port: str = "datab",
+                                      name: str = "fuzz_top") -> str:
+    """Same as gen_two_luts_single_input but registers Q with a flip-flop.
+
+    Adds a CLK port and a 1-bit register on the output. The register sits
+    downstream of lut2, so the LI activation feeding lut2's datab is
+    unchanged compared to the unclocked variant. The point of the register
+    is to give Quartus' STA a real timing arc (clock-to-output) so we can
+    extract the routing path with `report_timing -show_routing`.
+    """
+    lut2_ports = []
+    for port in ("dataa", "datab", "datac", "datad"):
+        sig = "lut1_out" if port == connect_port else "1'b0"
+        lut2_ports.append(f"        .{port}({sig})")
+    lut2_ports_str = ",\n".join(lut2_ports)
+
+    return f"""module {name}(
+    input  wire CLK,
+    input  wire A, B, C, D,
+    output reg  Q
+);
+    wire lut1_out;
+    wire lut2_out;
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask1:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut1 (
+        .dataa(A),
+        .datab(B),
+        .datac(C),
+        .datad(D),
+        .combout(lut1_out)
+    );
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask2:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut2 (
+{lut2_ports_str},
+        .combout(lut2_out)
+    );
+
+    always @(posedge CLK)
+        Q <= lut2_out;
+endmodule
+"""
+
+
+def gen_two_luts_pinned_clocked(mask1: int, mask2: int,
+                                connect_port: str = "datab",
+                                name: str = "fuzz_top") -> str:
+    """Two LUTs where lut2's unused inputs come from REAL top-level pins (E,F,G)
+    instead of 1'b0, and Q is registered.
+
+    Solves two problems at once:
+      1. No constant-network noise in the RBF diff (no 1'b0 routing).
+      2. lut1 and lut2 have real fanin/fanout, so dont_touch can't be folded
+         away by the fitter — STA timing graph contains lut1→lut2 edge.
+
+    Maps the 3 unused lut2 ports to E,F,G in some order so connect_port still
+    receives lut1_out.
+    """
+    spare = iter(("E", "F", "G"))
+    lut2_ports = []
+    for port in ("dataa", "datab", "datac", "datad"):
+        if port == connect_port:
+            sig = "lut1_out"
+        else:
+            sig = next(spare)
+        lut2_ports.append(f"        .{port}({sig})")
+    lut2_ports_str = ",\n".join(lut2_ports)
+
+    return f"""module {name}(
+    input  wire CLK,
+    input  wire A, B, C, D,
+    input  wire E, F, G,
+    output reg  Q
+);
+    wire lut1_out;
+    wire lut2_out;
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask1:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut1 (
+        .dataa(A),
+        .datab(B),
+        .datac(C),
+        .datad(D),
+        .combout(lut1_out)
+    );
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask2:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut2 (
+{lut2_ports_str},
+        .combout(lut2_out)
+    );
+
+    always @(posedge CLK)
+        Q <= lut2_out;
+endmodule
+"""
+
+
 def gen_single_lut_primitive_extra_inputs(mask: int, name: str = "fuzz_top") -> str:
     """Generate a single LUT primitive with 7 input ports (for routing baseline).
 

@@ -1,0 +1,178 @@
+{
+  "srcs_used": [
+    [
+      3,
+      5
+    ],
+    [
+      17,
+      8
+    ],
+    [
+      25,
+      15
+    ]
+  ],
+  "dst_y": 10,
+  "consensus": {
+    "3": "alternating",
+    "4": "paired",
+    "6": "alternating",
+    "7": "alternating",
+    "8": "alternating",
+    "10": "paired",
+    "11": "paired",
+    "12": "paired",
+    "13": "alternating",
+    "16": "paired",
+    "17": "alternating",
+    "18": "paired",
+    "19": "alternating",
+    "21": "paired",
+    "22": "alternating",
+    "23": "paired",
+    "24": "paired",
+    "25": "paired",
+    "26": "paired",
+    "28": "alternating",
+    "29": "alternating",
+    "31": "paired"
+  },
+  "raw": {
+    "3": {
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "4": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "6": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "paired"
+    },
+    "7": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "8": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "paired"
+    },
+    "10": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "11": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "alternating"
+    },
+    "12": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "13": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "16": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "17": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "18": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "19": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "21": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "22": {
+      "3,5": "alternating",
+      "17,8": "paired",
+      "25,15": "alternating"
+    },
+    "23": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "24": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "25": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "26": {
+      "3,5": "alternating",
+      "17,8": "paired",
+      "25,15": "paired"
+    },
+    "28": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "paired"
+    },
+    "29": {
+      "3,5": "alternating",
+      "17,8": "alternating",
+      "25,15": "alternating"
+    },
+    "31": {
+      "3,5": "paired",
+      "17,8": "paired",
+      "25,15": "paired"
+    }
+  },
+  "paired_columns": [
+    4,
+    10,
+    11,
+    12,
+    16,
+    18,
+    21,
+    23,
+    24,
+    25,
+    26,
+    31
+  ],
+  "alternating_columns": [
+    3,
+    6,
+    7,
+    8,
+    13,
+    17,
+    19,
+    22,
+    28,
+    29
+  ]
+}

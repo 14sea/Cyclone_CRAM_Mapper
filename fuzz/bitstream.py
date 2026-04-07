@@ -641,6 +641,54 @@ class RouteCodec:
     LI_MAX_PAIRED_PAIRS = 4    # middle paired pairs (excluding P8) — paired mode
     LI_MAX_PAIRS_PER_LAB = 5   # legacy alias (kept for callers)
 
+    # ------------------------------------------------------------------
+    # LI mode-by-column consensus table (2026-04-07)
+    # Built from a 22-LAB × 3-src sweep (66 compiles) — see
+    # results/li_mode_column_table.json and fuzz/li_mode_column_table.py
+    #
+    # 16/22 columns are unanimous across all 3 srcs ('✓'); 6/22 are mixed
+    # ('△') — for those we record the majority vote and keep the raw
+    # per-src observation in the comment for future debugging. Both modes
+    # are physically legal Quartus outputs, so a wrong guess on a mixed
+    # column should still produce a hardware-safe bitstream — pending
+    # roundtrip verification on AX301.
+    # ------------------------------------------------------------------
+    LI_MODE_BY_X = {
+        3:  "alternating",   # ✓
+        4:  "paired",        # ✓
+        6:  "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
+        7:  "alternating",   # ✓
+        8:  "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
+        10: "paired",        # ✓
+        11: "paired",        # △ AMBIGUOUS — majority 2/3 (src(25,15)→alternating)
+        12: "paired",        # ✓
+        13: "alternating",   # ✓
+        16: "paired",        # ✓
+        17: "alternating",   # ✓
+        18: "paired",        # ✓
+        19: "alternating",   # ✓
+        21: "paired",        # ✓
+        22: "alternating",   # △ AMBIGUOUS — majority 2/3 (src(17,8)→paired)
+        23: "paired",        # ✓
+        24: "paired",        # ✓
+        25: "paired",        # ✓
+        26: "paired",        # △ AMBIGUOUS — majority 2/3 (src(3,5)→alternating)
+        28: "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
+        29: "alternating",   # ✓
+        31: "paired",        # ✓
+    }
+    LI_MODE_AMBIGUOUS_X = {6, 8, 11, 22, 26, 28}
+
+    @staticmethod
+    def select_li_mode(dst_x):
+        """Return the preferred LI activation mode for a destination LAB column.
+
+        For 16/22 LAB columns this is the unanimous Quartus choice across all
+        observed source LABs. For the 6 ambiguous columns it is the majority
+        vote — both modes are hardware-legal. Raises KeyError for non-LAB X.
+        """
+        return RouteCodec.LI_MODE_BY_X[dst_x]
+
     @staticmethod
     def _classify_li_lab(pair_map):
         """Classify a single LAB's {pair: set(base_idx)} → (mode, reason).
