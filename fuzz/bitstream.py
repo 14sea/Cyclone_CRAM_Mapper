@@ -954,6 +954,29 @@ class RouteCodec:
         if all(p % 2 == 0 and bs == {0} for p, bs in pair_map.items()):
             return "edge_even_b0_p8", None
 
+        # edge_pair_groups_b0: subset of {(P0,P1),(P2,P3),(P4,P5),(P6,P7)}
+        # consecutive-pair groups, all base 0, optional P8B0 tail. Observed
+        # at Y=2 top-row destinations across γ (4,4) and (28,10) corpora.
+        # 4 distinct envelopes silicon-emitted by Quartus (2026-04-07):
+        #   {0,1,4,5} / {0,1,2,3} / {0,1,2,3,8} / {0,1,4,5,8}
+        # Hardware-safe by construction (all four came from real Quartus
+        # RBFs). Less restrictive than edge_even_b0 — allows odd pairs as
+        # long as they pair with the preceding even pair.
+        non_p8 = {p: bs for p, bs in pair_map.items() if p != 8}
+        if (all(bs == {0} for bs in pair_map.values()) and
+            (8 not in pair_map or pair_map[8] == {0})):
+            # Each non-P8 pair must be paired with its consecutive sibling
+            # forming a (2k, 2k+1) group. I.e. for each odd p, p-1 is also
+            # active; for each even p, p+1 is also active.
+            valid_groups = True
+            for p in non_p8:
+                sibling = p + 1 if p % 2 == 0 else p - 1
+                if sibling not in non_p8:
+                    valid_groups = False
+                    break
+            if valid_groups and non_p8:
+                return "edge_pair_groups_b0", None
+
         # P8 anchor: must be present with exactly one base
         if 8 not in pair_map:
             return "invalid", "missing P8 tail anchor"
