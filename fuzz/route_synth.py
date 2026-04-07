@@ -143,8 +143,19 @@ def plan_hops(need: Need) -> list[Hop]:
         cur_y = new_y
 
     # ---- then horizontal ----
+    # R24 expressway: for hops spanning ≥2 LAB columns, prefer R24 over R4.
+    # R24 covers up to 24 LABs in a single wire and matches Quartus's
+    # actual choice for medium/long horizontal moves. R4 is the fallback
+    # for the final 1-LAB step.
     while cur_x != need.dx:
         remaining = LAB_X.index(need.dx) - LAB_X.index(cur_x)
+        if abs(remaining) >= 2:
+            step = remaining if abs(remaining) <= 6 else (6 if remaining > 0 else -6)
+            new_x = _lab_step_to_x(cur_x, step)
+            hops.append(Hop("R24", anchor_x=cur_x, anchor_y=cur_y,
+                            i_index=0, span=step))
+            cur_x = new_x
+            continue
         step = _horizontal_step(remaining)
         if step == 0:
             break
@@ -184,6 +195,8 @@ def _hop_landing_coords(hop: Hop) -> tuple[int, int]:
 
 def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     """Stage 4 — turn the plan + LI envelope into apply_routing op dicts."""
+    from bitstream import RouteCodec
+    codec = RouteCodec()
     ops: list[dict] = []
     for hop in plan:
         wx, wy = _hop_landing_coords(hop)
@@ -192,7 +205,14 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
         elif hop.type == "R4":
             ops.append({"type": "r4", "wx": wx, "y": wy, "i_idx": hop.i_index})
         elif hop.type == "R24":
-            ops.append({"type": "r24", "wx": wx, "y": wy, "i_idx": hop.i_index})
+            # Sniper mode: pick the single fixed offset Quartus would use
+            # for this (wx, y) via the R24 (block, prev_x) table.
+            off, bp = codec.get_r24_offset(wx, wy, i_idx=hop.i_index)
+            ops.append({
+                "type": "r24",
+                "wx": wx, "y": wy, "i_idx": hop.i_index,
+                "cells": [(off, bp)],
+            })
 
     mode, cells = li
     ops.append({

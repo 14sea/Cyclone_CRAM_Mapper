@@ -298,6 +298,102 @@ class RouteCodec:
     # R24 wire X range (same as R4 plus wider)
     R24_X_RANGE = list(range(3, 34))
 
+    # ------------------------------------------------------------------
+    # R24 (Y_block, prev_x) → offset table  (2026-04-07)
+    # Built from r24_cardinality_mine.py over 118 routed RBFs
+    # (5217+ wire-groups). Schema:
+    #   1. exact (block, prev_x) lookup
+    #   2. fall back to column-stable verdict (blocks aggregated)
+    #   3. fall back to global default 'pri' (most common single-cell choice)
+    # See results/r24_offset_table.json for confidence + sample counts.
+    #
+    # Physical pattern: blocks A (Y2-3), F (Y16-18), G (Y19-21) — the chip
+    # top edge, mid M9K boundary (Y15 missing), and bottom edge — flip
+    # several columns from PRI to SEC. Interior blocks B/C/D/E are
+    # PRI-dominant. The two columns that hold SEC across all blocks are
+    # prev_x ∈ {8, 29} (97-98% confidence, 800+ samples each).
+    # ------------------------------------------------------------------
+    R24_Y_BLOCK = {
+        2: "A", 3: "A",
+        4: "B", 5: "B", 6: "B",
+        7: "C", 8: "C", 9: "C",
+        10: "D", 11: "D", 12: "D",
+        13: "E", 14: "E",
+        16: "F", 17: "F", 18: "F",
+        19: "G", 21: "G",
+    }
+
+    # offsets: 'pri' = 3124, 'sec' = 2705 (relative to prev col_start)
+    R24_OFFSET_TABLE = {
+        ('A',  3): 'pri', ('A',  4): 'sec', ('A',  6): 'pri', ('A',  7): 'pri',
+        ('A',  8): 'sec', ('A', 10): 'pri', ('A', 11): 'sec', ('A', 12): 'pri',
+        ('A', 13): 'sec', ('A', 17): 'pri', ('A', 18): 'pri', ('A', 19): 'pri',
+        ('A', 21): 'pri', ('A', 22): 'pri', ('A', 23): 'pri', ('A', 25): 'sec',
+        ('A', 26): 'sec', ('A', 28): 'pri', ('A', 29): 'sec', ('A', 31): 'pri',
+        ('B',  3): 'pri', ('B',  6): 'pri', ('B',  7): 'pri', ('B',  8): 'sec',
+        ('B', 10): 'pri', ('B', 11): 'pri', ('B', 12): 'sec', ('B', 13): 'pri',
+        ('B', 17): 'pri', ('B', 18): 'pri', ('B', 19): 'pri', ('B', 21): 'pri',
+        ('B', 23): 'pri', ('B', 24): 'pri', ('B', 25): 'sec', ('B', 28): 'pri',
+        ('B', 29): 'sec', ('B', 31): 'pri',
+        ('C',  3): 'pri', ('C',  4): 'pri', ('C',  6): 'pri', ('C',  7): 'sec',
+        ('C', 10): 'pri', ('C', 11): 'sec', ('C', 12): 'pri', ('C', 13): 'pri',
+        ('C', 16): 'pri', ('C', 17): 'pri', ('C', 18): 'sec', ('C', 19): 'pri',
+        ('C', 21): 'pri', ('C', 22): 'sec', ('C', 23): 'pri', ('C', 24): 'pri',
+        ('C', 26): 'sec', ('C', 28): 'pri', ('C', 29): 'sec',
+        ('D',  3): 'pri', ('D',  4): 'pri', ('D',  6): 'pri', ('D',  7): 'pri',
+        ('D', 10): 'pri', ('D', 11): 'pri', ('D', 12): 'pri', ('D', 13): 'pri',
+        ('D', 17): 'pri', ('D', 18): 'pri', ('D', 19): 'pri', ('D', 22): 'sec',
+        ('D', 23): 'pri', ('D', 25): 'sec', ('D', 26): 'pri', ('D', 28): 'pri',
+        ('D', 29): 'sec', ('D', 31): 'pri',
+        ('E',  3): 'pri', ('E',  4): 'pri', ('E',  7): 'pri', ('E', 10): 'pri',
+        ('E', 11): 'pri', ('E', 16): 'pri', ('E', 18): 'pri', ('E', 19): 'sec',
+        ('E', 21): 'pri', ('E', 22): 'sec', ('E', 24): 'pri', ('E', 25): 'sec',
+        ('E', 26): 'sec', ('E', 28): 'pri', ('E', 29): 'sec', ('E', 31): 'pri',
+        ('F',  4): 'pri', ('F',  6): 'pri', ('F',  7): 'pri', ('F', 10): 'pri',
+        ('F', 11): 'pri', ('F', 12): 'pri', ('F', 13): 'sec', ('F', 16): 'pri',
+        ('F', 17): 'sec', ('F', 18): 'pri', ('F', 19): 'sec', ('F', 22): 'pri',
+        ('F', 23): 'sec', ('F', 24): 'pri', ('F', 25): 'pri', ('F', 26): 'sec',
+        ('F', 28): 'pri', ('F', 29): 'sec', ('F', 31): 'pri',
+        ('G',  3): 'pri', ('G',  4): 'sec', ('G',  6): 'pri', ('G',  7): 'pri',
+        ('G',  8): 'sec', ('G', 10): 'pri', ('G', 11): 'sec', ('G', 12): 'pri',
+        ('G', 13): 'pri', ('G', 16): 'pri', ('G', 17): 'sec', ('G', 18): 'pri',
+        ('G', 19): 'sec', ('G', 21): 'sec', ('G', 22): 'sec', ('G', 23): 'pri',
+        ('G', 26): 'pri', ('G', 28): 'pri', ('G', 29): 'sec',
+    }
+    R24_OFFSET_STABLE = {
+        3: 'pri', 4: 'pri', 6: 'pri', 7: 'pri', 8: 'sec', 10: 'pri',
+        11: 'pri', 12: 'pri', 13: 'pri', 16: 'pri', 17: 'pri', 18: 'pri',
+        19: 'pri', 21: 'pri', 22: 'sec', 23: 'pri', 24: 'pri', 28: 'pri',
+        29: 'sec', 31: 'pri',
+    }
+
+    def get_r24_offset(self, wx, y, i_idx=0):
+        """Return absolute (byte_offset, bp) for an R24 I=0 wire at (wx, y).
+
+        Uses the 3-tier fallback chain:
+          1. exact (Y_block, prev_x) lookup
+          2. column-stable verdict
+          3. global default 'pri'
+
+        Returns (offset, bp) suitable for write_r24's `cells=` whitelist.
+        """
+        if i_idx != 0:
+            raise NotImplementedError("get_r24_offset only supports I=0 today")
+        prev_x = self._prev_lab_x(wx)
+        if prev_x is None or prev_x not in COLUMN_BASE:
+            raise ValueError(f"no valid prev LAB column for wx={wx}")
+        col_start = COLUMN_BASE[prev_x] - 136
+        block = self.R24_Y_BLOCK.get(y)
+        if block is None:
+            raise ValueError(f"Y={y} not a valid LAB Y")
+
+        choice = (self.R24_OFFSET_TABLE.get((block, prev_x))
+                  or self.R24_OFFSET_STABLE.get(prev_x)
+                  or 'pri')
+        rel = 3124 if choice == 'pri' else 2705
+        _, _, bp = _cram_group_bit(y)
+        return col_start + rel, bp
+
     def read_r24(self, rbf_data, zero_data):
         """Read active R24 switches.
 
@@ -623,7 +719,8 @@ class RouteCodec:
                                      sw['i_idx'], sw.get('value', True))
             elif sw_type == 'r24':
                 data = self.write_r24(data, zero_data, sw['wx'], sw['y'],
-                                      sw.get('i_idx', 0), sw.get('value', True))
+                                      sw.get('i_idx', 0), sw.get('value', True),
+                                      cells=sw.get('cells'))
             elif sw_type == 'raw':
                 # Single-bit flip: used by round-trip to faithfully replay
                 # reads of types whose write path is wire-level (R24, LI).
