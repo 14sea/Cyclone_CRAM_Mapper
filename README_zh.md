@@ -888,48 +888,134 @@ python3 analyze.py write_tt zero.rbf 0x6996 output.rbf 10 10 0
 ```python
 from bitstream import RouteCodec
 
-codec = RouteCodec("design.rbf", "zero_baseline.rbf")
+codec = RouteCodec()
+design = open("design.rbf","rb").read()
+zero   = open("zero_baseline.rbf","rb").read()
 
-# ========== 读取开关状态 ==========
+# ========== 批量读取所有布线开关 ==========
+sw = codec.read_switches(design, zero)
+# 返回 {'c4': [...], 'r4': [...], 'r24': [...], 'li': [...]}
+# 每条记录：(wire_name, byte_offset, bit_pos, candidates)
+# LI 的 wire_name 现在是 base 粒度："LI_X10_Y5_P3B0"
+#   P3 = pair 索引，B0 = base offset 70（B1 = base offset 71）
 
-# 读取 C4（列方向，跨 ~4 行）开关
-state = codec.read_c4(x=10, y=5, i=0)
-# 返回 True（开关闭合）或 False（开关断开）
+# ========== 把开关写进空白基线 ==========
+ops = [
+    {'type': 'c4', 'x': 10, 'y': 5, 'i_idx': 0},
+    {'type': 'c4', 'x': 13, 'y': 8, 'i_idx': 3},          # 自动走 I≠0 查表
+    {'type': 'r4', 'wx': 22, 'y': 8, 'i_idx': 17},
+    {'type': 'li', 'lx': 10, 'ly': 5,
+     'pair_bases': [(0,0),(0,1),(2,0),(2,1),(4,0),(4,1),(6,0),(6,1),(8,0)]},
+]
+new_rbf = codec.apply_routing(zero, ops)
 
-# 读取 R4（行方向，跨 ~4 列）开关
-state = codec.read_r4(wx=22, wy=5, idx=1)
+# ========== 烧录前的硬件安全检查 ==========
+codec.validate_safe_for_hardware(new_rbf, zero)
+# 如果某个 LAB 的 LI 激活模式落在「Quartus 从未观察过」的形状之外
+# （cell 数错、缺 anchor、paired/alternating 模式破损等），就会 raise
 
-# 读取 LOCAL_INTERCONNECT（LAB 输入选择器）开关
-state = codec.read_local_interconnect(lx=10, ly=5, li=2)
-
-# 批量读取所有已知类型的开关
-switches = codec.read_switches()
-# 返回字典：{"C4_X10_Y5_N0_I0": True, "R4_X22_Y5_N0_I1": False, ...}
-
-# ========== 写入开关状态 ==========
-
-# 写入单个 C4 开关
-codec.write_c4(x=10, y=5, i=0, value=True)
-
-# 写入单个 R4 开关
-codec.write_r4(wx=22, wy=5, idx=1, value=True)
-
-# 写入单个 LOCAL_INTERCONNECT 开关
-codec.write_local_interconnect(lx=10, ly=5, li=2, value=True)
-
-# 批量写入多个开关，然后保存到文件
-codec.write_c4(x=10, y=5, i=0, value=True)
-codec.write_r4(wx=22, wy=8, idx=17, value=True)
-codec.apply_routing("output.rbf")  # 保存修改后的 RBF
+open("output.rbf","wb").write(new_rbf)
 ```
+
+注意：`li` op 现在必须传 `pair_bases` 显式列表——以前那种「传一个 I-index 自动展开成 9 对」的写法已经移除了。原因是真实 Quartus 在每个 LAB 上最多只会激活 9 个特定的 cell，自动展开会让多条布线通道同时驱动同一个 LE 输入端，那是真硅片上的物理短路风险。
 
 **当前覆盖率**：
 - C4 I=0：100%（63 条线全部正确）
 - R4：18/37 个 I-index 已映射（~90.5% 线网覆盖率，~77% 直接验证准确率）
 - R24 I=0：固定字节模型已映射（~66% 的 pair-diff 准确率），覆盖 73% 的 R24 线网
-- LOCAL_INTERCONNECT：~70% 交叉验证准确率
-- C4 I≠0：无通用公式，只能逐线查表
+- LOCAL_INTERCONNECT：base 粒度读写完成，两种编码模式已破解
+- C4 I≠0：无通用公式，逐线查表（24 条已映射）
 - C16：尚未映射（本质上是多 bit 编码，方法论不同）
+
+---
+
+## 布线编解码器：往返一致性 + 硬件安全防线
+
+基本读写跑通之后，下一个问题是：**我们的编解码器真的能往返吗？** 也就是说，从一份真正由 Quartus 生成的 RBF 里把所有布线开关读出来，再把它们写回一份空白基线，最后再读一次——读到的开关集合会和原始读到的一致吗？
+
+### 往返自洽测试
+
+`route_roundtrip.py` 跑的就是这个实验：
+
+```
+真正的 Quartus RBF ──► RouteCodec.read_switches() ──► 一串 switch op
+                                                          │
+                                                          ▼
+              空白零基线 RBF ──► RouteCodec.apply_routing(ops)
+                                                          │
+                                                          ▼
+                              再 read_switches() 一次
+                                                          │
+                              和原始读到的集合做比对
+```
+
+如果编解码器是自洽的，这两次读取的 cell 集合必须**完全一致**：0 条 dropped（写漏的）、0 条 hallucinated（写多的）。注意这不是要求「写出来的 RBF 跟 Quartus 的 RBF 一模一样」——那还得连 LUT TT、IO buffer 一起编码。我们只在测布线这一层。
+
+一条列方向路径（Y10→Y5）和一条行方向路径（X10→X22）的结果：
+
+```
+column route Y10→Y5: OK  orig=52 repro=52 common=52
+row route X10→X22:    OK  orig=65 repro=65 common=65
+```
+
+**0 dropped、0 hallucinated。** 布线编解码器内部完全自洽。
+
+为了让这个跑通，加了两样东西：
+
+1. **`write_c4_inz()`** —— C4 在 I≠0 的时候不走通用 slot/group 公式，而是用固定字节偏移。我们用 baseline-diff 挖出了 24 条 (X, I) → byte 的映射。
+2. **`'raw'` switch type** —— R24 / LOCAL_INTERCONNECT 的「按线写」方法，一次会动比单条 read entry 更多的 cell（一根线对应 2+ 个 cell）。在 replay 一份 read 的时候，我们改用 `raw` op，每次只翻一个 (offset, bit)，跟 read 的粒度对齐。
+
+### 硬件安全防线 V2
+
+把编解码器生成的 RBF 烧到真正的 AX301 板子之前，我们想拦下任何可能让 LAB 输入选择器短路的东西。多条布线通道同时驱动同一个 LE 输入端，在真硅片上就是物理冲突。
+
+`RouteCodec.validate_safe_for_hardware(rbf, zero)` 会扫描整个 RBF 的 LOCAL_INTERCONNECT 激活，凡是「Quartus 从未做过」的形状都拒绝放行。
+
+```python
+codec = RouteCodec()
+codec.validate_safe_for_hardware(my_rbf, zero_rbf)   # 不安全就 raise
+```
+
+「什么算安全」这个边界是用经验数据画出来的。我们先把 `read_local_interconnect()` 里那个会掩盖 cell 级结构的 `break` 拔掉，然后重跑了一次 21 个 LAB 的扫描。结果发现：**所有** Quartus 的 LI 激活都落进两种定义清晰的模式之一，**每个 LAB 永远是恰好 9 个 cell**：
+
+- **Paired 模式**（21 个里 13 个，多见于列方向）：`P0` 成对（B0、B1 都点亮）+ 4 个中段 pair 也成对 + `P8` 尾巴（一个 base） = 9 cells
+- **Alternating 模式**（21 个里 8 个，多见于行方向）：`P0..P7` 各点一个 base，按 `B1,B0,B1,...,B0` 交错 + `P8` 尾巴 = 9 cells
+- **永远存在的锚点**：`P0` 和 `P8` 总是出现；`(P0, B1)` 这一格在所有观察到的 class 里都存在
+
+> 「pair」和「base」是什么？LOCAL_INTERCONNECT 的 cell 落在每个 LAB 列里一个以 210 字节为周期的区域。每个周期里有两个字节——offset 70 和 71（也就是 base 70 / base 71，简称 `B0`/`B1`）——是 LI 字节。pair 索引 `P0..P8` 表示我们在列里的第几个 210 字节周期。
+
+V2 分类器 `_classify_li_lab(pair_map)` 会把任意一个 LAB 标记成 `paired`、`alternating` 或 `invalid`（带原因）。守卫会拒绝放行：
+
+- 任何 LAB 的活跃 cell > 9
+- 缺 `P0` 或 `P8` 锚点；`P8` 同时点亮两个 base
+- Paired 模式但中段 pair 只点了单个 base（破损的 paired）
+- Alternating 模式但某个 pair 的 base 错了，或者有任何中段 pair 同时点了两个 base
+
+这套规则在 6 种实际观察到的 Quartus class 上全部通过，在 4 种人造违规上全部拒绝。**之前的 V1 守卫（「每个 LAB 最多 5 对」）其实是错的**：21 个合法 Quartus 配置里有 13 个会被它误杀。
+
+### 这件事顺带破解了「9-pair vs 5-pair 之谜」
+
+之前有好几周，同一个布线 key 在不同 LAB 上读出来是看上去完全不同的两种位模式——有时 5 个 pair 位置共 10 个字节翻转，有时 9 个 pair 位置共 9 个字节翻转。我们一直以为这是两种结构上不同的编码。
+
+其实不是。它们是**同一个 9-cell envelope**用两种不同方式数出来的：
+- 「5 pairs × 2 字节 = 10 翻转」是只数了成对的 pair，漏掉了 P8 那个单字节尾巴（实际是 4 中段成对 + P0 成对 + P8 单 = 9 cells）
+- 「9 pairs × 1 字节 = 9 翻转」其实数 cell 数一直都对
+
+旧版 reader 在第一次命中后就 `break` 掉了，正好把 paired 和 alternating 之间的差异盖掉了。当我们改成「每 `(pair, base)` 对一个 cell 就发一条 read entry」之后，结构立刻变得肉眼可见。
+
+### 模式选择规则（还没完全破解）
+
+我们拿这 21 个已分类的 LAB 去挖：到底什么因素决定 Quartus 选 paired 还是 alternating？
+
+| 特征 | 是否能预测？ |
+|------|-------------|
+| 列方向（dy != 0）| ✅ 7 个列方向移动全部 → paired |
+| 行方向（dx != 0）| ⚠ 混合：8 alternating + 6 paired |
+| 是否邻近非 LAB 列（X=5,9,14,15,20,27,30）| ❌ 无相关性 |
+| dst_x 奇偶 | ❌ 无相关性 |
+| LAB-list 索引距离 | 弱相关，存在反例 |
+
+所以列方向是确定性的，但行方向的分裂用单一特征还推不出来。最可能漏掉的变量是「进 LI 之前最后一段 R4/C4 的 I-index」——这个值决定走哪一层 LI 输入选择器。要破解它得有更丰富的多 LE 设计语料库。
 
 ---
 
@@ -1018,13 +1104,20 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.4：R4 I-index 映射 — 13/37 个已映射（I=0,1,2,4,7,10,14,15,17,18,20,22,25）
 - [x] Phase 3.5：LOCAL_INTERCONNECT 开关建模（70% 交叉验证，22 列，4 种 pair 激活模式）
 - [x] Phase 3.6：布线编解码器（RouteCodec 读写方法：C4/R4/LOCAL_INTERCONNECT）
+- [x] Phase 3.7：R24 I=0 固定字节模型（~66% pair-diff 准确率，覆盖 73% 的 R24 线网）
+- [x] Phase 3.8：C4 I≠0 逐 (X,I) 固定字节查表（24 条映射，11 个 I-index）
+- [x] Phase 3.9：RouteCodec 往返自洽（列、行路径均 0 dropped、0 hallucinated）
+- [x] Phase 3.10：LOCAL_INTERCONNECT base 粒度读 API（每 (pair, base) cell 单独发一条）
+- [x] Phase 3.11：LI 编码模式破解 —— paired vs alternating，统一 9-cell envelope
+- [x] Phase 3.12：硬件安全防线 V2（带特征识别的 `validate_safe_for_hardware`）
+- [x] Phase 3.13：AX301 端到端硬件验证（编解码器 → 烧录 → 逻辑行为正确）
 
 ### 进行中
 
-- [ ] Phase 3.7：C4 I≠0 开关建模（24 个 I-index 已观察，无通用公式，需逐线查找表）
-- [ ] Phase 3.8：映射剩余 ~24 个 R4 I-index（I=3,6,8,9,11,12,13,16,19,21,23,26,27,28 等）
-- [ ] Phase 3.9：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
-- [ ] Phase 3.10：C16/R24 长距离线建模（完全未映射）
+- [ ] Phase 3.14：映射剩余 ~19 个 R4 I-index（I=3,6,8,9,11,12,13,16,19,21,23,26,27,28 等）
+- [ ] Phase 3.15：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
+- [ ] Phase 3.16：C16 长距离线建模（完全未映射）
+- [ ] Phase 3.17：LI 模式选择规则挖掘 —— Quartus 凭什么选 paired vs alternating？（需要更丰富的多 LE 路径语料库）
 
 ### 未来工作
 
@@ -1038,11 +1131,12 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 |------|------|------|
 | 逻辑配置（LUT/FF/算术） | **~95%** | 全部 LE 位置的 LUT TT 已解码，FF 和算术模式已映射 |
 | CRAM 地址映射 | **100%** | 22 列 × 18 行 × 16 LE = 376/376 位置全部验证 |
-| C4 布线开关 | **~30%** | I=0 100% 完成；I≠0（24 种）需要逐线查找表 |
-| R4 布线开关 | **~35%** | 13/37 个 I-index 已映射，标准列 ~78% 准确率 |
-| LOCAL_INTERCONNECT | **~70%** | 模型已验证，pair 激活模式已分类 |
-| C16/R24 长距离线 | **0%** | 完全未开始 |
-| 比特流编解码器 | **~40%** | LUT TT 读写完成，布线读写框架完成但覆盖率有限 |
+| C4 布线开关 | **~55%** | I=0 100% 公式；I≠0 24 条逐 (X,I) 固定字节查表 |
+| R4 布线开关 | **~50%** | 18/37 个 I-index 已映射，~90.5% 线网覆盖，~77% 直接准确率 |
+| LOCAL_INTERCONNECT | **~85%** | base 粒度读写；两种编码模式破解；V2 硬件安全防线 |
+| R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
+| C16 长距离线 | **0%** | 尚未开始 |
+| 比特流编解码器 | **~70%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2 |
 
 ---
 

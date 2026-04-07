@@ -51,18 +51,26 @@ def load(path):
         return f.read()
 
 
-def read_pair_set_at(codec, design, zero, dx, dy):
-    """Return frozenset of LI pairs activated at LAB(dx,dy) (vs zero)."""
+def read_pair_base_set_at(codec, design, zero, dx, dy):
+    """Return frozenset of (pair, base_idx) cells active at LAB(dx,dy)."""
     li_entries = codec.read_local_interconnect(design, zero)
-    pairs = set()
+    cells = set()
     for name, off, bp, cands in li_entries:
-        parts = name.split('_')
-        lx = int(parts[1][1:])
-        ly = int(parts[2][1:])
-        pair = int(parts[3][1:])
+        lx, ly, pair, base_idx = codec._parse_li_name(name)
         if (lx, ly) == (dx, dy):
-            pairs.add(pair)
-    return frozenset(pairs)
+            cells.add((pair, base_idx))
+    return frozenset(cells)
+
+
+def classify_mode(cells):
+    """Classify via the canonical RouteCodec V2 classifier."""
+    if not cells:
+        return "empty"
+    by_pair = {}
+    for p, b in cells:
+        by_pair.setdefault(p, set()).add(b)
+    mode, _reason = RouteCodec._classify_li_lab(by_pair)
+    return mode
 
 
 def main():
@@ -80,7 +88,7 @@ def main():
     zero = load(zero_path)
 
     # Compile (or reuse) every target
-    results = []   # (dx, dy, frozenset(pairs))
+    results = []   # (dx, dy, frozenset((pair, base_idx)))
     for dx, dy in TARGETS:
         tag = f"{TAG_PREFIX}_X10Y10_to_X{dx}Y{dy}N0_{CONNECT_PORT}"
         rbf_path = os.path.join(RBF_DIR, tag + ".rbf")
@@ -93,7 +101,7 @@ def main():
                 continue
             print(f"  OK ({t:.1f}s)")
         design = load(rbf_path)
-        ps = read_pair_set_at(codec, design, zero, dx, dy)
+        ps = read_pair_base_set_at(codec, design, zero, dx, dy)
         results.append((dx, dy, ps))
 
     # === Analysis ===
@@ -101,8 +109,13 @@ def main():
     print(f"  Per-LAB pair sets ({len(results)} samples)")
     print(f"{'='*64}")
     for dx, dy, ps in results:
+        mode = classify_mode(ps)
         marker = "  " if ps else "??"
-        print(f"  {marker} LAB(X{dx:2d},Y{dy:2d}): {sorted(ps) if ps else '[]  (empty — likely baseline aliasing)'}")
+        if ps:
+            cells_str = " ".join(f"P{p}B{b}" for p, b in sorted(ps))
+            print(f"  {marker} LAB(X{dx:2d},Y{dy:2d}) [{mode:11s}] n={len(ps):2d}: {cells_str}")
+        else:
+            print(f"  {marker} LAB(X{dx:2d},Y{dy:2d}) [empty]      (baseline aliasing)")
 
     # Filter empties for the equivalence-class analysis
     valid = [(dx, dy, ps) for dx, dy, ps in results if ps]
@@ -124,10 +137,17 @@ def main():
     print(f"\n  Distinct equivalence classes: {len(classes)}")
     for i, (ps, labs) in enumerate(sorted(classes.items(),
                                           key=lambda kv: -len(kv[1]))):
-        print(f"\n  Class {i+1}: pairs = {sorted(ps)}  (cardinality {len(ps)})")
+        mode = classify_mode(ps)
+        cells_str = " ".join(f"P{p}B{b}" for p, b in sorted(ps))
+        print(f"\n  Class {i+1} [{mode}] n={len(ps)}: {cells_str}")
         print(f"           used at {len(labs)} LABs:")
         for lab in labs:
             print(f"             X{lab[0]:2d},Y{lab[1]:2d}")
+
+    # Mode tally
+    from collections import Counter
+    mode_tally = Counter(classify_mode(ps) for _, _, ps in valid)
+    print(f"\n  Mode tally across {len(valid)} valid LABs: {dict(mode_tally)}")
 
     # Structural analysis
     if len(classes) > 1:

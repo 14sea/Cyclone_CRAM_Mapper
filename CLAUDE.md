@@ -196,15 +196,23 @@ SLOT_OFFSET = {0: 67, 1: -70, 2: 0}   # same as R4
 - **SAFETY: `write_local_interconnect()` signature changed** from `(lx, ly, i_idx)` to `(lx, ly, pairs)`. The old auto-expansion of an I-index into ALL pairs from `_LI_ALL9 / _SKIP37 / _EVEN / _FIRST2` is **physically dangerous** — those pattern tables were inferred from CRAM reads but real Quartus only activates 1-5 pairs per LI MUX, never 9. Auto-expansion would drive multiple routing channels into the same LE input → input MUX short circuit on real silicon
 - The pattern constants are kept only for `read_local_interconnect()` I-index disambiguation, never used by writes
 
-### LI encoding mystery (UNRESOLVED)
-- Same routing key `(LE_BUFFER, src_I=0, dst_N=0, datab)` produces 4 different pair sets across LABs:
-  - `[0,2,4,6,8]` 5-pair pattern (10 byte flips, both base 70+71 set per pair) — common for column moves
-  - `[0..8]` 9-pair pattern (9 byte flips, alternating base 70/71 per pair) — common for row moves at certain X
-  - `[0,1,2,3,8]` and `[0,1,4,5,8]` 5-pair variants
-- Backbone `{0, 8}` is universal — pair 0 + pair 8 are likely datab port enable bits
-- 9-pair LABs cluster around non-LAB columns (M9K/DSP at X5,9,14,15,20,27,30) — possibly extra mux entries to handle M9K/DSP outputs
-- The 9-pair vs 5-pair patterns are STRUCTURALLY different bit layouts (alternating vs paired), not "same MUX with extra noise"
-- `read_local_interconnect()`'s `break` after first base hit currently masks the difference — needs base-aware rewrite
+### LI encoding modes (RESOLVED 2026-04-07 via base-granularity reads)
+After dropping the `break` in `read_local_interconnect()` and emitting one entry per (pair, base) cell, the "9-pair vs 5-pair mystery" resolved into **two well-defined modes** with a uniform 9-cell envelope:
+
+- **Mode "paired"** (13/21 LABs in single-input lut2 sweep, datab port):
+  - P0 fully paired (B0+B1) + 4 middle pairs fully paired + P8 single-base tail = 9 cells
+  - 3 middle-pair variants observed: `{2,4,6}` (most common), `{1,2,3}`, `{1,4,5}`
+  - P8 tail base flips between B0/B1 across LABs
+- **Mode "alternating"** (8/21 LABs):
+  - Strict P0..P7 with alternating bases (P0=B1, P1=B0, P2=B1, ..., P7=B0) + P8 single-base tail = 9 cells
+  - P8 tail base flips B0/B1 across LABs
+- **Universal anchors**: P0 and P8 always present; cell `(P0, B1)` is in every observed class
+- Total cells per LAB is **always exactly 9** — what looked like "5-pair vs 9-pair" was paired-cardinality vs cell-cardinality conflation in the old reader
+
+`RouteCodec._classify_li_lab()` validates a LAB's pair_map against this taxonomy; `validate_safe_for_hardware()` V2 uses it as the safe-envelope check (rejects mixed/broken modes, accepts all 6 observed Quartus classes).
+
+### Open: mode selection rule
+Which mode (paired vs alternating) Quartus picks for a given LAB is not yet derivable from the routing key. Mode "paired" dominates column moves; mode "alternating" dominates row moves and LABs near non-LAB columns (M9K/DSP at X5,9,14,15,20,27,30). Need a richer routing_paths corpus (multi-LE designs) to mine the rule.
 
 ## Methodology
 

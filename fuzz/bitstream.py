@@ -359,15 +359,25 @@ class RouteCodec:
         return bytes(result)
 
     def read_local_interconnect(self, rbf_data, zero_data):
-        """Read active LOCAL_INTERCONNECT switches.
+        """Read active LOCAL_INTERCONNECT switches at FULL (pair, base) granularity.
 
-        Returns list of (wire_name, byte_offset, bit_pos) for active switches.
-        Since multiple I-indices share overlapping pair sets, each active CRAM
-        cell is reported once with the list of candidate I-indices.
-        Wire name format: LI_X{x}_Y{y}_P{pair} (pair index disambiguates).
+        Each active CRAM cell is reported as a separate entry — both base=70
+        and base=71 are surfaced when both are flipped (no `break`). This is
+        critical: empirically, two distinct LI encoding modes coexist in the
+        same byte range:
+
+          * "paired" mode: both base 70 and base 71 of the same pair are
+            flipped together → 5 pairs × 2 bytes = 10 bit flips
+          * "alternating" mode: only one of {70, 71} is flipped per pair,
+            alternating across pair indices → 9 pairs × 1 byte = 9 bit flips
+
+        Wire name format: LI_X{x}_Y{y}_P{pair}B{0|1}
+          where B0 = base offset 70, B1 = base offset 71
+
+        Returns list of (wire_name, byte_offset, bit_pos, candidates).
         """
         active = []
-        # All known I-indices
+        # All known I-indices (kept only for the disambiguation `candidates` field)
         all_i = sorted(_LI_ALL9 | _LI_SKIP37 | _LI_EVEN | _LI_FIRST2)
 
         for lx in LAB_X:
@@ -380,16 +390,28 @@ class RouteCodec:
                 slot_off = _LI_SLOT_OFFSET[slot]
 
                 for pair in range(9):
-                    for base in (70, 71):
+                    for base_idx, base in enumerate((70, 71)):
                         offset = col_start + base + pair * PAIR_SPACING + slot_off + 3 * group
                         if offset < 0 or offset >= len(rbf_data):
                             continue
                         if (rbf_data[offset] >> bp) & 1 != (zero_data[offset] >> bp) & 1:
-                            # Find which I-indices include this pair
                             candidates = [i for i in all_i if pair in _li_active_pairs(i)]
-                            active.append((f"LI_X{lx}_Y{ly}_P{pair}", offset, bp, candidates))
-                            break  # don't double-count base=70 vs 71
+                            active.append(
+                                (f"LI_X{lx}_Y{ly}_P{pair}B{base_idx}", offset, bp, candidates)
+                            )
         return active
+
+    @staticmethod
+    def _parse_li_name(name):
+        """Parse LI_X{x}_Y{y}_P{pair}B{base_idx} → (lx, ly, pair, base_idx)."""
+        parts = name.split('_')
+        lx = int(parts[1][1:])
+        ly = int(parts[2][1:])
+        pb = parts[3]  # P{pair}B{base_idx}
+        bsplit = pb.index('B')
+        pair = int(pb[1:bsplit])
+        base_idx = int(pb[bsplit + 1:])
+        return lx, ly, pair, base_idx
 
     # --- Write methods ---
 
@@ -511,44 +533,47 @@ class RouteCodec:
             self._set_bit(result, zero_data, offset, bp, value)
         return bytes(result)
 
-    def write_local_interconnect(self, rbf_data, zero_data, lx, ly, pairs, value=True):
-        """Set/clear LOCAL_INTERCONNECT switches for an EXPLICIT pair list.
+    def write_local_interconnect(self, rbf_data, zero_data, lx, ly, pair_bases, value=True):
+        """Set/clear LOCAL_INTERCONNECT cells for an EXPLICIT (pair, base_idx) list.
 
-        SAFETY: this method no longer accepts an I-index. Empirically, real
-        Quartus RBFs activate 1-5 LI pairs per LAB — never the 9-pair I-index
-        "pattern" the read-side disambiguation table suggests. Auto-expanding
-        from an I-index would over-activate input MUXes and risk physical
-        contention on real silicon. Callers must pass the exact pair list.
+        SAFETY: this method no longer accepts an I-index. Callers must pass
+        the exact list of (pair, base_idx) tuples to flip, where:
+            pair      ∈ 0..8
+            base_idx  ∈ 0 (base offset 70) | 1 (base offset 71)
+
+        For backwards convenience, bare ints are accepted and treated as
+        (pair, 0) — i.e. base 70 only — but this is discouraged for new code.
 
         Args:
-            rbf_data: bytes of the RBF to modify
-            zero_data: bytes of the zero-mask baseline RBF
-            lx: LAB X coordinate
-            ly: LAB Y coordinate
-            pairs: iterable of pair indices (0-8) to flip; must be non-empty
-            value: True to activate, False to deactivate
-
-        Returns:
-            Modified RBF as bytes
+            pair_bases: iterable of (pair, base_idx) tuples (or bare pair ints)
         """
         if lx not in COLUMN_BASE:
             raise ValueError(f"X={lx} not in COLUMN_BASE (valid: {sorted(COLUMN_BASE.keys())})")
         if ly not in LAB_Y:
             raise ValueError(f"Y={ly} not a valid LAB Y coordinate")
-        pairs = list(pairs)
-        if not pairs:
-            raise ValueError("pairs must be non-empty (no implicit I-index expansion)")
-        for p in pairs:
-            if not (0 <= p <= 8):
-                raise ValueError(f"pair {p} out of range 0-8")
+
+        norm = []
+        for item in pair_bases:
+            if isinstance(item, int):
+                pair, base_idx = item, 0
+            else:
+                pair, base_idx = item
+            if not (0 <= pair <= 8):
+                raise ValueError(f"pair {pair} out of range 0-8")
+            if base_idx not in (0, 1):
+                raise ValueError(f"base_idx {base_idx} must be 0 or 1")
+            norm.append((pair, base_idx))
+        if not norm:
+            raise ValueError("pair_bases must be non-empty (no implicit I-index expansion)")
 
         col_start = COLUMN_BASE[lx] - 136
         group, slot, bp = _cram_group_bit(ly)
         slot_off = _LI_SLOT_OFFSET[slot]
 
         result = bytearray(rbf_data)
-        for pair in pairs:
-            offset = col_start + 70 + pair * PAIR_SPACING + slot_off + 3 * group
+        for pair, base_idx in norm:
+            base = 70 + base_idx
+            offset = col_start + base + pair * PAIR_SPACING + slot_off + 3 * group
             self._set_bit(result, zero_data, offset, bp, value)
         return bytes(result)
 
@@ -593,71 +618,133 @@ class RouteCodec:
                               sw.get('value', True))
                 data = bytes(buf)
             elif sw_type == 'li':
-                if 'pairs' not in sw:
+                pb = sw.get('pair_bases', sw.get('pairs'))
+                if pb is None:
                     raise ValueError(
-                        "li switch requires explicit 'pairs' list — "
-                        "implicit I-index expansion removed for hardware safety"
+                        "li switch requires explicit 'pair_bases' list of "
+                        "(pair, base_idx) tuples — implicit I-index expansion "
+                        "removed for hardware safety"
                     )
                 data = self.write_local_interconnect(data, zero_data, sw['lx'],
-                                                     sw['ly'], sw['pairs'],
+                                                     sw['ly'], pb,
                                                      sw.get('value', True))
             else:
                 raise ValueError(f"Unknown switch type: {sw_type!r}")
         return data
 
-    # Empirically observed maximum LI pairs activated by Quartus per LAB
-    # (5 pairs in column/row routes; raise only after confirming on more designs).
-    LI_MAX_PAIRS_PER_LAB = 5
+    # Empirically observed envelope (single-input lut2 sweep, 21 valid LABs):
+    #   * always exactly 9 active cells per LAB
+    #   * P8 always present with exactly one base
+    #   * Mode "paired":  P0 has both bases; 4 middle pairs have both bases; +P8 single
+    #   * Mode "alternating": P0..P7 each single base alternating B1/B0/B1/.../B0; +P8 single
+    LI_MAX_CELLS_PER_LAB = 9
+    LI_MAX_PAIRED_PAIRS = 4    # middle paired pairs (excluding P8) — paired mode
+    LI_MAX_PAIRS_PER_LAB = 5   # legacy alias (kept for callers)
+
+    @staticmethod
+    def _classify_li_lab(pair_map):
+        """Classify a single LAB's {pair: set(base_idx)} → (mode, reason).
+
+        Returns (mode, reason) where mode ∈ {"empty","paired","alternating","invalid"}.
+        Empirically validated against 21 single-input lut2 destination LABs.
+        """
+        if not pair_map:
+            return "empty", None
+
+        n_cells = sum(len(bs) for bs in pair_map.values())
+        if n_cells > RouteCodec.LI_MAX_CELLS_PER_LAB:
+            return "invalid", f"{n_cells} cells > {RouteCodec.LI_MAX_CELLS_PER_LAB}"
+
+        # P8 anchor: must be present with exactly one base
+        if 8 not in pair_map:
+            return "invalid", "missing P8 tail anchor"
+        if len(pair_map[8]) != 1:
+            return "invalid", "P8 tail must have exactly one base"
+
+        # P0 must be present
+        if 0 not in pair_map:
+            return "invalid", "missing P0 anchor"
+
+        middle = {p: bs for p, bs in pair_map.items() if p not in (0, 8)}
+        p0_bases = pair_map[0]
+
+        # Paired mode: P0 fully paired
+        if p0_bases == {0, 1}:
+            paired_pairs_incl_p0 = [p for p, bs in pair_map.items()
+                                     if p != 8 and bs == {0, 1}]
+            single_middle = [p for p, bs in middle.items() if len(bs) == 1]
+            if single_middle:
+                return "invalid", f"paired mode but middle pairs {single_middle} are single-base"
+            n_middle_paired = len(paired_pairs_incl_p0) - 1   # exclude P0
+            if n_middle_paired > RouteCodec.LI_MAX_PAIRED_PAIRS:
+                return "invalid", f"{n_middle_paired} middle paired pairs > {RouteCodec.LI_MAX_PAIRED_PAIRS}"
+            return "paired", None
+
+        # Alternating mode: P0 has only B1
+        if p0_bases == {1}:
+            doubled = [p for p, bs in middle.items() if bs == {0, 1}]
+            if doubled:
+                return "invalid", f"alternating mode but middle pairs {doubled} have both bases"
+            # Expect contiguous P0..P7 with alternating pattern P0=B1, P1=B0, P2=B1, ...
+            for p in range(8):
+                if p not in pair_map:
+                    return "invalid", f"alternating mode missing pair P{p}"
+                expected = {1} if p % 2 == 0 else {0}
+                if pair_map[p] != expected:
+                    return "invalid", (f"alternating mode P{p} expected base "
+                                       f"{1 if p%2==0 else 0}, got {sorted(pair_map[p])}")
+            return "alternating", None
+
+        return "invalid", f"P0 bases {sorted(p0_bases)} match neither paired nor alternating mode"
 
     def validate_safe_for_hardware(self, rbf_data, zero_data,
                                     li_max_pairs=None, raise_on_fail=True):
-        """Pre-flash safety check for LOCAL_INTERCONNECT pair contention.
+        """Pre-flash safety check for LI cell activation (V2 — signature aware).
 
-        LAB input MUXes are physically driven by routing channels. Activating
-        too many LI pairs at the same (lx, ly) can cause multiple channels to
-        drive the same LE input simultaneously — that's a short circuit on
-        real silicon and can damage the device.
+        Empirically, Quartus emits LI activations in two distinct encoding
+        modes that coexist across the chip but never (so far) within the
+        same LAB:
 
-        This method scans the RBF for each LAB and counts how many distinct
-        LI pairs are flipped relative to zero_data. It fails if any LAB
-        exceeds li_max_pairs (default: empirically observed max from Quartus).
+          * "paired" mode: every active pair has BOTH base 70 and base 71
+            set together. ≤5 such pairs per LAB observed.
+          * "alternating" mode: every active pair has EXACTLY ONE of
+            {base 70, base 71} set, alternating across pair indices.
+            ≤9 active bytes per LAB observed.
 
-        Args:
-            rbf_data: candidate RBF about to be flashed
-            zero_data: zero-baseline RBF
-            li_max_pairs: per-LAB limit (default LI_MAX_PAIRS_PER_LAB)
-            raise_on_fail: if True, raise RuntimeError on violation; otherwise
-                           return the list of violators
+        Three rules:
+          1. paired mode → number of paired pairs ≤ LI_MAX_PAIRED_PAIRS
+          2. alternating mode → total active bytes ≤ LI_MAX_ALT_BYTES,
+             AND no pair has both bases set
+          3. mixed mode (some pairs paired, some alternating in the same
+             LAB) → PANIC; never observed from Quartus, so refuse to flash
 
-        Returns:
-            list of (lx, ly, n_pairs, pair_list) for any LAB that exceeds the
-            limit. Empty list = safe.
+        Returns the list of violations as
+        (lx, ly, mode, detail_dict). Empty list = safe.
         """
-        if li_max_pairs is None:
-            li_max_pairs = self.LI_MAX_PAIRS_PER_LAB
-
         li_entries = self.read_local_interconnect(rbf_data, zero_data)
-        # Group by (lx, ly) → set of pair indices
+
+        # Group by (lx, ly) → {pair: set(base_idx)}
         per_lab = {}
         for name, _off, _bp, _cands in li_entries:
-            parts = name.split('_')
-            lx = int(parts[1][1:])
-            ly = int(parts[2][1:])
-            pair = int(parts[3][1:])
-            per_lab.setdefault((lx, ly), set()).add(pair)
+            lx, ly, pair, base_idx = self._parse_li_name(name)
+            per_lab.setdefault((lx, ly), {}).setdefault(pair, set()).add(base_idx)
 
         violations = []
-        for (lx, ly), pairs in per_lab.items():
-            if len(pairs) > li_max_pairs:
-                violations.append((lx, ly, len(pairs), sorted(pairs)))
+        for (lx, ly), pair_map in per_lab.items():
+            mode, reason = self._classify_li_lab(pair_map)
+            if mode == "invalid":
+                violations.append((lx, ly, mode, {
+                    "reason": reason,
+                    "pair_map": {p: sorted(bs) for p, bs in sorted(pair_map.items())},
+                }))
 
         if violations and raise_on_fail:
             lines = [
-                f"  LAB X{lx} Y{ly}: {n} pairs active {pl} (limit {li_max_pairs})"
-                for lx, ly, n, pl in sorted(violations)
+                f"  LAB X{lx} Y{ly}: {info['reason']} | {info['pair_map']}"
+                for lx, ly, _, info in sorted(violations, key=lambda v: (v[0], v[1]))
             ]
             raise RuntimeError(
-                "UNSAFE FOR HARDWARE: LOCAL_INTERCONNECT pair contention risk\n"
+                "UNSAFE FOR HARDWARE: LOCAL_INTERCONNECT activation outside known-safe envelope\n"
                 + "\n".join(lines)
                 + "\n  Flashing this RBF may cause input MUX short circuits."
             )

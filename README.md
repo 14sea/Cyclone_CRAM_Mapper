@@ -793,11 +793,49 @@ C16 column wires span ~16 rows. Preliminary analysis shows their encoding is **f
 - Routes using C16 are noisy (3–6 R4, 2–5 C4 wires per path), making isolation difficult
 - Likely requires per-wire lookup table or a completely different methodology
 
-#### C4 I≠0 Switches (No Universal Formula)
+#### C4 I≠0 Switch Model (24 per-(X,I) Mappings — 11 I-indices)
 
-Unlike C4 I=0, the other 24 C4 I-indices have **no** unified formula for their CRAM positions. The same I-index maps to different pair positions in different columns, and even the polarity differs (some bits are 1=on, others 0=on).
+C4 I≠0 switches use the same **fixed byte offset** model as R24 — the byte address is constant for all Y values, and only the bit position varies:
 
-For now these can only be handled via per-wire lookup tables. 24 distinct C4 I-indices have been observed across 774 routing paths.
+```python
+# CRAM address for C4_X{wx}_Y{wy}_N0_I{ii}  (I≠0)
+byte = C4_FIXED_OFFSETS[(wx, ii)]   # absolute RBF byte offset — fixed, Y-independent
+group = (wy - 2) // 3
+slot = (wy - 2) % 3
+bp = (6 - group) if slot == 2 else (7 - group)   # same formula as C4 I=0
+```
+
+**Discovery method**: baseline-diff — compile each route, diff against `baseline.rbf`, look for bytes in the self column whose bit at the expected `bp` is flipped. A byte that fires for multiple Y values of the same (wx, I) is the switch byte.
+
+**Mapped positions** (24 per-(X,I) entries in `_C4_FIXED_OFFSETS` in `bitstream.py`):
+
+| I-index | Columns mapped | Hit rate |
+|---------|---------------|----------|
+| 1 | X=9, 15, 16, 25 | 4–5/6 |
+| 3 | X=13, 22, 25 | 2–3/5 |
+| 7 | X=13 | 2/2 |
+| 8 | X=13 | 2/3 |
+| 9 | X=10, 28, 30 | 2–3/3 |
+| 10 | X=9, 28, 29 | 2–5/6 |
+| 12 | X=9, 10, 22, 25 | 5–6/6 |
+| 14 | X=25 | 2/2 |
+| 15 | X=16 | 2/2 |
+| 20 | X=9 | 2/2 |
+| 23 | X=22, 29 | 2–3/3 |
+
+**Key findings**:
+
+1. **Fixed byte, varying bp**: Unlike R4 (which adjusts byte offset per slot/group), the byte address for C4 I≠0 is Y-independent. Only `bp` encodes the Y coordinate.
+
+2. **No universal formula**: The pair index varies per column for the same I-index. Per-(X,I) lookup is required.
+
+3. **pos always 184 or 185**: All switches land at data-byte positions within the 210-byte period (identical to the LUT TT data byte positions).
+
+4. **Shared bytes**: I=3 and I=12 map to the same byte at X=22 and X=25. These two I-indices are indistinguishable by CRAM inspection alone at those columns.
+
+5. **Non-LAB columns have larger pair numbers**: X=9, X=15, X=30 have pair indices of 58, 382, 53 respectively — consistent with their wider CRAM regions.
+
+6. **RouteCodec integration**: `read_c4()` now handles both I=0 (formula) and I≠0 (lookup table) in a single call.
 
 #### Routing Bit CRAM Distribution
 
@@ -890,48 +928,134 @@ The codec now also supports reading and writing routing matrix switch states:
 ```python
 from bitstream import RouteCodec
 
-codec = RouteCodec("design.rbf", "zero_baseline.rbf")
+codec = RouteCodec()
+design = open("design.rbf","rb").read()
+zero   = open("zero_baseline.rbf","rb").read()
 
-# ========== Read switch states ==========
+# ========== Read all routing switches ==========
+sw = codec.read_switches(design, zero)
+# Returns {'c4': [...], 'r4': [...], 'r24': [...], 'li': [...]}
+# Each entry: (wire_name, byte_offset, bit_pos, candidates)
+# LI wire names use base granularity: "LI_X10_Y5_P3B0"
+#   P3 = pair index, B0 = base offset 70 (B1 = base offset 71)
 
-# Read a C4 (column direction, ~4 rows) switch
-state = codec.read_c4(x=10, y=5, i=0)
-# Returns True (switch closed) or False (switch open)
+# ========== Write switches into a blank baseline ==========
+ops = [
+    {'type': 'c4', 'x': 10, 'y': 5, 'i_idx': 0},
+    {'type': 'c4', 'x': 13, 'y': 8, 'i_idx': 3},          # uses I≠0 lookup
+    {'type': 'r4', 'wx': 22, 'y': 8, 'i_idx': 17},
+    {'type': 'li', 'lx': 10, 'ly': 5,
+     'pair_bases': [(0,0),(0,1),(2,0),(2,1),(4,0),(4,1),(6,0),(6,1),(8,0)]},
+]
+new_rbf = codec.apply_routing(zero, ops)
 
-# Read an R4 (row direction, ~4 columns) switch
-state = codec.read_r4(wx=22, wy=5, idx=1)
+# ========== Pre-flash hardware safety check ==========
+codec.validate_safe_for_hardware(new_rbf, zero)
+# Raises RuntimeError if any LAB has an LI activation pattern outside the
+# known-safe envelope (wrong cell count, broken paired/alternating mode, etc.)
 
-# Read a LOCAL_INTERCONNECT (LAB input mux) switch
-state = codec.read_local_interconnect(lx=10, ly=5, li=2)
-
-# Read all known switch types in bulk
-switches = codec.read_switches()
-# Returns dict: {"C4_X10_Y5_N0_I0": True, "R4_X22_Y5_N0_I1": False, ...}
-
-# ========== Write switch states ==========
-
-# Write a single C4 switch
-codec.write_c4(x=10, y=5, i=0, value=True)
-
-# Write a single R4 switch
-codec.write_r4(wx=22, wy=5, idx=1, value=True)
-
-# Write a single LOCAL_INTERCONNECT switch
-codec.write_local_interconnect(lx=10, ly=5, li=2, value=True)
-
-# Write multiple switches, then save to file
-codec.write_c4(x=10, y=5, i=0, value=True)
-codec.write_r4(wx=22, wy=8, idx=17, value=True)
-codec.apply_routing("output.rbf")  # save modified RBF
+open("output.rbf","wb").write(new_rbf)
 ```
+
+Note the `li` op now requires an explicit `pair_bases` list — implicit "expand an I-index into all 9 pairs" was removed because real Quartus never activates more than 9 specific cells per LAB, and auto-expansion would have been a physical-contention hazard.
 
 **Current coverage**:
 - C4 I=0: 100% (all 63 wires correct)
 - R4: 18/37 I-indices mapped (~90.5% wire coverage, ~77% direct-verification accuracy)
 - R24 I=0: mapped with fixed-byte model (~66% pair-diff accuracy), 73% of R24 wires
-- LOCAL_INTERCONNECT: ~70% cross-validation accuracy
-- C4 I≠0: no universal formula, per-wire lookup only
+- LOCAL_INTERCONNECT: full read/write at base granularity, two encoding modes resolved
+- C4 I≠0: no universal formula, per-wire lookup table (24 entries)
 - C16: not yet mapped (fundamentally different multi-bit encoding)
+
+---
+
+## Routing Codec Round-Trip + Hardware Safety Guard
+
+After basic read/write was working, the next question was: **does our codec actually round-trip?** If we read all the routing switches out of a real Quartus RBF, then write them back into a blank baseline using only our own write methods, do we get the same set of cells back?
+
+### Round-trip self-consistency test
+
+`route_roundtrip.py` runs this experiment:
+
+```
+real Quartus RBF ──► RouteCodec.read_switches() ──► list of switch ops
+                                                        │
+                                                        ▼
+              blank zero baseline ──► RouteCodec.apply_routing(ops)
+                                                        │
+                                                        ▼
+                              re-read with read_switches()
+                                                        │
+                              compare against the original read
+```
+
+If the codec is consistent, the two reads must agree exactly: zero dropped cells, zero hallucinated cells. Note this is **not** a "match Quartus byte-for-byte" test — that would also require encoding LUT TT, IO buffers, etc. We're only testing the routing layer in isolation.
+
+Result for both a column route (Y10→Y5) and a row route (X10→X22):
+
+```
+column route Y10→Y5: OK  orig=52 repro=52 common=52
+row route X10→X22:    OK  orig=65 repro=65 common=65
+```
+
+**0 dropped, 0 hallucinated.** The routing codec is internally consistent.
+
+To make this work we had to add two things:
+
+1. **`write_c4_inz()`** — C4 with non-zero I index uses fixed byte offsets instead of the universal slot/group formula. We mined 24 (X, I) → byte mappings by baseline-diffing fresh compiles.
+2. **`'raw'` switch type** — for R24/LOCAL_INTERCONNECT, the per-wire write methods set *more* cells than a single read entry corresponds to (one wire activates 2+ cells). When replaying a read, we instead emit `raw` ops that flip exactly one (offset, bit) — the same granularity as the read.
+
+### Hardware safety guard V2
+
+Before flashing a codec-generated RBF to a real AX301 board, we want to refuse anything that could short out a LAB input mux. Multiple routing channels driving the same LE input port at the same time is a physical-contention hazard on real silicon.
+
+`RouteCodec.validate_safe_for_hardware(rbf, zero)` scans the RBF for LOCAL_INTERCONNECT activations and refuses to pass anything Quartus has never been observed to produce.
+
+```python
+codec = RouteCodec()
+codec.validate_safe_for_hardware(my_rbf, zero_rbf)   # raises if unsafe
+```
+
+The "what's safe" envelope was discovered empirically. After dropping a sloppy `break` in `read_local_interconnect()` that was hiding cell-level structure, we re-ran a 21-LAB sweep and found that **every** Quartus LI activation falls into one of two well-defined modes, each with **exactly 9 active cells per LAB**:
+
+- **Paired mode** (13/21 LABs, mostly column moves): `P0` paired (both bases set) + 4 middle pairs paired + `P8` tail (one base) = 9 cells
+- **Alternating mode** (8/21 LABs, mostly row moves): `P0..P7` each with one base, alternating `B1,B0,B1,...,B0` + `P8` tail = 9 cells
+- **Universal anchors**: `P0` and `P8` always present; cell `(P0, B1)` is in every observed class
+
+> What is a "pair" and a "base"? LOCAL_INTERCONNECT cells live in a 210-byte-period region of each LAB column. In each period, two CRAM bytes at offsets 70 and 71 ("base 70" / "base 71" — `B0`/`B1`) are the LI bytes. The pair index `P0..P8` is which 210-byte period within the column we're in.
+
+The V2 classifier `_classify_li_lab(pair_map)` tags any LAB as `paired`, `alternating`, or `invalid` (with a reason). The guard refuses to pass:
+
+- Any LAB with more than 9 active cells
+- Missing `P0` or `P8` anchor; `P8` doubly set
+- Paired mode with single-base middle pairs (broken paired)
+- Alternating mode with the wrong base on any pair, or any doubled middle pair
+
+This was tested against all 6 observed Quartus classes (all accepted) and 4 synthetic violation cases (all rejected). The previous V1 guard (`max 5 pairs per LAB`) was actually wrong: it would have false-rejected 13 of the 21 legitimate Quartus configurations.
+
+### What this resolved: the "9-pair vs 5-pair" mystery
+
+For weeks the same routing key was producing what looked like two completely different bit patterns at different LABs — sometimes 10 byte flips at 5 pair positions, sometimes 9 byte flips at 9 pair positions. We thought these were structurally distinct encodings.
+
+They aren't. They're the **same 9-cell envelope** counted two different ways:
+- "5 pairs × 2 bytes = 10 flips" was counting only paired pairs and missing the P8 single-byte tail (it's actually 4 paired + P0 paired + P8 single = 9 cells)
+- "9 pairs × 1 byte = 9 flips" was already counting cells correctly
+
+The old reader's `break` after the first base hit was masking the difference between paired and alternating modes. Once we emitted one read entry per `(pair, base)` cell, the structure became obvious.
+
+### Mode-selection rule (still partially open)
+
+We mined the 21 classified LABs to see what predicts paired vs alternating:
+
+| Feature | Predictive? |
+|---------|-------------|
+| Column move (dy != 0) | ✅ All 7 column moves → paired |
+| Row move (dx != 0) | ⚠ Mixed: 8 alternating + 6 paired |
+| Adjacency to non-LAB columns (X=5,9,14,15,20,27,30) | ❌ No correlation |
+| dst_x parity | ❌ No correlation |
+| LAB-list index distance | Weak correlation, exceptions exist |
+
+So column moves are deterministic, but the row-move split is not yet derivable from a single feature. The most likely missing variable is the **last R4/C4 hop's I-index** before LI — that's what selects the LI input mux tier. Resolving this needs a richer routing-paths corpus with multi-LE designs.
 
 ---
 
@@ -1020,13 +1144,20 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.4: R4 I-index mapping — 13/37 mapped (I=0,1,2,4,7,10,14,15,17,18,20,22,25)
 - [x] Phase 3.5: LOCAL_INTERCONNECT switch modeling (70% cross-validation, 22 columns, 4 pair activation patterns)
 - [x] Phase 3.6: Routing codec (RouteCodec read/write methods: C4/R4/LOCAL_INTERCONNECT)
+- [x] Phase 3.7: R24 I=0 fixed-byte model (~66% pair-diff accuracy, 73% of R24 wires)
+- [x] Phase 3.8: C4 I≠0 per-(X,I) fixed-byte lookup (24 entries, 11 I-indices)
+- [x] Phase 3.9: RouteCodec round-trip self-consistency (0 dropped, 0 hallucinated on column + row)
+- [x] Phase 3.10: LOCAL_INTERCONNECT base-granularity read API (one entry per (pair, base) cell)
+- [x] Phase 3.11: LI encoding modes resolved — paired vs alternating, uniform 9-cell envelope
+- [x] Phase 3.12: Hardware safety guard V2 with signature recognition (`validate_safe_for_hardware`)
+- [x] Phase 3.13: End-to-end hardware verification on AX301 (codec → flash → expected logic)
 
 ### In Progress
 
-- [ ] Phase 3.7: C4 I≠0 switch modeling (24 I-indices observed, no universal formula, need per-wire lookup table)
-- [ ] Phase 3.8: Map remaining ~24 R4 I-indices (I=3,6,8,9,11,12,13,16,19,21,23,26,27,28, etc.)
-- [ ] Phase 3.9: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
-- [ ] Phase 3.10: C16/R24 long-distance wire modeling (not yet started)
+- [ ] Phase 3.14: Map remaining ~19 R4 I-indices (I=3,6,8,9,11,12,13,16,19,21,23,26,27,28, etc.)
+- [ ] Phase 3.15: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
+- [ ] Phase 3.16: C16 long-distance wire modeling (not yet started)
+- [ ] Phase 3.17: LI mode-selection rule mining — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
 
 ### Future Work
 
@@ -1040,11 +1171,12 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 |--------|----------|-------|
 | Logic configuration (LUT/FF/Arithmetic) | **~95%** | All LE positions' LUT TT decoded; FF and arithmetic mode mapped |
 | CRAM address mapping | **100%** | 22 cols × 18 rows × 16 LEs = 376/376 positions fully verified |
-| C4 routing switches | **~30%** | I=0 100% complete; I≠0 (24 types) need per-wire lookup table |
-| R4 routing switches | **~35%** | 13/37 I-indices mapped; ~78% accuracy at standard-width columns |
-| LOCAL_INTERCONNECT | **~70%** | Model verified, pair activation patterns classified |
-| C16/R24 long-distance wires | **0%** | Not yet started |
-| Bitstream codec | **~40%** | LUT TT read/write complete; routing read/write framework done but limited coverage |
+| C4 routing switches | **~55%** | I=0 100% formula; I≠0 24-entry per-(X,I) lookup table |
+| R4 routing switches | **~50%** | 18/37 I-indices mapped; ~90.5% wire coverage, ~77% direct accuracy |
+| LOCAL_INTERCONNECT | **~85%** | Base-granular read/write; two encoding modes resolved; V2 safety guard |
+| R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
+| C16 long-distance wires | **0%** | Not yet started |
+| Bitstream codec | **~70%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2 |
 
 ---
 
