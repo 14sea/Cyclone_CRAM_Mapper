@@ -267,6 +267,15 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
             "ly": need.sy,
             "pair_bases": [(8, 0), (8, 1)],
         })
+
+    # Universal source-side R4 launch driver: R4_X{sx+1}_Y{sy} I=1 + I=2.
+    # Mined from lits_pair corpus (r4_iindex_mine.py, 2026-04-07): present
+    # in every inter-LAB route regardless of direction (vertical, horizontal,
+    # short, long), so emit unconditionally for non-same-LAB needs.
+    if not need.same_lab:
+        launch_wx = _lab_step_to_x(need.sx, 1)
+        for ii in (1, 2):
+            ops.append({"type": "r4", "wx": launch_wx, "y": need.sy, "i_idx": ii})
     return ops
 
 
