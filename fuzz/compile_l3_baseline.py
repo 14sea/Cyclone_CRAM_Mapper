@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """L3 step 1 — compile a Quartus 'golden' baseline with proper LUT masks.
 
 Design: lut1@(10,10,0) mask=0x8888 (A AND B) feeds lut2@(12,10,0) mask=0xAA

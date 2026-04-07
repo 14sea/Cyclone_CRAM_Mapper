@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """LI topology equivalence-class validation.
 
 Refined hypothesis (2026-04-07):

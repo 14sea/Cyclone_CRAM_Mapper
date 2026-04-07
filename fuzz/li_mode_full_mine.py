@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Combined (A)+(B) analysis on the 21 lits_pair RBFs:
   A) Source-side residual cells at (10,10): per-sample (pair,base) pattern
   B) Total hop count (R4 + C4) parity vs mode

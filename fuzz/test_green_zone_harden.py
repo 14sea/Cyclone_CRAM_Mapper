@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Multi-island green-zone harden test (auto-discovers all islands).
 
 For every results/fingerprint_{sx}_{sy}.json snapshot, run:

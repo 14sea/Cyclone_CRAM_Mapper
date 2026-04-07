@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """R4 I-index BASE mapper v2 — route-pair diff method.
 
 Instead of diffing against baseline (noisy), we diff two routes that

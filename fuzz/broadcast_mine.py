@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine the 'broadcast fanout' pattern: R24/C4 cells that span many Y at
 the same (wx, I) for a single point-to-point route.
 

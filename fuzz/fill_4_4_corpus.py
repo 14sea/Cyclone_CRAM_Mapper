@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """γ step 1 — fill the (4,4) corner corpus.
 
 (4,4) is the double-edge case: one column from left IO (X3 is leftmost

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine per-(src_dx, dst_x, dst_y) dst LI envelope variants.
 
 The 'typical' envelope ({P0,P2,P4,P6}+P8B0) is the most common variant

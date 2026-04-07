@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """R24 mirror experiment — replay Quartus's R24 cells via RouteCodec.
 
 Reads every active R24 cell from lits_l3_base.rbf, asks the codec to write

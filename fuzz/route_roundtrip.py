@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Routing codec round-trip verification.
 
 For each (zero baseline, route pair) RBF:

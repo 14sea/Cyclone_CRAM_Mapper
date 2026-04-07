@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Stage 1+2 unit tests: parse_need + plan_hops on 8 hand-traced cases."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

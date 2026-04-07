@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Targeted compiles to fill sparse cells in the R24 (Y_block, prev_x) matrix.
 
 Forces Quartus to route long horizontal paths through the under-sampled

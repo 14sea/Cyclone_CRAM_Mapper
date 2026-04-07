@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine mode-selection rule from the 21 already-classified LABs.
 
 Source LE is fixed at (X=10, Y=10, N=0) for the entire single-input lut2 sweep.

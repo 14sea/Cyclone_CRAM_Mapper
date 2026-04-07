@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Compile lits_pair RBFs at varied (sx, sy) to test whether the R24
 broadcast hold is relative to (sx, sy) or absolute.
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """End-to-end route synthesis MVP for EP4CE6.
 
 5-stage pipeline (see CLAUDE.md and the MVP planning doc):

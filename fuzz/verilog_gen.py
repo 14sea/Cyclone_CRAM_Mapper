@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Generate minimal Verilog designs for bitstream fuzzing."""
 
 

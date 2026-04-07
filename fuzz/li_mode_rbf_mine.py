@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine LI mode-selection rule via RBF spatial traceback.
 
 For each lits_pair_X10Y10_to_X{dst_x}Y{dst_y}N0_datab.rbf:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine LI mode-selection rule by extracting STA paths from existing
 lits_pair_* work directories and correlating the last R4/C4 hop's I-index
 with the paired/alternating mode label.

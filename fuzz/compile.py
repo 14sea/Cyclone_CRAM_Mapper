@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Drive Quartus headless compilation for fuzzing."""
 
 import os

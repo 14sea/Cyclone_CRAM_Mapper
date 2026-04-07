@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """EP4CE6F17C8 constants and fuzzing pipeline configuration."""
 
 import os
@@ -86,10 +87,11 @@ def cram_ctrl_bit(y):
 # Using LED and KEY pins from AX301 that won't conflict
 # These are minimal I/O for a 4-input LUT + output
 FUZZ_PINS = {
+    # Verified 2026-04-07 via pin_probe.py hardware bind test
     "A": "PIN_E16",   # KEY2
     "B": "PIN_M16",   # KEY3
     "C": "PIN_M15",   # KEY4
-    "D": "PIN_E15",   # RESET (used as input for fuzzing)
+    "D": "PIN_E15",   # KEY1  (was mislabeled "RESET")
     "Q": "PIN_G15",   # LED[0]
     "CLK": "PIN_E1",  # 50 MHz clock
 }
@@ -99,7 +101,7 @@ ROUTE_FUZZ_PINS = {
     "A": "PIN_E16",   # KEY2
     "B": "PIN_M16",   # KEY3
     "C": "PIN_M15",   # KEY4
-    "D": "PIN_E15",   # RESET
+    "D": "PIN_E15",   # KEY1
     "E": "PIN_N13",   # SRAM addr
     "F": "PIN_L16",   # SRAM addr
     "G": "PIN_K16",   # SRAM addr (adjacent)

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """L3 step 2-4 — routing transplant surgery on lits_l3_base.rbf.
 
   2. Strip   — read every active C4/R4/R24/LI cell from the Quartus

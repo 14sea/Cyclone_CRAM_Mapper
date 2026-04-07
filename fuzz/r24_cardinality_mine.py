@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine R24 (wx, y) → fixed-offset cardinality across the RBF corpus.
 
 Walks every routed RBF in results/rbf/ and groups its R24 cells by

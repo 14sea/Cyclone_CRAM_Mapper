@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Extract typical LI 9-cell envelopes from the 66-sample column sweep.
 
 Reads every litcol_*.rbf produced by li_mode_column_table.py, groups the

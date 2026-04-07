@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Build the 22-entry X→mode consensus table.
 
 For each LAB_X, compile from 3 different src LABs to dst=(X, 10) and read

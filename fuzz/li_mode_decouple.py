@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Decoupling test: is LI mode purely a function of dst_x?
 
 Compile 3 srcs × 3 dsts = 9 designs and read the LI mode at each dst LAB.

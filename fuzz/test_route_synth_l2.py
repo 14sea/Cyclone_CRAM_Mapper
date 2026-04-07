@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """L2: cell-set diff between synthesized RBF and real Quartus RBF.
 
 For each test case, synthesize an RBF via synth_route() and compare its

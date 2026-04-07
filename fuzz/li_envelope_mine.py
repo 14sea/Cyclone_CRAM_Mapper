@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine source AND destination LI envelopes from lits_pair_* corpus.
 
 For each lits_pair_X{sx}Y{sy}_to_X{dx}Y{dy}N{dn}_{port}.rbf, read its LI

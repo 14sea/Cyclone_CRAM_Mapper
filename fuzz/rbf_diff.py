@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Binary diff engine for RBF bitstream comparison."""
 
 from dataclasses import dataclass

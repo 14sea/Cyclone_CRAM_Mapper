@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Generate QSF (Quartus Settings File) for fuzzing experiments."""
 
 from config import (

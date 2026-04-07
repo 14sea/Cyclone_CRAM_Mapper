@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """LI activation key-space analysis (Phase 1: pure path_json mining).
 
 Goal: characterize the (src_type, src_I, dst_N, dst_port) keyspace from

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """L1 round-trip test for synth_route on a real zero baseline RBF."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

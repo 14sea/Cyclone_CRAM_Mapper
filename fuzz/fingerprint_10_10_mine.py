@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Step 2 — extract the (10,10) source fingerprint by intersecting all
 lits_pair_X10Y10_to_*.rbf cell sets, then break down the per-route delta.
 

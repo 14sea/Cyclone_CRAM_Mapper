@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """R24 I=0 BASE mapper — route-pair diff method.
 
 R24 wires are row wires spanning ~24 columns. Like R4, their switches

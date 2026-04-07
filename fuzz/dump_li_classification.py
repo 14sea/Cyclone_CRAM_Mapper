@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Dump the 21-LAB LI mode classification to a JSON snapshot.
 
 The underlying lits_pair_* RBFs are gitignored (results/rbf/), so without

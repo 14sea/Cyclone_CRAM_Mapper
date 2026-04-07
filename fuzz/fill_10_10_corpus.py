@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Step 1 — fill the (10,10) Manhattan corridor with strategic dst samples."""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

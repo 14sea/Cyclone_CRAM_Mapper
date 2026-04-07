@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """EP4CE6 bitstream read/write codec for LUT truth tables and routing.
 
 Given calibrated minterm patterns at a position (X, Y, N), this module can:
@@ -70,6 +71,26 @@ _C4_FIXED_OFFSETS = {
     (29, 10): 0x512ad,  # 2/3 Y hit
     (29, 23): 0x50dc1,  # 2/2 Y hit
     (30, 9): 0x52f62,   # 3/3 Y hit
+    # --- c4_inz_sweep batch (2026-04-07): 19 new mappings ---
+    (3, 1):   0x092f5,  # 3/3 Y hit
+    (7, 12):  0x105cd,  # 5/6 Y hit
+    (10, 1):  0x15217,  # 2/2 Y hit
+    (10, 10): 0x14c59,  # 2/2 Y hit (same byte as (10,12) I=12)
+    (11, 1):  0x177d3,  # 4/5 Y hit
+    (11, 12): 0x16c56,  # 5/6 Y hit
+    (12, 12): 0x18ab1,  # 5/6 Y hit
+    (13, 1):  0x1a694,  # 3/3 Y hit
+    (16, 10): 0x2cd12,  # 3/3 Y hit
+    (16, 12): 0x2d12c,  # 4/6 Y hit
+    (17, 12): 0x2ef87,  # 5/6 Y hit
+    (21, 1):  0x364d5,  # 6/6 Y hit
+    (21, 10): 0x36679,  # 3/3 Y hit
+    (21, 12): 0x35afc,  # 6/6 Y hit
+    (24, 1):  0x3bc9a,  # 4/5 Y hit
+    (24, 10): 0x3bc9b,  # 2/2 Y hit
+    (24, 12): 0x3bbc8,  # 5/6 Y hit
+    (28, 1):  0x50316,  # 2/2 Y hit
+    (29, 12): 0x51036,  # 5/5 Y hit
 }
 
 # --- R4 address model constants ---

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """C16 switch CRAM address mapper.
 
 C16 wires are column wires spanning ~16 rows. Like C4, their switches

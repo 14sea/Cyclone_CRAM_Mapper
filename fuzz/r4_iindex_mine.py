@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Mine which R4 (wx, i_idx) Quartus picks per (src, dst, port).
 
 Walks lits_pair_*.rbf, reads R4 switches via RouteCodec, and tabulates

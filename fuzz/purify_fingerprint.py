@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Step A — purify the (10,14) and (10,10) fingerprints by removing
 GND-tie noise. Use compile_route_pair (multi-input lut2) with
 connect_port='datad' so all 4 lut2 inputs receive real routed signals.
