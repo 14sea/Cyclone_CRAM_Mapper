@@ -679,6 +679,42 @@ class RouteCodec:
     }
     LI_MODE_AMBIGUOUS_X = {6, 8, 11, 22, 26, 28}
 
+    # ------------------------------------------------------------------
+    # Typical LI 9-cell envelopes per mode (2026-04-07)
+    # Extracted from results/li_envelope_typical.json — see
+    # fuzz/extract_li_envelopes.py for the histogram source.
+    #
+    # paired: 5 distinct envelopes observed across 38 samples; the most
+    #   common one ({P0,P2,P4,P6} fully paired + P8B0) covers 52.6%.
+    # alternating: 2 distinct envelopes across 27 samples; the most common
+    #   (strict P0..P7 B1/B0 alternation + P8B0) covers 55.6%. Both
+    #   variants only differ in the P8 tail base.
+    #
+    # These are MVP defaults — the routing synthesizer emits them as the
+    # first-choice envelope. If hardware roundtrip fails on a specific
+    # column, fall back to the second-most-common variant for that mode.
+    # ------------------------------------------------------------------
+    LI_TYPICAL_ENVELOPE = {
+        "paired": [
+            (0, 0), (0, 1),
+            (2, 0), (2, 1),
+            (4, 0), (4, 1),
+            (6, 0), (6, 1),
+            (8, 0),
+        ],
+        "alternating": [
+            (0, 1),
+            (1, 0),
+            (2, 1),
+            (3, 0),
+            (4, 1),
+            (5, 0),
+            (6, 1),
+            (7, 0),
+            (8, 0),
+        ],
+    }
+
     @staticmethod
     def select_li_mode(dst_x):
         """Return the preferred LI activation mode for a destination LAB column.
