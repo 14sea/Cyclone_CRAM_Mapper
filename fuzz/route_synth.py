@@ -149,7 +149,7 @@ def plan_hops(need: Need) -> list[Hop]:
     # for the final 1-LAB step.
     while cur_x != need.dx:
         remaining = LAB_X.index(need.dx) - LAB_X.index(cur_x)
-        if abs(remaining) >= 2:
+        if abs(remaining) >= 3:
             step = remaining if abs(remaining) <= 6 else (6 if remaining > 0 else -6)
             new_x = _lab_step_to_x(cur_x, step)
             hops.append(Hop("R24", anchor_x=cur_x, anchor_y=cur_y,
@@ -171,9 +171,38 @@ def plan_hops(need: Need) -> list[Hop]:
 # Stage 3-5 — stubs (filled in next commits)
 # ----------------------------------------------------------------------
 
+_LI_VARIANT_TABLE = None
+
+
+def _load_variant_table():
+    global _LI_VARIANT_TABLE
+    if _LI_VARIANT_TABLE is None:
+        import json
+        from pathlib import Path
+        p = Path(__file__).resolve().parent.parent / "results" / "li_dst_variant_table.json"
+        if p.exists():
+            raw = json.loads(p.read_text())
+            _LI_VARIANT_TABLE = {k: [tuple(c) for c in v] for k, v in raw.items()}
+        else:
+            _LI_VARIANT_TABLE = {}
+    return _LI_VARIANT_TABLE
+
+
 def pick_li_envelope(need: Need):
-    """Stage 3 — return (mode, [(pair, base_idx), ...]) for the dst LAB."""
+    """Stage 3 — return (mode, [(pair, base_idx), ...]) for the dst LAB.
+
+    Lookup priority:
+      1. Exact (src, dst, port) match in the corpus-mined variant table
+      2. Fall back to the typical envelope per LI mode for dst column
+    """
     from bitstream import RouteCodec
+    table = _load_variant_table()
+    key = f"{need.sx},{need.sy},{need.dx},{need.dy},{need.dst_port}"
+    if key in table:
+        cells = table[key]
+        # Classify which mode this corresponds to (just for safety check)
+        mode = RouteCodec.select_li_mode(need.dx)
+        return mode, cells
     mode = RouteCodec.select_li_mode(need.dx)
     return mode, list(RouteCodec.LI_TYPICAL_ENVELOPE[mode])
 

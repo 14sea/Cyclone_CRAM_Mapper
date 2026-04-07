@@ -12,18 +12,22 @@ from runner import compile_route_pair_single_input
 
 
 def main():
-    tag = "lits_l3_base"
-    rbf, t, err = compile_route_pair_single_input(
-        tag, 10, 10, 0, 12, 10, 0,
-        connect_port="datab",
-        mask1=0x8888,   # A AND B at lut1
-        mask2=0xAA,     # pass datab at lut2
-    )
-    if rbf is None:
-        print(f"FAIL ({t:.1f}s): {err}")
-        return 1
-    print(f"OK  ({t:.1f}s) -> {rbf}")
-    return 0
+    designs = [
+        ("lits_l3_base", 0x8888, 0xAA),   # working logic
+        ("lits_l3_zero", 0x0000, 0x00),   # same skeleton, no signal route
+    ]
+    rc = 0
+    for tag, m1, m2 in designs:
+        rbf, t, err = compile_route_pair_single_input(
+            tag, 10, 10, 0, 12, 10, 0,
+            connect_port="datab", mask1=m1, mask2=m2,
+        )
+        if rbf is None:
+            print(f"FAIL {tag} ({t:.1f}s): {err}")
+            rc = 1
+        else:
+            print(f"OK   {tag} ({t:.1f}s) -> {rbf}")
+    return rc
 
 
 if __name__ == "__main__":

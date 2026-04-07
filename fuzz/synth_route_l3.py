@@ -16,6 +16,7 @@ All offline; no hardware needed. Run before flashing AX301.
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import re
 from collections import defaultdict
 from pathlib import Path
 
@@ -27,7 +28,7 @@ RBF_DIR = ROOT / "results" / "rbf"
 BASE = RBF_DIR / "lits_l3_base.rbf"
 STRIPPED = RBF_DIR / "lits_l3_stripped.rbf"
 GRAFTED = RBF_DIR / "lits_l3_grafted.rbf"
-ZERO = RBF_DIR / "lits_zero_10_10.rbf"   # used only as a stable read baseline
+ZERO = RBF_DIR / "lits_l3_zero.rbf"  # logic-matched zero — same skeleton, no signal
 
 SRC = (10, 10)
 DST = (12, 10)
@@ -40,6 +41,23 @@ def cells_of(codec, rbf, baseline):
         for e in lst:
             out.add((t, e[0], e[1], e[2]))
     return out
+
+
+_NAME_RE = re.compile(r"_X(\d+)_Y(\d+)")
+
+
+def in_corridor(name, src, dst, pad=1):
+    m = _NAME_RE.search(name)
+    if not m:
+        return False
+    x, y = int(m.group(1)), int(m.group(2))
+    xlo, xhi = min(src[0], dst[0]) - pad, max(src[0], dst[0]) + pad
+    ylo, yhi = min(src[1], dst[1]) - pad, max(src[1], dst[1]) + pad
+    return xlo <= x <= xhi and ylo <= y <= yhi
+
+
+def filter_corridor(cells, src, dst, pad=1):
+    return {c for c in cells if in_corridor(c[1], src, dst, pad)}
 
 
 def by_type(s):
@@ -100,7 +118,13 @@ def main():
     g_only = g_cells - q_cells
     q_only = q_cells - g_cells
 
-    print(f"\nstep 4 cell-set diff (relative to stripped):")
+    # Apply corridor filter — strip the I/O-pin and constant-network noise
+    g_cells = filter_corridor(g_cells, SRC, DST, pad=1)
+    q_cells = filter_corridor(q_cells, SRC, DST, pad=1)
+    inter = g_cells & q_cells
+    g_only = g_cells - q_cells
+    q_only = q_cells - g_cells
+    print(f"\nstep 4 cell-set diff (relative to stripped, CORRIDOR-FILTERED):")
     print(f"  grafted total : {len(g_cells)}  by type {by_type(g_cells)}")
     print(f"  quartus total : {len(q_cells)}  by type {by_type(q_cells)}")
     print(f"  intersection  : {len(inter)}  by type {by_type(inter)}")
