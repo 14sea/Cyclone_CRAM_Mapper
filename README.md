@@ -181,8 +181,8 @@ EP4CE6/
 │   ├── analyze.py          ← Result analysis and visualization
 │   └── bitstream.py        ← Bitstream codec (read/write LUT + routing switches)
 ├── results/
-│   ├── rbf/                ← Collected .rbf files (~850 files, 368 KB each)
-│   ├── ep4ce6_bitdb.sqlite ← Bit-mapping database (609K+ records)
+│   ├── rbf/                ← Collected .rbf files (~1,340 files, 368 KB each)
+│   ├── ep4ce6_bitdb.sqlite ← Bit-mapping database (708K+ records)
 │   └── FINDINGS.md         ← Detailed findings report
 ├── work/                   ← Quartus temporary build directory (can be cleaned)
 ├── work_route/             ← Routing experiment build directory
@@ -395,9 +395,9 @@ CREATE TABLE routing_paths (
 ```
 
 Current database statistics:
-- **1,755** experiments
-- **609,835** bit-mapping records
-- **774** routing paths (including complete wire paths from STA extraction)
+- **1,961** experiments
+- **708,319** bit-mapping records
+- **980** routing paths (including complete wire paths from STA extraction)
 - **95** distinct features
 
 ---
@@ -1035,13 +1035,48 @@ This was tested against all 6 observed Quartus classes (all accepted) and 4 synt
 
 ### What this resolved: the "9-pair vs 5-pair" mystery
 
-For weeks the same routing key was producing what looked like two completely different bit patterns at different LABs — sometimes 10 byte flips at 5 pair positions, sometimes 9 byte flips at 9 pair positions. We thought these were structurally distinct encodings.
+For a long stretch of this work the same routing key was producing what looked like two completely different bit patterns at different LABs — sometimes 10 byte flips at 5 pair positions, sometimes 9 byte flips at 9 pair positions. We thought these were structurally distinct encodings.
 
 They aren't. They're the **same 9-cell envelope** counted two different ways:
 - "5 pairs × 2 bytes = 10 flips" was counting only paired pairs and missing the P8 single-byte tail (it's actually 4 paired + P0 paired + P8 single = 9 cells)
 - "9 pairs × 1 byte = 9 flips" was already counting cells correctly
 
 The old reader's `break` after the first base hit was masking the difference between paired and alternating modes. Once we emitted one read entry per `(pair, base)` cell, the structure became obvious.
+
+---
+
+## Route Synthesis: Island Hopping
+
+Once the read-side codec was solid, the next question was the inverse: **given a (src, dst) pair, can we synthesize a routing bitstream that matches Quartus cell-for-cell?** A formula-driven synthesizer turned out to be the wrong frame. We discovered that:
+
+> **Cyclone IV CRAM is interleaved, not topologically isomorphic to the chip.** The routing-state CRAM cells for each LE live in non-overlapping physical regions far from the source LAB column, and **cross-source fingerprint intersection is empty** — there is no universal "source entry code" that generalizes across source LABs.
+
+So `route_synth` (in `fuzz/route_synth.py`) takes a different tack: per-source corpus mining + bit-perfect snapshot replay. Each "green-zone island" is a `(sx, sy)` source LAB for which we have:
+
+1. A small corpus of `lits_pair_X{sx}Y{sy}_to_*` Quartus compiles
+2. A **source fingerprint** (cells present in 100% of routes from that source)
+3. A **per-route delta** (the remaining cells per dst, as raw `(offset, bit)` pairs)
+
+For any dst already in the corpus, `synth_route()` emits `fingerprint ∪ delta[dst]` as raw cell flips and produces a bitstream that matches Quartus byte-for-byte in the routing region. For dsts outside the corpus, it falls back to the formula-based plan (C4/R4/R24 hops + LI envelope) and is gated by `validate_safe_for_hardware()` so it can't drive a LAB into an unknown LI activation pattern.
+
+### Three islands so far
+
+| Island | Location | Routes | Fingerprint bits | Bit-perfect | Round-trip | Safe (synth/quartus) | Yellow zone |
+|--------|----------|--------|------------------|-------------|------------|----------------------|-------------|
+| α | (10, 10) — interior | 31 | 6 | 31/31 | 31/31 | 31/31 / 31/31 | 3/3 |
+| β | (10, 14) — M9K boundary (Y15 ghost row) | 11 | 11 | 11/11 | 11/11 | 11/11 / 11/11 | 3/3 |
+| γ | (4, 4) — corner | 16 | **1** | 16/16 | 16/16 | 16/16 / 16/16 | 3/3 |
+| **Total** | | **58** | | **58/58** | **58/58** | **58/58** | **9/9** |
+
+A few non-obvious findings from the islands:
+
+- The (4, 4) **corner** has the *smallest* fingerprint of all three (1 bit, `R4_X11_Y5_N0_I3`). The expectation that corner LABs would need *more* "edge bits" turned out to be wrong — the corner's per-route delta absorbs almost everything.
+- An earlier "GND-tie hypothesis" — that the (10, 14) fingerprint's 11 bits were artifacts of unrouted lut2 inputs being tied to GND — was **falsified** by a controlled multi-input compile (`purify_fingerprint.py`). With all 4 lut2 inputs routed to real signals, the fingerprint slightly *grew* instead of shrinking.
+- Several universal "always-on" structures were extracted from the corpus and are emitted unconditionally by `emit_ops()` for any inter-LAB route from a known source: a **source-side R4 launch driver** (`R4_X{sx+1}_Y{sy}` at I=1 and I=2), a **source-column R24 broadcast hold** (5 raw bits), and an **LI source-driver MUX** (`P8B0+P8B1`) skipped only for adjacent ±1 horizontal hops. These were each mined as 100% across the corresponding `lits_pair_*` corpus.
+
+### Tests
+
+`fuzz/test_green_zone_harden.py` auto-discovers all `results/fingerprint_{sx}_{sy}.json` snapshots and runs five checks per island (bit-perfect vs. Quartus, codec round-trip, safe-synth, safe-quartus, fingerprint drift) plus three "yellow zone" probes (dsts NOT in the corpus, must at least pass `validate_safe_for_hardware`). All three current islands pass with zero drift.
 
 ### Mode-selection rule (still partially open)
 
@@ -1141,7 +1176,7 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.1: C4 I=0 switch address model (63 wires, 0 false predictions, universal formula across 22 columns)
 - [x] Phase 3.2: R4 switch address model framework (slot/group formula + PREV column location)
 - [x] Phase 3.3: R4 slot=1 offset correction (bp = 6-group, 0%→78% fix)
-- [x] Phase 3.4: R4 I-index mapping — 13/37 mapped (I=0,1,2,4,7,10,14,15,17,18,20,22,25)
+- [x] Phase 3.4: R4 I-index mapping — 18/37 mapped (13 via R4_BASE_PREV slot/group formula: I=0,1,2,4,7,10,14,15,17,18,20,22,25; +5 via per-(X,I) corpus mining: I=3,11,12,13,16)
 - [x] Phase 3.5: LOCAL_INTERCONNECT switch modeling (70% cross-validation, 22 columns, 4 pair activation patterns)
 - [x] Phase 3.6: Routing codec (RouteCodec read/write methods: C4/R4/LOCAL_INTERCONNECT)
 - [x] Phase 3.7: R24 I=0 fixed-byte model (~66% pair-diff accuracy, 73% of R24 wires)
@@ -1151,13 +1186,15 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 - [x] Phase 3.11: LI encoding modes resolved — paired vs alternating, uniform 9-cell envelope
 - [x] Phase 3.12: Hardware safety guard V2 with signature recognition (`validate_safe_for_hardware`)
 - [x] Phase 3.13: End-to-end hardware verification on AX301 (codec → flash → expected logic)
+- [x] Phase 3.14: Route synth island hopping — 3 green-zone source LABs ((10,10), (10,14), (4,4)), 58/58 routes bit-perfect against Quartus, fingerprint drift = 0
 
 ### In Progress
 
-- [ ] Phase 3.14: Map remaining ~19 R4 I-indices (I=3,6,8,9,11,12,13,16,19,21,23,26,27,28, etc.)
-- [ ] Phase 3.15: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
-- [ ] Phase 3.16: C16 long-distance wire modeling (not yet started)
-- [ ] Phase 3.17: LI mode-selection rule mining — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
+- [ ] Phase 3.15: Map remaining ~19 R4 I-indices (I=6,8,9,19,21,23,26,27,28, etc.)
+- [ ] Phase 3.16: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
+- [ ] Phase 3.17: C16 long-distance wire modeling (not yet started)
+- [ ] Phase 3.18: LI mode-selection rule mining — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
+- [ ] Phase 3.19: Expand route-synth green zones beyond 3/392 source LABs; promote yellow-zone fallback to bit-perfect — what makes Quartus pick paired vs alternating? (needs richer multi-LE routing corpus)
 
 ### Future Work
 
@@ -1176,7 +1213,8 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 | LOCAL_INTERCONNECT | **~85%** | Base-granular read/write; two encoding modes resolved; V2 safety guard |
 | R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
 | C16 long-distance wires | **0%** | Not yet started |
-| Bitstream codec | **~70%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2 |
+| Bitstream codec | **~75%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2 |
+| Route synthesis (green islands) | **3/392 sources** | (10,10), (10,14), (4,4) — 58/58 routes bit-perfect against Quartus |
 
 ---
 

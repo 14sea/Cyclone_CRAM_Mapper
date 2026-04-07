@@ -19,6 +19,9 @@ python3 runner.py --node lut_inst lut_single 10 10 0
 # Analyze results
 python3 analyze.py summary
 python3 analyze.py lut_table 10 10 0
+
+# Route synth regression: 3 green-zone islands, 58/58 bit-perfect
+python3 fuzz/test_green_zone_harden.py
 ```
 
 ## Directory Structure
@@ -35,7 +38,7 @@ EP4CE6/
 │   ├── runner.py            # Fuzzing campaign orchestrator
 │   └── analyze.py           # Result analysis and visualization
 ├── results/
-│   ├── rbf/                 # Collected .rbf files (~190 files)
+│   ├── rbf/                 # Collected .rbf files (~1,340 files)
 │   ├── ep4ce6_bitdb.sqlite  # Bit mapping database
 │   └── FINDINGS.md          # Detailed findings report
 ├── templates/               # Verilog templates (unused, generated in-memory)
@@ -72,7 +75,7 @@ EP4CE6/
 - **Fully deterministic** routing with MINIMUM optimization level
 - **STA routing extraction**: `report_timing -show_routing` gives exact wire names per path
 - Wire naming: `{TYPE}_X{x}_Y{y}_N{n}_I{index}` (C4, R4, C16, R24, LOCAL_INTERCONNECT, LE_BUFFER)
-- 232 paths collected, 607+ unique wire instances from 12 source positions
+- 980 routing paths collected (SQLite), 1,340+ RBFs across multi-source corpora
 - Column routing: dy=1 direct link, dy=2-4 1×C4, dy=5-8 2×C4, dy=9+ 3×C4
 
 ### C4 Switch CRAM Address Model
@@ -143,7 +146,7 @@ R4_BASE_PREV = {
 - **RouteCodec**: read/write for C4, R4, R24, LOCAL_INTERCONNECT, apply_routing()
 - Huge columns (X13=76230, X26=68880) need M9K/DSP sub-region mapping
 - 37 unique R4 I-indices observed in STA data; ~19 still unmapped
-- 774 routing paths collected, parallel compilation at ~4s/target
+- 980 routing paths collected, parallel compilation at ~4s/target
 
 ### R24 Switch CRAM Address Model (I=0 mapped — 66% pair-diff accuracy)
 ```python
@@ -192,7 +195,7 @@ SLOT_OFFSET = {0: 67, 1: -70, 2: 0}   # same as R4
 ### RouteCodec round-trip + hardware safety (2026-04-07)
 - **Self-consistency PASS**: `route_roundtrip.py` reads switches from real Quartus RBFs, replays them with `apply_routing()`, re-reads → 0 dropped, 0 hallucinated cells (column + row routes)
 - New methods: `write_c4_inz()` for I≠0 fixed-byte writes; `'raw'` switch type for single-bit replay (R24/LI/R4 wire-level writes are coarser than per-bit reads)
-- **`validate_safe_for_hardware(rbf, zero)`**: counts LI pairs activated per LAB, raises if >`LI_MAX_PAIRS_PER_LAB` (default 5). Use as a flash-time guard against LI MUX over-activation contention
+- **`validate_safe_for_hardware(rbf, zero)` V2**: classifies each LAB's LI pair_map via `_classify_li_lab()` against the 5 known-safe envelopes (`paired` / `alternating` / `edge_even_b0` / ...). Raises on unknown / broken / over-activated LI patterns. Use as a flash-time guard against LI MUX contention
 - **SAFETY: `write_local_interconnect()` signature changed** from `(lx, ly, i_idx)` to `(lx, ly, pairs)`. The old auto-expansion of an I-index into ALL pairs from `_LI_ALL9 / _SKIP37 / _EVEN / _FIRST2` is **physically dangerous** — those pattern tables were inferred from CRAM reads but real Quartus only activates 1-5 pairs per LI MUX, never 9. Auto-expansion would drive multiple routing channels into the same LE input → input MUX short circuit on real silicon
 - The pattern constants are kept only for `read_local_interconnect()` I-index disambiguation, never used by writes
 
@@ -210,6 +213,22 @@ After dropping the `break` in `read_local_interconnect()` and emitting one entry
 - Total cells per LAB is **always exactly 9** — what looked like "5-pair vs 9-pair" was paired-cardinality vs cell-cardinality conflation in the old reader
 
 `RouteCodec._classify_li_lab()` validates a LAB's pair_map against this taxonomy; `validate_safe_for_hardware()` V2 uses it as the safe-envelope check (rejects mixed/broken modes, accepts all 6 observed Quartus classes).
+
+### Route Synthesis — Island Hopping (3 green-zone sources)
+- `fuzz/route_synth.py` — `synth_route(zero, src, dst)` returns a bit-perfect-vs-Quartus RBF when `(sx,sy)` has a fingerprint snapshot AND `(dx,dy,port)` is in its `per_route_delta`. Otherwise falls back to formula-based plan_hops + LI envelope, gated by `validate_safe_for_hardware()`.
+- **Major insight**: Cyclone IV CRAM is interleaved, NOT topologically isomorphic to chip layout. **Cross-source fingerprint intersection = 0** → no universal source-entry formula exists; route_synth must mine per-source corpora.
+- **3 green islands** (`results/fingerprint_{sx}_{sy}.json`):
+  - α (10,10) interior — 31 routes, 6 fp bits
+  - β (10,14) M9K boundary (Y15 ghost row) — 11 routes, 11 fp bits
+  - γ (4,4) corner — 16 routes, **1 fp bit** (counter-intuitive: corner has smallest fingerprint, NOT largest)
+- All 58/58 routes pass: bit-perfect vs Quartus, codec round-trip, safe-synth, safe-quartus, fingerprint drift = 0. 9/9 yellow-zone probes pass safety fallback.
+- `fuzz/test_green_zone_harden.py` auto-discovers all `fingerprint_*.json` and runs the 5 checks + yellow probes per island.
+- **Universal "always-on" structures** mined as 100% across `lits_pair_*` corpus, emitted unconditionally by `emit_ops()` for any inter-LAB route from a known source:
+  - Source-side R4 launch driver: `R4_X{sx+1}_Y{sy}` at I=1 + I=2
+  - Source-column R24 broadcast hold: 5 raw bits (currently hard-coded for sx=10,sy=10; needs multi-source generalization)
+  - LI source-driver MUX: `(P8,B0)+(P8,B1)` at source LAB, skipped only for adjacent ±1 horizontal hops
+- **Falsified hypothesis**: GND-tie noise was NOT the cause of (10,14)'s 11-bit fingerprint. `purify_fingerprint.py` recompiled with all 4 lut2 inputs routed (no GND ties) → fingerprint slightly grew, not shrank.
+- New LI mode `edge_even_b0` added to `_classify_li_lab()` for top/bottom-row LABs (Y2/Y21): even pairs only, all base 0, no P8.
 
 ### Open: mode selection rule
 Which mode (paired vs alternating) Quartus picks for a given LAB is not yet derivable from the routing key. Mode "paired" dominates column moves; mode "alternating" dominates row moves and LABs near non-LAB columns (M9K/DSP at X5,9,14,15,20,27,30). Need a richer routing_paths corpus (multi-LE designs) to mine the rule.
