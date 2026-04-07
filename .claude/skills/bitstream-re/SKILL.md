@@ -5,7 +5,7 @@ description: Black-box reverse engineering of FPGA configuration bitstreams (Alt
 
 # FPGA Bitstream Reverse Engineering — Playbook
 
-Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak, 58/58 bit-perfect route synthesis, HW-verified on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean.
+Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated on both axes — X=32 column AND Y=15 row; 686/686 bit-perfect route synthesis across 15 green-zone source LABs; HW-verified end-to-end on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean.
 
 ## Core principles
 

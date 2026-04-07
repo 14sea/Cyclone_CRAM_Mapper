@@ -668,7 +668,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 
 这个模型使用和 LUT TT 完全相同的 slot/group 编码框架（因为它们共享同一套 CRAM 地址空间），只是基地址不同。
 
-#### R4 开关 CRAM 地址模型（18 个 I-index 已映射）
+#### R4 开关 CRAM 地址模型（37 个 I-index 中已映射 25 个）
 
 R4 行导线的开关比 C4 更复杂，每个 R4 "I-index" 有独立的基地址 (BASE)：
 
@@ -921,7 +921,7 @@ open("output.rbf","wb").write(new_rbf)
 
 **当前覆盖率**：
 - C4 I=0：100%（63 条线全部正确）
-- R4：18/37 个 I-index 已映射（~90.5% 线网覆盖率，~77% 直接验证准确率）
+- R4：25/37 个 I-index 已映射（剩余 12 个卡在路由语料不足）
 - R24 I=0：固定字节模型已映射（~66% 的 pair-diff 准确率），覆盖 73% 的 R24 线网
 - LOCAL_INTERCONNECT：base 粒度读写完成，两种编码模式已破解
 - C4 I≠0：无通用公式，逐线查表（24 条已映射）
@@ -1466,7 +1466,7 @@ Verilog 想法  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
 - [x] Phase 3.11：LI 编码模式破解 —— paired vs alternating，统一 9-cell envelope
 - [x] Phase 3.12：硬件安全防线 V2（带特征识别的 `validate_safe_for_hardware`）
 - [x] Phase 3.13：AX301 端到端硬件验证（编解码器 → 烧录 → 逻辑行为正确）
-- [x] Phase 3.14：路由综合跳岛策略 —— 3 座绿区源 LAB（(10,10)、(10,14)、(4,4)），58/58 路由对 Quartus bit-perfect，指纹漂移 = 0
+- [x] Phase 3.14：路由综合跳岛策略 —— **15 座绿区源 LAB**（(4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12)），**686/686 路由对 Quartus bit-perfect**，指纹漂移 = 0
 - [x] Phase 3.15：**EP4CE6 RBF CRC 完全逆向**（CRC-16/IBM，poly 0x8005，init 0xFE54，反射，每 210 字节一帧，frames 25..1751）。CRC patcher 已整合进 codec；1727/1727 CRAM 帧验证通过
 - [x] Phase 3.16：**硬件回环闭合** —— RouteCodec + LutCodec 输出经 CRC patch 后可直接烧入真实 EP4CE6 矽片（不再回退到 EPCS）
 - [x] Phase 3.17：AX301 引脚映射经 `pin_probe.py` 在矽片上验证（KEY1=E15、KEY2=E16、KEY3=M16、KEY4=M15、LED0=G15）
@@ -1476,15 +1476,15 @@ Verilog 想法  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
 
 ### 进行中
 
-- [ ] Phase 3.19：映射剩余 ~19 个 R4 I-index（I=6,8,9,19,21,23,26,27,28 等）
+- [~] Phase 3.19：映射剩余 R4 I-index —— **37 个中已映射 25 个**（新增 I=6,8,11,12,13,16,17,19,21,23,26,27 + 早期 13 个）。剩余 12 个（5,9,24,28,29,30,31,32,33,104,116,125）卡在「没有足够多 Y 值的路由语料」，不是挖掘方法本身的问题
 - [ ] Phase 3.20：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
 - [ ] Phase 3.21：C16 长距离线建模（完全未映射）
 - [x] Phase 3.22：**LI 模式选择规则 —— 阴性收案**。T9 + T10 正交网格语料（12 个 source、374 次 compile、414 条 mappable rows，`fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`）。可部署规则：`dy∈{2,3,21}→edge_even_b0`（100%）、`adx==0→paired`（79%）、`dx>30∧dy>7.5→paired`。中段叶子 `dy>3∧dx≤24.5∧adx>0.5`（n=247，占语料 60%）卡在 **52% 抛硬币**，语料翻倍 + 强制 sx/dx 解耦都没用。结论：paired vs alternating **不是静态路由键的函数**，大概率是 Quartus 的 placement seed / LI 通道占用 / 成本函数 tiebreak 决定的。继续扩语料不会有帮助。黄区回退继续把 `paired` 作为弱先验（两种模式都是硬件安全的）。
 - [x] Phase 3.23：**C4 I≠0 大扫** —— `fuzz/c4_inz_sweep.py` 从现有 routing_paths 语料里挖出 19 条新的 (X,I) 映射，`_C4_FIXED_OFFSETS` 从 25 条扩到 **44 条**。绿区回归仍然 58/58 bit-perfect。
 - [x] Phase 3.24：**非 LAB 列身份解密** —— `~/EP4CE10_Jailbreak/probe_blocks.v`（12 个 altsyncram + 8 个 lpm_mult，虚拟管脚）。Quartus 把 block 分别落在 `M9K_X15_Y*`、`M9K_X27_Y*`、`DSPMULT_X20_Y*`。越狱之后的 3 条真·非 LAB 列身份确认：**X=15、X=27 是 M9K RAM 列**；**X=20 是嵌入式 9×9 乘法器列**。PLL 不占任何 X 列，在 die 边缘。
-- [ ] Phase 3.25：把 `COLUMN_BASE` 扩展到越狱发现的六条新 LAB 列（X=5,9,14,30,32,33），用 baseline-diff 方法挖出它们的 CRAM base；在 bitstream.py 打开扩展版图之前，至少要在 X=32/33 其中一个 source 上跑通 green-zone 回归
-- [ ] Phase 3.26：扩展路由综合绿区，超出 3/392 源 LAB；把黄区回落也提升到 bit-perfect
-- [ ] Phase 3.27：M9K / 嵌入式乘法器 CRAM 编码逆向 —— X=15/20/27 的 bit 排布、pair 间距（完全未探索）
+- [x] Phase 3.25：**越狱版图在矽片上完整收案（2026-04-07）** —— 两个轴都通过编解码器端到端在矽片上验证。**X=32 列**：LCCOMB_X32_Y10_N0 mask 0x8888 在 AX301 上跑通；编解码器已校准，`COLUMN_BASE` 扩展到全部 28 条 LAB 列，标准 7350 字节步进。**Y=15 幽灵行**：LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1∧K2)∨(K3∧K4)` 在 AX301 上跑通（`fuzz/demo_y15_keys2led.py`）。+65% fabric 在真实 CE6 矽片上达到生产可用
+- [x] Phase 3.26：**路由综合绿区从 3 → 15 个源 LAB**（`fuzz/fingerprint_raw_mine.py` 编解码器盲态 XOR 挖掘 + 头部过滤）；686/686 路由 bit-perfect。`results/r4_iindex_table.json`（942 条目）由 `route_synth.py:206` 静默使用，按 (src,dst,port) 几何选择 R4 I-index 提示
+- [~] Phase 3.27：**M9K CRAM 探测 —— 部分完成**。`fuzz/m9k_probe_mine.py` 把 237 个 `M9K_GLOBAL_ON` + 299 个 `M9K_COL15_ON` 归档到 `results/ep4ce6_bitdb.sqlite` 表 `m9k_cells`；M9K 配置区段定位在字节 0x567xx..0x588xx。**Y 位置模型放弃**：X=15 七个 Y 位置扫掠，1707 个 Y-varying cell 中有 1489 个只在某一个 Y 出现 —— 自动布线噪声主导，无法消减。乘法器 X=20 探测失败（LOC 名未知）。如需继续，下条路是 STA wire-name 提取
 
 ### 未来工作
 
@@ -1567,7 +1567,7 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 | R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
 | C16 长距离线 | **0%** | 尚未开始 |
 | 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
-| 路由综合（绿区岛） | **3/392 源** | (10,10)、(10,14)、(4,4) — 58/58 路由对 Quartus bit-perfect |
+| 路由综合（绿区岛） | **15/392 源** | (4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12) — 686/686 路由对 Quartus bit-perfect |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 功能 demo 在 AX301 上运行 |
 

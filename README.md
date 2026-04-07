@@ -669,7 +669,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 
 This model uses exactly the same slot/group encoding framework as LUT TT (since they share the same CRAM address space), just with different base addresses.
 
-#### R4 Switch CRAM Address Model (18 I-indices Mapped)
+#### R4 Switch CRAM Address Model (25 of 37 I-indices Mapped)
 
 R4 row-wire switches are more complex than C4 — each R4 "I-index" has an independent BASE address:
 
@@ -961,7 +961,7 @@ Note the `li` op now requires an explicit `pair_bases` list — implicit "expand
 
 **Current coverage**:
 - C4 I=0: 100% (all 63 wires correct)
-- R4: 18/37 I-indices mapped (~90.5% wire coverage, ~77% direct-verification accuracy)
+- R4: 25/37 I-indices mapped (12 remaining blocked on insufficient route corpus)
 - R24 I=0: mapped with fixed-byte model (~66% pair-diff accuracy), 73% of R24 wires
 - LOCAL_INTERCONNECT: full read/write at base granularity, two encoding modes resolved
 - C4 I≠0: no universal formula, per-wire lookup table (24 entries)
@@ -1549,7 +1549,7 @@ chip respond.
 - [x] Phase 3.11: LI encoding modes resolved — paired vs alternating, uniform 9-cell envelope
 - [x] Phase 3.12: Hardware safety guard V2 with signature recognition (`validate_safe_for_hardware`)
 - [x] Phase 3.13: End-to-end hardware verification on AX301 (codec → flash → expected logic)
-- [x] Phase 3.14: Route synth island hopping — 3 green-zone source LABs ((10,10), (10,14), (4,4)), 58/58 routes bit-perfect against Quartus, fingerprint drift = 0
+- [x] Phase 3.14: Route synth island hopping — **15 green-zone source LABs** (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12) — **686/686 routes bit-perfect** against Quartus, fingerprint drift = 0
 - [x] Phase 3.15: **EP4CE6 RBF CRC fully reverse-engineered** (CRC-16/IBM, poly 0x8005, init 0xFE54, reflected, per 210-byte frame, frames 25..1751). Patcher integrated into codec; 1727/1727 CRAM frames verified
 - [x] Phase 3.16: **Hardware loopback closed** — RouteCodec + LutCodec output flashes successfully on real EP4CE6 silicon after CRC patch (no more EPCS fallback)
 - [x] Phase 3.17: AX301 pin map silicon-verified via `pin_probe.py` (KEY1=E15, KEY2=E16, KEY3=M16, KEY4=M15, LED0=G15)
@@ -1559,15 +1559,15 @@ chip respond.
 
 ### In Progress
 
-- [ ] Phase 3.19: Map remaining ~19 R4 I-indices (I=6,8,9,19,21,23,26,27,28, etc.)
+- [~] Phase 3.19: Map remaining R4 I-indices — **25 of 37 mapped** (added I=6,8,11,12,13,16,17,19,21,23,26,27 + 13 earlier). 12 remain blocked on insufficient route corpus (5,9,24,28,29,30,31,32,33,104,116,125), not on mining method
 - [ ] Phase 3.20: M9K/DSP boundary column fix (X=13/26 large columns need sub-region address model)
 - [ ] Phase 3.21: C16 long-distance wire modeling (not yet started)
 - [x] Phase 3.22: **LI mode-selection rule — CLOSED NEGATIVE**. T9 + T10 orthogonal-grid corpus (12 sources, 374 compiles, 414 mappable rows, `fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`). Clean rules: `dy∈{2,3,21}→edge_even_b0` (100%), `adx==0→paired` (79%), `dx>30∧dy>7.5→paired`. Middle leaf `dy>3∧dx≤24.5∧adx>0.5` (n=247, 60% of corpus) stuck at **52% coin flip** — unchanged by 2× corpus growth and sx/dx decorrelation. Conclusion: paired vs alternating is **not a function of the static routing key**; likely driven by Quartus placement seed / LI channel occupancy. Further corpus expansion will not help. Yellow-zone fallback keeps `paired` as a weak prior (both modes are hardware-safe).
 - [x] Phase 3.23: **C4 I≠0 fog-of-war sweep** — `fuzz/c4_inz_sweep.py` mined 19 new (X,I) mappings from existing routing_paths corpus, taking `_C4_FIXED_OFFSETS` from 25 → **44 mappings**. Green-zone regression still 58/58 bit-perfect.
 - [x] Phase 3.24: **Non-LAB column identity resolved** — `~/EP4CE10_Jailbreak/probe_blocks.v` (12× altsyncram + 8× lpm_mult, virtual-pinned). Quartus placed blocks at `M9K_X15_Y*`, `M9K_X27_Y*`, `DSPMULT_X20_Y*`. So of the 3 true non-LAB columns (post-jailbreak): **X=15 and X=27 are M9K RAM columns**; **X=20 is the embedded 9×9 multiplier column**. PLLs live at the die periphery, not in any X column.
-- [ ] Phase 3.25: Extend `COLUMN_BASE` table to the six jailbreak-discovered LAB columns (X=5,9,14,30,32,33) via baseline-diff mining; green-zone regression on at least one X=32/33 source before opening the extended fabric in bitstream.py
-- [ ] Phase 3.26: Expand route-synth green zones beyond 3/392 source LABs; promote yellow-zone fallback to bit-perfect
-- [ ] Phase 3.27: M9K / embedded-multiplier CRAM encoding reverse — pair spacing, bit layout at X=15/20/27 (unexplored)
+- [x] Phase 3.25: **Jailbreak fabric CLOSED on silicon (2026-04-07)** — both axes silicon-validated end-to-end through the codec. **X=32 column**: LCCOMB_X32_Y10_N0 mask 0x8888 ran on AX301; codec calibrated, `COLUMN_BASE` extended to all 28 LAB columns at standard 7350-byte stride. **Y=15 ghost row**: LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1∧K2)∨(K3∧K4)` ran on AX301 (`fuzz/demo_y15_keys2led.py`). +65% fabric is production-ready on real CE6 silicon
+- [x] Phase 3.26: **Route-synth green zones expanded 3 → 15 source LABs** (`fuzz/fingerprint_raw_mine.py` codec-blind XOR mining, header filter); 686/686 routes bit-perfect. `results/r4_iindex_table.json` (942 entries) silently used by `route_synth.py:206` for I-index hint selection per (src,dst,port) geometry
+- [~] Phase 3.27: **M9K CRAM probe — partial**. `fuzz/m9k_probe_mine.py` archived 237 `M9K_GLOBAL_ON` + 299 `M9K_COL15_ON` cells in `results/ep4ce6_bitdb.sqlite` table `m9k_cells`; M9K config band identified at bytes 0x567xx..0x588xx. **Y-position model abandoned**: 7-Y sweep at X=15 had 1489/1707 cells unique to one Y — auto-router churn dominates. Mult X=20 probe failed (LOC name unknown). STA wire-name extraction is the next path if/when needed
 
 ### Future Work
 
@@ -1651,12 +1651,12 @@ answers.
 | Logic configuration (LUT/FF/Arithmetic) | **~95%** | All LE positions' LUT TT decoded; FF and arithmetic mode mapped |
 | CRAM address mapping | **100%** | 22 cols × 18 rows × 16 LEs = 376/376 positions fully verified |
 | C4 routing switches | **~55%** | I=0 100% formula; I≠0 24-entry per-(X,I) lookup table |
-| R4 routing switches | **~50%** | 18/37 I-indices mapped; ~90.5% wire coverage, ~77% direct accuracy |
+| R4 routing switches | **~68%** | 25/37 I-indices mapped; remaining 12 blocked on corpus, not method |
 | LOCAL_INTERCONNECT | **~85%** | Base-granular read/write; two encoding modes resolved; V2 safety guard |
 | R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
 | C16 long-distance wires | **0%** | Not yet started |
 | Bitstream codec | **~85%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; **CRC patcher integrated; HW-verified on silicon** |
-| Route synthesis (green islands) | **3/392 sources** | (10,10), (10,14), (4,4) — 58/58 routes bit-perfect against Quartus |
+| Route synthesis (green islands) | **15/392 sources** | (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12) — 686/686 routes bit-perfect against Quartus |
 | RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
 | Hardware loopback (codec → flash → silicon) | **closed** | LutCodec functional demo running on AX301 |
 

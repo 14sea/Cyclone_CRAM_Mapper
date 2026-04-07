@@ -20,7 +20,7 @@ python3 runner.py --node lut_inst lut_single 10 10 0
 python3 analyze.py summary
 python3 analyze.py lut_table 10 10 0
 
-# Route synth regression: 3 green-zone islands, 58/58 bit-perfect
+# Route synth regression: 15 green-zone islands, 686/686 bit-perfect
 python3 fuzz/test_green_zone_harden.py
 ```
 
@@ -43,13 +43,16 @@ EP4CE6/
 │   ├── r4_mapper.py / r4_iindex_mine.py    # R4 address model + I-index sweep
 │   ├── r24_mapper.py        # R24 fixed-byte model
 │   ├── li_mode_*.py         # LI mode analysis (T9+T10 corpus + tree)
-│   ├── test_green_zone_harden.py  # 58/58 bit-perfect regression
-│   ├── pin_probe.py / demo_keys2leds.py  # HW pin probe + 4-input demo
+│   ├── test_green_zone_harden.py  # 15 islands / 686 routes bit-perfect regression
+│   ├── pin_probe.py / demo_keys2leds.py / demo_y15_keys2led.py  # HW pin probe + X10/Y10 + Y15 demos
+│   ├── m9k_probe_mine.py / m9k_probe_clean.py  # Phase 3.27 M9K CRAM probes
+│   ├── r4_iindex_mine.py    # mines results/r4_iindex_table.json (route_synth dep)
 │   ├── cross_device_diff.py # EP4CE6 ≡ EP4CE10 proof
 │   └── bitstream-re.SKILL.md # Methodology playbook (also at .claude/skills/)
 ├── results/
 │   ├── rbf/                 # Collected .rbf files (~2,013 files)
-│   └── fingerprint_{sx}_{sy}.json  # Green-zone island corpora (3)
+│   ├── fingerprint_{sx}_{sy}.json  # Green-zone island corpora (15)
+│   ├── r4_iindex_table.json # 942-entry route_synth I-index hint table
 │   ├── ep4ce6_bitdb.sqlite  # Bit mapping database
 │   └── FINDINGS.md          # Detailed findings report
 ├── templates/               # Verilog templates (unused, generated in-memory)
@@ -111,7 +114,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 - Non-LAB columns (X=9,15,30) have large pair numbers (58-382) due to wider CRAM
 - RouteCodec reads both I=0 (formula) and I≠0 (lookup) in read_c4()
 
-### R4 Switch CRAM Address Model (18 I-indices mapped)
+### R4 Switch CRAM Address Model (25 of 37 I-indices mapped)
 ```python
 # prev_lab_x = largest LAB_X value < wx (works for non-LAB wire X too)
 prev_col_start = COLUMN_BASE[prev_lab_x] - 136
@@ -154,7 +157,8 @@ R4_BASE_PREV = {
 - I=3,6,19,21,23,27 stored in **non-LAB CRAM** (M9K/DSP blocks)
 - **RouteCodec**: read/write for C4, R4, R24, LOCAL_INTERCONNECT, apply_routing()
 - Huge columns (X13=76230, X26=68880) need M9K/DSP sub-region mapping
-- 37 unique R4 I-indices observed in STA data; ~19 still unmapped
+- 37 unique R4 I-indices observed in STA data; **25 mapped, 12 unmapped** (5,9,24,28,29,30,31,32,33,104,116,125 — all blocked on insufficient route corpus, not mining method)
+- I=23 and I=26 added 2026-04-07 via `r4_mapper2.py`; 15-island green-zone harden showed no regression
 - 980 routing paths collected, parallel compilation at ~4s/target
 
 ### R24 Switch CRAM Address Model (I=0 mapped — 66% pair-diff accuracy)
@@ -223,14 +227,14 @@ After dropping the `break` in `read_local_interconnect()` and emitting one entry
 
 `RouteCodec._classify_li_lab()` validates a LAB's pair_map against this taxonomy; `validate_safe_for_hardware()` V2 uses it as the safe-envelope check (rejects mixed/broken modes, accepts all 6 observed Quartus classes).
 
-### Route Synthesis — Island Hopping (3 green-zone sources)
+### Route Synthesis — Island Hopping (15 green-zone sources, 686 routes)
 - `fuzz/route_synth.py` — `synth_route(zero, src, dst)` returns a bit-perfect-vs-Quartus RBF when `(sx,sy)` has a fingerprint snapshot AND `(dx,dy,port)` is in its `per_route_delta`. Otherwise falls back to formula-based plan_hops + LI envelope, gated by `validate_safe_for_hardware()`.
-- **Major insight**: Cyclone IV CRAM is interleaved, NOT topologically isomorphic to chip layout. **Cross-source fingerprint intersection = 0** → no universal source-entry formula exists; route_synth must mine per-source corpora.
-- **3 green islands** (`results/fingerprint_{sx}_{sy}.json`):
-  - α (10,10) interior — 31 routes, 6 fp bits
-  - β (10,14) M9K boundary (Y15 ghost row) — 11 routes, 11 fp bits
-  - γ (4,4) corner — 16 routes, **1 fp bit** (counter-intuitive: corner has smallest fingerprint, NOT largest)
-- All 58/58 routes pass: bit-perfect vs Quartus, codec round-trip, safe-synth, safe-quartus, fingerprint drift = 0. 9/9 yellow-zone probes pass safety fallback.
+- **Major insight**: Cyclone IV CRAM is interleaved, NOT topologically isomorphic to chip layout. **Cross-source fingerprint intersection = 0 across 15 mined sources** → no universal source-entry formula exists at the cell level; route_synth must mine per-source corpora.
+- **Per-source raw fingerprint mining**: `fuzz/fingerprint_raw_mine.py` is the codec-blind XOR-diff miner with header filter (frames 0..24 / bytes 32..5281 excluded). Replaces the older codec-aware mine which missed cells in unmapped R4 I-indices.
+- **15 green islands** (`results/fingerprint_{sx}_{sy}.json`): (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12). Fingerprint sizes range 0–41 cells; corner sources tend to be small, mid-die can be large.
+- All 686/686 routes pass: bit-perfect vs Quartus, codec round-trip, safe-synth, safe-quartus, fingerprint drift = 0.
+- **Source-tie hypothesis falsified (2026-04-07)**: cross-source analytic on 13 fingerprints found **0 cells appear in ≥2 sources**. The earlier "eastern-edge X=29/31/32/33 universal ties" reading was a byte-band coincidence, not real cell sharing. Static-dict and analytic-formula approaches are both dead.
+- `fuzz/r4_iindex_mine.py` produces `results/r4_iindex_table.json` (942 entries), a silent dependency of `route_synth.py:206`. Auto-loaded; tells `synth_route()` which R4 I-index to pick per (src,dst,port) geometry.
 - `fuzz/test_green_zone_harden.py` auto-discovers all `fingerprint_*.json` and runs the 5 checks + yellow probes per island.
 - **Universal "always-on" structures** mined as 100% across `lits_pair_*` corpus, emitted unconditionally by `emit_ops()` for any inter-LAB route from a known source:
   - Source-side R4 launch driver: `R4_X{sx+1}_Y{sy}` at I=1 + I=2
@@ -257,7 +261,19 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
   - PLLs are off-fabric (die periphery, not any X column)
 - **Dead-cell scan**: 3-phase XOR identity chain (`~/EP4CE10_Jailbreak/scan_gen.py` / `scanC_gen.py`) — 2,480 forbidden LEs hardware-verified healthy (Phase A=40, Phase B=640 full N, Phase C=1840 all hidden cols + Y=15 row). K1^K2 truth table matched bit-for-bit every time.
 - **Effective fabric**: 392 → ~520+ LABs, 6,272 → 10,320 LEs (+65%)
-- **NOT yet wired into bitstream.py**: new column bases need baseline-diff mining + green-zone regression on at least one X=32/33 source before `COLUMN_BASE` is extended.
+- **Phase 3.25 CLOSED 2026-04-07**: both axes silicon-validated end-to-end through the codec.
+  - **X=32 column** silicon-verified earlier today (LCCOMB_X32_Y10_N0 mask 0x8888); X=33 codec-verified via same column model. `COLUMN_BASE` extended to 28 LAB columns with standard 7350-byte stride.
+  - **Y=15 ghost row** silicon-verified 2026-04-07 (`fuzz/demo_y15_keys2led.py` → `results/rbf/demo_y15_keys_to_led0.rbf`, LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1&K2)|(K3&K4)`). Calibrated via `lut_single 10 15 0`, 48 minterm bits promoted, codec round-trip OK.
+  - +65% fabric is production-ready on real CE6 silicon.
+
+### Phase 3.27 — M9K CRAM probe (PARTIAL — position model abandoned)
+- `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).
+- **Wins archived to `results/ep4ce6_bitdb.sqlite` table `m9k_cells`**:
+  - `M9K_GLOBAL_ON` = 237 cells universally toggled by any M9K instantiation
+  - `M9K_COL15_ON` = 299 cells specific to X=15 M9K column
+- M9K config band identified at bytes `0x567xx..0x588xx` (~5.4 KB), anchor `0x580AC..0x580B8 bp=3`.
+- **Position model abandoned**: 7-Y sweep at X=15 showed 1489/1707 Y-varying cells appear in exactly 1 Y — auto-router churn dominates and cannot be subtracted away without manual placement of every signal feeding the M9K. STA wire-name extraction is the next path if/when needed.
+- **Mult X=20 probe** failed: `MULT_X20_Y*_N0` is the wrong LOC syntax. Real MULT_* LOC name unknown; deferred.
 
 ## Methodology
 

@@ -1,5 +1,6 @@
 # Quartus build directories (large, reproducible)
 work/
+work_gp/
 work_route/
 work_verify/
 work_tcl.qpf
@@ -26,6 +27,9 @@ Thumbs.db
 
 # Mining run logs
 results/*.log
+
+# Accidental files with embedded spaces (from earlier shell-arg quoting bugs)
+fuzz/fill_*\ *_corpus.py
 
 # Editor
 *.swp
