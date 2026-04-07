@@ -161,19 +161,63 @@ def plan_hops(need: Need) -> list[Hop]:
 # ----------------------------------------------------------------------
 
 def pick_li_envelope(need: Need):
-    """Stage 3 — to be implemented next."""
-    raise NotImplementedError
+    """Stage 3 — return (mode, [(pair, base_idx), ...]) for the dst LAB."""
+    from bitstream import RouteCodec
+    mode = RouteCodec.select_li_mode(need.dx)
+    return mode, list(RouteCodec.LI_TYPICAL_ENVELOPE[mode])
 
 
-def emit_ops(plan, li):
-    """Stage 4 — to be implemented next."""
-    raise NotImplementedError
+def _hop_landing_coords(hop: Hop) -> tuple[int, int]:
+    """Return the (wx, wy) the codec should be addressed with for this hop.
+
+    MVP heuristic: use the END of the wire span (the side closer to dst).
+    L1 round-trip will reveal if this convention matches CRAM addressing.
+    """
+    if hop.type == "C4":
+        new_y = LAB_Y[LAB_Y.index(hop.anchor_y) + hop.span]
+        return hop.anchor_x, new_y
+    elif hop.type in ("R4", "R24"):
+        new_x = LAB_X[LAB_X.index(hop.anchor_x) + hop.span]
+        return new_x, hop.anchor_y
+    raise ValueError(f"unknown hop type {hop.type}")
 
 
-def synth_route(base_rbf: bytes, src, dst) -> bytes:
-    """Top-level entry. Stages 1-2 wired up; 3-5 still stubs."""
+def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
+    """Stage 4 — turn the plan + LI envelope into apply_routing op dicts."""
+    ops: list[dict] = []
+    for hop in plan:
+        wx, wy = _hop_landing_coords(hop)
+        if hop.type == "C4":
+            ops.append({"type": "c4", "x": wx, "y": wy, "i_idx": hop.i_index})
+        elif hop.type == "R4":
+            ops.append({"type": "r4", "wx": wx, "y": wy, "i_idx": hop.i_index})
+        elif hop.type == "R24":
+            ops.append({"type": "r24", "wx": wx, "y": wy, "i_idx": hop.i_index})
+
+    mode, cells = li
+    ops.append({
+        "type": "li",
+        "lx": need.dx,
+        "ly": need.dy,
+        "pair_bases": cells,
+    })
+    return ops
+
+
+def synth_route(base_rbf: bytes, src, dst) -> tuple[bytes, dict]:
+    """Top-level entry. Returns (output_rbf, debug_info)."""
+    from bitstream import RouteCodec
     need = parse_need(src, dst)
     plan = plan_hops(need)
     li = pick_li_envelope(need)
-    ops = emit_ops(plan, li)
-    raise NotImplementedError("apply+validate not yet wired")
+    ops = emit_ops(plan, li, need)
+
+    codec = RouteCodec()
+    out = codec.apply_routing(base_rbf, ops)
+
+    # Stage 5 — L1 validation: round-trip + hardware safety
+    codec.validate_safe_for_hardware(out, base_rbf)
+    sw = codec.read_switches(out, base_rbf)
+
+    debug = {"need": need, "plan": plan, "li_mode": li[0], "ops": ops, "read_back": sw}
+    return out, debug
