@@ -367,14 +367,12 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     return ops
 
 
-def synth_route(base_rbf: bytes, src, dst, patch_crc: bool = False) -> tuple[bytes, dict]:
+def synth_route(base_rbf: bytes, src, dst, patch_crc: bool = True) -> tuple[bytes, dict]:
     """Top-level entry. Returns (output_rbf, debug_info).
 
-    patch_crc: If True, recompute CRAM frame CRCs so the FPGA accepts the
-    bitstream when flashed via JTAG. Disabled by default because CRC bytes
-    happen to fall on positions the routing readers scan, which would break
-    bit-perfect comparisons against unpatched Quartus output. Always set
-    True for any RBF you intend to flash to real hardware.
+    patch_crc: Recompute CRAM frame CRCs so the FPGA accepts the bitstream
+    when flashed via JTAG. On by default — read_switches() now masks CRC byte
+    positions, so patching no longer breaks bit-perfect comparisons.
     """
     from bitstream import RouteCodec, patch_rbf_crc
     need = parse_need(src, dst)

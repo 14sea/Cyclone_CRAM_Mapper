@@ -180,6 +180,23 @@ def patch_rbf_crc(rbf: bytes) -> bytes:
     return bytes(buf)
 
 
+def mask_rbf_crc_bytes(rbf: bytes, ref: bytes) -> bytes:
+    """Return a copy of `rbf` with every CRAM-frame CRC byte overwritten by
+    `ref`'s value at the same position.
+
+    Used to neutralize CRC noise before feeding routing diffs to the codec
+    readers — the CRC byte offsets (+208/+209 of every 210-byte frame) collide
+    with positions the C4/R4/R24/LI readers scan, so a CRC update would be
+    misread as a routing-cell change.
+    """
+    buf = bytearray(rbf)
+    for n in range(CRC_FIRST_CRAM_FRAME, CRC_LAST_FRAME + 1):
+        s = CRC_PREAMBLE + n * CRC_FRAME_SIZE
+        buf[s + CRC_DATA_SIZE] = ref[s + CRC_DATA_SIZE]
+        buf[s + CRC_DATA_SIZE + 1] = ref[s + CRC_DATA_SIZE + 1]
+    return bytes(buf)
+
+
 def _li_active_pairs(i_idx):
     """Return list of active 210-byte pair indices for a LOCAL_INTERCONNECT I-index."""
     if i_idx in _LI_ALL9:
@@ -1017,6 +1034,9 @@ class RouteCodec:
         """
         if wire_types is None:
             wire_types = {'c4', 'r4', 'r24', 'li'}
+
+        # Mask CRC bytes so a CRC patch doesn't leak into the routing diff.
+        rbf_data = mask_rbf_crc_bytes(rbf_data, zero_data)
 
         result = {}
         if 'c4' in wire_types:
