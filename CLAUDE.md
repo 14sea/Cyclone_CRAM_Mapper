@@ -189,6 +189,23 @@ SLOT_OFFSET = {0: 67, 1: -70, 2: 0}   # same as R4
 - 70% cross-validation hit rate (consistent with ~30% baseline cancellation)
 - CRAM layout: LI at pairs 0-8, LUT TT at pairs ~16-23, R4 in prev column
 
+### RouteCodec round-trip + hardware safety (2026-04-07)
+- **Self-consistency PASS**: `route_roundtrip.py` reads switches from real Quartus RBFs, replays them with `apply_routing()`, re-reads → 0 dropped, 0 hallucinated cells (column + row routes)
+- New methods: `write_c4_inz()` for I≠0 fixed-byte writes; `'raw'` switch type for single-bit replay (R24/LI/R4 wire-level writes are coarser than per-bit reads)
+- **`validate_safe_for_hardware(rbf, zero)`**: counts LI pairs activated per LAB, raises if >`LI_MAX_PAIRS_PER_LAB` (default 5). Use as a flash-time guard against LI MUX over-activation contention
+- **SAFETY: `write_local_interconnect()` signature changed** from `(lx, ly, i_idx)` to `(lx, ly, pairs)`. The old auto-expansion of an I-index into ALL pairs from `_LI_ALL9 / _SKIP37 / _EVEN / _FIRST2` is **physically dangerous** — those pattern tables were inferred from CRAM reads but real Quartus only activates 1-5 pairs per LI MUX, never 9. Auto-expansion would drive multiple routing channels into the same LE input → input MUX short circuit on real silicon
+- The pattern constants are kept only for `read_local_interconnect()` I-index disambiguation, never used by writes
+
+### LI encoding mystery (UNRESOLVED)
+- Same routing key `(LE_BUFFER, src_I=0, dst_N=0, datab)` produces 4 different pair sets across LABs:
+  - `[0,2,4,6,8]` 5-pair pattern (10 byte flips, both base 70+71 set per pair) — common for column moves
+  - `[0..8]` 9-pair pattern (9 byte flips, alternating base 70/71 per pair) — common for row moves at certain X
+  - `[0,1,2,3,8]` and `[0,1,4,5,8]` 5-pair variants
+- Backbone `{0, 8}` is universal — pair 0 + pair 8 are likely datab port enable bits
+- 9-pair LABs cluster around non-LAB columns (M9K/DSP at X5,9,14,15,20,27,30) — possibly extra mux entries to handle M9K/DSP outputs
+- The 9-pair vs 5-pair patterns are STRUCTURALLY different bit layouts (alternating vs paired), not "same MUX with extra noise"
+- `read_local_interconnect()`'s `break` after first base hit currently masks the difference — needs base-aware rewrite
+
 ## Methodology
 
 ### Best Practice: Pair-Diff

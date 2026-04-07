@@ -28,7 +28,8 @@ from config import (
 )
 from verilog_gen import (
     gen_lut4, gen_lut4_primitive, gen_empty,
-    gen_two_luts_primitive, gen_single_lut_primitive_extra_inputs,
+    gen_two_luts_primitive, gen_two_luts_single_input,
+    gen_single_lut_primitive_extra_inputs,
 )
 from qsf_gen import gen_qsf, make_lccomb
 from compile import compile_and_export, setup_project, run_quartus, compile_full, generate_rbf, extract_routing
@@ -592,6 +593,40 @@ def compile_route_pair(tag: str, x1: int, y1: int, n1: int,
     """Compile a two-LUT design with specified placements."""
     ensure_dirs()
     verilog = gen_two_luts_primitive(mask1, mask2)
+    placement = {
+        "lut1": make_lccomb(x1, y1, n1),
+        "lut2": make_lccomb(x2, y2, n2),
+    }
+    qsf = gen_route_qsf(placement, seed=seed)
+    out = rbf_path(tag)
+    return compile_and_export(tag, verilog, qsf, rbf_output=out)
+
+
+def compile_route_baseline_abcd(tag: str, x: int, y: int, n: int,
+                                mask: int = 0x8888, seed: int = 1):
+    """Single-LUT baseline matching gen_two_luts_single_input's IO signature
+    (A,B,C,D inputs only). Use as the diff baseline for single-input pair tests.
+    """
+    ensure_dirs()
+    verilog = gen_lut4_primitive(mask)
+    placement = {"lut_inst": make_lccomb(x, y, n)}
+    qsf = gen_route_qsf(placement, seed=seed)
+    out = rbf_path(tag)
+    return compile_and_export(tag, verilog, qsf, rbf_output=out)
+
+
+def compile_route_pair_single_input(tag: str, x1: int, y1: int, n1: int,
+                                    x2: int, y2: int, n2: int,
+                                    connect_port: str = "datab",
+                                    mask1: int = 0x8888, mask2: int = 0xAAAA,
+                                    seed: int = 1) -> tuple[str | None, float, str]:
+    """Two-LUT route where lut2 has only ONE meaningful input (rest tied to 0).
+
+    Lets us probe a SINGLE (src, dst_N, dst_port) LI activation in isolation
+    instead of getting a union of 4 input ports' activations.
+    """
+    ensure_dirs()
+    verilog = gen_two_luts_single_input(mask1, mask2, connect_port=connect_port)
     placement = {
         "lut1": make_lccomb(x1, y1, n1),
         "lut2": make_lccomb(x2, y2, n2),

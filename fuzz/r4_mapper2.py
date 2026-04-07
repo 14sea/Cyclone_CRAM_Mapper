@@ -29,7 +29,7 @@ from runner import compile_route_pair
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                        "results", "ep4ce6_bitdb.sqlite")
 
-MAPPED = {0, 1, 2, 4, 7, 10, 14, 15, 17, 18, 20, 22, 25}
+MAPPED = {0, 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 25}
 
 
 def load_rbf(path):
@@ -138,18 +138,26 @@ def map_index(target_idx, max_columns=4):
     for _, wx, px, unique_y, entries in ranked:
         if columns_done >= max_columns:
             break
-        # Skip huge columns (M9K/DSP boundary)
+        # For wide columns (M9K/DSP), use sub-region model
         px_idx = LAB_X.index(px)
+        col_width = 7350
         if px_idx + 1 < len(LAB_X):
             next_x = LAB_X[px_idx + 1]
             if next_x in COLUMN_BASE:
                 col_width = COLUMN_BASE[next_x] - COLUMN_BASE[px]
-                if col_width > 10000:
-                    print(f"\n  Skipping wx={wx} prev={px} (col_width={col_width}, non-standard)")
-                    continue
 
         prev_col_start = COLUMN_BASE[px] - 136
-        col_end = prev_col_start + 7350
+        # For wide columns, determine sub-region based on wire X position
+        if col_width >= 2 * 7350:
+            next_x = LAB_X[px_idx + 1] if px_idx + 1 < len(LAB_X) else px + 2
+            mid = (px + next_x) / 2
+            if wx > mid:
+                # Right sub-region: offset by 7350
+                prev_col_start += 7350
+            col_end = prev_col_start + 7350
+            print(f"\n  --- wx={wx}, prev_x={px} (wide col {col_width}B, sub-region {'right' if wx > mid else 'left'}) ---")
+        else:
+            col_end = prev_col_start + col_width
 
         print(f"\n  --- wx={wx}, prev_x={px} ---")
 

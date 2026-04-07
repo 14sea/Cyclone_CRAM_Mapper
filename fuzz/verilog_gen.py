@@ -150,6 +150,63 @@ endmodule
 """
 
 
+def gen_two_luts_single_input(mask1: int, mask2: int,
+                              connect_port: str = "datab",
+                              name: str = "fuzz_top") -> str:
+    """Two connected LUTs where lut2 only has ONE meaningful input.
+
+    Unlike gen_two_luts_primitive, the unused lut2 inputs are tied to constant
+    literals (1'b0) instead of top-level pins. This prevents Quartus from
+    routing external signals through lut2's other input ports, so the only LI
+    MUX activation at lut2's destination LAB is the lut1 -> lut2 path. The
+    top-level still has A..D pins to keep the IO signature similar to other
+    designs (and to drive lut1).
+
+    Args:
+        mask1: 16-bit truth table for driver LUT (lut1)
+        mask2: 16-bit truth table for load LUT (lut2)
+        connect_port: which lut2 input port lut1's output drives
+                      (dataa | datab | datac | datad)
+    """
+    lut2_ports = []
+    for port in ("dataa", "datab", "datac", "datad"):
+        sig = "lut1_out" if port == connect_port else "1'b0"
+        lut2_ports.append(f"        .{port}({sig})")
+    lut2_ports_str = ",\n".join(lut2_ports)
+
+    return f"""module {name}(
+    input  wire A, B, C, D,
+    output wire Q
+);
+    wire lut1_out;
+    wire lut2_out;
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask1:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut1 (
+        .dataa(A),
+        .datab(B),
+        .datac(C),
+        .datad(D),
+        .combout(lut1_out)
+    );
+
+    cycloneive_lcell_comb #(
+        .lut_mask(16'h{mask2:04X}),
+        .sum_lutc_input("datac"),
+        .dont_touch("on")
+    ) lut2 (
+{lut2_ports_str},
+        .combout(lut2_out)
+    );
+
+    assign Q = lut2_out;
+endmodule
+"""
+
+
 def gen_single_lut_primitive_extra_inputs(mask: int, name: str = "fuzz_top") -> str:
     """Generate a single LUT primitive with 7 input ports (for routing baseline).
 

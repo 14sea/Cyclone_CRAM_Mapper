@@ -57,6 +57,7 @@ _C4_FIXED_OFFSETS = {
     (15, 1): 0x2cf89,   # 5/6 Y hit
     (16, 1): 0x2dbd6,   # 5/6 Y hit
     (16, 15): 0x2d1fe,  # 2/2 Y hit
+    (21, 2): 0x35958,   # 2/2 Y hit (2026-04-07)
     (22, 3): 0x37957,   # 2/2 Y hit (shares offset with I=12)
     (22, 12): 0x37957,  # 5/6 Y hit (shares offset with I=3)
     (22, 23): 0x36a92,  # 3/3 Y hit
@@ -94,7 +95,12 @@ _R4_BASE_PREV = {
     18: (4057, 4267),   # delta=210, verified X4,X7
     20: (2791, 3001),   # delta=210, verified prev=X6,X11 (40% — some wires use diff scheme)
     22: (2783, 2993),   # delta=210, verified prev=X7 (small sample)
+    6:  (3612, 3822),   # delta=210, cross-Y 1 col prev=X31 (same BASE as I=8, 2026-04-06)
+    8:  (3612, 3822),   # delta=210, cross-Y 1 col prev=X26 wide (same BASE as I=6, 2026-04-06)
+    19: (2794, 3215),   # delta=421, cross-Y 1 col prev=X11 (2026-04-06)
+    21: (2786, 3207),   # delta=421, cross-Y 2 cols prev=X13(wide),X22 (2026-04-06)
     25: (2762, 2972),   # delta=210, verified X4,X8
+    27: (2754, 2964),   # delta=210, cross-Y 1 col prev=X26 wide (2026-04-06)
 }
 _R4_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
@@ -434,6 +440,28 @@ class RouteCodec:
         self._set_bit(result, zero_data, offset, bp, value)
         return bytes(result)
 
+    def write_c4_inz(self, rbf_data, zero_data, x, i_idx, y, value=True):
+        """Set/clear a C4 I≠0 switch via per-(X,I) lookup table.
+
+        The byte offset is fixed for all Y values; only bp varies with Y
+        (same bp formula as I=0).
+        """
+        if i_idx == 0:
+            return self.write_c4(rbf_data, zero_data, x, y, value)
+        key = (x, i_idx)
+        if key not in _C4_FIXED_OFFSETS:
+            raise ValueError(
+                f"C4 (X={x}, I={i_idx}) not in fixed-offset lookup "
+                f"(mapped: {sorted(_C4_FIXED_OFFSETS.keys())})"
+            )
+        if y not in self.C4_Y_RANGE:
+            raise ValueError(f"Y={y} out of C4 range")
+        offset = _C4_FIXED_OFFSETS[key]
+        _, _, bp = _cram_group_bit(y)
+        result = bytearray(rbf_data)
+        self._set_bit(result, zero_data, offset, bp, value)
+        return bytes(result)
+
     def write_r4(self, rbf_data, zero_data, wx, y, i_idx, value=True):
         """Set/clear an R4 switch for a mapped I-index.
 
@@ -483,17 +511,21 @@ class RouteCodec:
             self._set_bit(result, zero_data, offset, bp, value)
         return bytes(result)
 
-    def write_local_interconnect(self, rbf_data, zero_data, lx, ly, i_idx, value=True):
-        """Set/clear LOCAL_INTERCONNECT switches for a given I-index.
+    def write_local_interconnect(self, rbf_data, zero_data, lx, ly, pairs, value=True):
+        """Set/clear LOCAL_INTERCONNECT switches for an EXPLICIT pair list.
 
-        Sets ALL active pairs for the given I-index.
+        SAFETY: this method no longer accepts an I-index. Empirically, real
+        Quartus RBFs activate 1-5 LI pairs per LAB — never the 9-pair I-index
+        "pattern" the read-side disambiguation table suggests. Auto-expanding
+        from an I-index would over-activate input MUXes and risk physical
+        contention on real silicon. Callers must pass the exact pair list.
 
         Args:
             rbf_data: bytes of the RBF to modify
             zero_data: bytes of the zero-mask baseline RBF
             lx: LAB X coordinate
             ly: LAB Y coordinate
-            i_idx: I-index
+            pairs: iterable of pair indices (0-8) to flip; must be non-empty
             value: True to activate, False to deactivate
 
         Returns:
@@ -503,10 +535,12 @@ class RouteCodec:
             raise ValueError(f"X={lx} not in COLUMN_BASE (valid: {sorted(COLUMN_BASE.keys())})")
         if ly not in LAB_Y:
             raise ValueError(f"Y={ly} not a valid LAB Y coordinate")
-
-        pairs = _li_active_pairs(i_idx)
+        pairs = list(pairs)
         if not pairs:
-            raise ValueError(f"No active pairs for I-index {i_idx}")
+            raise ValueError("pairs must be non-empty (no implicit I-index expansion)")
+        for p in pairs:
+            if not (0 <= p <= 8):
+                raise ValueError(f"pair {p} out of range 0-8")
 
         col_start = COLUMN_BASE[lx] - 136
         group, slot, bp = _cram_group_bit(ly)
@@ -527,7 +561,7 @@ class RouteCodec:
                       plus type-specific params:
                       - c4: x, y
                       - r4: wx, y, i_idx
-                      - li: lx, ly, i_idx
+                      - li: lx, ly, pairs (explicit list — no I-index expansion)
 
         Returns:
             Modified RBF as bytes
@@ -538,21 +572,96 @@ class RouteCodec:
         for sw in switches:
             sw_type = sw.get('type')
             if sw_type == 'c4':
-                data = self.write_c4(data, zero_data, sw['x'], sw['y'],
-                                     sw.get('value', True))
+                ii = sw.get('i_idx', 0)
+                if ii == 0:
+                    data = self.write_c4(data, zero_data, sw['x'], sw['y'],
+                                         sw.get('value', True))
+                else:
+                    data = self.write_c4_inz(data, zero_data, sw['x'], ii,
+                                             sw['y'], sw.get('value', True))
             elif sw_type == 'r4':
                 data = self.write_r4(data, zero_data, sw['wx'], sw['y'],
                                      sw['i_idx'], sw.get('value', True))
             elif sw_type == 'r24':
                 data = self.write_r24(data, zero_data, sw['wx'], sw['y'],
                                       sw.get('i_idx', 0), sw.get('value', True))
+            elif sw_type == 'raw':
+                # Single-bit flip: used by round-trip to faithfully replay
+                # reads of types whose write path is wire-level (R24, LI).
+                buf = bytearray(data)
+                self._set_bit(buf, zero_data, sw['offset'], sw['bp'],
+                              sw.get('value', True))
+                data = bytes(buf)
             elif sw_type == 'li':
+                if 'pairs' not in sw:
+                    raise ValueError(
+                        "li switch requires explicit 'pairs' list — "
+                        "implicit I-index expansion removed for hardware safety"
+                    )
                 data = self.write_local_interconnect(data, zero_data, sw['lx'],
-                                                     sw['ly'], sw['i_idx'],
+                                                     sw['ly'], sw['pairs'],
                                                      sw.get('value', True))
             else:
                 raise ValueError(f"Unknown switch type: {sw_type!r}")
         return data
+
+    # Empirically observed maximum LI pairs activated by Quartus per LAB
+    # (5 pairs in column/row routes; raise only after confirming on more designs).
+    LI_MAX_PAIRS_PER_LAB = 5
+
+    def validate_safe_for_hardware(self, rbf_data, zero_data,
+                                    li_max_pairs=None, raise_on_fail=True):
+        """Pre-flash safety check for LOCAL_INTERCONNECT pair contention.
+
+        LAB input MUXes are physically driven by routing channels. Activating
+        too many LI pairs at the same (lx, ly) can cause multiple channels to
+        drive the same LE input simultaneously — that's a short circuit on
+        real silicon and can damage the device.
+
+        This method scans the RBF for each LAB and counts how many distinct
+        LI pairs are flipped relative to zero_data. It fails if any LAB
+        exceeds li_max_pairs (default: empirically observed max from Quartus).
+
+        Args:
+            rbf_data: candidate RBF about to be flashed
+            zero_data: zero-baseline RBF
+            li_max_pairs: per-LAB limit (default LI_MAX_PAIRS_PER_LAB)
+            raise_on_fail: if True, raise RuntimeError on violation; otherwise
+                           return the list of violators
+
+        Returns:
+            list of (lx, ly, n_pairs, pair_list) for any LAB that exceeds the
+            limit. Empty list = safe.
+        """
+        if li_max_pairs is None:
+            li_max_pairs = self.LI_MAX_PAIRS_PER_LAB
+
+        li_entries = self.read_local_interconnect(rbf_data, zero_data)
+        # Group by (lx, ly) → set of pair indices
+        per_lab = {}
+        for name, _off, _bp, _cands in li_entries:
+            parts = name.split('_')
+            lx = int(parts[1][1:])
+            ly = int(parts[2][1:])
+            pair = int(parts[3][1:])
+            per_lab.setdefault((lx, ly), set()).add(pair)
+
+        violations = []
+        for (lx, ly), pairs in per_lab.items():
+            if len(pairs) > li_max_pairs:
+                violations.append((lx, ly, len(pairs), sorted(pairs)))
+
+        if violations and raise_on_fail:
+            lines = [
+                f"  LAB X{lx} Y{ly}: {n} pairs active {pl} (limit {li_max_pairs})"
+                for lx, ly, n, pl in sorted(violations)
+            ]
+            raise RuntimeError(
+                "UNSAFE FOR HARDWARE: LOCAL_INTERCONNECT pair contention risk\n"
+                + "\n".join(lines)
+                + "\n  Flashing this RBF may cause input MUX short circuits."
+            )
+        return violations
 
     def read_switches(self, rbf_data, zero_data, wire_types=None):
         """Read all active routing switches from RBF.

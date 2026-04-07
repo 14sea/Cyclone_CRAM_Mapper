@@ -36,7 +36,7 @@ BASELINE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                              "results", "rbf", "baseline.rbf")
 
 # Already mapped I-indices (from bitstream.py)
-MAPPED = {0, 1, 2, 4, 7, 10, 14, 15, 17, 18, 20, 22, 25}
+MAPPED = {0, 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 25}
 
 
 def prev_lab_x(wx):
