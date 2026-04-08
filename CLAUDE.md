@@ -28,7 +28,7 @@ python3 fuzz/test_green_zone_harden.py
 
 ```
 EP4CE6/
-├── fuzz/                    # Fuzzing pipeline (Python, 54 modules)
+├── fuzz/                    # Fuzzing pipeline (Python, 96 modules)
 │   ├── config.py            # EP4CE6 constants, coordinates, pins
 │   ├── verilog_gen.py       # Verilog generators (LUT4 primitive, FF, empty)
 │   ├── qsf_gen.py           # QSF + placement constraint generator
@@ -48,9 +48,14 @@ EP4CE6/
 │   ├── m9k_probe_mine.py / m9k_probe_clean.py  # Phase 3.27 M9K CRAM probes
 │   ├── r4_iindex_mine.py    # mines results/r4_iindex_table.json (route_synth dep)
 │   ├── cross_device_diff.py # EP4CE6 ≡ EP4CE10 proof
+│   ├── fasm2rbf.py / rbf2fasm.py          # Phase 4 FASM writer + reverse tool
+│   ├── route_signatures.py / route_decompose.py  # sig backend + set-cover
+│   ├── source_overhead_build.py           # per-source overhead vs baseline
+│   ├── test_fasm_*.py / test_cross_source.py / test_multiroute_decompose.py
 │   └── bitstream-re.SKILL.md # Methodology playbook (also at .claude/skills/)
+├── jailbreak/               # CE10 fitter probes (X=32/33, Y=15 dead-cell scans)
 ├── results/
-│   ├── rbf/                 # Collected .rbf files (~2,013 files)
+│   ├── rbf/                 # Collected .rbf files (~2,500 files)
 │   ├── fingerprint_{sx}_{sy}.json  # Green-zone island corpora (15)
 │   ├── r4_iindex_table.json # 942-entry route_synth I-index hint table
 │   ├── ep4ce6_bitdb.sqlite  # Bit mapping database
@@ -67,7 +72,7 @@ EP4CE6/
 
 ### CRAM Structure (verified 376/376 positions)
 - **Standard LAB column step: 7,350 bytes (0x1CB6)**
-- 22 LAB columns mapped; non-LAB columns (M9K/DSP/PLL) at X=5,9,14,15,20,27,30
+- 28 LAB columns mapped post-jailbreak; true non-LAB columns are X=15,27 (M9K) and X=20 (mult) only
 - **Pair spacing: 210 bytes** (uniform across ALL columns)
 - **Ctrl→Data offset: 48 bytes** (uniform)
 - Y-address formula: `slot = (Y-2)%3, group = (Y-2)//3, ctrl_bit = 7-group-(1 if slot>0 else 0)`
@@ -89,7 +94,7 @@ EP4CE6/
 - **Fully deterministic** routing with MINIMUM optimization level
 - **STA routing extraction**: `report_timing -show_routing` gives exact wire names per path
 - Wire naming: `{TYPE}_X{x}_Y{y}_N{n}_I{index}` (C4, R4, C16, R24, LOCAL_INTERCONNECT, LE_BUFFER)
-- 980 routing paths collected (SQLite), ~2,013 RBFs across multi-source corpora (5+ source LABs after T10 grid mine)
+- 980 routing paths collected (SQLite), ~2,500 RBFs across multi-source corpora (15 green-zone source LABs)
 - Column routing: dy=1 direct link, dy=2-4 1×C4, dy=5-8 2×C4, dy=9+ 3×C4
 
 ### C4 Switch CRAM Address Model
@@ -251,20 +256,29 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
 
 ### Jailbreak — CE6 fabric map falsified (2026-04-07)
 - **EP4CE6 ≡ EP4CE10 same physical die** (byte-identical RBF incl. device ID, `fuzz/cross_device_diff.py`)
-- Probed `LCCOMB_Xx_Yy_N0` legality under DEVICE=EP4CE10F17C8 via `~/EP4CE10_Jailbreak/`. Result: **CE6 whitelist deletes ~40% of the die**.
+- Probed `LCCOMB_Xx_Yy_N0` legality under DEVICE=EP4CE10F17C8 via `jailbreak/`. Result: **CE6 whitelist deletes ~40% of the die**.
 - **True LAB_X = [3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,21,22,23,24,25,26,28,29,30,31,32,33]** (28 cols, +6 vs CE6's 22)
 - **True NON_LAB_X = {15, 20, 27}** only (not the old {5,9,14,15,20,27,30})
 - **True LAB_Y = [2..21]** (20 rows, +Y=15 vs CE6's 19)
-- **Non-LAB column identity** (via `~/EP4CE10_Jailbreak/probe_blocks.v` with 12× altsyncram + 8× lpm_mult):
+- **Non-LAB column identity** (via `jailbreak/probe_blocks.v` with 12× altsyncram + 8× lpm_mult):
   - X=15, X=27 → **M9K RAM columns**
   - X=20 → **embedded 9×9 multiplier column**
   - PLLs are off-fabric (die periphery, not any X column)
-- **Dead-cell scan**: 3-phase XOR identity chain (`~/EP4CE10_Jailbreak/scan_gen.py` / `scanC_gen.py`) — 2,480 forbidden LEs hardware-verified healthy (Phase A=40, Phase B=640 full N, Phase C=1840 all hidden cols + Y=15 row). K1^K2 truth table matched bit-for-bit every time.
+- **Dead-cell scan**: 3-phase XOR identity chain (`jailbreak/scan_gen.py` / `scanC_gen.py`) — 2,480 forbidden LEs hardware-verified healthy (Phase A=40, Phase B=640 full N, Phase C=1840 all hidden cols + Y=15 row). K1^K2 truth table matched bit-for-bit every time.
 - **Effective fabric**: 392 → ~520+ LABs, 6,272 → 10,320 LEs (+65%)
 - **Phase 3.25 CLOSED 2026-04-07**: both axes silicon-validated end-to-end through the codec.
   - **X=32 column** silicon-verified earlier today (LCCOMB_X32_Y10_N0 mask 0x8888); X=33 codec-verified via same column model. `COLUMN_BASE` extended to 28 LAB columns with standard 7350-byte stride.
   - **Y=15 ghost row** silicon-verified 2026-04-07 (`fuzz/demo_y15_keys2led.py` → `results/rbf/demo_y15_keys_to_led0.rbf`, LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1&K2)|(K3&K4)`). Calibrated via `lut_single 10 15 0`, 48 minterm bits promoted, codec round-trip OK.
   - +65% fabric is production-ready on real CE6 silicon.
+
+### Phase 4 — FASM toolchain (CLOSED on silicon 2026-04-08)
+- `fuzz/fasm2rbf.py` / `fuzz/rbf2fasm.py`: human-readable FASM ⇄ CRC-valid RBF. Directives: `LUT`, `ROUTE`, `BIT`, `SRC` (per-source overhead vs baseline).
+- **Signature backend** (`fuzz/route_signatures.py`): 1050 route cell-sets mined into `results/route_cells.json`; `build_route_ops()` short-circuits `synth_route` for any (src,dst,port) in the table, unlocking yellow-zone sources + the Y=15 jailbreak row.
+- **Semantic decomposer** (`fuzz/route_decompose.py`): greedy set-cover over route sigs + source-overhead chunks with strict containment; decomposes multi-route / cross-source CRAM diffs into clean ROUTE/SRC directives.
+- **LUT absolute-mask compensation**: `fasm2rbf.bitgen()` auto-loads `minterm_0_X{x}_Y{y}_N{n}.rbf` to compute `base_tt` and convert FASM's absolute mask into the XOR delta `LutCodec.write_tt` actually expects.
+- **Double-flip safety**: SRC overhead cells are unioned with route sig cells in `build_route_ops()` before emission, so cells shared between a source overhead and a route are XORed exactly once. Regression guard: `test_cross_source.py` (3/3 bit-perfect).
+- **Regressions**: `test_fasm_roundtrip.py` 1050/1050, `test_fasm_semantic.py` 1050/1050, `test_multiroute_decompose.py` 42/42, `test_cross_source.py` 3/3 — all bit-perfect.
+- **Hardware closure (2026-04-08)**: `X10Y10N0.LUT = 0x8888` (AND(K1,K2)) written as a one-line FASM → `fasm2rbf` → `patch_rbf_crc` → openFPGALoader flash → AX301 behavior matched (LED idle ON, K2 or K3 → OFF). FASM path is silicon-accepted end-to-end.
 
 ### Phase 3.27 — M9K CRAM probe (PARTIAL — position model abandoned)
 - `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).

@@ -169,7 +169,7 @@ EP4CE6 的 RBF 文件总是恰好 **368,011 字节**，不管设计多复杂：
 EP4CE6/
 ├── README.md               ← 你正在读的文件
 ├── CLAUDE.md               ← AI 助手的上下文记忆文件
-├── fuzz/                   ← Fuzzing 管线（Python 源代码）
+├── fuzz/                   ← Fuzzing 管线（Python 源代码，96 个模块）
 │   ├── config.py           ← EP4CE6 常量、坐标、引脚定义
 │   ├── verilog_gen.py      ← Verilog 代码生成器
 │   ├── qsf_gen.py          ← Quartus 工程配置文件生成器
@@ -178,30 +178,39 @@ EP4CE6/
 │   ├── database.py         ← SQLite 数据库接口
 │   ├── runner.py           ← Fuzzing 实验编排器（主入口）
 │   ├── analyze.py          ← 结果分析和可视化
-│   └── bitstream.py        ← Bitstream 编解码器（读/写 LUT、路由开关）
+│   ├── bitstream.py        ← Bitstream 编解码器（LutCodec + RouteCodec + CRC 修补）
+│   ├── route_synth.py      ← 绿区路由综合引擎
+│   ├── fasm2rbf.py / rbf2fasm.py ← Phase 4 FASM 写入器 + 反向工具
+│   └── route_signatures.py / route_decompose.py ← 签名后端 + 集合覆盖分解
+├── jailbreak/              ← CE10 fitter 探针（X=32/33、Y=15 坏点扫描）
 ├── results/
-│   ├── rbf/                ← 收集的 .rbf 文件（~2,013 个，各 368 KB）
-│   ├── ep4ce6_bitdb.sqlite ← Bit 映射数据库（569K 条记录）
+│   ├── rbf/                ← 收集的 .rbf 文件（~2,500 个，各 368 KB）
+│   ├── fingerprint_*.json  ← 15 个绿区 island 语料
+│   ├── route_cells.json    ← 1050 条路由 signature 后端
+│   ├── source_overhead.json ← per-source 相对 baseline 的开销
+│   ├── r4_iindex_table.json ← 942 条 R4 I-index 提示表
+│   ├── ep4ce6_bitdb.sqlite ← Bit 映射数据库
 │   └── FINDINGS.md         ← 详细发现报告
-├── work/                   ← Quartus 临时编译目录（可清理）
-├── work_route/             ← 路由实验编译目录
-└── work_verify/            ← 验证实验编译目录
+└── work/                   ← Quartus 临时编译目录（可清理）
 ```
 
-### 源代码统计
+### 源代码统计（核心模块）
 
 | 文件 | 行数 | 功能 |
 |------|------|------|
-| `config.py` | 160 | 芯片常量、CRAM 地址公式、引脚定义 |
-| `verilog_gen.py` | 193 | 8 个 Verilog 生成函数 |
-| `qsf_gen.py` | 80 | QSF 项目配置生成 |
-| `compile.py` | 269 | Quartus 编译流程驱动 + STA 路由提取 |
-| `rbf_diff.py` | 110 | 二进制比较引擎 |
-| `database.py` | 192 | SQLite 数据库操作 |
-| `runner.py` | 1,226 | 实验编排器（最大的文件） |
-| `analyze.py` | 569 | 分析、可视化和编解码命令 |
-| `bitstream.py` | 614 | **Bitstream 编解码器（LUT + 路由读/写）** |
-| **总计** | **~3,413** | |
+| `config.py` | 184 | 芯片常量、CRAM 地址公式、引脚定义 |
+| `verilog_gen.py` | 363 | Verilog 生成（LUT/FF/LI/route/越狱模板） |
+| `qsf_gen.py` | 81 | QSF 项目配置生成 |
+| `compile.py` | 270 | Quartus 编译流程驱动 + STA 路由提取 |
+| `rbf_diff.py` | 111 | 二进制比较引擎 |
+| `database.py` | 193 | SQLite 数据库操作 |
+| `runner.py` | 1,305 | 实验编排器（最大的文件） |
+| `analyze.py` | 570 | 分析、可视化和编解码命令 |
+| `bitstream.py` | 1,264 | **LutCodec + RouteCodec + CRC 修补** |
+| `route_synth.py` | 398 | 绿区路由综合 |
+| `fasm2rbf.py` | 239 | Phase 4 FASM → RBF |
+| `rbf2fasm.py` | 175 | Phase 4 RBF → FASM |
+| **核心合计** | **~5,150** | （另有 84 个挖矿/分析/测试模块） |
 
 ---
 
@@ -1371,7 +1380,7 @@ die 的 yes/no 真实地图。
 **用 XOR 链证明 LE 真的活着**。声称某个座标存在，和声称那颗 LE 真的
 **能用**，是两回事 —— rebin 很多时候就是因为某几列 yield 失败。为了
 分开这两件事，我们写了一个单 bitstream 坏点扫描器
-(`~/EP4CE10_Jailbreak/scanC_gen.py`)：
+(`jailbreak/scanC_gen.py`)：
 
 ```
 chain[0] = K1 ^ K2
@@ -1471,7 +1480,7 @@ Verilog 想法  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
 - [x] Phase 3.16：**硬件回环闭合** —— RouteCodec + LutCodec 输出经 CRC patch 后可直接烧入真实 EP4CE6 矽片（不再回退到 EPCS）
 - [x] Phase 3.17：AX301 引脚映射经 `pin_probe.py` 在矽片上验证（KEY1=E15、KEY2=E16、KEY3=M16、KEY4=M15、LED0=G15）
 - [x] Phase 3.18a：**EP4CE6 ≡ EP4CE10 确认是同一颗物理矽片** —— RBF 逐字节相同（含 device ID）；CE10 可作为「越狱版 Quartus」用来 fuzz CE6 的禁区（`fuzz/cross_device_diff.py`）
-- [x] Phase 3.18b：**完整越狱 —— CE6 版图白名单被证伪** —— 三阶段 XOR 链坏点扫描器硬件验证 2,480 颗禁区 LE 全部健康（`~/EP4CE10_Jailbreak/scanC_gen.py`）；解锁 6 条新 LAB 列（X=5,9,14,30,32,33）+ Y=15 整行；有效 fabric 392→520+ LAB、6,272→10,320 LE (+65%)
+- [x] Phase 3.18b：**完整越狱 —— CE6 版图白名单被证伪** —— 三阶段 XOR 链坏点扫描器硬件验证 2,480 颗禁区 LE 全部健康（`jailbreak/scanC_gen.py`）；解锁 6 条新 LAB 列（X=5,9,14,30,32,33）+ Y=15 整行；有效 fabric 392→520+ LAB、6,272→10,320 LE (+65%)
 - [x] Phase 3.18：**4 输入 LUT 功能 demo 在硬件上跑通** —— `LED0 = (K1∧K2)∨(K3∧K4)`，由 LutCodec 写入，按键按下完整真值表验证通过
 
 ### 进行中
@@ -1481,16 +1490,17 @@ Verilog 想法  →  LutCodec.write_tt  →  patch_rbf_crc  →  openFPGALoader
 - [ ] Phase 3.21：C16 长距离线建模（完全未映射）
 - [x] Phase 3.22：**LI 模式选择规则 —— 阴性收案**。T9 + T10 正交网格语料（12 个 source、374 次 compile、414 条 mappable rows，`fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`）。可部署规则：`dy∈{2,3,21}→edge_even_b0`（100%）、`adx==0→paired`（79%）、`dx>30∧dy>7.5→paired`。中段叶子 `dy>3∧dx≤24.5∧adx>0.5`（n=247，占语料 60%）卡在 **52% 抛硬币**，语料翻倍 + 强制 sx/dx 解耦都没用。结论：paired vs alternating **不是静态路由键的函数**，大概率是 Quartus 的 placement seed / LI 通道占用 / 成本函数 tiebreak 决定的。继续扩语料不会有帮助。黄区回退继续把 `paired` 作为弱先验（两种模式都是硬件安全的）。
 - [x] Phase 3.23：**C4 I≠0 大扫** —— `fuzz/c4_inz_sweep.py` 从现有 routing_paths 语料里挖出 19 条新的 (X,I) 映射，`_C4_FIXED_OFFSETS` 从 25 条扩到 **44 条**。绿区回归仍然 58/58 bit-perfect。
-- [x] Phase 3.24：**非 LAB 列身份解密** —— `~/EP4CE10_Jailbreak/probe_blocks.v`（12 个 altsyncram + 8 个 lpm_mult，虚拟管脚）。Quartus 把 block 分别落在 `M9K_X15_Y*`、`M9K_X27_Y*`、`DSPMULT_X20_Y*`。越狱之后的 3 条真·非 LAB 列身份确认：**X=15、X=27 是 M9K RAM 列**；**X=20 是嵌入式 9×9 乘法器列**。PLL 不占任何 X 列，在 die 边缘。
+- [x] Phase 3.24：**非 LAB 列身份解密** —— `jailbreak/probe_blocks.v`（12 个 altsyncram + 8 个 lpm_mult，虚拟管脚）。Quartus 把 block 分别落在 `M9K_X15_Y*`、`M9K_X27_Y*`、`DSPMULT_X20_Y*`。越狱之后的 3 条真·非 LAB 列身份确认：**X=15、X=27 是 M9K RAM 列**；**X=20 是嵌入式 9×9 乘法器列**。PLL 不占任何 X 列，在 die 边缘。
 - [x] Phase 3.25：**越狱版图在矽片上完整收案（2026-04-07）** —— 两个轴都通过编解码器端到端在矽片上验证。**X=32 列**：LCCOMB_X32_Y10_N0 mask 0x8888 在 AX301 上跑通；编解码器已校准，`COLUMN_BASE` 扩展到全部 28 条 LAB 列，标准 7350 字节步进。**Y=15 幽灵行**：LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1∧K2)∨(K3∧K4)` 在 AX301 上跑通（`fuzz/demo_y15_keys2led.py`）。+65% fabric 在真实 CE6 矽片上达到生产可用
 - [x] Phase 3.26：**路由综合绿区从 3 → 15 个源 LAB**（`fuzz/fingerprint_raw_mine.py` 编解码器盲态 XOR 挖掘 + 头部过滤）；686/686 路由 bit-perfect。`results/r4_iindex_table.json`（942 条目）由 `route_synth.py:206` 静默使用，按 (src,dst,port) 几何选择 R4 I-index 提示
 - [~] Phase 3.27：**M9K CRAM 探测 —— 部分完成**。`fuzz/m9k_probe_mine.py` 把 237 个 `M9K_GLOBAL_ON` + 299 个 `M9K_COL15_ON` 归档到 `results/ep4ce6_bitdb.sqlite` 表 `m9k_cells`；M9K 配置区段定位在字节 0x567xx..0x588xx。**Y 位置模型放弃**：X=15 七个 Y 位置扫掠，1707 个 Y-varying cell 中有 1489 个只在某一个 Y 出现 —— 自动布线噪声主导，无法消减。乘法器 X=20 探测失败（LOC 名未知）。如需继续，下条路是 STA wire-name 提取
 
+- [x] Phase 4：**FASM 工具链在矽片上收案（2026-04-08）** —— `fuzz/fasm2rbf.py` + `fuzz/rbf2fasm.py` 实现最小 FASM 方言（`LUT`、`ROUTE`、`BIT`、`SRC`），驱动 `LutCodec` + `RouteCodec` + `patch_rbf_crc`。signature 后端（`fuzz/route_signatures.py`，1050 条路由 cell-set）对黄区和 Y=15 越狱源直接短路 `synth_route`。set-cover 分解器（`fuzz/route_decompose.py`）把多路由 + 跨 source 的 CRAM diff 折叠成干净的 directives。回归：单路由 1050/1050、多路由 42/42、跨 source 3/3 全部 bit-perfect。硬件收案：`X10Y10N0.LUT = 0x8888`（AND(K1,K2)）一行 FASM 经 `fasm2rbf` 烧到 AX301，矽片行为一致
+
 ### 未来工作
 
-- [ ] Phase 4：完善布线编解码器覆盖率（目标：所有线类型 >90%）
-- [ ] Phase 5：FASM 格式适配（与 Yosys/NextPNR 对接）
-- [ ] Phase 6：NextPNR EP4CE6 后端开发
+- [ ] Phase 5：完善布线编解码器覆盖率（目标：所有线类型 >90%；C16 + 剩余 R4 I-index 仍未结）
+- [ ] Phase 6：NextPNR EP4CE6 后端开发（从 bit dictionary 生成 chipdb + nextpnr-generic 对接）
 
 ### 长期方向：我们究竟可能在哪里赢过 Quartus
 
@@ -1546,7 +1556,7 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 这些都不是「ML 打败 Quartus」。它们是「ML 帮我们学一些我们不想手动推的
 规则」。
 
-**建议优先级。** 先把 Phase 4–6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
+**建议优先级。** 先把 Phase 5–6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
 一旦端到端的 `.v → bitstream` 开源流程能跑起来，问题就从「能不能在 PPA 上
 打败 Quartus」变成「我们能做哪些 Quartus 根本做不了的事」—— 而解锁这些
 答案的是 codec，不是模型。
@@ -1560,16 +1570,18 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 | 领域 | 进度 | 说明 |
 |------|------|------|
 | 逻辑配置（LUT/FF/算术） | **~95%** | 全部 LE 位置的 LUT TT 已解码，FF 和算术模式已映射 |
-| CRAM 地址映射 | **100%** | 22 列 × 18 行 × 16 LE = 376/376 位置全部验证 |
-| C4 布线开关 | **~55%** | I=0 100% 公式；I≠0 24 条逐 (X,I) 固定字节查表 |
-| R4 布线开关 | **~50%** | 18/37 个 I-index 已映射，~90.5% 线网覆盖，~77% 直接准确率 |
+| CRAM 地址映射 | **100%** | 22 列 × 18 行 × 16 LE = 376/376 位置全部验证（CE6 白名单；越狱后 X=32/33 + Y=15 矽片验证通过） |
+| C4 布线开关 | **~55%** | I=0 100% 公式；I≠0 44 条逐 (X,I) 固定字节查表 |
+| R4 布线开关 | **~68%** | 25/37 个 I-index 已映射，剩余 12 条卡在语料不足而非挖掘方法 |
 | LOCAL_INTERCONNECT | **~85%** | base 粒度读写；两种编码模式破解；V2 硬件安全防线 |
 | R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
 | C16 长距离线 | **0%** | 尚未开始 |
 | 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
 | 路由综合（绿区岛） | **15/392 源** | (4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12) — 686/686 路由对 Quartus bit-perfect |
+| FASM signature 后端 | **1050 条路由** | `results/route_cells.json` —— 对全部挖到的路由（含黄区 + Y=15 越狱行）短路 `synth_route` |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
-| 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 功能 demo 在 AX301 上运行 |
+| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器；1050/1050 + 42/42 + 3/3 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
+| 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
 
 ---
 

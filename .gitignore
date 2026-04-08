@@ -28,6 +28,9 @@ Thumbs.db
 # Mining run logs
 results/*.log
 
+# Regenerable derived artifacts (rebuild with fuzz/route_signatures.py)
+results/route_signatures.json
+
 # Accidental files with embedded spaces (from earlier shell-arg quoting bugs)
 fuzz/fill_*\ *_corpus.py
 
@@ -49,3 +52,6 @@ fuzz/fill_*\ *_corpus.py
 db/
 incremental_db/
 output_files/
+output_files_*/
+*.qpf.bak
+*.qsf.bak
