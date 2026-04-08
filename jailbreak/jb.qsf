@@ -1,0 +1,10 @@
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE10F17C8
+set_global_assignment -name TOP_LEVEL_ENTITY jb
+set_global_assignment -name VERILOG_FILE jb.v
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_location_assignment PIN_E15 -to k1
+set_location_assignment PIN_E16 -to k2
+set_location_assignment PIN_G15 -to led
+set_location_assignment M9K_X27_Y21_N0 -to "mem_rtl_0"
+set_global_assignment -name GENERATE_RBF_FILE ON

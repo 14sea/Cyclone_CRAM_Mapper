@@ -1,0 +1,14 @@
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE10F17C8
+set_global_assignment -name TOP_LEVEL_ENTITY probe_blocks
+set_global_assignment -name VERILOG_FILE probe_blocks.v
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files_blocks
+
+# virtual-pin everything so we don't blow the I/O budget
+set_instance_assignment -name VIRTUAL_PIN ON -to addr
+set_instance_assignment -name VIRTUAL_PIN ON -to din
+set_instance_assignment -name VIRTUAL_PIN ON -to dout
+set_instance_assignment -name VIRTUAL_PIN ON -to a
+set_instance_assignment -name VIRTUAL_PIN ON -to b
+set_instance_assignment -name VIRTUAL_PIN ON -to p
+set_instance_assignment -name VIRTUAL_PIN ON -to we
