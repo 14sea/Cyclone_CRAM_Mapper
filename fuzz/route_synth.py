@@ -175,6 +175,33 @@ def plan_hops(need: Need) -> list[Hop]:
 _LI_VARIANT_TABLE = None
 _R4_IINDEX_TABLE = None
 _FP_SNAPSHOTS = {}  # (sx,sy) -> {fingerprint, per_route_delta}
+_UNIVERSAL_ROUTE_CELLS: list[tuple[int, int]] | None = None
+
+
+def _load_universal_cells() -> list[tuple[int, int]]:
+    """63 cells that appear in all 15 mined source fingerprints.
+
+    These are the device-level routing infrastructure bits that Quartus
+    flips for ANY inter-LAB route regardless of source. See
+    memory/universal_route_cells.md — verified 0 overlap with M9K / FF
+    globals, 63/63 seen in route_cells.json, 1725/1725 sigs contain
+    ≥1 of them.
+
+    Emitted unconditionally for inter-LAB routes so we can strip them
+    from per_route_delta at load time and shrink the snapshot.
+    """
+    global _UNIVERSAL_ROUTE_CELLS
+    if _UNIVERSAL_ROUTE_CELLS is not None:
+        return _UNIVERSAL_ROUTE_CELLS
+    import json
+    from pathlib import Path
+    p = Path(__file__).resolve().parent.parent / "results" / "universal_route_cells.json"
+    if p.exists():
+        d = json.loads(p.read_text())
+        _UNIVERSAL_ROUTE_CELLS = [tuple(c) for c in d.get("universal_cells", [])]
+    else:
+        _UNIVERSAL_ROUTE_CELLS = []
+    return _UNIVERSAL_ROUTE_CELLS
 
 
 def _load_fp(sx, sy):
@@ -189,7 +216,8 @@ def _load_fp(sx, sy):
         snap = {
             "fingerprint": [tuple(c) for c in raw["fingerprint"]],
             "per_route_delta": {
-                k: [tuple(c) for c in v] for k, v in raw["per_route_delta"].items()
+                k: [tuple(c) for c in v]
+                for k, v in raw["per_route_delta"].items()
             },
         }
     else:
@@ -271,6 +299,13 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     codec = RouteCodec()
     ops: list[dict] = []
 
+    # Phase A (universal_route_cells) DEFERRED 2026-04-08: the 63 cells
+    # are source-level universals (present in each source's aggregated
+    # per_route_delta), NOT route-level. Unconditional per-route emit
+    # over-clamps cells that only some routes actually touch, breaking
+    # bit-perfect (only_s=3 per route in green-zone regression). Phase A
+    # needs per-route universal membership data before it can be wired in.
+
     # ================================================================
     # GREEN ZONE: (10,10) source — bit-perfect snapshot mode.
     # When src is (10,10) and the dst was mined into the corpus,
@@ -342,18 +377,14 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
             "pair_bases": [(8, 0), (8, 1)],
         })
 
-    # Universal source-column R24 broadcast hold: 5 raw bits identical
-    # across all 23 lits_pair routes (broadcast_mine.py, 2026-04-07).
-    # The 5 bits live at 2 bytes in prev_x=8's column and the codec reader
-    # expands them into ~24 wire names (different (wx,y) → same physical
-    # bit). The pri/sec choice differs from R24_OFFSET_TABLE because
-    # broadcast and routing use opposite halves of the same physical pair.
-    # Limitation: hard-coded for sx=10, sy=10. Need multi-(sx,sy) corpus
-    # to generalize the offset formula.
-    if not need.same_lab and need.sx == 10 and need.sy == 10:
-        for off, bp in ((0x11077, 1), (0x11077, 6), (0x11077, 7),
-                        (0x1121a, 2), (0x1121a, 3)):
-            ops.append({"type": "raw", "offset": off, "bp": bp, "value": True})
+    # (Removed 2026-04-08) The former "universal source-column R24 broadcast
+    # hold" block wrote 5 raw bits at (0x11077, {1,6,7}) and (0x1121a, {2,3}).
+    # Audit found all 5 offsets land on frame-CRC byte positions
+    # ((off-32)%210 ∈ {208,209}) — they were CRC ghosts from pre-CRC-normalized
+    # mining, not real broadcast cells. They appeared "correct" only because
+    # patch_rbf_crc() overwrote them after emission, so every write was a
+    # no-op. Cross-source check also found 0 hits in all 15 fingerprint JSONs.
+    # Deleted; broadcast_mine.py results are retracted.
 
     # Per-route R4 cells: prefer exact-table match, else universal launch.
     if r4_exact is not None:

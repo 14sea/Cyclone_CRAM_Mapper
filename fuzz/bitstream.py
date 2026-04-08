@@ -119,8 +119,13 @@ _R4_BASE_PREV = {
     18: (4057, 4267),   # delta=210, verified X4,X7
     20: (2791, 3001),   # delta=210, verified prev=X6,X11 (40% — some wires use diff scheme)
     22: (2783, 2993),   # delta=210, verified prev=X7 (small sample)
-    6:  (3612, 3822),   # delta=210, cross-Y 1 col prev=X31 (same BASE as I=8, 2026-04-06)
-    8:  (3612, 3822),   # delta=210, cross-Y 1 col prev=X26 wide (same BASE as I=6, 2026-04-06)
+    # I=6 REMOVED 2026-04-08: Option-1 fingerprint recheck showed the (3612,3822)
+    # base was blindly propagated from I=8 during 2026-04-06 mining with zero
+    # independent evidence. 15 green-zone sources don't route through any I=6
+    # wire, so no fingerprint data exists to validate it. I=6 routes must now
+    # fall back to signature short-circuit until a fresh I=6 corpus is mined.
+    # See memory/r4_i6_i8_base_collision.md for the validation run.
+    8:  (3612, 3822),   # delta=210, VALIDATED 83.3% (10/12) via fingerprint recheck 2026-04-08
     19: (2794, 3215),   # delta=421, cross-Y 1 col prev=X11 (2026-04-06)
     21: (2786, 3207),   # delta=421, cross-Y 2 cols prev=X13(wide),X22 (2026-04-06)
     25: (2762, 2972),   # delta=210, verified X4,X8
@@ -1193,7 +1198,14 @@ class LutCodec:
                     f"No minterm_{bit} data for ({x},{y},{n}). "
                     f"Run: python runner.py n_sweep {x} {y} first."
                 )
-            patterns[bit] = set((bo, bp) for bo, bp in rows)
+            # Filter CRC bytes (last 2 bytes of each 210-byte CRAM frame,
+            # frames 25..1751). These are frame-CRC false positives from
+            # pre-CRC-normalized mining — they flip because the preceding
+            # data bytes changed, not because they encode the minterm.
+            patterns[bit] = set(
+                (bo, bp) for bo, bp in rows
+                if not (5282 <= bo < 367952 and (bo - 32) % 210 >= 208)
+            )
         return cls(x, y, n, patterns)
 
     def predict_sram(self, mask):
@@ -1334,24 +1346,62 @@ class FFCodec:
     patch_rbf_crc silently cleaned up).
     """
 
-    def _apply_global(self, rbf_data, cells):
+    def _set_global(self, rbf_data, zero_data, cells, enable):
+        """Idempotent absolute set: for each (off,bp), force the bit to its
+        active polarity (enable=True) or zero-baseline polarity (enable=False).
+
+        The active polarity is (zero_bit ^ 1) — i.e. the complement of the
+        baseline byte's bit value — since the globals were mined as XOR diffs
+        vs the zero-mask baseline.
+
+        Calling repeatedly is safe: N concurrent FFs using arst share the
+        same global bits, and each write clamps to the same target state
+        (no XOR double-flip, no OR with stale state).
+        """
         result = bytearray(rbf_data)
         for off, bp in cells:
-            if 0 <= off < len(result):
-                result[off] ^= (1 << bp)
+            if not (0 <= off < len(result) and off < len(zero_data)):
+                continue
+            zero_bit = (zero_data[off] >> bp) & 1
+            target_bit = (zero_bit ^ 1) if enable else zero_bit
+            mask = 1 << bp
+            result[off] = (result[off] & ~mask) | (target_bit << bp)
         return bytes(result)
 
-    def write_arst(self, rbf_data, lab_xs=None, enable=True):
-        """Toggle the device-global arst feature bits.
+    # Fuse: the 61 "globals" in ff_remine_final.json were mined from a 1-FF
+    # design and conflate layer 1 (device feature enable) with layer 2
+    # (per-LE arst bit). See memory: ff_per_le_layer2_header_band.md.
+    # Clamping those cells on a real multi-FF design (e.g. reset-counter)
+    # would corrupt header bits that should depend on LE placement. Keep
+    # the _set_global engine healthy, but refuse to fire until Y=4 sweep
+    # derives the layer-2 address model.
+    _LAYER2_READY = False
 
-        lab_xs is accepted for backward compatibility but ignored —
-        the new arst bits are device-global, not per-column.
+    def write_arst(self, rbf_data, zero_data, enable=True):
+        """Set the device-global arst feature bits. Idempotent.
+
+        DISABLED: raises NotImplementedError until layer 2 (per-LE arst
+        bit in header byte 73 + 44-52) is mapped. See
+        memory/ff_per_le_layer2_header_band.md.
         """
-        return self._apply_global(rbf_data, _FF_ARST_GLOBAL)
+        if not self._LAYER2_READY:
+            raise NotImplementedError(
+                "FFCodec.write_arst: layer 2 address model pending — "
+                "the 61 'globals' are 1-FF-corpus artifacts and clamping "
+                "them on a multi-FF design is unsafe. Run the Y=4 sweep "
+                "and derive header_byte73_bp=f(lab_X,n) before enabling.")
+        return self._set_global(rbf_data, zero_data, _FF_ARST_GLOBAL, enable)
 
-    def write_ena(self, rbf_data, lab_xs=None, enable=True):
-        """Toggle the device-global ena feature bits."""
-        return self._apply_global(rbf_data, _FF_ENA_GLOBAL)
+    def write_ena(self, rbf_data, zero_data, enable=True):
+        """Set the device-global ena feature bits. Idempotent.
+
+        DISABLED: raises NotImplementedError until layer 2 is mapped.
+        """
+        if not self._LAYER2_READY:
+            raise NotImplementedError(
+                "FFCodec.write_ena: layer 2 address model pending — "
+                "same caveat as write_arst.")
+        return self._set_global(rbf_data, zero_data, _FF_ENA_GLOBAL, enable)
 
     def _read_global(self, rbf_data, zero_data, cells):
         hits = 0
