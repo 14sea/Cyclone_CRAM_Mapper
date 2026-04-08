@@ -1,0 +1,4 @@
+# Phase 4 hardware closure: LED0 = K1 & K2
+# Base: minterm_0_X10_Y10_N0.rbf (Quartus-routed lut2 stub, TT=0)
+# LutCodec writes 0x8888 absolute via auto-loaded minterm_0 zero baseline.
+X10Y10N0.LUT = 0x8888
