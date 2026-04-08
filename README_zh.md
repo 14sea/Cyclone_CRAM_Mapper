@@ -1494,11 +1494,53 @@ CRC 字节翻一下，然后 `patch_rbf_crc` 立刻用正确的 CRC 把它覆盖
 我们已经把相关的 FASM 指令用硬报错禁用掉，把发现写进了项目
 memory 作为 critical 警告，并排了一个 re-audit 任务 —— 用同一个
 `(off-32) % 210 >= 208` 过滤器把 codec 里所有其他映射都审一遍。
-后续任何挖矿脚本都必须先对两边 RBF 都跑一遍 `patch_rbf_crc` 归一
-化，再做 XOR 差分，这样 CRC 字节才会干净抵消，不再冒充成幽灵
-cell。LUT 真值表和 LI pair_map 的工作大概率是安全的（它们是在真
-实硅片上点 LED 验证过的），但任何打着「R24」或「FF mode」标签的
-映射都要重新检查，才能重新信任。
+
+### 修复：用 CRC 归一化的差分把 FF 控制位重新挖出来（2026-04-08）
+
+CRC 幽灵发现的几个小时之后，我们用两个改动重新跑了一遍 FF 挖矿：
+每个 .rbf 在做 XOR 差分**之前**都先经过 `patch_rbf_crc` 归一化（让
+CRC 字节干净抵消），而且每种 variant 都编译多次，把 Quartus 的放置
+选择平均掉。
+
+Round 1 用 8 个不同的 `SEED` 值在同一个输出引脚上编译 {base, arst,
+ena}。一个愉快的意外：对于一个琐碎的 D 触发器设计，8 个 seed 的
+base-vs-base 差分是**零字节**。之前挡住我们的「fitter 噪声墙」原来
+是带路由负载的设计特有的 —— 不是 Quartus 本身的性质。扣掉 CRC 字节
+之后，arst 和 ena 各自都有 ~75-95 个 cell 在所有 8 个 seed 里都翻转。
+
+Round 2 反过来固定 seed，换用 **10 个不同的输出引脚**，把 FF 散布到
+芯片上 10 个不同的 LAB。把 round 1 和 round 2 的 universal 集合取
+交集，得到的就是**既与 seed 无关、又与放置位置无关**的 cell ——
+也就是真正的设备级 FF 控制位。
+
+最后的数字是 **61 个 arst + 61 个 ena**，其中 arst ∩ ena = 48 个
+共享的「任何带控制信号的 FF」使能位，各自有 13 个是模式专属的。
+大多数落在比特流 header 段（偏移 < 5282，`patch_rbf_crc` 永远不动
+这段），呈一个紧凑的位域：
+
+- 偏移 73-74 是主 FF 模式字节；arst 用 bit {1,5,7} 和 {0,1,3,4,6}，
+  ena 用同两个字节里的不同 bit 子集
+- 偏移 42-52、710-729、1074-1081 是辅助位域
+
+13 个落在 CRAM 段的 cell 在 10 个不同放置下都停在同一个绝对偏移上，
+这说明 Quartus 永远把 FF 控制信号走一条**固定的全局时钟/复位网络**
+—— 这 13 个 cell 配置的是那张网络，和具体哪个 LAB 无关。
+
+这给了我们一个 FF 特性编码的三层图景：
+
+1. **设备级控制特性位** —— 现在挖出来了（每种模式 61 个）
+2. **per-LE 模式位**（*这个* LE 的 FF 用 arst）—— 还没做
+3. **per-LE FF 存在位** —— 部分已经在 LUT codec 里
+
+`fuzz/bitstream.py` 里的 `FFCodec` 改写成在 import 时加载
+`results/ff_remine_final.json`，直接翻这 61 个绝对偏移。round-trip
+测试证实 `FFCodec.write_arst(base)` 在所有 61 个全局位上都能和真实
+Quartus 编译出来的 arst .rbf 完全一致。FASM 的 `DFF.ARST` / `DFF.ENA`
+指令还是禁用状态，等 per-LE 挖矿完成再开。
+
+旧的列相对 `_FF_ARST_CELLS` / `_FF_ENA_CELLS` 表作为 deprecated
+stub 留在文件里，前面加了注释指向 CRC 幽灵的 memory 笔记，让后来
+读历史的人能同时看到错的答案和对的答案。
 
 ---
 

@@ -87,8 +87,15 @@ EP4CE6/
 - 4 FF pairs per LE (same ctrl+data structure as LUT TT)
 - Split into 2 regions: below and above LUT TT in CRAM column
 - Adding FF changes ~362 bits total (~90% routing, ~10% LE config)
-- FF mode bits (arst/ena): 82 shared mode bits + feature-specific routing
 - **LCFF placement rejected** by Quartus Lite — FF auto-placed near output pin
+
+### FF ctrl bits — three-layer model (2026-04-08 re-mine)
+- **Layer 1 (device-global, DONE)**: 61 arst + 61 ena absolute-offset bits mined via `fuzz/ff_remine.py` (8 SEEDs) ∩ `fuzz/ff_remine_r2.py` (10 Q pins), CRC-normalized. Stored in `results/ff_remine_final.json`, loaded by `FFCodec` at import. arst ∩ ena = 48 "any-FF-with-ctrl" enables; 13 mode-specific per side. Mostly in header band (off<5282) — compact bitfield at off 73-74 + supporting bits at 42-52/710-729/1074-1081; 13 CRAM-band cells configure the global clock/reset network.
+- **Layer 2 (per-LE mode, UNMINED)**: the bit that says "*this* LE's FF uses arst/ena". Requires a multi-FF design experiment (current ff_remine uses 1 FF → layer 1 only).
+- **Layer 3 (per-LE FF presence)**: partly already in LutCodec minterm cells.
+- Fitter-noise wall from earlier session is specific to loaded designs with routing competition — trivial D FF base-vs-base diff is 0 bytes across 8 seeds.
+- Old `_FF_ARST_CELLS` / `_FF_ENA_CELLS` column-relative tables are **deprecated** (94-100% CRC byte artifacts) but kept as stubs for read-path structure.
+- `FFCodec.write_arst` / `write_ena` now flip the 61 absolute offsets; `read_arst_active` / `read_ena_active` return bool against a 50% threshold. FASM `DFF.ARST` / `DFF.ENA` directives remain **disabled** (FasmError) pending layer 2.
 
 ### Routing Matrix (Phase 3 — In Progress)
 - **Fully deterministic** routing with MINIMUM optimization level

@@ -1584,12 +1584,60 @@ cleaning up after a broken write path.
 We disabled the affected FASM directives with a hard error, wrote the
 finding into project memory as a critical warning, and queued a
 re-audit of every other mapping in the codec using the same
-`(off-32) % 210 >= 208` filter. Future mining work must normalize
-both sides through `patch_rbf_crc` **before** taking an XOR diff, so
-CRC bytes cancel instead of showing up as phantom cells. The LUT
-truth-table and LI pair-map work is probably fine (those were
-verified against real silicon with LED tests), but anything labeled
-"R24" or "FF mode" is suspect until re-checked.
+`(off-32) % 210 >= 208` filter.
+
+### The fix: re-mining FF control bits through a CRC-normalized diff (2026-04-08)
+
+A few hours after the CRC ghost finding, we re-ran the FF mining with
+two changes: every .rbf was passed through `patch_rbf_crc` **before**
+the XOR diff (so CRC bytes cancel out cleanly), and we compiled each
+variant multiple times to average over Quartus's placement choices.
+
+Round 1 compiled {base, arst, ena} with 8 different `SEED` values at a
+fixed output pin. A pleasant surprise: for a trivial D flip-flop design
+the base-vs-base diff was **zero bytes** across all 8 seeds. The
+"fitter noise wall" that had blocked earlier FF mining was specific to
+loaded designs with routing competition — not an inherent property of
+Quartus. After subtracting CRC bytes, arst and ena each produced ~75-95
+cells that flipped in every single seed.
+
+Round 2 repeated the experiment with a fixed seed but **10 different
+output pins**, scattering the FF to 10 different LABs across the die.
+Intersecting the round-1 and round-2 universal sets gave cells that
+are both seed-deterministic AND placement-independent — i.e. truly
+device-global FF control bits.
+
+The final count was **61 arst + 61 ena** cells, with arst ∩ ena = 48
+shared "any-FF-with-ctrl" enables and 13 mode-specific bits on each
+side. Most live in the bitstream header band (offsets below 5282, which
+`patch_rbf_crc` never touches), arranged as a compact bitfield:
+
+- offsets 73-74 hold the main FF mode byte; arst uses bits {1,5,7} and
+  {0,1,3,4,6}, ena uses a different subset of the same two bytes
+- offsets 42-52, 710-729, and 1074-1081 contain supporting bitfields
+
+The 13 CRAM-band cells per mode stayed at the same absolute offsets
+across all 10 placements, which means Quartus always routes the FF
+control-signal tree through the same fixed global clock/reset network
+— those cells configure that network, not any specific LAB.
+
+This gives us a three-layer picture of how FF features are encoded:
+
+1. **Device-global ctrl feature bits** — now mined (61 per mode)
+2. **Per-LE mode bit** ("*this* LE's FF uses arst") — still open
+3. **Per-LE FF presence bit** — partly captured in the LUT codec
+
+`FFCodec` in `fuzz/bitstream.py` was rewritten to load
+`results/ff_remine_final.json` at import time and flip the 61 absolute
+offsets directly. A round-trip test confirmed that
+`FFCodec.write_arst(base)` produces a byte-identical match against a
+real Quartus-compiled arst .rbf on all 61 global bits. FASM's `DFF.ARST`
+and `DFF.ENA` directives are still disabled pending per-LE mining.
+
+The old column-relative `_FF_ARST_CELLS` and `_FF_ENA_CELLS` tables are
+kept in the file as deprecated stubs, with comments pointing at the
+CRC-ghost memory note, so anyone reading the history can see both the
+wrong and the right answer side by side.
 
 ---
 
