@@ -66,7 +66,26 @@ def predicted_cells(wy, col_start, pair1, pair2):
     return out
 
 
-def gather_wire_instances(target_i):
+def wire_col_start(wx, mode):
+    """mode='prev_lab': largest LAB_X < wx (default R4 model)
+       mode='self':     COLUMN_BASE[wx] itself (for non-LAB CRAM wires
+                        whose cells live in the wx column, e.g. M9K X=15
+                        or DSP X=20)
+       Returns None if wx has no COLUMN_BASE entry for that mode."""
+    if mode == "prev_lab":
+        px = prev_lab_x(wx)
+        if px is None or px not in COLUMN_BASE:
+            return None, None
+        return px, COLUMN_BASE[px] - 136
+    elif mode == "self":
+        if wx not in COLUMN_BASE:
+            return None, None
+        return wx, COLUMN_BASE[wx] - 136
+    else:
+        return None, None
+
+
+def gather_wire_instances(target_i, col_mode="prev_lab"):
     """Walk r4_iindex_table.json, collect (route_key, wx, wy, col_start, cells_set)
     for every wire at target_i where prev_lab_x is known and route_cells has the key."""
     with open(IINDEX_PATH) as f:
@@ -97,10 +116,9 @@ def gather_wire_instances(target_i):
         for wx, wy, i in wires:
             if i != target_i:
                 continue
-            px = prev_lab_x(wx)
-            if px is None or px not in COLUMN_BASE:
+            px, col_start = wire_col_start(wx, col_mode)
+            if col_start is None:
                 continue
-            col_start = COLUMN_BASE[px] - 136
             instances.append((route_key, wx, wy, px, col_start, cells))
     return instances
 
@@ -142,8 +160,12 @@ def brute_force(instances, pair1_range, deltas=(210, 419, 420, 421)):
 
 def main():
     target_i = int(sys.argv[1]) if len(sys.argv) > 1 else 6
-    print(f"=== r4_remine target I={target_i} ===")
-    inst = gather_wire_instances(target_i)
+    col_mode = sys.argv[2] if len(sys.argv) > 2 else "prev_lab"
+    pair1_lo = int(sys.argv[3]) if len(sys.argv) > 3 else 2500
+    pair1_hi = int(sys.argv[4]) if len(sys.argv) > 4 else 4500
+    print(f"=== r4_remine I={target_i} col_mode={col_mode} "
+          f"pair1∈[{pair1_lo},{pair1_hi}] ===")
+    inst = gather_wire_instances(target_i, col_mode=col_mode)
     print(f"wire instances: {len(inst)}")
     if not inst:
         print("no instances — cannot mine")
@@ -156,8 +178,8 @@ def main():
     print(f"prev_x distribution: {dict(sorted(prev_xs.items()))}")
 
     # Brute force over a wide pair1 range. Prior bases fall in 2700..4300.
-    print("\nbrute-forcing pair1 ∈ [2500, 4500], delta ∈ {210, 419, 420, 421}...")
-    pair1_range = range(2500, 4501)
+    print(f"\nbrute-forcing pair1 ∈ [{pair1_lo}, {pair1_hi}], delta ∈ {{210, 419, 420, 421}}...")
+    pair1_range = range(pair1_lo, pair1_hi + 1)
     results = brute_force(inst, pair1_range)
     print("\nTop 15 candidates:")
     print(f"  {'rate':>7} {'hits':>5}/{'tot':<5} {'pair1':>6} {'pair2':>6} {'delta':>6}")
