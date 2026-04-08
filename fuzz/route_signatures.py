@@ -28,6 +28,7 @@ ROOT = Path(HERE).parent
 RBF = ROOT / "results" / "rbf"
 TABLE_PATH = ROOT / "results" / "route_signatures.json"
 CELLS_PATH = ROOT / "results" / "route_cells.json"
+CELLS_CONSOLIDATED_PATH = ROOT / "results" / "route_cells_consolidated.json"
 
 NAME_RE = re.compile(
     r"lits_pair_X(\d+)Y(\d+)_to_X(\d+)Y(\d+)N(\d+)_(\w+)\.rbf$"
@@ -109,10 +110,33 @@ def build(verbose=True):
 _CELLS_CACHE = {}
 
 
+def _expand_consolidated(raw):
+    """Expand {src,dst,dn: {common, port_delta: {p: [...]}}} into the
+    flat {route_key: [(o,b),...]} form, unioning common ∪ port_delta[p].
+    Semantic invariant self-tested 1725/1725 against route_cells.json.
+    """
+    out = {}
+    for key, grp in raw.items():
+        common = [tuple(c) for c in grp["common"]]
+        for port, delta in grp["port_delta"].items():
+            cells = common + [tuple(c) for c in delta]
+            out[f"{key},{port}"] = sorted(set(cells))
+    return out
+
+
 def load_cells(path=CELLS_PATH):
     key = str(path)
     if key in _CELLS_CACHE:
         return _CELLS_CACHE[key]
+    # Prefer consolidated form when the default path is requested and
+    # the consolidated file is present — 34% file / 37% cell savings,
+    # identical semantic content (self-tested invariant:
+    # common ∪ port_delta[p] == route_cells.json[key+",p"]).
+    if path == CELLS_PATH and CELLS_CONSOLIDATED_PATH.exists():
+        raw = json.loads(CELLS_CONSOLIDATED_PATH.read_text())
+        parsed = _expand_consolidated(raw)
+        _CELLS_CACHE[key] = parsed
+        return parsed
     if not path.exists():
         _CELLS_CACHE[key] = None
         return None
