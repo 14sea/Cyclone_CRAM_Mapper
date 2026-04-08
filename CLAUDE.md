@@ -91,7 +91,7 @@ EP4CE6/
 
 ### FF ctrl bits — three-layer model (2026-04-08 re-mine)
 - **Layer 1 (device-global, DONE)**: 61 arst + 61 ena absolute-offset bits mined via `fuzz/ff_remine.py` (8 SEEDs) ∩ `fuzz/ff_remine_r2.py` (10 Q pins), CRC-normalized. Stored in `results/ff_remine_final.json`, loaded by `FFCodec` at import. arst ∩ ena = 48 "any-FF-with-ctrl" enables; 13 mode-specific per side. Mostly in header band (off<5282) — compact bitfield at off 73-74 + supporting bits at 42-52/710-729/1074-1081; 13 CRAM-band cells configure the global clock/reset network.
-- **Layer 2 (per-LE mode, UNMINED)**: the bit that says "*this* LE's FF uses arst/ena". Requires a multi-FF design experiment (current ff_remine uses 1 FF → layer 1 only).
+- **Layer 2 (per-LE mode, INVESTIGATED NEGATIVE 2026-04-08)**: byte 73 showed a per-(X,N) bit pattern under forced-placement mining at Y=4 and looked promising as a 2D header-band signal. Companion sweep at Y=10 (`fuzz/ff_y10_sweep.py`, 448 placements) joint-solved against Y=4 and found **only 7/448 (X,N) pairs have matching byte-73 bit sets** — essentially noise floor. Layer 2 is either 3D (X,Y,N) or still fitter-noise dominated at header granularity; the "layer 2 in byte 73" model is NOT a 2D lookup. Snapshots frozen at `results/ff_y4_sweep.json` / `ff_y10_sweep.json` for future work. See `memory/ff_byte73_y_dependent.md`.
 - **Layer 3 (per-LE FF presence)**: partly already in LutCodec minterm cells.
 - Fitter-noise wall from earlier session is specific to loaded designs with routing competition — trivial D FF base-vs-base diff is 0 bytes across 8 seeds.
 - Old `_FF_ARST_CELLS` / `_FF_ENA_CELLS` column-relative tables are **deprecated** (94-100% CRC byte artifacts) but kept as stubs for read-path structure.
@@ -126,7 +126,7 @@ SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 - Non-LAB columns (X=9,15,30) have large pair numbers (58-382) due to wider CRAM
 - RouteCodec reads both I=0 (formula) and I≠0 (lookup) in read_c4()
 
-### R4 Switch CRAM Address Model (25 of 37 I-indices mapped)
+### R4 Switch CRAM Address Model (24 of 37 I-indices mapped — table unreliable for synthesis)
 ```python
 # prev_lab_x = largest LAB_X value < wx (works for non-LAB wire X too)
 prev_col_start = COLUMN_BASE[prev_lab_x] - 136
@@ -149,6 +149,8 @@ R4_BASE_PREV = {
     0: (3423, 3842),   # delta=419, verified X12,X19,X31
     1: (3431, 3850),   # delta=419, verified X4,X18,X23
     2: (3431, 3851),   # delta=420, verified prev=X4,X6,X10,X24,X28
+    # I=6 REMOVED 2026-04-08 (propagation error from I=8, zero independent evidence)
+    8:  (3612, 3822),   # delta=210, VALIDATED 83.3% (10/12) via fingerprint recheck 2026-04-08
     4: (3423, 3842),   # delta=419, verified X9,X14,X29 (same BASE as I=0)
     7: (3414, 3835),   # delta=421, verified prev=X22 (same BASE as I=10)
    10: (3414, 3835),   # delta=421, verified X13,X18,X25
@@ -169,7 +171,9 @@ R4_BASE_PREV = {
 - I=3,6,19,21,23,27 stored in **non-LAB CRAM** (M9K/DSP blocks)
 - **RouteCodec**: read/write for C4, R4, R24, LOCAL_INTERCONNECT, apply_routing()
 - Huge columns (X13=76230, X26=68880) need M9K/DSP sub-region mapping
-- 37 unique R4 I-indices observed in STA data; **25 mapped, 12 unmapped** (5,9,24,28,29,30,31,32,33,104,116,125 — all blocked on insufficient route corpus, not mining method)
+- 37 unique R4 I-indices observed in STA data; **24 mapped, 13 unmapped** (5,6,9,24,28,29,30,31,32,33,104,116,125 — all blocked on insufficient route corpus, not mining method)
+- **I=6 removed 2026-04-08**: Option-1 fingerprint recheck proved the `(3612,3822)` base was blindly propagated from I=8 during 2026-04-06 mining; 15 green-zone sources don't route through any I=6 wire, so no independent evidence exists. I=8 validated at 83.3% (10/12) and kept. See `memory/r4_i6_i8_base_collision.md`.
+- **Table mass audit 2026-04-08**: Methods B (union per_route_delta) + D (absolute route_cells.json) flagged **11/16 testable entries SUSPECT** at <40% hit rate. Not CRC poisoning, not differential-sparsity bias — predicted cells miss by >20B. Regression stays 686/686 green because `route_synth.emit_ops()` short-circuits via the signature backend for the entire green corpus; **the R4 formula is dead code for synthesis**. Do not mass-edit the table; a proper re-mine needs `r4_remine.py` (CRC-normalized, ≥3 prev_x, cross-seed). See `memory/r4_base_prev_audit_2026_04_08.md`.
 - I=23 and I=26 added 2026-04-07 via `r4_mapper2.py`; 15-island green-zone harden showed no regression
 - 980 routing paths collected, parallel compilation at ~4s/target
 
@@ -280,11 +284,12 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
 
 ### Phase 4 — FASM toolchain (CLOSED on silicon 2026-04-08)
 - `fuzz/fasm2rbf.py` / `fuzz/rbf2fasm.py`: human-readable FASM ⇄ CRC-valid RBF. Directives: `LUT`, `ROUTE`, `BIT`, `SRC` (per-source overhead vs baseline).
-- **Signature backend** (`fuzz/route_signatures.py`): 1050 route cell-sets mined into `results/route_cells.json`; `build_route_ops()` short-circuits `synth_route` for any (src,dst,port) in the table, unlocking yellow-zone sources + the Y=15 jailbreak row.
+- **Signature backend** (`fuzz/route_signatures.py`): 1725 route cell-sets mined into `results/route_cells.json`; `build_route_ops()` short-circuits `synth_route` for any (src,dst,port) in the table, unlocking yellow-zone sources + the Y=15 jailbreak row.
+- **Port-MUX consolidated loader (2026-04-08)**: every `(src,dst,dn)` group in `route_cells.json` consolidates into a `common` preamble + per-port `delta` of exactly 4 cells (2 adjacent byte pairs at 840-byte = LI-pair×4 spacing). 225/225 full 4-port groups match the "3+1" equivalence class with datab always the odd port. `route_signatures.load_cells()` now prefers `results/route_cells_consolidated.json` (34% file / 37% cell savings) and expands to the legacy flat dict in memory — zero behavior change, semantic invariant `common ∪ port_delta[p] == route_cells.json[key+",p"]` self-tested 1725/1725. See `memory/port_mux_4cell_structure.md`.
 - **Semantic decomposer** (`fuzz/route_decompose.py`): greedy set-cover over route sigs + source-overhead chunks with strict containment; decomposes multi-route / cross-source CRAM diffs into clean ROUTE/SRC directives.
 - **LUT absolute-mask compensation**: `fasm2rbf.bitgen()` auto-loads `minterm_0_X{x}_Y{y}_N{n}.rbf` to compute `base_tt` and convert FASM's absolute mask into the XOR delta `LutCodec.write_tt` actually expects.
 - **Double-flip safety**: SRC overhead cells are unioned with route sig cells in `build_route_ops()` before emission, so cells shared between a source overhead and a route are XORed exactly once. Regression guard: `test_cross_source.py` (3/3 bit-perfect).
-- **Regressions**: `test_fasm_roundtrip.py` 1050/1050, `test_fasm_semantic.py` 1050/1050, `test_multiroute_decompose.py` 42/42, `test_cross_source.py` 3/3 — all bit-perfect.
+- **Regressions**: `test_fasm_roundtrip.py` 1725/1725, `test_fasm_semantic.py` 1725/1725, `test_multiroute_decompose.py` 41/42 (1 pre-existing), `test_cross_source.py` 3/3, `test_green_zone_harden.py` 15/15 islands 686/686 — all bit-perfect.
 - **Hardware closure (2026-04-08)**: `X10Y10N0.LUT = 0x8888` (AND(K1,K2)) written as a one-line FASM → `fasm2rbf` → `patch_rbf_crc` → openFPGALoader flash → AX301 behavior matched (LED idle ON, K2 or K3 → OFF). FASM path is silicon-accepted end-to-end.
 
 ### Phase 3.27 — M9K CRAM probe (PARTIAL — position model abandoned)

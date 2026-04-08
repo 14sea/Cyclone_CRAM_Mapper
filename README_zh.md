@@ -1577,7 +1577,7 @@ stub 留在文件里，前面加了注释指向 CRC 幽灵的 memory 笔记，�
 
 ### 进行中
 
-- [~] Phase 3.19：映射剩余 R4 I-index —— **37 个中已映射 25 个**（新增 I=6,8,11,12,13,16,17,19,21,23,26,27 + 早期 13 个）。剩余 12 个（5,9,24,28,29,30,31,32,33,104,116,125）卡在「没有足够多 Y 值的路由语料」，不是挖掘方法本身的问题
+- [~] Phase 3.19：映射剩余 R4 I-index —— **37 个中已映射 24 个**（I=6 于 2026-04-08 移除：Option-1 fingerprint 复查证明它是从 I=8 盲目传播的，15 个绿区源没有任何路由经过 I=6 线路，零独立证据；I=8 同日以 83.3% 复验通过保留）。**2026-04-08 批量审计**（方法 B+D）标出 16 个可测项中 11 个 SUSPECT（命中率 <40%），R4 公式对合成是 **dead code**，因为 `route_synth.emit_ops()` 对整个绿区语料走 signature 短路；回归依然 686/686 bit-perfect。正式重挖需要 `r4_remine.py`（CRC-normalized、≥3 prev_x、跨 seed 投票）。剩余 13 个未映射：5,6,9,24,28,29,30,31,32,33,104,116,125
 - [ ] Phase 3.20：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
 - [ ] Phase 3.21：C16 长距离线建模（完全未映射）
 - [x] Phase 3.22：**LI 模式选择规则 —— 阴性收案**。T9 + T10 正交网格语料（12 个 source、374 次 compile、414 条 mappable rows，`fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`）。可部署规则：`dy∈{2,3,21}→edge_even_b0`（100%）、`adx==0→paired`（79%）、`dx>30∧dy>7.5→paired`。中段叶子 `dy>3∧dx≤24.5∧adx>0.5`（n=247，占语料 60%）卡在 **52% 抛硬币**，语料翻倍 + 强制 sx/dx 解耦都没用。结论：paired vs alternating **不是静态路由键的函数**，大概率是 Quartus 的 placement seed / LI 通道占用 / 成本函数 tiebreak 决定的。继续扩语料不会有帮助。黄区回退继续把 `paired` 作为弱先验（两种模式都是硬件安全的）。
@@ -1587,7 +1587,7 @@ stub 留在文件里，前面加了注释指向 CRC 幽灵的 memory 笔记，�
 - [x] Phase 3.26：**路由综合绿区从 3 → 15 个源 LAB**（`fuzz/fingerprint_raw_mine.py` 编解码器盲态 XOR 挖掘 + 头部过滤）；686/686 路由 bit-perfect。`results/r4_iindex_table.json`（942 条目）由 `route_synth.py:206` 静默使用，按 (src,dst,port) 几何选择 R4 I-index 提示
 - [~] Phase 3.27：**M9K CRAM 探测 —— 部分完成**。`fuzz/m9k_probe_mine.py` 把 237 个 `M9K_GLOBAL_ON` + 299 个 `M9K_COL15_ON` 归档到 `results/ep4ce6_bitdb.sqlite` 表 `m9k_cells`；M9K 配置区段定位在字节 0x567xx..0x588xx。**Y 位置模型放弃**：X=15 七个 Y 位置扫掠，1707 个 Y-varying cell 中有 1489 个只在某一个 Y 出现 —— 自动布线噪声主导，无法消减。乘法器 X=20 探测失败（LOC 名未知）。如需继续，下条路是 STA wire-name 提取
 
-- [x] Phase 4：**FASM 工具链在矽片上收案（2026-04-08）** —— `fuzz/fasm2rbf.py` + `fuzz/rbf2fasm.py` 实现最小 FASM 方言（`LUT`、`ROUTE`、`BIT`、`SRC`），驱动 `LutCodec` + `RouteCodec` + `patch_rbf_crc`。signature 后端（`fuzz/route_signatures.py`，1050 条路由 cell-set）对黄区和 Y=15 越狱源直接短路 `synth_route`。set-cover 分解器（`fuzz/route_decompose.py`）把多路由 + 跨 source 的 CRAM diff 折叠成干净的 directives。回归：单路由 1050/1050、多路由 42/42、跨 source 3/3 全部 bit-perfect。硬件收案：`X10Y10N0.LUT = 0x8888`（AND(K1,K2)）一行 FASM 经 `fasm2rbf` 烧到 AX301，矽片行为一致
+- [x] Phase 4：**FASM 工具链在矽片上收案（2026-04-08）** —— `fuzz/fasm2rbf.py` + `fuzz/rbf2fasm.py` 实现最小 FASM 方言（`LUT`、`ROUTE`、`BIT`、`SRC`），驱动 `LutCodec` + `RouteCodec` + `patch_rbf_crc`。signature 后端（`fuzz/route_signatures.py`，**1725** 条路由 cell-set）对黄区和 Y=15 越狱源直接短路 `synth_route`。**Port-MUX 合并版 loader（2026-04-08）**：每个 `(src,dst,dn)` 组分解为共享 `common` 前缀 + 每个 port 恰好 4 个 delta cells（2 对相邻字节对，相距 840 字节 = LI-pair×4）。225/225 个完整 4-port 组符合「3+1」等价类，datab 永远是独立端口。`route_signatures.load_cells()` 优先加载 `results/route_cells_consolidated.json`（34% 文件 / 37% cell 压缩），语义不变式 `common ∪ port_delta[p] == route_cells[key+",p"]` 自检 1725/1725。set-cover 分解器（`fuzz/route_decompose.py`）把多路由 + 跨 source 的 CRAM diff 折叠成干净的 directives。回归：单路由 **1725/1725**、多路由 41/42（1 个先存在）、跨 source 3/3、绿区 15/15 岛屿（686/686）—— 全部 bit-perfect。硬件收案：`X10Y10N0.LUT = 0x8888`（AND(K1,K2)）一行 FASM 经 `fasm2rbf` 烧到 AX301，矽片行为一致
 
 ### 未来工作
 
@@ -1672,7 +1672,7 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 | 路由综合（绿区岛） | **15/392 源** | (4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12) — 686/686 路由对 Quartus bit-perfect |
 | FASM signature 后端 | **1050 条路由** | `results/route_cells.json` —— 对全部挖到的路由（含黄区 + Y=15 越狱行）短路 `synth_route` |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
-| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器；1050/1050 + 42/42 + 3/3 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
+| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
 
 ---

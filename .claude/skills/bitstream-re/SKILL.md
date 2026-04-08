@@ -43,7 +43,7 @@ Routing wires are named by the vendor's STA tool. For Cyclone IV:
 For each wire type:
 1. **Collect multiple routes that share the wire** — mine SQLite for every path using `C4_X10_Y10_N0_I0`, for example
 2. **Pair-diff two routes that differ only in that wire's presence**. The common bits = the wire's CRAM cells
-3. **Baseline-diff mapper**: for a candidate (X, I) combo, find which (byte, bit) positions are uniquely correlated with Y across the corpus. This is how the 44 C4 I≠0 mappings and 18 R4 I-index models were found.
+3. **Baseline-diff mapper**: for a candidate (X, I) combo, find which (byte, bit) positions are uniquely correlated with Y across the corpus. This is how the 44 C4 I≠0 mappings and 24 R4 I-index models were found. **Audit what you mine**: a 2026-04-08 mass audit of the EP4CE6 R4 table (Methods B+D against absolute route_cells.json) found 11/16 testable entries at <40% hit rate — mining results rot when the corpus shifts and the formula path becomes dead code behind a signature short-circuit. Periodically cross-check mined tables against a ground-truth absolute cell set, not just per-route differentials.
 4. **Expect per-wire-type address styles**: C4/R4 have slot/group/group-indexed formulas; R24 has fixed per-wire bytes (no Y offset); LOCAL_INTERCONNECT lives in the *self* column not the prev column. Don't assume uniformity.
 
 ## Stage 4 — Codec + safety envelope
