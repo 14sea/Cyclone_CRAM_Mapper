@@ -1,0 +1,672 @@
+{
+ "10,10,0": {
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,13,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,4,0": {
+  "datad": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "11,12,0": {
+  "datac": {
+   "n_sources": 9,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 9,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,18,0": {
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,12,0": {
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,21,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,4,0": {
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,10,0": {
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,14,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,2,0": {
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,4,0": {
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,5,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,8,0": {
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "11,8,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,7,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,12,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,14,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,6,0": {
+  "datad": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,18,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,19,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,21,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,2,0": {
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,11,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "11,4,0": {
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,17,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,6,0": {
+  "dataa": {
+   "n_sources": 4,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 4,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 4,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,14,0": {
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,6,0": {
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,3,0": {
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,13,0": {
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,3,0": {
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "10,16,0": {
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "12,4,0": {
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "18,6,0": {
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "16,2,0": {
+  "datac": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 2,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 3,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,10,0": {
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "18,10,0": {
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,5,0": {
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ },
+ "13,9,0": {
+  "dataa": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datad": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  },
+  "datac": {
+   "n_sources": 1,
+   "intersection_size": 0,
+   "cells": []
+  }
+ }
+}

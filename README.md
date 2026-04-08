@@ -1533,6 +1533,64 @@ From this point forward, we no longer need to round-trip through Quartus to
 validate codec changes — we can write the bitstream ourselves and watch the
 chip respond.
 
+### The CRC ghost: how a "working" mapping turned out to be fake (2026-04-08)
+
+Late in the project we caught ourselves celebrating a mapping that
+wasn't real. Here's what happened, in plain terms.
+
+The bitstream is laid out as 1727 "frames" of 210 bytes each. Inside
+every frame, the last 2 bytes are a CRC-16 checksum — the chip uses
+them to detect flipped bits during loading. We knew that.
+
+The chip's configuration RAM is also organized in a per-column grid.
+Each column repeats every 210 bytes too (coincidence driven by the
+same hardware geometry). It was tempting to assume "column position
+184" inside a pair was the same as "frame position 184". It isn't —
+the column grid and the frame grid **start at different bytes**, so
+they are shifted relative to each other. A cell that looks like "pair
+13, position 184" in column coordinates can physically be **position
+208 of some frame** — which is a CRC byte.
+
+For a while we'd been mining "R24 switch bits" and "flip-flop control
+bits" by XOR-diffing two Quartus-compiled .rbf files. Any single
+logic change causes Quartus to recompute the CRC for the affected
+frames, so the XOR diff picks up both the real bit that changed AND
+the two CRC bytes of that frame. We never noticed, and kept
+cataloguing the CRC bytes as if they were real configuration cells.
+The "pair delta of 419-420 bytes" we had celebrated as the spacing of
+the R24 switch structure was actually 2 × 210 = 420 — the distance
+between two consecutive frames' CRCs.
+
+The smoking gun came from a one-line check: take every "mapped" cell
+in the codec and ask `(offset - 32) % 210 >= 208`. If that's true,
+the cell is physically a CRC byte, not a configuration byte. The
+results were devastating:
+
+- `R24 I=0` fixed offsets: **56 of 56 cells** (100%) were CRC bytes
+- `FF async-reset` control cells: **448 of 476 cells** (94%) were CRC
+- `FF enable` control cells: **168 of 168 cells** (100%) were CRC
+
+The route synthesizer still passed all 1725 regression tests anyway.
+At the very end of generating any .rbf we call `patch_rbf_crc()`,
+which recomputes every frame CRC from the frame data. So the R24
+writes flipped CRC bytes, and then `patch_rbf_crc` immediately
+overwrote those same bytes with the correct values. The writes were
+effectively no-ops. The real R24 bits were being emitted through
+other paths (probably buried inside the LI and C4 envelopes we also
+mine), which is why routes still worked on silicon. The tests looked
+bit-perfect, but only because `patch_rbf_crc` was idempotently
+cleaning up after a broken write path.
+
+We disabled the affected FASM directives with a hard error, wrote the
+finding into project memory as a critical warning, and queued a
+re-audit of every other mapping in the codec using the same
+`(off-32) % 210 >= 208` filter. Future mining work must normalize
+both sides through `patch_rbf_crc` **before** taking an XOR diff, so
+CRC bytes cancel instead of showing up as phantom cells. The LUT
+truth-table and LI pair-map work is probably fine (those were
+verified against real silicon with LED tests), but anything labeled
+"R24" or "FF mode" is suspect until re-checked.
+
 ---
 
 ## Current Progress and Next Steps

@@ -53,6 +53,9 @@ _BIT_RE = re.compile(
     r"^BIT\s+(?P<off>0x[0-9a-fA-F]+|\d+)\s+(?P<bp>[0-7])$"
 )
 _SRC_RE = re.compile(r"^SRC\s+X(?P<sx>\d+)Y(?P<sy>\d+)$")
+_DFF_RE = re.compile(
+    r"^DFF\s+X(?P<x>\d+)Y(?P<y>\d+)\.(?P<mode>ARST|ENA)$"
+)
 
 
 class FasmError(ValueError):
@@ -69,6 +72,7 @@ def parse_fasm(text):
     routes = []
     bits = []
     srcs = []
+    dffs = []  # list[(x, y, mode)] mode in {"ARST","ENA"}
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
@@ -102,8 +106,12 @@ def parse_fasm(text):
             bp = int(m["bp"])
             bits.append((off, bp))
             continue
+        m = _DFF_RE.match(line)
+        if m:
+            dffs.append((int(m["x"]), int(m["y"]), m["mode"]))
+            continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
-    return luts, routes, bits, srcs
+    return luts, routes, bits, srcs, dffs
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -160,7 +168,7 @@ def _load_overhead():
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
-    luts, routes, bits, srcs = parse_fasm(fasm_text)
+    luts, routes, bits, srcs, dffs = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -190,6 +198,19 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         for off, bp in bits:
             buf[off] ^= (1 << bp)
         work = bytes(buf)
+
+    if dffs:
+        # DFF directive parsing retained, but apply is DISABLED as of
+        # 2026-04-08: FFCodec._FF_ARST_CELLS / _FF_ENA_CELLS were mined
+        # against a CRC-unpatched baseline and ≥94% of the "cells" land on
+        # frame positions 208-209 (the per-frame CRC LE bytes). The entire
+        # mapping was CRC side-effects, not real FF mode bits. See memory
+        # note ff_arst_ena_crc_false_positive.md. Do NOT re-enable without
+        # re-mining against patch_rbf_crc'd baselines.
+        raise FasmError(
+            "DFF.ARST / DFF.ENA disabled — underlying FFCodec mapping is "
+            "CRC byte artifacts, not real FF mode bits. Needs re-mining."
+        )
 
     if luts:
         db = sqlite3.connect(db_path)

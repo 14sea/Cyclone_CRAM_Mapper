@@ -45,6 +45,9 @@ _C4_SLOT_BASE = {0: 2405, 1: 2475, 2: 2338}
 # Key: (wire_x, i_index) -> absolute RBF byte offset.
 # The byte is FIXED for all Y values; only bp changes with Y (same formula as I=0).
 # Mapped via baseline-diff method (c4_mapper.py, 2026-04-06).
+# DEPRECATED 2026-04-08: CRC audit shows 44/44 entries land on frame CRC bytes
+# (pos 208/209). Writes are overwritten by patch_rbf_crc → dead code.
+# See memory/ff_arst_ena_crc_false_positive.md. Kept for read-path structure.
 _C4_FIXED_OFFSETS = {
     (9, 1): 0x13633,    # 5/5 Y hit
     (9, 10): 0x15216,   # 5/6 Y hit
@@ -153,9 +156,36 @@ for _i in range(len(LAB_X)):
 # R24 switches: in PREV LAB column, FIXED byte offset (no slot/group byte adjustment)
 # Only bp changes with Y: bp = (6-group) if slot==2 else (7-group)
 # Each entry is a list of fixed offsets from col_start (= COLUMN_BASE[prev_x] - 136)
+# DEPRECATED 2026-04-08: 56/56 CRC bytes. Dead code. See ff_arst_ena_crc_false_positive.md.
 _R24_FIXED_OFFSETS = {
     0: [3124, 2705],  # pair-diff 66%/61%, 5-6 wx columns (2026-04-06)
 }
+
+# --- FF ctrl-signal mode bit constants (mined 2026-04-08) ------------------
+# Async reset (arst) and clock enable (ena) mode bits broadcast across every
+# LAB column on the FF control-signal R24 row. See memory:
+# ff_ctrl_r24_broadcast.md. Each (rel, bp) is applied per-column at
+# `COLUMN_BASE[x] - 136 + rel`, for every LAB column in the ctrl net span.
+#
+# Validation: the arst table was extracted from ff2 corpus (B->C diff) and
+# cross-validated on dff_async_reset (69 hits across 8 independent columns).
+# The ena table overlaps R24 I=0 at rel 3124/3125 (same bytes as the I=0
+# long-row broadcast), confirming ctrl signals ride R24 infrastructure.
+# DEPRECATED 2026-04-08: 448/476 CRC bytes (94%), only rel=3291 is real data.
+# Needs re-mining against CRC-normalized baselines. See ff_arst_ena_crc_false_positive.md.
+_FF_ARST_CELLS = [
+    (2914, 0), (2914, 2), (2914, 3),
+    (2915, 2), (2915, 3), (2915, 4), (2915, 6),
+    (3291, 4),
+    (3334, 0), (3334, 1), (3334, 2), (3334, 3), (3334, 5),
+    (3335, 2), (3335, 3), (3335, 4), (3335, 6),
+]
+# DEPRECATED 2026-04-08: 168/168 CRC bytes (100%). Dead code. Needs re-mining.
+_FF_ENA_CELLS = [
+    (2914, 7), (2915, 1),
+    (3124, 3), (3124, 7), (3125, 1), (3125, 7),  # matches _R24_FIXED_OFFSETS[0]
+]
+
 
 # --- LOCAL_INTERCONNECT address model constants ---
 
@@ -1262,3 +1292,96 @@ class LutCodec:
             result[addr] ^= (1 << bitpos)
 
         return bytes(result)
+
+
+class FFCodec:
+    """FF control-signal mode bit codec (arst, ena).
+
+    FF mode bits are NOT local to a single LE — they broadcast across every
+    LAB column on the control-signal R24 row. This codec toggles the shared
+    `_FF_ARST_CELLS` / `_FF_ENA_CELLS` pattern at each LAB column in the
+    supplied span.
+
+    Usage:
+        codec = FFCodec()
+        # Enable arst across a row spanning LAB columns 4..12:
+        rbf = codec.write_arst(rbf, lab_xs=[4,5,6,7,8,10,11,12], enable=True)
+        # Or infer the column span from an existing RBF by XOR-diffing:
+        cols = codec.read_arst_span(rbf, zero)
+
+    Skeleton status (2026-04-08): arst table cross-validated on
+    dff_async_reset (69 hits / 8 cols). ena table includes R24 I=0 pair
+    (3124/3125) and needs independent validation. sclr/sload not yet mined.
+    """
+
+    def _apply_cells(self, rbf_data, lab_xs, cells):
+        from config import COLUMN_BASE
+        result = bytearray(rbf_data)
+        for x in lab_xs:
+            if x not in COLUMN_BASE:
+                continue
+            col_start = COLUMN_BASE[x] - 136
+            for rel, bp in cells:
+                off = col_start + rel
+                if 0 <= off < len(result):
+                    result[off] ^= (1 << bp)
+        return bytes(result)
+
+    def write_arst(self, rbf_data, lab_xs, enable=True):
+        """Toggle FF async-reset mode bits at each LAB column in lab_xs.
+
+        Args:
+            rbf_data: existing RBF bytes
+            lab_xs: iterable of LAB X coordinates to flip
+            enable: currently ignored (XOR is self-inverse — caller tracks
+                    whether they're enabling or disabling against a baseline)
+        """
+        return self._apply_cells(rbf_data, lab_xs, _FF_ARST_CELLS)
+
+    def write_ena(self, rbf_data, lab_xs, enable=True):
+        """Toggle FF clock-enable mode bits at each LAB column in lab_xs.
+
+        Note: `_FF_ENA_CELLS` overlaps R24 I=0 broadcast at rel 3124/3125.
+        If the design already drives an R24 I=0 net through these columns,
+        the ena write will collide — union the sets before emission (same
+        rule as FASM SRC+ROUTE XOR double-flip).
+        """
+        return self._apply_cells(rbf_data, lab_xs, _FF_ENA_CELLS)
+
+    def read_arst_span(self, rbf_data, zero_data):
+        """Return the list of LAB X columns where arst cells are set vs zero.
+
+        A column is flagged as "arst active" if ≥50% of `_FF_ARST_CELLS`
+        entries differ from the zero baseline at that column.
+        """
+        from config import COLUMN_BASE
+        threshold = max(1, len(_FF_ARST_CELLS) // 2)
+        hits = []
+        for x in sorted(COLUMN_BASE):
+            col_start = COLUMN_BASE[x] - 136
+            count = 0
+            for rel, bp in _FF_ARST_CELLS:
+                off = col_start + rel
+                if off < len(rbf_data):
+                    if (rbf_data[off] ^ zero_data[off]) & (1 << bp):
+                        count += 1
+            if count >= threshold:
+                hits.append(x)
+        return hits
+
+    def read_ena_span(self, rbf_data, zero_data):
+        """Return the list of LAB X columns where ena cells are set vs zero."""
+        from config import COLUMN_BASE
+        threshold = max(1, len(_FF_ENA_CELLS) // 2)
+        hits = []
+        for x in sorted(COLUMN_BASE):
+            col_start = COLUMN_BASE[x] - 136
+            count = 0
+            for rel, bp in _FF_ENA_CELLS:
+                off = col_start + rel
+                if off < len(rbf_data):
+                    if (rbf_data[off] ^ zero_data[off]) & (1 << bp):
+                        count += 1
+            if count >= threshold:
+                hits.append(x)
+        return hits

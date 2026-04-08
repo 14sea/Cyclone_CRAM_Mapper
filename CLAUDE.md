@@ -267,7 +267,7 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
 - **Dead-cell scan**: 3-phase XOR identity chain (`jailbreak/scan_gen.py` / `scanC_gen.py`) — 2,480 forbidden LEs hardware-verified healthy (Phase A=40, Phase B=640 full N, Phase C=1840 all hidden cols + Y=15 row). K1^K2 truth table matched bit-for-bit every time.
 - **Effective fabric**: 392 → ~520+ LABs, 6,272 → 10,320 LEs (+65%)
 - **Phase 3.25 CLOSED 2026-04-07**: both axes silicon-validated end-to-end through the codec.
-  - **X=32 column** silicon-verified earlier today (LCCOMB_X32_Y10_N0 mask 0x8888); X=33 codec-verified via same column model. `COLUMN_BASE` extended to 28 LAB columns with standard 7350-byte stride.
+  - **X=32 column** silicon-verified on the same day (LCCOMB_X32_Y10_N0 mask 0x8888); X=33 codec-verified via same column model. `COLUMN_BASE` extended to 28 LAB columns with standard 7350-byte stride.
   - **Y=15 ghost row** silicon-verified 2026-04-07 (`fuzz/demo_y15_keys2led.py` → `results/rbf/demo_y15_keys_to_led0.rbf`, LCCOMB_X10_Y15_N0 mask 0x0357 = `(K1&K2)|(K3&K4)`). Calibrated via `lut_single 10 15 0`, 48 minterm bits promoted, codec round-trip OK.
   - +65% fabric is production-ready on real CE6 silicon.
 

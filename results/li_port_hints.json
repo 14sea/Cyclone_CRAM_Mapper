@@ -1,0 +1,29 @@
+{
+ "exclusive": {
+  "dataa": [
+   1,
+   33
+  ],
+  "datab": [
+   11,
+   26
+  ],
+  "datac": [],
+  "datad": []
+ },
+ "strong": {
+  "dataa": [
+   2,
+   18
+  ],
+  "datab": [
+   28,
+   29,
+   32
+  ],
+  "datac": [],
+  "datad": []
+ },
+ "methodology": "Extracted from 979 STA lut2|data{a-d} events via LI I-index preceding the LUT input. Non-exclusive I-indices (e.g. I=15 serves both dataa and datac) indicate additional LE-internal MUX configuration that STA does not expose.",
+ "sample_size": 979
+}
