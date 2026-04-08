@@ -1577,7 +1577,7 @@ stub 留在文件里，前面加了注释指向 CRC 幽灵的 memory 笔记，�
 
 ### 进行中
 
-- [~] Phase 3.19：映射剩余 R4 I-index —— **37 个中已映射 24 个**（I=6 于 2026-04-08 移除：Option-1 fingerprint 复查证明它是从 I=8 盲目传播的，15 个绿区源没有任何路由经过 I=6 线路，零独立证据；I=8 同日以 83.3% 复验通过保留）。**2026-04-08 批量审计**（方法 B+D）标出 16 个可测项中 11 个 SUSPECT（命中率 <40%），R4 公式对合成是 **dead code**，因为 `route_synth.emit_ops()` 对整个绿区语料走 signature 短路；回归依然 686/686 bit-perfect。正式重挖需要 `r4_remine.py`（CRC-normalized、≥3 prev_x、跨 seed 投票）。剩余 13 个未映射：5,6,9,24,28,29,30,31,32,33,104,116,125
+- [~] Phase 3.19：映射剩余 R4 I-index —— **37 个中已映射 24 个**（I=6 于 2026-04-08 移除；同日复审发现 I=6 和 I=8 都是非 LAB CRAM，需要不同的列模型）。同日 `fuzz/r4_remine.py` 分析式复审（942 条 STA 语料 × `route_cells.json` 绝对 cell 集，零差分偏差）**翻案**早上的 per_route_delta 审计：I=0/1/2/4/7/10/13/15/16/17/18/20 命中率 60-97%，**LAB-CRAM 条目整体健康**。确认有问题的：I=12（29%）、I=14（(3191,3191) 明显坏掉）、I=6/I=8（非 LAB CRAM）。R4 公式没被 `route_synth` 使用是因为 signature 后端短路，不是因为坏掉。剩余 13 个未映射：5,9,24,28,29,30,31,32,33,104,116,125 —— 被 STA 语料挡住
 - [ ] Phase 3.20：M9K/DSP 边界列修复（X=13/26 等大列需要子区域地址模型）
 - [ ] Phase 3.21：C16 长距离线建模（完全未映射）
 - [x] Phase 3.22：**LI 模式选择规则 —— 阴性收案**。T9 + T10 正交网格语料（12 个 source、374 次 compile、414 条 mappable rows，`fuzz/li_mode_grid_mine.py` + `li_mode_analyze.py` + `li_mode_tree.py`）。可部署规则：`dy∈{2,3,21}→edge_even_b0`（100%）、`adx==0→paired`（79%）、`dx>30∧dy>7.5→paired`。中段叶子 `dy>3∧dx≤24.5∧adx>0.5`（n=247，占语料 60%）卡在 **52% 抛硬币**，语料翻倍 + 强制 sx/dx 解耦都没用。结论：paired vs alternating **不是静态路由键的函数**，大概率是 Quartus 的 placement seed / LI 通道占用 / 成本函数 tiebreak 决定的。继续扩语料不会有帮助。黄区回退继续把 `paired` 作为弱先验（两种模式都是硬件安全的）。
