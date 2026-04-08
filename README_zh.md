@@ -1598,7 +1598,8 @@ stub 留在文件里，前面加了注释指向 CRC 幽灵的 memory 笔记，�
 
 ### 未来工作
 
-- [ ] Phase 5：完善布线编解码器覆盖率（目标：所有线类型 >90%；C16 + 剩余 R4 I-index 仍未结）
+- [ ] Phase 5.1：完善布线编解码器覆盖率（目标：所有线类型 >90%；C16 + 剩余 R4 I-index 仍未结）—— 与已完成的 Phase 5.0 非 LAB 工作不同
+- [ ] Phase 5.2：非 LAB 块参数解码（CLOCK_ENABLE 之外）—— 需要「块内差分探针」绕过 header 噪声地板、STA 黑盒、以及每点位配置不可观察这三堵墙；PLL 探针（用 `PLL_1`/`PLL_2` 单例 LOC）延到这里做
 - [ ] Phase 6：NextPNR EP4CE6 后端开发（从 bit dictionary 生成 chipdb + nextpnr-generic 对接）
 
 ### 长期方向：我们究竟可能在哪里赢过 Quartus
@@ -1655,7 +1656,7 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 这些都不是「ML 打败 Quartus」。它们是「ML 帮我们学一些我们不想手动推的
 规则」。
 
-**建议优先级。** 先把 Phase 5–6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
+**建议优先级。** 先把 Phase 5.1 → 6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
 一旦端到端的 `.v → bitstream` 开源流程能跑起来，问题就从「能不能在 PPA 上
 打败 Quartus」变成「我们能做哪些 Quartus 根本做不了的事」—— 而解锁这些
 答案的是 codec，不是模型。

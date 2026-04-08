@@ -294,7 +294,7 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
 
 ### Phase 3.27 — M9K CRAM probe (superseded by Phase 5.0 real-pin re-mine)
 - `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).
-- **Legacy wins** (kept for history, do not use directly): `M9K_GLOBAL_ON`=237, `M9K_COL15_ON`=299 — Phase 5.0 showed **76-81% were CRC byte ghosts**. CRC-stripped to 58 each, and the two are byte-identical → the "GLOBAL vs COL15" distinction was fiction.
+- **Legacy archive**: the `m9k_cells` table originally carried 237 `M9K_GLOBAL_ON` + 299 `M9K_COL15_ON` rows. Phase 5.0 showed **76-81% were CRC byte ghosts** (bytes at col 208/209 of each 210-byte frame). Both tags were CRC-stripped in place to **58 cells each**, and the two are byte-identical → the "GLOBAL vs COL15" distinction was fiction. Current bitdb state: `M9K_GLOBAL_ON=58`, `M9K_COL15_ON=58`. Use the CRC-stripped rows; the 237/299 values only exist in git history.
 - Position model (Y sweep at X=15) abandoned 2026-04-07: auto-router churn dominates and the per-Y signal cannot be separated from fitter noise without manual routing for every feeder.
 - **Mult X=20 probe** originally failed with `MULT_X20_Y*_N0` (wrong LOC); Phase 5.0 cracked the real syntax — see next section.
 

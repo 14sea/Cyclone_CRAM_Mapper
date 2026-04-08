@@ -1695,7 +1695,8 @@ wrong and the right answer side by side.
 
 ### Future Work
 
-- [ ] Phase 5: Complete routing codec coverage (target: all wire types >90%; C16 + remaining R4 I-indices still open)
+- [ ] Phase 5.1: Complete routing codec coverage (target: all wire types >90%; C16 + remaining R4 I-indices still open) — distinct from the already-done Phase 5.0 non-LAB work
+- [ ] Phase 5.2: Non-LAB block parameter decoding beyond CLOCK_ENABLE — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
 - [ ] Phase 6: NextPNR EP4CE6 backend (chipdb from the bit dictionary, nextpnr-generic port)
 
 ### Long-term direction: where we can actually beat Quartus
@@ -1757,7 +1758,7 @@ modest place in this project:
 None of these are "ML beats Quartus." They are "ML helps us write rules we do
 not want to hand-derive."
 
-**Recommended priority.** Finish Phase 5–6 first (routing coverage → chipdb →
+**Recommended priority.** Finish Phase 5.1 → 6 first (routing coverage → chipdb →
 nextpnr backend). Once a `.v → bitstream` open-source flow runs end-to-end,
 the question shifts from "can we beat Quartus on PPA" to "what can we do that
 Quartus cannot do at all" — and the codec, not a model, is what unlocks those
