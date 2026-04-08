@@ -10,11 +10,12 @@ DEVICE = "EP4CE10F17C8"
 
 VERILOG = """\
 module fuzz_top(
-    input clk, input [7:0] addr, input [7:0] din, input we, output [7:0] dout
+    input clk, input addr, input din, input we, output dout
 );
+    // Minimal 2x1 M9K so all ports fit on real AX301 pins
     altsyncram #(
         .operation_mode("SINGLE_PORT"),
-        .width_a(8), .widthad_a(8), .numwords_a(256),
+        .width_a(1), .widthad_a(1), .numwords_a(2),
         .lpm_type("altsyncram"), .ram_block_type("M9K"),
         .outdata_reg_a("UNREGISTERED")
     ) u (
@@ -37,11 +38,13 @@ set_global_assignment -name DEVICE {DEVICE}
 set_global_assignment -name TOP_LEVEL_ENTITY fuzz_top
 set_global_assignment -name VERILOG_FILE fuzz_top.v
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_instance_assignment -name VIRTUAL_PIN ON -to clk
-set_instance_assignment -name VIRTUAL_PIN ON -to addr
-set_instance_assignment -name VIRTUAL_PIN ON -to din
-set_instance_assignment -name VIRTUAL_PIN ON -to we
-set_instance_assignment -name VIRTUAL_PIN ON -to dout
+# REAL pins only — VIRTUAL_PIN mining contaminates CRAM diffs with
+# router-to-fake-pin artifacts (Phase 5.0 retraction 2026-04-08).
+set_location_assignment PIN_E1  -to clk
+set_location_assignment PIN_E16 -to addr
+set_location_assignment PIN_M16 -to din
+set_location_assignment PIN_M15 -to we
+set_location_assignment PIN_G15 -to dout
 set_location_assignment {{LOC}} -to "{NODE}"
 """
 

@@ -1,5 +1,5 @@
 {
- "description": "Mult always-on signature \u2014 cells flipped whenever any lpm_mult is instantiated on X=20 DSP column. Mined 2026-04-08 Phase 5.0.",
+ "description": "RETRACTED 2026-04-08: VIRTUAL_PIN artifact, NOT real mult signature. Real-pin test (mult_noise_test) shows 0 overlap with these 62 cells. Kept for historical reference and as example of virtual-pin contamination. Correct mining requires real I/O LOC.",
  "n_sites": 42,
  "common_all_42": [
   [
@@ -513,5 +513,6 @@
    2
   ]
  ],
- "note": "Head cluster 48457..52217 likely global DSP enable; tail 206142..207664 in X=20 column band."
+ "note": "Head cluster 48457..52217 likely global DSP enable; tail 206142..207664 in X=20 column band.",
+ "status": "VIRTUAL_PIN_ARTIFACT"
 }

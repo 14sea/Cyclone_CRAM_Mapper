@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Phase 3.27 follow-up: discover real LOC name for embedded multiplier.
 
+SAFE to use VIRTUAL_PIN here: this script only greps fit.rpt for the
+hierarchical MegaFunction node path. No CRAM diffing, no mining output.
+Never copy this QSF for pair-diff mining — see
+memory/feedback_virtual_pin_mining_is_fiction.md.
+
 mult_probe_clean.py hit "illegal location" on MULT_X20_Y*_N0. Strategy:
 compile an lpm_mult with NO location constraint, let Quartus auto-place,
 then grep the fit report for whatever placement name it chose. Plug

@@ -38,12 +38,13 @@ set_global_assignment -name DEVICE {DEVICE}
 set_global_assignment -name TOP_LEVEL_ENTITY fuzz_top
 set_global_assignment -name VERILOG_FILE fuzz_top.v
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_instance_assignment -name VIRTUAL_PIN ON -to clk
-set_instance_assignment -name VIRTUAL_PIN ON -to a0
-set_instance_assignment -name VIRTUAL_PIN ON -to a1
-set_instance_assignment -name VIRTUAL_PIN ON -to b0
-set_instance_assignment -name VIRTUAL_PIN ON -to b1
-set_instance_assignment -name VIRTUAL_PIN ON -to p0
+# REAL pins only — see memory/feedback_virtual_pin_mining_is_fiction.md
+set_location_assignment PIN_E1  -to clk
+set_location_assignment PIN_E16 -to a0
+set_location_assignment PIN_M16 -to a1
+set_location_assignment PIN_M15 -to b0
+set_location_assignment PIN_E15 -to b1
+set_location_assignment PIN_G15 -to p0
 set_location_assignment {{LOC}} -to "{NODE}"
 """
 

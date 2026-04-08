@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """M9K LOC syntax discovery (Phase 5.0 parallel).
 
+SAFE to use VIRTUAL_PIN here: only grep fit.rpt for node path, no CRAM
+diffing. Never copy this QSF for mining — see
+memory/feedback_virtual_pin_mining_is_fiction.md.
+
 Same trick that cracked DSPMULT: compile one altsyncram with no LOC,
 grep fit.rpt for the hierarchical node path + M9K container name.
 """
