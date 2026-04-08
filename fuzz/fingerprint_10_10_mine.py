@@ -16,7 +16,7 @@ from collections import defaultdict, Counter
 from pathlib import Path
 from bitstream import RouteCodec
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 ZERO = RBF / 'lits_zero_10_10.rbf'
 NAME = re.compile(r'lits_pair_X10Y10_to_X(\d+)Y(\d+)N(\d+)_(\w+)\.rbf')

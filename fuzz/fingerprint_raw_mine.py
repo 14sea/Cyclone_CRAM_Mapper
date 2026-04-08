@@ -9,7 +9,7 @@ the codec-based fingerprint mine for the SOURCE_OVERHEAD_TIES table.
 import os, json, re, sys
 from pathlib import Path
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 
 SOURCES = [(10,10),(10,14),(4,4),(22,12),(28,18),(16,8),(16,14),(22,16),(16,4),(28,10),

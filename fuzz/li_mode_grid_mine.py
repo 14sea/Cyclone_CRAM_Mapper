@@ -8,6 +8,8 @@ crossed with the same relative-dy grid, so dx-effect and sx-effect can be
 disentangled by the tree.
 """
 import sys, os, time
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from runner import compile_route_pair_single_input, compile_route_baseline_abcd
 
@@ -64,11 +66,11 @@ def dsts_for(sx, sy):
     return uniq
 
 
-OUT = "/home/test/EP4CE6/results/rbf"
+OUT = f"{REPO}/results/rbf"
 
 
 def main():
-    log = open("/home/test/EP4CE6/results/li_mode_grid.log", "w")
+    log = open(f"{REPO}/results/li_mode_grid.log", "w")
     def say(s):
         print(s, flush=True); log.write(s + "\n"); log.flush()
 

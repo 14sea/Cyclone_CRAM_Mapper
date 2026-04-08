@@ -9,12 +9,14 @@ Step 3: Print a delta table the user can paste into bitstream.py.
 """
 import sys, os, json, sqlite3
 from collections import defaultdict
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from bitstream import _C4_FIXED_OFFSETS
 from c4_mapper import map_c4_baseline
 
-DB_PATH = "/home/test/EP4CE6/results/ep4ce6_bitdb.sqlite"
+DB_PATH = f"{REPO}/results/ep4ce6_bitdb.sqlite"
 
 def survey():
     db = sqlite3.connect(DB_PATH)

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Step 1 — fill the (10,10) Manhattan corridor with strategic dst samples."""
 import sys, os
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from runner import compile_route_pair_single_input
 
@@ -16,7 +18,7 @@ DSTS = [
 def main():
     for dx, dy in DSTS:
         tag = f"lits_pair_X10Y10_to_X{dx}Y{dy}N0_datab"
-        path = f"/home/test/EP4CE6/results/rbf/{tag}.rbf"
+        path = f"{REPO}/results/rbf/{tag}.rbf"
         if os.path.exists(path):
             print(f"  exists: {tag}")
             continue

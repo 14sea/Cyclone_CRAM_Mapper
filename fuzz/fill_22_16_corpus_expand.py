@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """δ expansion — push (22,12) past 60 routes to test if fp=1 is small-N too."""
 import sys, os
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from runner import compile_route_pair_single_input, compile_route_baseline_abcd
 
@@ -15,12 +17,12 @@ DSTS = [
 
 def main():
     ztag = f"lits_zero_{SX}_{SY}"
-    if not os.path.exists(f"/home/test/EP4CE6/results/rbf/{ztag}.rbf"):
+    if not os.path.exists(f"{REPO}/results/rbf/{ztag}.rbf"):
         compile_route_baseline_abcd(ztag, SX, SY, 0)
     ok=fail=0
     for dx,dy in DSTS:
         tag=f"lits_pair_X{SX}Y{SY}_to_X{dx}Y{dy}N0_datab"
-        path=f"/home/test/EP4CE6/results/rbf/{tag}.rbf"
+        path=f"{REPO}/results/rbf/{tag}.rbf"
         if os.path.exists(path):
             ok+=1; continue
         rbf,t,err=compile_route_pair_single_input(tag,SX,SY,0,dx,dy,0,connect_port="datab")

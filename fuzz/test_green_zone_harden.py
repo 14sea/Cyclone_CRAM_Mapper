@@ -17,7 +17,7 @@ from pathlib import Path
 from bitstream import RouteCodec
 from route_synth import synth_route, _load_fp
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 RES = ROOT / 'results'
 

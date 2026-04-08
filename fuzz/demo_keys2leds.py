@@ -7,12 +7,14 @@ Default (no key pressed): A=B=C=D=1 -> Q=0 -> LED OFF.
 Press K1+K2 or K3+K4 -> Q=1 -> LED ON.
 """
 import sys, os
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bitstream import LutCodec, patch_rbf_crc
 from database import get_db
 
-BASE = "/home/test/EP4CE6/results/rbf/minterm_0_X10_Y10_N0.rbf"
-OUT  = "/home/test/EP4CE6/results/rbf/demo_keys_to_led0.rbf"
+BASE = f"{REPO}/results/rbf/minterm_0_X10_Y10_N0.rbf"
+OUT  = f"{REPO}/results/rbf/demo_keys_to_led0.rbf"
 # minterm_0 baseline already has TT[0]=1, so XOR-mask to land on 0x0357 absolute
 TARGET = 0x0357
 MASK = TARGET ^ 0x0001  # 0x0356

@@ -7,8 +7,10 @@ pickable rule for paired vs alternating.
 import json
 from collections import Counter
 from pathlib import Path
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
-ROWS = json.loads(Path("/home/test/EP4CE6/results/li_mode_dataset.json").read_text())
+ROWS = json.loads(Path(f"{REPO}/results/li_mode_dataset.json").read_text())
 NON_LAB_X = {5, 9, 14, 15, 20, 27, 30}
 
 # Restrict to mappable

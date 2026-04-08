@@ -14,7 +14,7 @@ from pathlib import Path
 from bitstream import RouteCodec
 
 SX, SY = 4, 4
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 ZERO = RBF / f'lits_zero_{SX}_{SY}.rbf'
 NAME = re.compile(rf'lits_pair_X{SX}Y{SY}_to_X(\d+)Y(\d+)N(\d+)_(\w+)\.rbf')

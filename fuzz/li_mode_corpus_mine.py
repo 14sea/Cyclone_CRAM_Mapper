@@ -7,6 +7,8 @@ Destinations span dx in {3..31} crossing non-LAB columns (5,9,14,15,20,27,30)
 to test the "near non-LAB → alternating" hypothesis.
 """
 import sys, os, time
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from runner import compile_route_pair_single_input, compile_route_baseline_abcd
 
@@ -39,10 +41,10 @@ def dsts_for(sx, sy):
             seen.add(k); uniq.append(k)
     return uniq
 
-OUT = "/home/test/EP4CE6/results/rbf"
+OUT = f"{REPO}/results/rbf"
 
 def main():
-    log = open("/home/test/EP4CE6/results/li_mode_mine.log", "w")
+    log = open(f"{REPO}/results/li_mode_mine.log", "w")
     def say(s):
         print(s, flush=True); log.write(s + "\n"); log.flush()
 

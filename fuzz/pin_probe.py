@@ -4,6 +4,8 @@ to one candidate KEY pin via `assign LED = K`. Flash one at a time, press all ke
 and the only key that toggles LED0 reveals which physical key sits on that pin.
 """
 import os, sys, shutil, subprocess
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from compile import compile_and_export
 
@@ -30,7 +32,7 @@ set_location_assignment {kpin} -to K
 set_location_assignment {lpin} -to LED
 """
 
-OUT_DIR = "/home/test/EP4CE6/results/rbf"
+OUT_DIR = f"{REPO}/results/rbf"
 
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)

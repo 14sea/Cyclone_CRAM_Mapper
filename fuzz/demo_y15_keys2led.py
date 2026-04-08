@@ -6,12 +6,14 @@ LCCOMB_X10_Y15_N0. Validates Phase 3.25 jailbreak Y axis on silicon.
 Default LED OFF; press K1+K2 or K3+K4 -> LED ON.
 """
 import sys, os
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bitstream import LutCodec, patch_rbf_crc
 from database import get_db
 
-BASE = "/home/test/EP4CE6/results/rbf/minterm_0_X10_Y15_N0.rbf"
-OUT  = "/home/test/EP4CE6/results/rbf/demo_y15_keys_to_led0.rbf"
+BASE = f"{REPO}/results/rbf/minterm_0_X10_Y15_N0.rbf"
+OUT  = f"{REPO}/results/rbf/demo_y15_keys_to_led0.rbf"
 TARGET = 0x0357
 MASK = TARGET ^ 0x0001  # XOR-delta vs minterm_0 baseline (TT[0]=1)
 X, Y, N = 10, 15, 0

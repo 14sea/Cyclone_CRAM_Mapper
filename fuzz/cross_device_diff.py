@@ -7,6 +7,8 @@ EP4CE10 with software-imposed resource limits in Quartus. If true, the two
 RBFs will be byte-identical.
 """
 import sys, os, hashlib
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from compile import compile_and_export
 
@@ -25,7 +27,7 @@ set_location_assignment PIN_E16 -to K
 set_location_assignment PIN_G15 -to LED
 """
 
-OUT = "/home/test/EP4CE6/results/rbf"
+OUT = f"{REPO}/results/rbf"
 
 def main():
     rbfs = {}

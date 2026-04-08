@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """β expansion — push (10,14) corpus to ~30+ routes to kill small-N inflation."""
 import sys, os
+import os as _os
+REPO = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from runner import compile_route_pair_single_input, compile_route_baseline_abcd
 
@@ -24,14 +26,14 @@ DSTS = [
 
 def main():
     ztag = f"lits_zero_{SX}_{SY}"
-    if not os.path.exists(f"/home/test/EP4CE6/results/rbf/{ztag}.rbf"):
+    if not os.path.exists(f"{REPO}/results/rbf/{ztag}.rbf"):
         rbf, t, err = compile_route_baseline_abcd(ztag, SX, SY, 0)
         print(f"baseline: {'OK' if rbf else 'FAIL'} ({t:.1f}s) {err or ''}")
 
     ok = fail = 0
     for dx, dy in DSTS:
         tag = f"lits_pair_X{SX}Y{SY}_to_X{dx}Y{dy}N0_datab"
-        path = f"/home/test/EP4CE6/results/rbf/{tag}.rbf"
+        path = f"{REPO}/results/rbf/{tag}.rbf"
         if os.path.exists(path):
             ok += 1
             continue

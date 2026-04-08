@@ -17,7 +17,7 @@ from pathlib import Path
 from runner import compile_route_pair, compile_route_baseline_abcd
 from bitstream import RouteCodec
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 
 # 5 short routes per source — keep simple to avoid fitter failures

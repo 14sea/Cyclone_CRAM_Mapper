@@ -14,7 +14,7 @@ from collections import Counter, defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bitstream import RouteCodec
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF_DIR = ROOT / 'results' / 'rbf'
 NON_LAB_X = {5, 9, 14, 15, 20, 27, 30}
 LAB_X = [3, 4, 6, 7, 8, 10, 11, 12, 13, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 28, 29, 31]

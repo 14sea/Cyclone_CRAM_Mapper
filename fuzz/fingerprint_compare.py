@@ -7,7 +7,7 @@ from collections import Counter
 from pathlib import Path
 from bitstream import RouteCodec
 
-ROOT = Path('/home/test/EP4CE6')
+ROOT = Path(__file__).resolve().parent.parent
 RBF = ROOT / 'results' / 'rbf'
 codec = RouteCodec()
 
