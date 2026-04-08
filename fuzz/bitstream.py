@@ -1294,94 +1294,88 @@ class LutCodec:
         return bytes(result)
 
 
+def _load_ff_globals():
+    """Load the 61-cell arst/ena global bit sets from ff_remine_final.json.
+
+    Mined 2026-04-08 via ff_remine.py + ff_remine_r2.py (8-seed × 10-pin
+    cross-validation, CRC-normalized). Each set has 61 cells = 48 header
+    bitfield + 13 CRAM global clock/reset network. Falls back to empty
+    sets if the file is missing (e.g. fresh clone before mining).
+    """
+    import json, os
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(os.path.dirname(here), "results", "ff_remine_final.json")
+    try:
+        d = json.load(open(path))
+        return (
+            [tuple(c) for c in d.get("arst_true_global", [])],
+            [tuple(c) for c in d.get("ena_true_global", [])],
+        )
+    except FileNotFoundError:
+        return [], []
+
+
+_FF_ARST_GLOBAL, _FF_ENA_GLOBAL = _load_ff_globals()
+
+
 class FFCodec:
-    """FF control-signal mode bit codec (arst, ena).
+    """FF control-signal mode bit codec (arst, ena) — device-global bits.
 
-    FF mode bits are NOT local to a single LE — they broadcast across every
-    LAB column on the control-signal R24 row. This codec toggles the shared
-    `_FF_ARST_CELLS` / `_FF_ENA_CELLS` pattern at each LAB column in the
-    supplied span.
+    Current (2026-04-08) status: encodes the 61 device-level FF ctrl bits
+    found via seed × pin cross-validation (48 header + 13 CRAM each for
+    arst/ena). These bits tell the FPGA "this design contains FFs that
+    use arst/ena" at the device-feature-enable level.
 
-    Usage:
-        codec = FFCodec()
-        # Enable arst across a row spanning LAB columns 4..12:
-        rbf = codec.write_arst(rbf, lab_xs=[4,5,6,7,8,10,11,12], enable=True)
-        # Or infer the column span from an existing RBF by XOR-diffing:
-        cols = codec.read_arst_span(rbf, zero)
+    Per-LE FF mode bits ("which specific LE's FF uses arst") are NOT in
+    this codec yet — they require multi-FF mining experiments.
 
-    Skeleton status (2026-04-08): arst table cross-validated on
-    dff_async_reset (69 hits / 8 cols). ena table includes R24 I=0 pair
-    (3124/3125) and needs independent validation. sclr/sload not yet mined.
+    The old column-relative `_FF_ARST_CELLS` / `_FF_ENA_CELLS` tables are
+    deprecated (94-100% of their entries were CRC byte artifacts that
+    patch_rbf_crc silently cleaned up).
     """
 
-    def _apply_cells(self, rbf_data, lab_xs, cells):
-        from config import COLUMN_BASE
+    def _apply_global(self, rbf_data, cells):
         result = bytearray(rbf_data)
-        for x in lab_xs:
-            if x not in COLUMN_BASE:
-                continue
-            col_start = COLUMN_BASE[x] - 136
-            for rel, bp in cells:
-                off = col_start + rel
-                if 0 <= off < len(result):
-                    result[off] ^= (1 << bp)
+        for off, bp in cells:
+            if 0 <= off < len(result):
+                result[off] ^= (1 << bp)
         return bytes(result)
 
-    def write_arst(self, rbf_data, lab_xs, enable=True):
-        """Toggle FF async-reset mode bits at each LAB column in lab_xs.
+    def write_arst(self, rbf_data, lab_xs=None, enable=True):
+        """Toggle the device-global arst feature bits.
 
-        Args:
-            rbf_data: existing RBF bytes
-            lab_xs: iterable of LAB X coordinates to flip
-            enable: currently ignored (XOR is self-inverse — caller tracks
-                    whether they're enabling or disabling against a baseline)
+        lab_xs is accepted for backward compatibility but ignored —
+        the new arst bits are device-global, not per-column.
         """
-        return self._apply_cells(rbf_data, lab_xs, _FF_ARST_CELLS)
+        return self._apply_global(rbf_data, _FF_ARST_GLOBAL)
 
-    def write_ena(self, rbf_data, lab_xs, enable=True):
-        """Toggle FF clock-enable mode bits at each LAB column in lab_xs.
+    def write_ena(self, rbf_data, lab_xs=None, enable=True):
+        """Toggle the device-global ena feature bits."""
+        return self._apply_global(rbf_data, _FF_ENA_GLOBAL)
 
-        Note: `_FF_ENA_CELLS` overlaps R24 I=0 broadcast at rel 3124/3125.
-        If the design already drives an R24 I=0 net through these columns,
-        the ena write will collide — union the sets before emission (same
-        rule as FASM SRC+ROUTE XOR double-flip).
-        """
-        return self._apply_cells(rbf_data, lab_xs, _FF_ENA_CELLS)
-
-    def read_arst_span(self, rbf_data, zero_data):
-        """Return the list of LAB X columns where arst cells are set vs zero.
-
-        A column is flagged as "arst active" if ≥50% of `_FF_ARST_CELLS`
-        entries differ from the zero baseline at that column.
-        """
-        from config import COLUMN_BASE
-        threshold = max(1, len(_FF_ARST_CELLS) // 2)
-        hits = []
-        for x in sorted(COLUMN_BASE):
-            col_start = COLUMN_BASE[x] - 136
-            count = 0
-            for rel, bp in _FF_ARST_CELLS:
-                off = col_start + rel
-                if off < len(rbf_data):
-                    if (rbf_data[off] ^ zero_data[off]) & (1 << bp):
-                        count += 1
-            if count >= threshold:
-                hits.append(x)
+    def _read_global(self, rbf_data, zero_data, cells):
+        hits = 0
+        for off, bp in cells:
+            if off < len(rbf_data) and off < len(zero_data):
+                if (rbf_data[off] ^ zero_data[off]) & (1 << bp):
+                    hits += 1
         return hits
+
+    def read_arst_active(self, rbf_data, zero_data, threshold=0.5):
+        """Return True if ≥threshold of arst global bits differ from zero."""
+        hits = self._read_global(rbf_data, zero_data, _FF_ARST_GLOBAL)
+        need = max(1, int(len(_FF_ARST_GLOBAL) * threshold))
+        return hits >= need
+
+    def read_ena_active(self, rbf_data, zero_data, threshold=0.5):
+        """Return True if ≥threshold of ena global bits differ from zero."""
+        hits = self._read_global(rbf_data, zero_data, _FF_ENA_GLOBAL)
+        need = max(1, int(len(_FF_ENA_GLOBAL) * threshold))
+        return hits >= need
+
+    # Backward-compat shims (return empty / no-op for deprecated column-span API)
+    def read_arst_span(self, rbf_data, zero_data):
+        return []
 
     def read_ena_span(self, rbf_data, zero_data):
-        """Return the list of LAB X columns where ena cells are set vs zero."""
-        from config import COLUMN_BASE
-        threshold = max(1, len(_FF_ENA_CELLS) // 2)
-        hits = []
-        for x in sorted(COLUMN_BASE):
-            col_start = COLUMN_BASE[x] - 136
-            count = 0
-            for rel, bp in _FF_ENA_CELLS:
-                off = col_start + rel
-                if off < len(rbf_data):
-                    if (rbf_data[off] ^ zero_data[off]) & (1 << bp):
-                        count += 1
-            if count >= threshold:
-                hits.append(x)
-        return hits
+        return []
