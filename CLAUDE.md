@@ -90,7 +90,7 @@ EP4CE6/
 - **LCFF placement rejected** by Quartus Lite — FF auto-placed near output pin
 
 ### FF ctrl bits — three-layer model (2026-04-08 re-mine)
-- **Layer 1 (device-global, DONE)**: 61 arst + 61 ena absolute-offset bits mined via `fuzz/ff_remine.py` (8 SEEDs) ∩ `fuzz/ff_remine_r2.py` (10 Q pins), CRC-normalized. Stored in `results/ff_remine_final.json`, loaded by `FFCodec` at import. arst ∩ ena = 48 "any-FF-with-ctrl" enables; 13 mode-specific per side. Mostly in header band (off<5282) — compact bitfield at off 73-74 + supporting bits at 42-52/710-729/1074-1081; 13 CRAM-band cells configure the global clock/reset network.
+- **Layer 1 (device-global, DONE — but header-band cells are suspect)**: 61 arst + 61 ena absolute-offset bits mined via `fuzz/ff_remine.py` (8 SEEDs) ∩ `fuzz/ff_remine_r2.py` (10 Q pins), CRC-normalized. Stored in `results/ff_remine_final.json`, loaded by `FFCodec` at import. arst ∩ ena = 48 "any-FF-with-ctrl" enables; 13 mode-specific per side. **Caveat**: most cells sit in the header band (off<5282) around byte 44 + 73-74 + 710-729 + 1074-1081, which Phase 5.0's 5-seed null test (`fuzz/mult_header_noise.py`) proved has a 4-5 bit per-SEED noise floor shared across FF, M9K, and DSPMULT writers. Re-audit with CRAM-only filter (off≥5282) is pending; in the meantime the FASM `DFF.ARST`/`DFF.ENA` directives remain disabled.
 - **Layer 2 (per-LE mode, INVESTIGATED NEGATIVE 2026-04-08)**: byte 73 showed a per-(X,N) bit pattern under forced-placement mining at Y=4 and looked promising as a 2D header-band signal. Companion sweep at Y=10 (`fuzz/ff_y10_sweep.py`, 448 placements) joint-solved against Y=4 and found **only 7/448 (X,N) pairs have matching byte-73 bit sets** — essentially noise floor. Layer 2 is either 3D (X,Y,N) or still fitter-noise dominated at header granularity; the "layer 2 in byte 73" model is NOT a 2D lookup. Snapshots frozen at `results/ff_y4_sweep.json` / `ff_y10_sweep.json` for future work. See `memory/ff_byte73_y_dependent.md`.
 - **Layer 3 (per-LE FF presence)**: partly already in LutCodec minterm cells.
 - Fitter-noise wall from earlier session is specific to loaded designs with routing competition — trivial D FF base-vs-base diff is 0 bytes across 8 seeds.
@@ -292,14 +292,34 @@ T9+T10 ran 12-source orthogonal-grid corpus (374 new compiles, 414 mappable rows
 - **Regressions**: `test_fasm_roundtrip.py` 1725/1725, `test_fasm_semantic.py` 1725/1725, `test_multiroute_decompose.py` 41/42 (1 pre-existing), `test_cross_source.py` 3/3, `test_green_zone_harden.py` 15/15 islands 686/686 — all bit-perfect.
 - **Hardware closure (2026-04-08)**: `X10Y10N0.LUT = 0x8888` (AND(K1,K2)) written as a one-line FASM → `fasm2rbf` → `patch_rbf_crc` → openFPGALoader flash → AX301 behavior matched (LED idle ON, K2 or K3 → OFF). FASM path is silicon-accepted end-to-end.
 
-### Phase 3.27 — M9K CRAM probe (PARTIAL — position model abandoned)
+### Phase 3.27 — M9K CRAM probe (superseded by Phase 5.0 real-pin re-mine)
 - `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).
-- **Wins archived to `results/ep4ce6_bitdb.sqlite` table `m9k_cells`**:
-  - `M9K_GLOBAL_ON` = 237 cells universally toggled by any M9K instantiation
-  - `M9K_COL15_ON` = 299 cells specific to X=15 M9K column
-- M9K config band identified at bytes `0x567xx..0x588xx` (~5.4 KB), anchor `0x580AC..0x580B8 bp=3`.
-- **Position model abandoned**: 7-Y sweep at X=15 showed 1489/1707 Y-varying cells appear in exactly 1 Y — auto-router churn dominates and cannot be subtracted away without manual placement of every signal feeding the M9K. STA wire-name extraction is the next path if/when needed.
-- **Mult X=20 probe** failed: `MULT_X20_Y*_N0` is the wrong LOC syntax. Real MULT_* LOC name unknown; deferred.
+- **Legacy wins** (kept for history, do not use directly): `M9K_GLOBAL_ON`=237, `M9K_COL15_ON`=299 — Phase 5.0 showed **76-81% were CRC byte ghosts**. CRC-stripped to 58 each, and the two are byte-identical → the "GLOBAL vs COL15" distinction was fiction.
+- Position model (Y sweep at X=15) abandoned 2026-04-07: auto-router churn dominates and the per-Y signal cannot be separated from fitter noise without manual routing for every feeder.
+- **Mult X=20 probe** originally failed with `MULT_X20_Y*_N0` (wrong LOC); Phase 5.0 cracked the real syntax — see next section.
+
+### Phase 5.0 — Non-LAB blocks (DSPMULT + M9K re-mine, 2026-04-08)
+- **LOC syntax cracked** (`fuzz/mult_loc_discover.py`, `m9k_loc_discover.py`): LOC takes the hierarchical MegaFunction node path, not a coordinate alias.
+  - DSPMULT: `set_location_assignment DSPMULT_X20_Y{y}_N{n} -to "lpm_mult:u|mult_qpl:auto_generated|mac_mult1"`, 42 legal sites (Y1..21 × N{0,1}, N=2 illegal)
+  - M9K: `set_location_assignment M9K_X{x}_Y{y}_N{n} -to "altsyncram:u|altsyncram_3ov:auto_generated|ALTSYNCRAM"`, X∈{15,27}, 126 legal sites
+- **RULE: never mine non-LAB blocks with VIRTUAL_PIN** (`fuzz/mult_noise_test.py` proof). A first-attempt 62-cell `MULT_GLOBAL_ON` under VIRTUAL_PIN had 0 overlap with a real-pin recompile — Quartus routes to a fake pin bank and the resulting CRAM diff is 100% ghost-routing artifact. Retagged `MULT_VIRTUAL_PIN_ARTIFACT`, memory `feedback_virtual_pin_mining_is_fiction.md`.
+- **RULE: non-LAB mining must filter CRAM-only (off >= 5282)** (`fuzz/mult_header_noise.py` 5-seed null test). Bytes 44 and 73 have a 4-5 bit per-SEED noise floor on identical designs — any "header band finding" without this filter is fiction. This also explains the earlier FF layer-2 @ byte 73 dead end (same noise). Memory `feedback_header_band_noise_floor.md`.
+- **Two non-LAB config bands found** (both CRAM-only, CRC-stripped):
+
+| band | frames | role | cells mined |
+|---|---|---|---|
+| Block enable/mode | 1692-1738 | block presence + mode | DSPMULT 29, M9K 58, mult∩M9K=0 (disjoint) |
+| Block clock-net | ~1007-1013 | per-block clock-enable register | DSPMULT clock 8, M9K clock 4, 1-3 byte adjacency in same frames/bp |
+
+- **Signatures archived** in `results/ep4ce6_bitdb.sqlite` table `m9k_cells` / `results/mult_global_on_real.json`:
+  - `MULT_GLOBAL_ON_REAL` = **29 cells** (42-site real-pin sweep, CRAM-only)
+  - `M9K_GLOBAL_ON` = **58 cells** (CRC-stripped from legacy 237, cross-validated 55/58 against 126-site real-pin sweep)
+  - `M9K_COL15_ON` ≡ `M9K_GLOBAL_ON` (no column-specific signature)
+  - `DSPMULT_CLOCK_ENABLE = (209891, bp 4)` — first single-bit semantic field extracted from a non-LAB block (`fuzz/mult_reg_sweep.py`, pipe1∩pipe2∩pipe3)
+- **Dead ends**:
+  - STA wire extraction (`fuzz/mult_sta_wires.py`) on DSPMULT returns only chip-edge IOBUF/IOPAD — Quartus treats DSPMULT as a black-box cell, internal routing not exposed via `report_timing`. Same wall that killed the M9K per-site model.
+  - Parameter decoding beyond CLOCK_ENABLE: width bits are multi-bit continuous, signed bits hide in the header noise floor, pipeline stages don't encode incrementally (pipe2 vs pipe1 and pipe3 vs pipe2 share 0 cells).
+  - `altpll` has no `PLL_Xx_Yy_N{n}` LOC (`fuzz/altpll_loc_discover.py`) — PLLs are off-fabric and use singleton `PLL_1`/`PLL_2` names; deferred.
 
 ## Methodology
 
