@@ -4,6 +4,9 @@ hierarchy -check -top neorv32_top
 proc
 async2sync
 memory_libmap -lib /home/test/EP4CE6/synth/m9k.lib
+memory_map
+opt -full
+flatten
 opt -full
 techmap
 opt -fast
@@ -11,4 +14,7 @@ dffunmap -ce-only
 dffunmap -srst-only
 abc -lut 4
 clean
+techmap -map /home/test/EP4CE6/synth/ep4ce6_map.v
+clean
 stat
+write_json /tmp/nv32_synth/neorv32.json
