@@ -1,0 +1,74 @@
+# Cyclone IV M9K BRAM library description for Yosys memory_libmap.
+#
+# M9K = 9216 bits (8192 data + 1024 parity), configurable as:
+#   8192x1, 4096x2, 2048x4, 1024x8, 1024x9,
+#   512x16, 512x18, 256x32, 256x36
+# Simple-dual-port and true-dual-port variants supported; parity bits
+# are exposed on the x9/x18/x36 widths (byte=9).
+#
+# NEORV32 uses single-port (IMEM ROM, BOOTROM, sysinfo) and simple
+# dual-port (DMEM, cache tag/data, FIFOs) M9K inferences. TDP is
+# included for completeness — NEORV32 does not currently need it.
+#
+# Reference format: yosys/techlibs/gowin/brams.txt.
+
+ram block $__M9K_SP_ {
+	abits 13;
+	widths 1 2 4 9 18 36 per_port;
+	cost 64;
+	byte 9;
+	init any;
+	port srsw "A" {
+		clock posedge;
+		clken;
+		rdinit zero;
+		portoption "WRITE_MODE" 0 {
+			rdwr no_change;
+		}
+		portoption "WRITE_MODE" 1 {
+			rdwr new;
+		}
+		portoption "WRITE_MODE" 2 {
+			rdwr old;
+		}
+	}
+}
+
+ram block $__M9K_SDP_ {
+	abits 13;
+	widths 1 2 4 9 18 36 per_port;
+	cost 64;
+	byte 9;
+	init any;
+	port sr "R" {
+		clock posedge;
+		clken;
+		rdinit zero;
+	}
+	port sw "W" {
+		clock posedge;
+		clken;
+	}
+}
+
+ram block $__M9K_TDP_ {
+	abits 13;
+	widths 1 2 4 9 18 per_port;
+	cost 64;
+	byte 9;
+	init any;
+	port srsw "A" "B" {
+		clock posedge;
+		clken;
+		rdinit zero;
+		portoption "WRITE_MODE" 0 {
+			rdwr no_change;
+		}
+		portoption "WRITE_MODE" 1 {
+			rdwr new;
+		}
+		portoption "WRITE_MODE" 2 {
+			rdwr old;
+		}
+	}
+}
