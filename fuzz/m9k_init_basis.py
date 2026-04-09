@@ -34,7 +34,16 @@ from __future__ import annotations
 # Calibrated anchors: (site, WIDTH, DEPTH) -> (word=0, bit=0) CRAM byte.
 # Extend via calibration sweeps similar to LUT TT n_sweep.
 M9K_INIT_ANCHORS: dict[tuple[str, int, int], int] = {
-    ("X15_Y2_N0", 9, 512): 261142,
+    # CORRECTION 2026-04-09: Stage A's LOC assignment was silently ignored
+    # by Quartus (hardcoded auto_generated wrapper name `_3ov` didn't match
+    # the real `_2v11`, see memory feedback_quartus_m9k_loc_ignored.md).
+    # The physical site backing anchor 261142 is X27_Y4_N0, the fitter's
+    # auto-placement for this harness. The X15_Y2_N0 key is kept as a
+    # compatibility alias so existing callers (m9k_init_basis self-test,
+    # m9k_hero_build.py) keep working. Multi-site sweep pending a LOC
+    # syntax fix.
+    ("X27_Y4_N0", 9, 512): 261142,
+    ("X15_Y2_N0", 9, 512): 261142,  # alias — historical label
 }
 
 FRAME_SIZE = 210

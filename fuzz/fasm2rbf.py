@@ -56,6 +56,13 @@ _SRC_RE = re.compile(r"^SRC\s+X(?P<sx>\d+)Y(?P<sy>\d+)$")
 _DFF_RE = re.compile(
     r"^DFF\s+X(?P<x>\d+)Y(?P<y>\d+)\.(?P<mode>ARST|ENA)$"
 )
+# M9K init content: X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x<hex>
+# The hex payload is depth words, word 0 first, each `width` bits wide,
+# MSB-first within the byte string (standard Python int.to_bytes style).
+_M9K_INIT_RE = re.compile(
+    r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.INIT_"
+    r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
+)
 
 
 class FasmError(ValueError):
@@ -73,6 +80,7 @@ def parse_fasm(text):
     bits = []
     srcs = []
     dffs = []  # list[(x, y, mode)] mode in {"ARST","ENA"}
+    m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
@@ -123,8 +131,26 @@ def parse_fasm(text):
         if m:
             dffs.append((int(m["x"]), int(m["y"]), m["mode"]))
             continue
+        m = _M9K_INIT_RE.match(line)
+        if m:
+            x = int(m["x"]); y = int(m["y"]); n = int(m["n"])
+            width = int(m["width"]); depth = int(m["depth"])
+            hex_str = m["hex"]
+            total_bits = width * depth
+            expected_hex = (total_bits + 3) // 4
+            if len(hex_str) != expected_hex:
+                raise FasmError(
+                    f"line {lineno}: INIT_{width}x{depth} expects "
+                    f"{expected_hex} hex chars, got {len(hex_str)}"
+                )
+            blob_int = int(hex_str, 16)
+            mask = (1 << width) - 1
+            # Word 0 is the LSB-most word; word i = bits [i*width, (i+1)*width)
+            words = [(blob_int >> (i * width)) & mask for i in range(depth)]
+            m9k_inits.append((x, y, n, width, depth, words))
+            continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
-    return luts, routes, bits, srcs, dffs
+    return luts, routes, bits, srcs, dffs, m9k_inits
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -197,7 +223,7 @@ def _load_overhead():
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
-    luts, routes, bits, srcs, dffs = parse_fasm(fasm_text)
+    luts, routes, bits, srcs, dffs, m9k_inits = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -263,6 +289,23 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 work = lut.write_tt(work, delta)
         finally:
             db.close()
+
+    if m9k_inits:
+        from m9k_init_basis import (
+            M9K_INIT_ANCHORS, write_init, read_init,
+        )
+        for x, y, n, width, depth, target_words in m9k_inits:
+            site = f"X{x}_Y{y}_N{n}"
+            key = (site, width, depth)
+            if key not in M9K_INIT_ANCHORS:
+                raise FasmError(
+                    f"M9K {site} {width}x{depth}: no calibrated anchor; "
+                    f"run fuzz/m9k_anchor_sweep.py for this site/mode"
+                )
+            anchor = M9K_INIT_ANCHORS[key]
+            base_words = read_init(work, anchor, width=width, depth=depth)
+            work = write_init(work, anchor, base_words, target_words,
+                              width=width, depth=depth)
 
     if patch_crc:
         work = patch_rbf_crc(work)
