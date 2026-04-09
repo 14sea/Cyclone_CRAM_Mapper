@@ -328,6 +328,38 @@ Two dead ends from this session, both archived as they shape future work:
 - **R4 dark I-index passive mining DEAD** (`fuzz/nv_r4_dark_mine.py`, memory `r4_dark_passive_mining_dead.md`): attempted to recover `_R4_BASE_PREV` entries for 13 dark I-indices by XOR-diffing the full NEORV32 RBF vs `nv_zero_global.rbf` and sweeping BASE candidates against STA wire geometry. Null test (`/tmp/r4_dark_null.py`) showed the diff set is too dense (93k dirty bytes, 113k set cells ≈ 4% CRAM) — any BASE in [7185..7263] scores 55-61% hit across wires regardless of I-index, and the method cannot recover known BASEs for I=0/1/2/10 (returns 1789, 68, 76, 47 — all wrong). Per-I "winners" have lift only 1.1-1.5× over the density floor, indistinguishable from noise. Conclusion: passive observation needs sparse signals; full NEORV32 builds are too dense. Any future dark-I mining must use active per-I pair-diff compiles, OR accept that the sig-cache supersedes formula completion for production use (route_synth's signature short-circuit already makes `_R4_BASE_PREV` dead code for green-zone regression).
 - **Fanout-first scheduling intuition WRONG** (`fuzz/nv_schedule_sim.py`, memory `fanout_first_scheduling_worse.md`): the "main roads before alleys" intuition — reordering remaining factory edges by source-fanout DESC to finish high-fanout hubs first — actually **delays the `sources_fully_covered` milestones by 1-4 hours** vs the current lex order. Reason: spending 12 minutes on one 203-edge hub source before marking it +1 done is strictly worse than finishing ~60 small sources in the same window. Lex order accidentally clusters small sources at the head of the sorted edge list, producing a near-optimal source-completion curve. Rule: **never propose scheduling intervention without a simulator saying the delta is strictly positive on the target metric**. Fanout-weighted coverage is ~identical between strategies (<4 min delta), confirming lex isn't just incidentally good — it's near-globally optimal for this workload.
 
+### Phase 5.2 — M9K init content codec (Stage A+B CLOSED 2026-04-09)
+
+Stage A at `M9K_X15_Y2_N0` (9b×512 altsyncram, real-pin AX301 SDRAM bus harness, `fuzz/m9k_init_harness.py`) partitioned M9K CRAM into three physically decoupled bands — inverse of the going-in "everything lives in the block band" assumption:
+
+1. **Data content** → column-local frame ~1243, XOR-linear GREEN (`m9k_init_sweep.py` walking-1)
+2. **Mode / operation_mode / ROM** → block band 1692-1738 (`m9k_mode_t20_probe.py`) — **STRUCTURAL_ROM verdict**: ROM is an independent operation_mode, not degenerate RAM(wren=0); 41 block-band cells differentiate ROM from tied-wren RAM. T2 mode sweep upgrades to 4 axes.
+3. **Output-register clock enable** → frames 1007/1009 bp=6 offset 85 (`m9k_clock_probe.py`); cken0/rden are smaller, scattered, NOT in the Phase 5.0 1005-1015 band as previously assumed.
+
+**Harness pin fix**: initial `_FREE_PINS` guessed B1/B2/C1/C2/D1/D2/E2/... which are EPCS config dual-use (fitter error 171016). Replaced with 16 S_DB + 13 S_A = 29 SDRAM bus pins from `~/fpga/AX301_ref/AX301.tcl` (board-validated). Memory `ax301_board_docs.md`.
+
+**Sweep verdict bug**: `m9k_init_sweep.py` prints YELLOW whenever the block band is empty, but the data band lives at frame 1243 (outside). A clean walking-1 GREEN result is mis-classified as YELLOW. Always inspect `per_bit.all_cram` manually until the verdict logic is patched. Memory `feedback_m9k_sweep_verdict_bug.md`.
+
+**Stage B 2D linear formula** (`fuzz/m9k_init_basis.py`, validated 10/10 probe points + full 512-word round-trip):
+
+```python
+byte(word, bit) = anchor + (word // 2) * 210 - (word % 2) - 2 * bit
+bp              = 6
+M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)] = 261142
+```
+
+- Words pair two-per-frame (odd word one byte below even word), then advance 210 bytes per pair.
+- Codec flips ONLY primary cells; the "secondary" cells that showed up in the word probe at +128/+129 were **frame CRC bytes** at per-frame offsets 208/209, auto-handled downstream by `bitstream.patch_rbf_crc()`.
+- **READ** validation: 512/512 words decoded correctly from a Quartus-compiled RBF with 74 random non-zero MIF entries.
+- **WRITE** validation: `base → write_init → patch_rbf_crc` produces **0 CRAM diffs** vs Quartus (only 6 expected header-band seed/timestamp bytes differ).
+- `_assert_cell_safe()` guards against the formula landing on a CRC slot (never does for the validated site; catches broken anchors on future calibrations).
+
+**Scope**: anchor 261142 is calibrated only for `(X15_Y2_N0, 9, 512)`. Other sites/modes need per-(X, Y, N, WIDTH, DEPTH) calibration sweeps analogous to LUT TT `n_sweep`. Formula structure is expected to generalize — verify at one more site before extrapolating.
+
+**Unblocks Phase 5.3**: NEORV32 boot ROM can be written as FASM `M9K.INIT = <hex>` once the anchor table covers the used M9K sites — self-contained RISC-V bitstream synthesis without Quartus MIF recompiles.
+
+See memories `m9k_stage_a_complete.md` and `m9k_stage_b_complete.md`.
+
 ### Phase 3.27 — M9K CRAM probe (superseded by Phase 5.0 real-pin re-mine)
 - `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).
 - **Legacy archive**: the `m9k_cells` table originally carried 237 `M9K_GLOBAL_ON` + 299 `M9K_COL15_ON` rows. Phase 5.0 showed **76-81% were CRC byte ghosts** (bytes at col 208/209 of each 210-byte frame). Both tags were CRC-stripped in place to **58 cells each**, and the two are byte-identical → the "GLOBAL vs COL15" distinction was fiction. Current bitdb state: `M9K_GLOBAL_ON=58`, `M9K_COL15_ON=58`. Use the CRC-stripped rows; the 237/299 values only exist in git history.

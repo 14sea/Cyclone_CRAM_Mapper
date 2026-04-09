@@ -1,0 +1,101 @@
+{
+ "width": 9,
+ "depth": 512,
+ "timings": {
+  "m9k_init_w0_b1": 13.53709101676941,
+  "m9k_init_w0_b0": 13.671602010726929,
+  "m9k_init_w0_b2": 13.793030738830566,
+  "m9k_init_base": 13.809587001800537,
+  "m9k_init_w0_b3": 13.838932514190674,
+  "m9k_init_w0_b4": 13.866942405700684,
+  "m9k_init_w0_b6": 14.12765097618103,
+  "m9k_init_w0_b5": 14.235569477081299,
+  "m9k_init_w0_b7": 11.12688159942627,
+  "m9k_init_w0_b8": 11.129632234573364
+ },
+ "per_bit": {
+  "0": {
+   "all_cram": [
+    [
+     261142,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "1": {
+   "all_cram": [
+    [
+     261140,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "2": {
+   "all_cram": [
+    [
+     261138,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "3": {
+   "all_cram": [
+    [
+     261136,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "4": {
+   "all_cram": [
+    [
+     261134,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "5": {
+   "all_cram": [
+    [
+     261132,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "6": {
+   "all_cram": [
+    [
+     261130,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "7": {
+   "all_cram": [
+    [
+     261128,
+     6
+    ]
+   ],
+   "block_band": []
+  },
+  "8": {
+   "all_cram": [
+    [
+     261126,
+     6
+    ]
+   ],
+   "block_band": []
+  }
+ },
+ "overlaps": [],
+ "verdict": "YELLOW \u2014 block band reacts but scrambled; investigate"
+}
