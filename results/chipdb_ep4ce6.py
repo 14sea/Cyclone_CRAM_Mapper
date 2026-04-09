@@ -16,23 +16,26 @@ try:
 except ImportError:
     Loc = globals().get("Loc")  # provided by --run environment
 
-_delay = ctx.getDelayFromNS(0.5)  # placeholder
+_delay = ctx.getDelayFromNS(0.5)  # placeholder, non-timing-driven
 
 for w in _DATA["wires"]:
-    ctx.addWire(w["name"], w["type"], w["x"], w["y"])
+    ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
 
 for b in _DATA["bels"]:
-    ctx.addBel(b["name"], b["type"], Loc(b["x"], b["y"], b["z"]),
-               False, False)
+    ctx.addBel(name=b["name"], type=b["type"],
+               loc=Loc(b["x"], b["y"], b["z"]),
+               gb=False, hidden=False)
 
 for bp in _DATA["belpins"]:
-    ctx.addBelInput(bp["bel"], bp["pin"], bp["wire"]) \
-        if not bp["output"] else \
-        ctx.addBelOutput(bp["bel"], bp["pin"], bp["wire"])
+    if bp["output"]:
+        ctx.addBelOutput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
+    else:
+        ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
-    ctx.addPip(p["name"], p["type"], p["src"], p["dst"],
-               _delay, Loc(p["x"], p["y"], 0))
+    ctx.addPip(name=p["name"], type=p["type"],
+               srcWire=p["src"], dstWire=p["dst"],
+               delay=_delay, loc=Loc(p["x"], p["y"], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",

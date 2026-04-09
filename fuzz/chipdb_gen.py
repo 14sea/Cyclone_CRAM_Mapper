@@ -75,6 +75,8 @@ M9K_Y = list(range(2, 22))
 PLACEHOLDER_DELAY = 1  # nextpnr generic delay_t units
 
 SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
+# Map sig-cache port labels to nextpnr-generic SLICE pin indices.
+PORT_TO_PIN_IDX = {"dataa": 0, "datab": 1, "datac": 2, "datad": 3}
 
 
 def _wire_slice_out(x: int, y: int, n: int) -> str:
@@ -113,7 +115,7 @@ def build_chipdb() -> dict:
                 name = f"SLICE_X{x}_Y{y}_N{n}"
                 bels.append({
                     "name": name,
-                    "type": "EP4CE6_SLICE",
+                    "type": "GENERIC_SLICE",
                     "x": x, "y": y, "z": n,
                 })
                 qw = _wire_slice_out(x, y, n)
@@ -121,11 +123,26 @@ def build_chipdb() -> dict:
                 belpins.append({
                     "bel": name, "pin": "Q", "wire": qw, "output": True,
                 })
-                for port in SLICE_INPUTS:
+                # F = combinational LUT output; GENERIC_SLICE packer
+                # requires it. Alias to the same Q wire — external
+                # routing can't tell the two apart at our granularity.
+                fw = f"slice_X{x}_Y{y}_N{n}_F"
+                wires.append({"name": fw, "type": "SLICE_F", "x": x, "y": y})
+                belpins.append({
+                    "bel": name, "pin": "F", "wire": fw, "output": True,
+                })
+                # CLK pin — needed so nextpnr's packer can route the
+                # global clock onto every FF slice.
+                cw = f"slice_X{x}_Y{y}_N{n}_CLK"
+                wires.append({"name": cw, "type": "SLICE_CLK",
+                              "x": x, "y": y})
+                belpins.append({"bel": name, "pin": "CLK",
+                                "wire": cw, "output": False})
+                for idx, port in enumerate(SLICE_INPUTS):
                     iw = _wire_slice_in(x, y, n, port)
                     wires.append({"name": iw, "type": "SLICE_IN",
                                   "x": x, "y": y})
-                    belpins.append({"bel": name, "pin": port.upper(),
+                    belpins.append({"bel": name, "pin": f"I[{idx}]",
                                     "wire": iw, "output": False})
 
     # ---------- M9K bels ----------
@@ -158,7 +175,7 @@ def build_chipdb() -> dict:
     for i, (pin_name, pin_loc) in enumerate(config.ROUTE_FUZZ_PINS.items()):
         name = f"IOB_{pin_name}_{pin_loc}"
         bels.append({
-            "name": name, "type": "EP4CE6_IOB",
+            "name": name, "type": "GENERIC_IOB",
             "x": i, "y": grid_h - 1, "z": 0,
             "pin": pin_loc,
         })
@@ -243,23 +260,26 @@ try:
 except ImportError:
     Loc = globals().get("Loc")  # provided by --run environment
 
-_delay = ctx.getDelayFromNS(0.5)  # placeholder
+_delay = ctx.getDelayFromNS(0.5)  # placeholder, non-timing-driven
 
 for w in _DATA["wires"]:
-    ctx.addWire(w["name"], w["type"], w["x"], w["y"])
+    ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
 
 for b in _DATA["bels"]:
-    ctx.addBel(b["name"], b["type"], Loc(b["x"], b["y"], b["z"]),
-               False, False)
+    ctx.addBel(name=b["name"], type=b["type"],
+               loc=Loc(b["x"], b["y"], b["z"]),
+               gb=False, hidden=False)
 
 for bp in _DATA["belpins"]:
-    ctx.addBelInput(bp["bel"], bp["pin"], bp["wire"]) \\
-        if not bp["output"] else \\
-        ctx.addBelOutput(bp["bel"], bp["pin"], bp["wire"])
+    if bp["output"]:
+        ctx.addBelOutput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
+    else:
+        ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
-    ctx.addPip(p["name"], p["type"], p["src"], p["dst"],
-               _delay, Loc(p["x"], p["y"], 0))
+    ctx.addPip(name=p["name"], type=p["type"],
+               srcWire=p["src"], dstWire=p["dst"],
+               delay=_delay, loc=Loc(p["x"], p["y"], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",
