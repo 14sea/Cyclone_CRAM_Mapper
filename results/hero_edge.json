@@ -1,0 +1,11 @@
+{
+ "sx": 5,
+ "sy": 3,
+ "sn": 4,
+ "dx": 4,
+ "dy": 3,
+ "dn": 6,
+ "port": "datad",
+ "n_cells": 144,
+ "factory_rbf": "/home/test/EP4CE6/results/rbf/nv_pair_X5Y3N4_to_X4Y3N6_datad.rbf"
+}

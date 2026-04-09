@@ -125,7 +125,13 @@ _R4_BASE_PREV = {
     # wire, so no fingerprint data exists to validate it. I=6 routes must now
     # fall back to signature short-circuit until a fresh I=6 corpus is mined.
     # See memory/r4_i6_i8_base_collision.md for the validation run.
-    8:  (3612, 3822),   # delta=210, VALIDATED 83.3% (10/12) via fingerprint recheck 2026-04-08
+    8:  (3612, 3822),   # EDGE_CASE 2026-04-09: fingerprint recheck said 83.3% but
+                        #   r4_full_audit.py vs absolute route_cells.json gives 6.7%
+                        #   (same rate as I=6, which is known non-LAB CRAM). Two
+                        #   methods disagree >70pp. Hypothesis: I=8 crosses the
+                        #   LAB ↔ non-LAB (M9K/DSP) boundary and the prev_lab col
+                        #   formula breaks. Keep base for sig-cache fallback only;
+                        #   do NOT trust for new routes. See r4_full_audit_2026_04_09.md.
     19: (2794, 3215),   # delta=421, cross-Y 1 col prev=X11 (2026-04-06)
     21: (2786, 3207),   # delta=421, cross-Y 2 cols prev=X13(wide),X22 (2026-04-06)
     25: (2762, 2972),   # delta=210, verified X4,X8

@@ -29,6 +29,10 @@ RBF = ROOT / "results" / "rbf"
 TABLE_PATH = ROOT / "results" / "route_signatures.json"
 CELLS_PATH = ROOT / "results" / "route_cells.json"
 CELLS_CONSOLIDATED_PATH = ROOT / "results" / "route_cells_consolidated.json"
+# Plan D' merged sig-cache: full 7-tuple key including source N. Keyed
+# "sx,sy,sn->dx,dy,dn,port". Supersedes CELLS_PATH when present; legacy
+# CELLS_PATH entries are auto-injected with sn=0 during merge.
+CELLS_FULL_PATH = ROOT / "results" / "route_cells_full.json"
 
 NAME_RE = re.compile(
     r"lits_pair_X(\d+)Y(\d+)_to_X(\d+)Y(\d+)N(\d+)_(\w+)\.rbf$"
@@ -56,6 +60,16 @@ def _sig_key(cells):
 
 def _route_key(sx, sy, dx, dy, dn, port):
     return f"{sx},{sy}->{dx},{dy},{dn},{port}"
+
+
+def _route_key_full(sx, sy, sn, dx, dy, dn, port):
+    """7-tuple key for the Plan D' full sig-cache.
+
+    Keeps source N explicit so FF-driven feedback paths, FF-vs-LCCOMB
+    driver ambiguity, and jailbreak sources at non-(N=0) slots can all
+    be addressed unambiguously. Legacy 6-tuple entries inject sn=0.
+    """
+    return f"{sx},{sy},{sn}->{dx},{dy},{dn},{port}"
 
 
 def build(verbose=True):
@@ -122,6 +136,38 @@ def _expand_consolidated(raw):
             cells = common + [tuple(c) for c in delta]
             out[f"{key},{port}"] = sorted(set(cells))
     return out
+
+
+def load_cells_full(path=CELLS_FULL_PATH, legacy_fallback=True):
+    """Load the Plan D' merged sig-cache (7-tuple key).
+
+    Returns a dict {"sx,sy,sn->dx,dy,dn,port": [(off,bp),...]}.
+    If the merged file is absent and legacy_fallback=True, auto-lifts
+    the legacy 6-tuple cache by injecting sn=0 (matches the original
+    green-zone corpus which used src_N=0 throughout).
+    """
+    key = str(path)
+    if key in _CELLS_CACHE:
+        return _CELLS_CACHE[key]
+    if path.exists():
+        raw = json.loads(path.read_text())
+        parsed = {k: [(o, b) for o, b in v] for k, v in raw.items()}
+        _CELLS_CACHE[key] = parsed
+        return parsed
+    if not legacy_fallback:
+        _CELLS_CACHE[key] = None
+        return None
+    # Lift legacy 6-tuple entries into 7-tuple keys with sn=0.
+    legacy = load_cells()
+    if legacy is None:
+        _CELLS_CACHE[key] = {}
+        return {}
+    lifted = {}
+    for lk, cells in legacy.items():
+        head, tail = lk.split("->")
+        lifted[f"{head},0->{tail}"] = cells
+    _CELLS_CACHE[key] = lifted
+    return lifted
 
 
 def load_cells(path=CELLS_PATH):

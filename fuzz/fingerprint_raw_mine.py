@@ -34,6 +34,11 @@ def mine(sx, sy):
         # Header byte deltas are not CRAM and confuse intersection mining.
         HEADER_END = 32 + 25 * 210
         for i in range(HEADER_END, len(zero)):
+            # Skip CRC bytes at frame positions 208/209 — without this filter
+            # small-corpus mining produces spurious CRC-ghost intersection hits
+            # (2026-04-09).
+            if (i - 32) % 210 >= 208:
+                continue
             x = zero[i] ^ r[i]
             if x:
                 for bp in range(8):

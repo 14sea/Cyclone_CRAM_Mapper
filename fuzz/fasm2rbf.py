@@ -46,7 +46,7 @@ _LUT_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.LUT\s*=\s*0x(?P<mask>[0-9a-fA-F]+)$"
 )
 _ROUTE_RE = re.compile(
-    r"^ROUTE\s+X(?P<sx>\d+)Y(?P<sy>\d+)\s*->\s*"
+    r"^ROUTE\s+X(?P<sx>\d+)Y(?P<sy>\d+)(?:N(?P<sn>\d+))?\s*->\s*"
     r"X(?P<dx>\d+)Y(?P<dy>\d+)N(?P<dn>\d+)\.(?P<port>\w+)$"
 )
 _BIT_RE = re.compile(
@@ -85,16 +85,29 @@ def parse_fasm(text):
             continue
         m = _ROUTE_RE.match(line)
         if m:
-            routes.append(
-                (
-                    int(m["sx"]),
-                    int(m["sy"]),
-                    int(m["dx"]),
-                    int(m["dy"]),
-                    int(m["dn"]),
-                    m["port"],
+            if m["sn"] is not None:
+                routes.append(
+                    (
+                        int(m["sx"]),
+                        int(m["sy"]),
+                        int(m["sn"]),
+                        int(m["dx"]),
+                        int(m["dy"]),
+                        int(m["dn"]),
+                        m["port"],
+                    )
                 )
-            )
+            else:
+                routes.append(
+                    (
+                        int(m["sx"]),
+                        int(m["sy"]),
+                        int(m["dx"]),
+                        int(m["dy"]),
+                        int(m["dn"]),
+                        m["port"],
+                    )
+                )
             continue
         m = _SRC_RE.match(line)
         if m:
@@ -129,10 +142,26 @@ def build_route_ops(routes, cells_table=None, extra_cells=None):
     """
     sig_cells = set(extra_cells) if extra_cells else set()
     synth_ops = []
-    for sx, sy, dx, dy, dn, port in routes:
-        rk = route_signatures._route_key(sx, sy, dx, dy, dn, port)
-        if cells_table is not None and rk in cells_table:
-            for off, bp in cells_table[rk]:
+    for route in routes:
+        # Accept both 6-tuple (legacy ROUTE X{sx}Y{sy}->X{dx}Y{dy}N{dn}.port)
+        # and 7-tuple (Plan D' ROUTE X{sx}Y{sy}N{sn}->...) forms.
+        if len(route) == 7:
+            sx, sy, sn, dx, dy, dn, port = route
+        else:
+            sx, sy, dx, dy, dn, port = route
+            sn = 0  # legacy corpus used src_N=0
+        rk_full = route_signatures._route_key_full(
+            sx, sy, sn, dx, dy, dn, port
+        )
+        rk_legacy = route_signatures._route_key(sx, sy, dx, dy, dn, port)
+        hit = None
+        if cells_table is not None:
+            if rk_full in cells_table:
+                hit = cells_table[rk_full]
+            elif rk_legacy in cells_table:
+                hit = cells_table[rk_legacy]
+        if hit is not None:
+            for off, bp in hit:
                 sig_cells.add((off, bp))
             continue
         need = parse_need((sx, sy), (dx, dy, dn, port))
@@ -189,7 +218,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 src_cells.add((off, bp))
 
     if routes or src_cells:
-        cells_table = route_signatures.load_cells() if routes else None
+        cells_table = route_signatures.load_cells_full() if routes else None
         ops = build_route_ops(routes, cells_table=cells_table, extra_cells=src_cells)
         work = codec.apply_routing(work, ops)
 
