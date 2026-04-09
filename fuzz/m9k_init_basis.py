@@ -33,33 +33,34 @@ from __future__ import annotations
 
 # Calibrated anchors: (site, WIDTH, DEPTH) -> (word=0, bit=0) CRAM byte.
 # Extend via calibration sweeps similar to LUT TT n_sweep.
-M9K_INIT_ANCHORS: dict[tuple[str, int, int], int] = {
-    # CORRECTION 2026-04-09: Stage A's LOC assignment was silently ignored
-    # by Quartus (hardcoded auto_generated wrapper name `_3ov` didn't match
-    # the real `_2v11`, see memory feedback_quartus_m9k_loc_ignored.md).
-    # The physical site backing anchor 261142 is X27_Y4_N0, the fitter's
-    # auto-placement for this harness. The X15_Y2_N0 key is kept as a
-    # compatibility alias so existing callers (m9k_init_basis self-test,
-    # m9k_hero_build.py) keep working. Multi-site sweep pending a LOC
-    # syntax fix.
-    ("X27_Y4_N0", 9, 512): 261142,
-    ("X15_Y2_N0", 9, 512): 261142,  # alias — historical label
+# Per-site calibration: (site, width, depth) -> (anchor_byte, bp).
+# bp is the constant bit position of the primary row for this site.
+M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
+    # Stage A/B harness (m9k_init_harness.py) auto-placed at X27_Y4_N0.
+    # 9-bit native width, primary row at bp=6. Label X15_Y2_N0 kept as
+    # alias — the LOC assignment was silently ignored, see memory
+    # feedback_quartus_m9k_loc_ignored.md.
+    ("X27_Y4_N0",  9, 512): (261142, 6),
+    ("X15_Y2_N0",  9, 512): (261142, 6),  # alias, historical label
+    # LED harness (m9k_led_harness.py) auto-places at X27_Y16_N0. Quartus
+    # trims bits 4-8 because only dout[3:0] is used → effective 4b×512
+    # ROM. Primary row at bp=2. Calibrated 2026-04-09 via bit+word sweep
+    # (fuzz/m9k_calibrate.py).
+    ("X27_Y16_N0", 4, 512): (261154, 2),
 }
 
 FRAME_SIZE = 210
 CRC_SLOTS = (208, 209)   # per-frame CRC bytes — never touch directly
-PRIMARY_BP = 6
 
 
-def init_cell(anchor: int, word: int, bit: int) -> tuple[int, int]:
+def init_cell(anchor: int, word: int, bit: int, bp: int = 6) -> tuple[int, int]:
     """Return the (byte_offset, bit_position) for M9K init cell
-    (word, bit) given the calibrated anchor byte.
+    (word, bit) given the calibrated (anchor, bp) pair.
 
     byte = anchor + (word // 2) * 210 - (word % 2) - 2 * bit
-    bp   = 6
     """
     byte = anchor + (word // 2) * FRAME_SIZE - (word % 2) - 2 * bit
-    return (byte, PRIMARY_BP)
+    return (byte, bp)
 
 
 def _assert_cell_safe(byte: int) -> None:
@@ -85,6 +86,7 @@ def write_init(
     target_words: list[int],
     width: int = 9,
     depth: int = 512,
+    bp: int = 6,
 ) -> bytes:
     """XOR-delta writer.
 
@@ -106,9 +108,9 @@ def write_init(
             continue
         for bit in range(width):
             if delta & (1 << bit):
-                byte, bp = init_cell(anchor, w, bit)
+                byte, _bp = init_cell(anchor, w, bit, bp=bp)
                 _assert_cell_safe(byte)
-                _bit_flip(out, byte, bp)
+                _bit_flip(out, byte, _bp)
                 flips += 1
     return bytes(out)
 
@@ -118,6 +120,7 @@ def read_init(
     anchor: int,
     width: int = 9,
     depth: int = 512,
+    bp: int = 6,
 ) -> list[int]:
     """Decode M9K init words from a raw RBF using the 2D formula.
 
@@ -128,9 +131,9 @@ def read_init(
     for w in range(depth):
         v = 0
         for bit in range(width):
-            byte, bp = init_cell(anchor, w, bit)
+            byte, _bp = init_cell(anchor, w, bit, bp=bp)
             _assert_cell_safe(byte)
-            if rbf_bytes[byte] & (1 << bp):
+            if rbf_bytes[byte] & (1 << _bp):
                 v |= (1 << bit)
         words.append(v)
     return words
@@ -139,20 +142,20 @@ def read_init(
 if __name__ == "__main__":
     # Sanity: evaluate the anchor cell and print the formula's round-trip
     # coverage for the 9x512 site.
-    anchor = M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)]
-    print(f"anchor(X15_Y2_N0, 9x512) = {anchor}")
-    print(f"w=0 b=0 -> {init_cell(anchor, 0, 0)}")
-    print(f"w=0 b=8 -> {init_cell(anchor, 0, 8)}")
-    print(f"w=1 b=0 -> {init_cell(anchor, 1, 0)}")
-    print(f"w=2 b=0 -> {init_cell(anchor, 2, 0)}")
-    print(f"w=511 b=8 -> {init_cell(anchor, 511, 8)}")
+    anchor, bp = M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)]
+    print(f"anchor(X15_Y2_N0, 9x512) = ({anchor}, bp={bp})")
+    print(f"w=0 b=0 -> {init_cell(anchor, 0, 0, bp=bp)}")
+    print(f"w=0 b=8 -> {init_cell(anchor, 0, 8, bp=bp)}")
+    print(f"w=1 b=0 -> {init_cell(anchor, 1, 0, bp=bp)}")
+    print(f"w=2 b=0 -> {init_cell(anchor, 2, 0, bp=bp)}")
+    print(f"w=511 b=8 -> {init_cell(anchor, 511, 8, bp=bp)}")
     # Full 9x512 = 4608 cells; verify none collide with CRC
     cells = set()
     for w in range(512):
         for b in range(9):
-            byte, bp = init_cell(anchor, w, b)
+            byte, _bp = init_cell(anchor, w, b, bp=bp)
             _assert_cell_safe(byte)
-            key = (byte, bp)
+            key = (byte, _bp)
             if key in cells:
                 raise RuntimeError(f"collision at w={w} b={b}: {key}")
             cells.add(key)

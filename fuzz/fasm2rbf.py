@@ -302,10 +302,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                     f"M9K {site} {width}x{depth}: no calibrated anchor; "
                     f"run fuzz/m9k_anchor_sweep.py for this site/mode"
                 )
-            anchor = M9K_INIT_ANCHORS[key]
-            base_words = read_init(work, anchor, width=width, depth=depth)
+            anchor, bp = M9K_INIT_ANCHORS[key]
+            base_words = read_init(work, anchor, width=width, depth=depth, bp=bp)
             work = write_init(work, anchor, base_words, target_words,
-                              width=width, depth=depth)
+                              width=width, depth=depth, bp=bp)
 
     if patch_crc:
         work = patch_rbf_crc(work)

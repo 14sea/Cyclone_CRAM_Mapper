@@ -20,7 +20,7 @@ ROOT = HERE.parent
 BASE = ROOT / "results" / "rbf" / "m9k_wp_base.rbf"
 OUT  = ROOT / "results" / "rbf" / "m9k_hero.rbf"
 
-anchor = M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)]
+anchor, bp = M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)]
 base_bytes = BASE.read_bytes()
 print(f"loaded base {BASE} ({len(base_bytes)} bytes)")
 
