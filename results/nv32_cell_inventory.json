@@ -1,0 +1,60 @@
+{
+  "source": "yosys 0.63 + ghdl-yosys-plugin, hierarchy -check -top neorv32_top (pre-synth, generics default)",
+  "top": "neorv32_top",
+  "vhdl_files": 56,
+  "verilog_files_read_but_not_bound": [
+    "wb_sdram_ctrl.v",
+    "sdram_ctrl.v",
+    "wb_sha256.v",
+    "sha256_core.v"
+  ],
+  "top_level_cells": 1336,
+  "top_level_wires": 3231,
+  "top_level_wire_bits": 67733,
+  "memories": 4,
+  "memory_bits": 33860,
+  "cell_ops": {
+    "add": 9,
+    "adff": 38,
+    "and": 166,
+    "bmux": 1,
+    "eq": 295,
+    "lt": 1,
+    "meminit_v2": 1,
+    "memrd_v2": 5,
+    "memwr_v2": 3,
+    "mux": 238,
+    "ne": 15,
+    "not": 111,
+    "or": 324,
+    "pmux": 123,
+    "sub": 3,
+    "xor": 3
+  },
+  "submodules": {
+    "neorv32_cpu_control": 896,
+    "neorv32_cpu_lsu": 65,
+    "neorv32_bus_switch": 65,
+    "neorv32_sysinfo": 50,
+    "neorv32_cpu_alu": 42,
+    "neorv32_cpu_alu_shifter": 40,
+    "neorv32_bus_gateway": 38,
+    "neorv32_cpu_frontend": 33,
+    "neorv32_sys_reset": 20,
+    "neorv32_cpu_frontend_ipb": 19,
+    "neorv32_cpu_regfile": 12,
+    "neorv32_bus_io_switch": 10,
+    "neorv32_cpu": 7,
+    "neorv32_sys_clock": 7,
+    "neorv32_bootrom": 5,
+    "neorv32_bus_reg": 5,
+    "neorv32_bootrom_rom": 2
+  },
+  "findings": {
+    "ghdl_plugin_works": true,
+    "vhdl_verilog_mixed_blocked_by_ghdl_bug": "ax301_top.vhd unbound components crash ghdl; workaround = synth neorv32_top directly",
+    "async_reset_dff_present": "38 $adff cells \u2014 contradicts 'NEORV32 is pure sync-reset' assumption; need to isolate which module. Likely neorv32_sys_reset or debug_dm.",
+    "memories": "4 inferred memories, 33860 bits total (~4.1 KB) \u2014 matches IMEM=16K/DMEM=8K expectations NOT YET (generics didn't flow through).",
+    "generics_not_applying": "synth -top reduces to 19 cells; generic -g flags not honored by ghdl plugin in this invocation form. Fix: wrap ax301_top with Verilog blackbox stubs for wb_sdram_ctrl/wb_sha256 so real generics flow in."
+  }
+}

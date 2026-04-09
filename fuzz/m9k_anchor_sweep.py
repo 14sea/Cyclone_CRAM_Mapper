@@ -29,10 +29,14 @@ RBF_DIR = ROOT / "results" / "rbf"
 # Sites to probe. Keep 9x512 so we isolate the *site* axis first; once
 # that generalizes, a second pass can vary WIDTH/DEPTH.
 SITES = [
-    ("X15_Y4_N0",  9, 512),
-    ("X15_Y2_N1",  9, 512),
-    ("X27_Y2_N0",  9, 512),
-    ("X27_Y10_N0", 9, 512),
+    # NEORV32 Linux demo M9K inventory (neorv32_demo.fit.rpt, 31 sites).
+    # Uniform 9x512 probe — per-site anchors for arbitrary future
+    # 9x512 writes; cross-shape generalization deferred to a second
+    # targeted pass. M9Ks only legal at N=0 on Cyclone IV E.
+    *[(f"X15_Y{y}_N0", 9, 512) for y in
+      (5,6,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)],
+    *[(f"X27_Y{y}_N0", 9, 512) for y in
+      (11,12,13,14,15,16,17,18,19,20,21,22,23)],
 ]
 
 PROBES = [
@@ -47,10 +51,11 @@ def _compile(site, width, depth, tag_suffix, override):
     """Worker: patch harness globals then build one RBF."""
     import m9k_init_harness as h
     h.M9K_LOC = f"M9K_{site}"
-    # Use wildcard on the auto_generated wrapper — the numeric suffix
-    # (e.g. altsyncram_2v11 vs altsyncram_3ov) drifts across compiles
-    # and breaks exact node paths, silently voiding the LOC.
-    h.M9K_NODE = "altsyncram:u|*|ALTSYNCRAM"
+    # Use the harness default M9K_NODE ("u" — Verilog instance name).
+    # Earlier attempts with `altsyncram:u|*|ALTSYNCRAM` or the exact
+    # hierarchical wrapper path both triggered Fitter warning 15706
+    # ("does not exist in design") and silently auto-placed the M9K.
+    h.M9K_NODE = "u"
     h.WIDTH = width
     h.DEPTH = depth
     h.ADDR_BITS = (depth - 1).bit_length()
@@ -72,12 +77,42 @@ def _compile(site, width, depth, tag_suffix, override):
     tag = f"m9k_as_{site}_{width}x{depth}_{tag_suffix}"
     rbf, elapsed, err = h.build(tag, overrides=ov,
                                 rbf_output=str(RBF_DIR / f"{tag}.rbf"))
-    return (site, width, depth, tag_suffix, rbf, elapsed, err)
+    # Post-compile sanity: confirm Quartus actually placed the M9K at
+    # the requested site. If not, the RBF is from an auto-placed
+    # block and its anchor is NOT the one the caller asked for.
+    loc_ok = None
+    loc_actual = None
+    loc_reason = ""
+    if rbf is not None:
+        from m9k_loc_helper import verify_loc_honored
+        import os
+        proj_dir = os.path.join("work", tag)
+        loc_ok, loc_actual, loc_reason = verify_loc_honored(
+            proj_dir, tag, site
+        )
+    return (site, width, depth, tag_suffix, rbf, elapsed, err,
+            loc_ok, loc_actual, loc_reason)
+
+
+def _is_crc_byte(byte_offset: int) -> bool:
+    """Per-frame CRC slot (210-byte frames, offsets 208/209)."""
+    return (byte_offset - 32) % 210 in (208, 209)
 
 
 def diff_one_cell(a, b):
+    """Return CRAM-only, non-CRC diff cells between two RBFs.
+
+    Filters header band (off<32+5282) and per-frame CRC byte slots
+    (offsets 208/209 within each 210-byte frame). No bp filter —
+    ``bp`` is per-site (X27_Y4_N0 = 6, X27_Y16_N0 LED harness = 2),
+    so fixing bp would drop valid singletons on any site whose
+    primary row isn't bp=6.
+    """
     diffs = [(d.byte_offset, d.bit_position) for d in diff_rbf_files(a, b)]
-    return diffs
+    return [
+        (off, bp) for (off, bp) in diffs
+        if off >= 32 + 5282 and not _is_crc_byte(off)
+    ]
 
 
 def main():
@@ -90,24 +125,39 @@ def main():
           f"({len(SITES)} sites)")
     t0 = time.time()
     out = {}
+    loc_status = {}  # key -> (honored, actual_site, reason)
     with ProcessPoolExecutor(max_workers=4) as ex:
         futs = [ex.submit(_compile, *t) for t in tasks]
         for fut in as_completed(futs):
-            site, w, d, suf, rbf, elapsed, err = fut.result()
+            (site, w, d, suf, rbf, elapsed, err,
+             loc_ok, loc_actual, loc_reason) = fut.result()
             key = f"{site}_{w}x{d}"
             if rbf is None:
                 print(f"  {key:28s} {suf:8s} FAIL ({elapsed:.1f}s): "
                       f"{err[:160]}")
                 out.setdefault(key, {})[suf] = None
             else:
-                print(f"  {key:28s} {suf:8s} OK   ({elapsed:.1f}s)")
+                tag = " " if loc_ok else "!LOC"
+                print(f"  {key:28s} {suf:8s} OK   ({elapsed:.1f}s) "
+                      f"{tag} {loc_reason}")
                 out.setdefault(key, {})[suf] = rbf
+                # Track per-(key) LOC honor — if ANY probe within a
+                # key is auto-placed, the whole key's anchor is
+                # compromised and we must not emit an anchor for it.
+                prev = loc_status.get(key)
+                if prev is None or not prev[0]:
+                    loc_status[key] = (loc_ok, loc_actual, loc_reason)
     print(f"\ntotal wall: {time.time()-t0:.1f}s\n")
 
     anchors = {}
     for key, results in out.items():
         if any(v is None for v in results.values()):
             print(f"{key}: SKIP (compile failure)")
+            continue
+        status = loc_status.get(key)
+        if status is not None and not status[0]:
+            print(f"{key}: SKIP (LOC ignored by Quartus — "
+                  f"actual site {status[1]}; {status[2]})")
             continue
         base = results["base"]
         c_w0b0 = diff_one_cell(base, results["w0_b0"])
@@ -118,23 +168,23 @@ def main():
                   f"— noise or routing echo, skipping")
             continue
         anchor, bp = c_w0b0[0]
-        if bp != 6:
-            print(f"{key}: w0_b0 bp={bp} != 6 — formula violated")
-            continue
+        # bp is per-site; do NOT hardcode 6 here. Stage B formula
+        # structure expected to hold with whichever bp the anchor
+        # probe lands on.
         # Predict w1_b0: byte = anchor + 0 - 1 - 0 = anchor - 1
         # Predict w0_b8: byte = anchor + 0 - 0 - 16 = anchor - 16
-        pred_w1 = (anchor - 1, 6)
-        pred_b8 = (anchor - 16, 6)
+        pred_w1 = (anchor - 1, bp)
+        pred_b8 = (anchor - 16, bp)
         ok_w1 = pred_w1 in c_w1b0
         ok_b8 = pred_b8 in c_w0b8
         status = "OK" if (ok_w1 and ok_b8) else "FORMULA MISMATCH"
-        print(f"{key}: anchor={anchor} bp=6  "
+        print(f"{key}: anchor={anchor} bp={bp}  "
               f"w1_b0:{'+' if ok_w1 else '-'} "
               f"w0_b8:{'+' if ok_b8 else '-'}  {status}")
         anchors[key] = {
             "site": key.rsplit("_", 1)[0],
             "anchor": anchor,
-            "bp": 6,
+            "bp": bp,
             "verified_w1_b0": ok_w1,
             "verified_w0_b8": ok_b8,
             "w1_b0_cells": c_w1b0,

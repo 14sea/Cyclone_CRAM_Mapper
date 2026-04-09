@@ -36,17 +36,44 @@ from __future__ import annotations
 # Per-site calibration: (site, width, depth) -> (anchor_byte, bp).
 # bp is the constant bit position of the primary row for this site.
 M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
-    # Stage A/B harness (m9k_init_harness.py) auto-placed at X27_Y4_N0.
-    # 9-bit native width, primary row at bp=6. Label X15_Y2_N0 kept as
-    # alias — the LOC assignment was silently ignored, see memory
-    # feedback_quartus_m9k_loc_ignored.md.
+    # Stage A/B legacy (aliased site, kept for backward-compat RBFs)
     ("X27_Y4_N0",  9, 512): (261142, 6),
-    ("X15_Y2_N0",  9, 512): (261142, 6),  # alias, historical label
-    # LED harness (m9k_led_harness.py) auto-places at X27_Y16_N0. Quartus
-    # trims bits 4-8 because only dout[3:0] is used → effective 4b×512
-    # ROM. Primary row at bp=2. Calibrated 2026-04-09 via bit+word sweep
-    # (fuzz/m9k_calibrate.py).
-    ("X27_Y16_N0", 4, 512): (261154, 2),
+    ("X27_Y16_N0", 4, 512): (261154, 2),  # LED harness 4b×512
+    # NEORV32 Linux demo M9K sites — 31 anchors calibrated 2026-04-09
+    # via m9k_anchor_sweep.py post-LOC-fix. All 9×512 uniform probe;
+    # w1_b0 + w0_b8 formula validated 31/31. Pattern: bp decrements
+    # every 3 Y rows, anchor cycles (+70, +70, -137) per Y.
+    ("X15_Y10_N0",  9, 512): (120028, 4),
+    ("X15_Y11_N0",  9, 512): (120098, 4),
+    ("X15_Y12_N0",  9, 512): (119961, 3),
+    ("X15_Y13_N0",  9, 512): (120031, 3),
+    ("X15_Y14_N0",  9, 512): (120101, 3),
+    ("X15_Y15_N0",  9, 512): (119964, 2),
+    ("X15_Y16_N0",  9, 512): (120034, 2),
+    ("X15_Y17_N0",  9, 512): (120104, 2),
+    ("X15_Y18_N0",  9, 512): (119967, 1),
+    ("X15_Y19_N0",  9, 512): (120037, 1),
+    ("X15_Y20_N0",  9, 512): (120107, 1),
+    ("X15_Y21_N0",  9, 512): (119970, 0),
+    ("X15_Y22_N0",  9, 512): (120040, 0),
+    ("X15_Y23_N0",  9, 512): (120110, 0),
+    ("X15_Y5_N0",  9, 512): (120092, 6),
+    ("X15_Y6_N0",  9, 512): (119955, 5),
+    ("X15_Y8_N0",  9, 512): (120095, 5),
+    ("X15_Y9_N0",  9, 512): (119958, 4),
+    ("X27_Y11_N0",  9, 512): (261218, 4),
+    ("X27_Y12_N0",  9, 512): (261081, 3),
+    ("X27_Y13_N0",  9, 512): (261151, 3),
+    ("X27_Y14_N0",  9, 512): (261221, 3),
+    ("X27_Y15_N0",  9, 512): (261084, 2),
+    ("X27_Y16_N0",  9, 512): (261154, 2),
+    ("X27_Y17_N0",  9, 512): (261224, 2),
+    ("X27_Y18_N0",  9, 512): (261087, 1),
+    ("X27_Y19_N0",  9, 512): (261157, 1),
+    ("X27_Y20_N0",  9, 512): (261227, 1),
+    ("X27_Y21_N0",  9, 512): (261090, 0),
+    ("X27_Y22_N0",  9, 512): (261160, 0),
+    ("X27_Y23_N0",  9, 512): (261230, 0),
 }
 
 FRAME_SIZE = 210

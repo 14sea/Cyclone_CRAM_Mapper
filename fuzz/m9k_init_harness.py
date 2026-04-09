@@ -36,7 +36,16 @@ DEVICE = "EP4CE10F17C8"
 
 # Stage A fixed point: smallest real M9K shape, X=15 column.
 M9K_LOC = "M9K_X15_Y2_N0"
-M9K_NODE = "altsyncram:u|altsyncram_3ov:auto_generated|ALTSYNCRAM"
+# LOC target: just the Verilog instance name ("u"), NOT the
+# hierarchical auto_generated wrapper path. Quartus follows the
+# instance name into the megafunction and places the underlying
+# RAMBLOCK at the requested M9K site. The previous
+# `altsyncram:u|altsyncram_3ov:auto_generated|ALTSYNCRAM` path was
+# rejected with "Warning (15706): does not exist in design" and
+# Quartus silently auto-placed the M9K, which is the root cause of
+# the Stage A/B "X15_Y2_N0" aliasing incident — every probe actually
+# landed at X27_Y4_N0. See memory/feedback_quartus_m9k_loc_ignored.md.
+M9K_NODE = "u"
 
 # 9x512 = 4608 init bits. 9 is the native M9K word width (8 data + 1 parity).
 WIDTH = 9
