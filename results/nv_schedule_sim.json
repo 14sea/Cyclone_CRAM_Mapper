@@ -1,0 +1,87 @@
+{
+ "rate_per_sec": 0.278,
+ "now_sources_full": 1270,
+ "now_fanout_covered": 2415,
+ "total_sources": 4291,
+ "total_fanout": 12259,
+ "remaining": 9552,
+ "top_15_priority": [
+  {
+   "src": "X17Y17N16",
+   "remaining": 203,
+   "total": 203
+  },
+  {
+   "src": "X23Y8N6",
+   "remaining": 133,
+   "total": 133
+  },
+  {
+   "src": "X19Y16N8",
+   "remaining": 123,
+   "total": 123
+  },
+  {
+   "src": "X14Y8N28",
+   "remaining": 101,
+   "total": 101
+  },
+  {
+   "src": "X18Y16N0",
+   "remaining": 87,
+   "total": 87
+  },
+  {
+   "src": "X14Y8N16",
+   "remaining": 77,
+   "total": 77
+  },
+  {
+   "src": "X18Y8N28",
+   "remaining": 75,
+   "total": 75
+  },
+  {
+   "src": "X17Y14N14",
+   "remaining": 74,
+   "total": 74
+  },
+  {
+   "src": "X18Y7N6",
+   "remaining": 73,
+   "total": 73
+  },
+  {
+   "src": "X17Y6N10",
+   "remaining": 72,
+   "total": 72
+  },
+  {
+   "src": "X14Y12N0",
+   "remaining": 69,
+   "total": 69
+  },
+  {
+   "src": "X13Y15N30",
+   "remaining": 64,
+   "total": 64
+  },
+  {
+   "src": "X21Y11N0",
+   "remaining": 62,
+   "total": 62
+  },
+  {
+   "src": "X21Y11N22",
+   "remaining": 62,
+   "total": 62
+  },
+  {
+   "src": "X13Y11N10",
+   "remaining": 59,
+   "total": 59
+  }
+ ],
+ "concentration_p50": 214,
+ "concentration_p80": 1150
+}

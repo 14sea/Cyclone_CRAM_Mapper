@@ -1641,6 +1641,252 @@ wrong and the right answer side by side.
 
 ---
 
+### Phase 4.5 — Scaling the FASM chain to real designs (2026-04-09)
+
+Up to Phase 4 we had proven that a FASM source file like
+`X10Y10N0.LUT = 0x8888` could be compiled, flashed, and run on real
+AX301 silicon. That was a huge milestone, but it had a hidden limit:
+our signature cache `route_cells.json` (1725 entries) was mined from
+only **15 "green-zone" LAB positions**, all with source-N = 0. A real
+CPU design like NEORV32 has thousands of logic cells scattered across
+the whole chip, with flip-flops at every even N slot, with feedback
+paths and routing hubs that never look anything like our 15 training
+islands. How do we know the chain generalises?
+
+Phase 4.5 is the scaling experiment. Its goal: **can the FASM chain
+reproduce an edge from a real NEORV32 compile, byte-for-byte, on silicon,
+including in the "jailbreak" columns that Quartus officially forbids?**
+
+#### What is a "signature cache"?
+
+Before we answer that, it's worth explaining what our cache actually
+is. It is **not** an analytic formula. When we say "the bits for route
+`X5Y3N4 → X4Y3N6.datad` are the following 144 CRAM cells", we don't
+compute those 144 cells from geometry — we **observed them** in a real
+RBF that Quartus produced for exactly that route, and we stored the
+observation in a giant JSON dictionary. The cache key is the route
+tuple; the value is the list of `(byte_offset, bit_position)` pairs
+that Quartus flipped.
+
+This is the same idea as IceStorm's fuzzing approach, but applied to
+**individual routing edges** rather than chip-wide features: instead
+of asking "what bits does this feature control?", we ask "what bits
+does this specific source-to-destination wire require?". At flash
+time we don't need to know *why* those bits are what they are — we
+just copy them out of the cache and XOR them into the baseline.
+
+The catch: the cache only knows routes it has seen. If you want it to
+cover NEORV32, you have to compile every edge NEORV32 uses at least
+once.
+
+#### Plan D' — a 12,000-compile factory
+
+Step 1 was a dry-run: we parsed NEORV32's static-timing report
+(`quartus_sta`-generated 3.6 GB text dump) and extracted every routing
+edge the compiler actually used. After dedup and self-loop removal we
+ended up with **12,259 unique edges**, each one a 7-tuple
+`(sx, sy, sn, dx, dy, dn, port)`. This is the "order list".
+
+Step 2 was the factory itself: `fuzz/plan_d_prime_factory.py`. It
+spawns 12 parallel Quartus worker processes, each one assigned one
+edge at a time. The worker writes a minimal two-LUT Verilog design
+(`lut1 → lut2` with a clock register to keep Quartus from optimizing
+it away), forces both LUTs into the exact coordinates the edge
+describes, runs a full Quartus compile, and saves the resulting RBF
+as `nv_pair_X{sx}Y{sy}N{sn}_to_X{dx}Y{dy}N{dn}_{port}.rbf`. Before it
+starts, the factory filters out edges that its two-LUT compile
+template physically cannot place: odd-N self-mappings collapsed by
+the N-normalizer, IO-ring coordinates, and non-LAB columns
+(X ∈ {15, 20, 27}, the M9K / multiplier blocks). 12,259 raw edges
+come down to **11,762 placeable edges**; the remaining 497 are
+unrepresentable in this strategy, not lost. At a steady-state rate of
+~0.28–0.29 compiles per second, the final run walked the whole list
+in **11 hours 16 minutes with zero failures** (11,715 ok / 0 fail on
+this run, plus 47 placeable edges already on disk from an earlier
+partial run).
+
+Every finished RBF is XOR-diffed against a neutral
+`nv_zero_global.rbf` baseline, and the diff cells are stored in
+`results/nv_route_cells.json` keyed by the edge 7-tuple. That file is
+then merged with the legacy green-zone cache into
+`results/route_cells_full.json` — a unified 7-tuple sig-cache keyed
+`"sx,sy,sn->dx,dy,dn,port"`, **13,487 merged entries**. The legacy
+entries get lifted with `sn = 0` so the old green-zone regression
+tests still pass unchanged. Cross-referenced against the full 12,259-
+edge NEORV32 order list, the merged cache covers **11,762 / 12,259
+(95.9%) — i.e. 100% of every edge the factory could place**. The 4.1%
+gap is exactly the filter set described above, not a factory miss.
+Interestingly, **zero of the 1725 legacy green-zone entries are hit
+by NEORV32** — all coverage comes from Plan D' factory entries. The
+legacy cache stays in the merged file because it is still load-
+bearing for the green-zone regression suite, but it is dead weight
+for real-world designs. See `memory/legacy_cache_zero_nv32_hits.md`.
+
+#### Why the source-N dimension matters
+
+A common question: why do we need `sn` in the key? Can't we just use
+`(sx, sy, dx, dy, dn, port)` like the old cache?
+
+The answer is that in a real CPU each LAB (logic array block) has 16
+LE slots, and different slots have different downstream routing
+envelopes. A flip-flop driving out of `N=14` does not use the same
+switch-boxes as a combinational cell driving out of `N=4`, even when
+both live at `X=5, Y=3` and target the same destination port.
+Collapsing those two into one key would make the cache give the wrong
+answer for one of them. Keeping `sn` explicit costs us a few MB of
+JSON and buys correctness for every source that isn't at `N=0`.
+
+#### The hero test: X=5, sn=4, on silicon
+
+With the factory warmed up we picked the first edge that satisfied
+three criteria: **(a)** its source column was outside the CE6
+whitelist (a "jailbreak" column we only unlocked by lying to Quartus
+and claiming the chip is an EP4CE10); **(b)** its source-N was
+non-zero (so the 7-tuple path was actually exercised, not the legacy
+`sn=0` fallback); **(c)** the factory had already produced the
+corresponding `nv_pair` RBF on disk so we had ground truth to diff
+against.
+
+The edge was `ROUTE X5Y3N4 -> X4Y3N6.datad`. Source X=5 is a column
+the Quartus CE6 software whitelist forbids — it simply refuses to
+place a LUT there. But we already knew (from the 2026-04-07 jailbreak
+probe) that X=5 is perfectly functional on silicon, the restriction
+is pure software. Plan D' deliberately routes through X=5 by lying
+about the device.
+
+We wrote the hero test as a **single line of FASM**:
+
+```
+ROUTE X5Y3N4 -> X4Y3N6.datad
+```
+
+That file went into `fasm2rbf.py`, which looked the 7-tuple key up in
+the merged cache, copied the 144 cells it found, XOR'd them into
+`nv_zero_global.rbf`, patched the CRAM CRCs frame by frame, and wrote
+a 368,011-byte RBF. We then compared this file byte-for-byte against
+the factory's ground-truth `nv_pair_X5Y3N4_to_X4Y3N6_datad.rbf`:
+
+```
+CRAM band (bytes ≥ 5282):     0 differing bytes  ← exact match
+Header band (bytes < 5282):   6 differing bytes  ← Quartus device-id / seed
+bad CRC frames:               0 / 1727            ← all pass
+```
+
+The CRAM is the part of the RBF that the FPGA's configuration state
+machine actually validates. **Zero CRAM differences** means our
+FASM-generated RBF is functionally identical to Quartus's own output.
+The six header-band differences sit in bytes 43–74, which carry
+Quartus's compile timestamp and seed hash — the configuration state
+machine never looks at them.
+
+We flashed the FASM-generated RBF to the AX301 via `openFPGALoader`.
+It loaded cleanly, `Done`, no CRC error, no EPCS fallback, the FPGA
+drove its LED pins with the expected constant outputs from the two
+LUTs. **First silicon proof** that:
+
+1. `fasm2rbf` reproduces factory-grade CRAM from a 7-tuple cache hit
+2. Plan D' cells are silicon-accepted even outside the training corpus
+3. The CE6-forbidden column X=5 configures and runs under FASM control
+
+The hero test validated the whole stack in one flash.
+
+#### Two negative results worth remembering
+
+**Negative result 1 — passive R4 dark-index mining is impossible.**
+Our routing bit model `_R4_BASE_PREV` has 24 of 37 theoretical R4
+switch I-indices mapped; the 13 "dark" indices never appeared in the
+green-zone corpus because Quartus never picked them under low routing
+pressure. We hoped that a full NEORV32 RBF, compiled under real
+congestion, would light up the dark indices and let us recover their
+BASE addresses by XOR-diffing against a neutral baseline. It did not
+work. The NEORV32 diff set turned out to be so dense (113k cells, ~4%
+of all CRAM bits) that *any* candidate BASE address scores a 55-61%
+hit rate across tested wires by pure chance. A null test confirmed
+the method cannot even recover the BASEs we already know to be
+correct for I=0, I=1, I=2, I=10. **Lesson**: passive observation
+needs a sparse signal. Dense diffs drown out the pattern you are
+looking for. We marked Task G closed-negative and moved on — the
+24/37 coverage turned out to be unnecessary anyway because the
+signature cache short-circuits the formula path for every route it
+has seen.
+
+**Negative result 2 — "schedule the biggest hubs first" is wrong.**
+When the factory was 22% through its 12k edges, we asked: could we
+finish the hero-test-relevant coverage faster by reordering the
+remaining 9,500 compiles to do the highest-fanout sources first?
+The intuition was "main roads before alleys" — finish the big
+architectural hubs early, let the small leaf sources wait. We wrote
+a pure simulator (no side effects on the live factory) and ran it.
+The result was the opposite of the intuition: fanout-first order
+**delays** the "sources fully covered" metric by up to 4.2 hours
+compared to the current lexicographic order. The reason is that
+while the factory is spending 12 minutes grinding through a single
+203-edge hub, the current lex order would be finishing ~60 small
+sources in the same window. Lex order accidentally clusters small
+sources at the head of the sorted list and is near-globally optimal
+for this metric. **Lesson**: never propose a scheduling change
+without a simulator proving it is strictly better on the target
+metric; "obvious" hub-first heuristics can be wrong.
+
+Both negative results are archived in `memory/r4_dark_passive_mining_dead.md`
+and `memory/fanout_first_scheduling_worse.md` for the benefit of
+anyone who considers the same approaches in the future.
+
+#### A postscript: what "stuck at 96%" actually meant
+
+A small debugging story from the day the factory finished, because it
+teaches a lesson that is almost more useful than the Phase 4.5 result
+itself. The factory had been running in the background all day. At
+the end of the afternoon we checked in and the progress counter read
+`11,762 / 12,259` — 95.9%, apparently stuck with nothing happening,
+and an hour later it read exactly the same number. The knee-jerk
+reading was "the factory crashed at 96% and left 497 edges unfinished,
+we need to restart it and investigate".
+
+We almost did exactly that. What stopped us was checking the actual
+log file (`/tmp/nvfac.log`) before touching anything. The log showed
+a perfectly clean final line:
+
+```
+== done ==  ok=11715  fail=0  jb_fail=0  elapsed=676.5min
+```
+
+The factory hadn't crashed — it had finished normally, 11 hours and
+16 minutes after launch, with zero failures. So where did the "497
+missing edges" come from?
+
+It came from reading two different denominators and assuming they
+were the same number. The progress counter we were watching reports
+`len(done)` out of `12,259` (the raw edge count from the STA dump).
+But the factory, before it starts, filters `12,259` down to `11,762`
+by removing edges its two-LUT compile template cannot place — odd-N
+self-mappings, IO-ring coordinates, non-LAB columns. The filtered
+edges never enter the work queue, so they never get marked done, so
+`len(done)` asymptotically approaches `11,762`, not `12,259`. Once
+the factory hits `11,762 / 12,259` it is **complete**, not stuck.
+
+The lesson: when a long-running pipeline "freezes" near the end,
+read the actual log before you restart anything. A progress counter
+whose denominator is wrong looks identical to a crashed process
+whose numerator got stuck — both produce the same flat number on
+your status check. The difference is exactly one grep of the log.
+Restarting a pipeline that has already finished is at best wasteful
+(you spawn 12 Quartus workers for no reason) and at worst destructive
+(if the "fix" touches the checkpoint file you can lose the work the
+pipeline already did). The reflex "something looks wrong, let me
+restart it" is one of the most expensive reflexes in long-running
+computing, and almost every time the right first move is instead
+"something looks wrong, let me read the log".
+
+This also explains why our README Phase 4.5 section quotes coverage
+as "11,762 / 12,259 (95.9%) — 100% of placeable edges". Both numbers
+are true simultaneously: the factory achieved 100% of what it could,
+and that 100% is 95.9% of the original edge list. Stating only the
+95.9% makes the result look worse than it is; stating only the 100%
+hides the 4.1% of NEORV32 structure that our current compile
+template cannot reach. Both numbers are worth writing down.
+
+
 ## Current Progress and Next Steps
 
 ### Completed ✓
