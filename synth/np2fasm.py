@@ -6,20 +6,18 @@ Reads the placed-and-routed JSON emitted by nextpnr-generic (via
 ``chipdb_ep4ce6.py``) and emits FASM directives that ``fasm2rbf.py``
 can consume to produce a CRC-valid EP4CE6 RBF.
 
+The converter extracts **logical connectivity** from the placed netlist
+(which source bel drives which sink bel input) and looks up each
+(src→dst.port) pair in the Plan D' sig-cache.  This decouples FASM
+generation from nextpnr's abstract routing topology — the chipdb's
+LOCAL/INTRA_LAB overlay pips are invisible to this tool.
+
 Supported directive output
 --------------------------
 * ``X{x}Y{y}N{n}.LUT = 0x{mask}`` — LUT truth table from cell INIT.
-* ``ROUTE X{sx}Y{sy}N{sn} -> X{dx}Y{dy}N{dn}.{port}`` — inter-LAB
-  routes backed by the Plan D' sig-cache. Only emitted when the pip
-  used by nextpnr matches a sig-cache entry.
-
-Unsupported (reported as warnings)
------------------------------------
-* LOCAL/INTRA_LAB/GCLK/IOB pips — overlay infrastructure with no CRAM
-  backing. These require either placement into sig-cache-covered LABs
-  or a future ``route_synth`` integration.
-* M9K INIT — not yet wired (needs M9K bel usage + anchor table).
-* IO pin configuration — ``fasm2rbf`` doesn't have IO cell CRAM maps.
+* ``ROUTE X{sx}Y{sy}N{sn} -> X{dx}Y{dy}N{dn}.{port}`` — physical
+  route from sig-cache, emitted for every placed (src→dst) arc that
+  has a sig-cache entry.
 
 Usage
 -----
@@ -39,39 +37,24 @@ HERE = Path(__file__).resolve().parent
 FUZZ = HERE.parent / "fuzz"
 sys.path.insert(0, str(FUZZ))
 
-# Try to load sig-cache for ROUTE pip validation
+# Load sig-cache for ROUTE lookup
 _SIG_CACHE: dict | None = None
 _CACHE_PATH = HERE.parent / "results" / "route_cells_full.json"
 if _CACHE_PATH.exists():
     _SIG_CACHE = json.loads(_CACHE_PATH.read_text())
+
+# I[n] index → Cyclone IV port name
+_IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
 
 
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
     """Parse 'SLICE_X3_Y19_N24' -> ('SLICE', 3, 19, 24)."""
     m = re.match(r"(SLICE|IOB|M9K)_X(\d+)_Y(\d+)_N(\d+)", bel_name)
     if not m:
-        # IOB format: IOB_D_PIN_E15
         if bel_name.startswith("IOB_"):
             return ("IOB", 0, 0, 0)
         return None
     return (m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)))
-
-
-def _parse_pip(pip_name: str) -> dict | None:
-    """Try to extract (sx,sy,sn,dx,dy,dn,port) from a SIG pip name.
-
-    SIG pips are named: pip_{sx}_{sy}_{sn}__{dx}_{dy}_{dn}_{port}
-    """
-    m = re.match(
-        r"pip_(\d+)_(\d+)_(\d+)__(\d+)_(\d+)_(\d+)_(\w+)", pip_name
-    )
-    if not m:
-        return None
-    return {
-        "sx": int(m.group(1)), "sy": int(m.group(2)), "sn": int(m.group(3)),
-        "dx": int(m.group(4)), "dy": int(m.group(5)), "dn": int(m.group(6)),
-        "port": m.group(7),
-    }
 
 
 def convert(routed_json: dict) -> tuple[list[str], list[str]]:
@@ -79,7 +62,6 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
     fasm: list[str] = []
     warnings: list[str] = []
 
-    # Find the single module
     modules = routed_json.get("modules", {})
     if not modules:
         warnings.append("ERROR: no modules in JSON")
@@ -89,70 +71,101 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
     cells = mod.get("cells", {})
     nets = mod.get("netnames", {})
 
+    # Build bel placement map: cell_name -> (kind, x, y, n)
+    cell_bel: dict[str, tuple[str, int, int, int]] = {}
+    for cell_name, cell in cells.items():
+        bel_str = cell.get("attributes", {}).get("NEXTPNR_BEL", "")
+        bel = _parse_bel(bel_str)
+        if bel:
+            cell_bel[cell_name] = bel
+
     # --- LUT / DFF directives from cells ---
     for cell_name, cell in cells.items():
-        attrs = cell.get("attributes", {})
-        params = cell.get("parameters", {})
-        bel_str = attrs.get("NEXTPNR_BEL", "")
-        bel = _parse_bel(bel_str)
+        bel = cell_bel.get(cell_name)
         if bel is None:
             continue
-
         kind, x, y, n = bel
+        params = cell.get("parameters", {})
 
         if kind == "SLICE":
             init_bin = params.get("INIT", "")
             if init_bin:
                 mask = int(init_bin, 2)
-                if mask != 0:  # skip zero-init LUTs (GND driver etc.)
+                if mask != 0:
                     fasm.append(f"X{x}Y{y}N{n}.LUT = 0x{mask:04x}")
             ff_bin = params.get("FF_USED", "0")
             if int(ff_bin, 2):
                 fasm.append(f"# DFF at X{x}Y{y}N{n} (no FASM directive yet)")
-
         elif kind == "IOB":
-            fasm.append(f"# IOB {bel_str} (no FASM IO cell map yet)")
+            fasm.append(
+                f"# IOB {cell.get('attributes',{}).get('NEXTPNR_BEL','?')}"
+                f" (no FASM IO cell map yet)")
 
-    # --- ROUTE directives from net routing ---
+    # --- ROUTE directives from logical connectivity ---
+    # For each net, find driver bel and all sink bels+ports, then look up
+    # the sig-cache for each (src→dst.port) arc.
+    #
+    # Build bit→cell mapping first.
+    bit_driver: dict[int, tuple[str, str]] = {}   # bit_id → (cell_name, port)
+    bit_sinks: dict[int, list[tuple[str, str, int]]] = {}  # bit_id → [(cell, port, idx)]
+
+    for cell_name, cell in cells.items():
+        conns = cell.get("connections", {})
+        dirs = cell.get("port_directions", {})
+        for port, port_bits in conns.items():
+            d = dirs.get(port, "")
+            for idx, bit_id in enumerate(port_bits):
+                if isinstance(bit_id, str):  # constant "0"/"1"
+                    continue
+                if d == "output":
+                    bit_driver[bit_id] = (cell_name, port)
+                elif d == "input":
+                    bit_sinks.setdefault(bit_id, []).append(
+                        (cell_name, port, idx))
+
     n_sig = 0
-    n_local = 0
-    for net_name, net in nets.items():
-        attrs = net.get("attributes", {})
-        routing = attrs.get("ROUTING", "")
-        if not routing:
-            continue
+    n_miss = 0
+    n_skip = 0
+    seen_routes: set[str] = set()
 
-        segs = routing.split(";")
-        for seg in segs:
-            if not seg.startswith("pip_"):
+    for bit_id, (drv_cell, drv_port) in bit_driver.items():
+        drv_bel = cell_bel.get(drv_cell)
+        if drv_bel is None or drv_bel[0] != "SLICE":
+            continue
+        _, sx, sy, sn = drv_bel
+
+        for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
+            sink_bel = cell_bel.get(sink_cell)
+            if sink_bel is None or sink_bel[0] != "SLICE":
+                n_skip += 1
+                continue
+            _, dx, dy, dn = sink_bel
+
+            # Map I[n] index to port name
+            port_name = _IDX_TO_PORT.get(sink_idx)
+            if port_name is None:
+                n_skip += 1
                 continue
 
-            sig = _parse_pip(seg)
-            if sig is not None:
-                # Check sig-cache
-                key = (f"{sig['sx']},{sig['sy']},{sig['sn']}"
-                       f"->{sig['dx']},{sig['dy']},{sig['dn']},"
-                       f"{sig['port']}")
-                if _SIG_CACHE and key in _SIG_CACHE:
-                    sn_part = (f"N{sig['sn']}" if sig['sn'] != 0
-                               else "")
-                    fasm.append(
-                        f"ROUTE X{sig['sx']}Y{sig['sy']}{sn_part} -> "
-                        f"X{sig['dx']}Y{sig['dy']}N{sig['dn']}."
-                        f"{sig['port']}"
-                    )
-                    n_sig += 1
-                else:
-                    warnings.append(
-                        f"SIG pip not in cache: {key} (net {net_name})"
-                    )
-            else:
-                n_local += 1
+            # Sig-cache lookup
+            key = f"{sx},{sy},{sn}->{dx},{dy},{dn},{port_name}"
+            if key in seen_routes:
+                continue  # dedup
+            seen_routes.add(key)
 
-    # Summary
+            if _SIG_CACHE and key in _SIG_CACHE:
+                sn_part = f"N{sn}" if sn != 0 else ""
+                fasm.append(
+                    f"ROUTE X{sx}Y{sy}{sn_part} -> "
+                    f"X{dx}Y{dy}N{dn}.{port_name}")
+                n_sig += 1
+            else:
+                n_miss += 1
+                warnings.append(f"no sig-cache: {key}")
+
     warnings.insert(0,
-        f"# {n_sig} SIG pips (FASM-backed), "
-        f"{n_local} local/overlay pips (no FASM backing)")
+        f"# {n_sig} ROUTE (FASM-backed), {n_miss} missing, "
+        f"{n_skip} skipped (non-slice/CLK)")
 
     return fasm, warnings
 
@@ -170,7 +183,6 @@ def main() -> None:
     if len(sys.argv) >= 3:
         out = open(sys.argv[2], "w")
 
-    # Write FASM
     out.write("# Auto-generated by np2fasm.py\n")
     for w in warnings:
         out.write(f"# WARN: {w}\n")
