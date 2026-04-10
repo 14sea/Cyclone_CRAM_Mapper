@@ -72,8 +72,11 @@ LE_N = config.LE_N
 M9K_X = [15, 27]
 M9K_Y = list(range(2, 22))
 
-PLACEHOLDER_DELAY = 1   # nextpnr generic delay_t units
-HOP_DELAY = 10          # hop pips cost 10× to discourage long chains
+SIG_DELAY = 1            # SIG pips (FASM-backed) — cheapest
+INTRA_DELAY = 2          # intra-LAB direct pips — within-LAB
+LOCAL_DELAY = 5          # LOCAL_IN / LOCAL_OUT — entering/leaving bus
+HOP_DELAY = 20           # LOCAL_HOP — expensive, discourages long chains
+PLACEHOLDER_DELAY = 1    # default (used for GCLK, IOB bridge)
 
 # Number of parallel LOCAL tracks per LAB. Each wire in nextpnr is a
 # single-net resource, so one LOCAL per LAB = one net per LAB — that
@@ -240,7 +243,7 @@ def build_chipdb() -> dict:
                             "name": f"pip_{src}__{dst}",
                             "type": "INTRA_LAB",
                             "src": src, "dst": dst,
-                            "delay": PLACEHOLDER_DELAY,
+                            "delay": INTRA_DELAY,
                             "x": x, "y": y,
                         })
                         n_local_pips += 1
@@ -256,7 +259,7 @@ def build_chipdb() -> dict:
                         "name": f"pip_{src}__{lw}",
                         "type": "LOCAL_IN",
                         "src": src, "dst": lw,
-                        "delay": PLACEHOLDER_DELAY,
+                        "delay": LOCAL_DELAY,
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
@@ -270,7 +273,7 @@ def build_chipdb() -> dict:
                         "name": f"pip_{lw}__{dw}",
                         "type": "LOCAL_OUT",
                         "src": lw, "dst": dw,
-                        "delay": PLACEHOLDER_DELAY,
+                        "delay": LOCAL_DELAY,
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
@@ -390,7 +393,7 @@ def build_chipdb() -> dict:
             "type": "SIG",
             "src": src_wire,
             "dst": dst_wire,
-            "delay": PLACEHOLDER_DELAY,
+            "delay": SIG_DELAY,
             "x": dx, "y": dy,
         })
         pip_count += 1
@@ -434,8 +437,9 @@ try:
 except ImportError:
     Loc = globals().get("Loc")  # provided by --run environment
 
-_delay1 = ctx.getDelayFromNS(0.5)   # direct pips
-_delay10 = ctx.getDelayFromNS(5.0)  # hop pips (10× cost, steers pathfinder)
+_delays = {}
+for cost in set(p["delay"] for p in _DATA["pips"]):
+    _delays[cost] = ctx.getDelayFromNS(cost * 0.5)
 
 for w in _DATA["wires"]:
     ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
@@ -452,10 +456,10 @@ for bp in _DATA["belpins"]:
         ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
-    d = _delay10 if p["delay"] > 1 else _delay1
     ctx.addPip(name=p["name"], type=p["type"],
                srcWire=p["src"], dstWire=p["dst"],
-               delay=d, loc=Loc(p["x"], p["y"], 0))
+               delay=_delays[p["delay"]],
+               loc=Loc(p["x"], p["y"], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",
