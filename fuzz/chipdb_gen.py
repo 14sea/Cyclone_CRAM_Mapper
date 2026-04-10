@@ -72,7 +72,15 @@ LE_N = config.LE_N
 M9K_X = [15, 27]
 M9K_Y = list(range(2, 22))
 
-PLACEHOLDER_DELAY = 1  # nextpnr generic delay_t units
+PLACEHOLDER_DELAY = 1   # nextpnr generic delay_t units
+HOP_DELAY = 10          # hop pips cost 10× to discourage long chains
+
+# Number of parallel LOCAL tracks per LAB. Each wire in nextpnr is a
+# single-net resource, so one LOCAL per LAB = one net per LAB — that
+# starves the clock arc as soon as any data arc claims the bus.
+# Keep small (8) to avoid pip-count blowup but big enough to carry
+# counter-class designs (~32 nets distributed across LABs).
+NUM_LOCAL_TRACKS = 4
 
 SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
 # Map sig-cache port labels to nextpnr-generic SLICE pin indices.
@@ -189,8 +197,172 @@ def build_chipdb() -> dict:
             {"bel": name, "pin": "I", "wire": wi, "output": False},
             {"bel": name, "pin": "O", "wire": wo, "output": True},
         ])
+    # Defer IOB<->LOCAL bridge pips until LOCAL wires exist (below).
 
-    # ---------- Pips from Plan D' sig-cache ----------
+    # ---------- Synthetic LOCAL-bus overlay (densification) ----------
+    # Plan D' sig-cache only covers NEORV32-observed edges; it's too
+    # sparse for arbitrary small-design routing (the counter smoke
+    # test exposed this). Mimic Cyclone IV LOCAL_INTERCONNECT + LAB-
+    # neighbor hops with a hierarchical bus: per LAB one LOCAL wire
+    # that every slice Q/F drives and every slice I reads, plus 8
+    # Moore-neighbour LOCAL->LOCAL pips.  Linear cost (~100 pips/LAB
+    # instead of O(N^2)) and gives the router full connectivity.
+    # These pips have NO FASM backing — np2fasm will either fall back
+    # to route_synth or flag unroutable FASM. Marked type="LOCAL" so
+    # M4 can distinguish them from the "SIG" sig-cache pips.
+    local_wires: set[tuple[int, int]] = set()
+    valid_labs = [(x, y) for x in LAB_X_FULL for y in LAB_Y_FULL
+                  if (x, y) not in config.INVALID_LABS]
+    for (x, y) in valid_labs:
+        for t in range(NUM_LOCAL_TRACKS):
+            wires.append({
+                "name": f"LOCAL_X{x}_Y{y}_T{t}",
+                "type": "LOCAL", "x": x, "y": y,
+            })
+        local_wires.add((x, y))
+    n_local_pips = 0
+    for (x, y) in valid_labs:
+        xi = LAB_X_FULL.index(x)
+        yi = LAB_Y_FULL.index(y)
+
+        # ----- Intra-LAB direct pips (Q/F → I[0..3]) -----
+        # Within the same LAB, slices connect via the LOCAL bus
+        # hardware, but we model it as direct pips to avoid track
+        # contention. 16×16×4 = 1024 pips per LAB.
+        for n_src in LE_N:
+            for out_pin in ("Q", "F"):
+                src = (_wire_slice_out(x, y, n_src) if out_pin == "Q"
+                       else f"slice_X{x}_Y{y}_N{n_src}_F")
+                for n_dst in LE_N:
+                    for port in SLICE_INPUTS:
+                        dst = _wire_slice_in(x, y, n_dst, port)
+                        pips.append({
+                            "name": f"pip_{src}__{dst}",
+                            "type": "INTRA_LAB",
+                            "src": src, "dst": dst,
+                            "delay": PLACEHOLDER_DELAY,
+                            "x": x, "y": y,
+                        })
+                        n_local_pips += 1
+
+        # ----- LOCAL tracks for inter-LAB routing -----
+        for t in range(NUM_LOCAL_TRACKS):
+            lw = f"LOCAL_X{x}_Y{y}_T{t}"
+            # slice outputs -> LOCAL track
+            for n in LE_N:
+                for src in (_wire_slice_out(x, y, n),
+                            f"slice_X{x}_Y{y}_N{n}_F"):
+                    pips.append({
+                        "name": f"pip_{src}__{lw}",
+                        "type": "LOCAL_IN",
+                        "src": src, "dst": lw,
+                        "delay": PLACEHOLDER_DELAY,
+                        "x": x, "y": y,
+                    })
+                    n_local_pips += 1
+            # LOCAL track -> slice inputs (I[0..3] and CLK)
+            for n in LE_N:
+                dsts = [_wire_slice_in(x, y, n, port)
+                        for port in SLICE_INPUTS]
+                dsts.append(f"slice_X{x}_Y{y}_N{n}_CLK")
+                for dw in dsts:
+                    pips.append({
+                        "name": f"pip_{lw}__{dw}",
+                        "type": "LOCAL_OUT",
+                        "src": lw, "dst": dw,
+                        "delay": PLACEHOLDER_DELAY,
+                        "x": x, "y": y,
+                    })
+                    n_local_pips += 1
+            # Same-track 4-neighbour hops (N/S/E/W only, no diagonals
+            # — reduces fan-out from 8 to 4 per wire, halving
+            # pathfinder search space).
+            for dxi, dyi in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                    nxi, nyi = xi + dxi, yi + dyi
+                    if not (0 <= nxi < len(LAB_X_FULL)):
+                        continue
+                    if not (0 <= nyi < len(LAB_Y_FULL)):
+                        continue
+                    nx, ny = LAB_X_FULL[nxi], LAB_Y_FULL[nyi]
+                    if (nx, ny) not in local_wires:
+                        continue
+                    dst = f"LOCAL_X{nx}_Y{ny}_T{t}"
+                    pips.append({
+                        "name": f"pip_{lw}__{dst}",
+                        "type": "LOCAL_HOP",
+                        "src": lw, "dst": dst,
+                        "delay": HOP_DELAY,
+                        "x": x, "y": y,
+                    })
+                    n_local_pips += 1
+
+    # ---------- Dedicated global clock network ----------
+    # A single GCLK wire carries one clock net with direct fanout to
+    # every slice CLK pin. Bypasses LOCAL so the clock never competes
+    # with data arcs for track allocation. Any IOB_O can drive it.
+    wires.append({"name": "GCLK", "type": "GCLK", "x": 0, "y": 0})
+    for (pin_name, _pl) in config.ROUTE_FUZZ_PINS.items():
+        wo = _wire_iob(pin_name, "O")
+        pips.append({
+            "name": f"pip_iob_{pin_name}_O__GCLK",
+            "type": "IOB_TO_GCLK",
+            "src": wo, "dst": "GCLK",
+            "delay": PLACEHOLDER_DELAY, "x": 0, "y": 0,
+        })
+        n_local_pips += 1
+    for (x, y) in valid_labs:
+        for n in LE_N:
+            cw = f"slice_X{x}_Y{y}_N{n}_CLK"
+            pips.append({
+                "name": f"pip_GCLK__{cw}",
+                "type": "GCLK_TO_CLK",
+                "src": "GCLK", "dst": cw,
+                "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+            })
+            n_local_pips += 1
+
+    # ---------- IOB <-> LOCAL bridge ----------
+    # Every IOB output (driver into fabric, e.g. clock input pad) gets
+    # a pip into every LOCAL bus so clock/reset/input signals can
+    # reach any LAB. Every IOB input (pad-driver from fabric) is
+    # reachable from every LOCAL so outputs can land anywhere. Cost:
+    # ~9 IOBs × 392 LABs × 2 = ~7k pips, linear and tiny.
+    # Single-entry IOB bridge: each IOB pads into ONE "gateway" LAB
+    # LOCAL (and reads from the same one). Propagation to the rest of
+    # the fabric uses LOCAL-hop chains. Avoids the combinatorial
+    # explosion of an all-LABs-per-IOB fanout that hung the router.
+    # One entry per IOB, but onto every track at the gateway LAB so
+    # different IOB nets can pick different tracks and not collide.
+    # Inputs (pad->fabric, non-clock): single gateway LAB LOCAL entry.
+    # Outputs (fabric->pad): direct slice-Q->IOB_I fanout, symmetric
+    # to GCLK. Each IOB_I is one wire carrying one net, so direct
+    # fanout is safe (no track contention) and pathfinder cost is
+    # a single hop instead of exploring LOCAL.
+    gx, gy = valid_labs[len(valid_labs) // 2]
+    for (pin_name, _pin_loc) in config.ROUTE_FUZZ_PINS.items():
+        wi = _wire_iob(pin_name, "I")  # fabric -> pad
+        wo = _wire_iob(pin_name, "O")  # pad -> fabric
+        for t in range(NUM_LOCAL_TRACKS):
+            gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
+            pips.append({
+                "name": f"pip_iob_{pin_name}_O__{gw}",
+                "type": "IOB_TO_LOCAL",
+                "src": wo, "dst": gw,
+                "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
+            })
+            n_local_pips += 1
+        for (x, y) in valid_labs:
+            for n in LE_N:
+                src = _wire_slice_out(x, y, n)
+                pips.append({
+                    "name": f"pip_{src}__iob_{pin_name}_I",
+                    "type": "SLICE_TO_IOB",
+                    "src": src, "dst": wi,
+                    "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                })
+                n_local_pips += 1
+
+    # ---------- Pips from Plan D' sig-cache (overlay) ----------
     cache_path = RESULTS / "route_cells_full.json"
     cache = json.loads(cache_path.read_text())
     known_wires = {w["name"] for w in wires}
@@ -234,7 +406,9 @@ def build_chipdb() -> dict:
             "n_bels": len(bels),
             "n_wires": len(wires),
             "n_belpins": len(belpins),
-            "n_pips": pip_count,
+            "n_pips_total": len(pips),
+            "n_pips_sig": pip_count,
+            "n_pips_local": n_local_pips,
             "pips_skipped_unknown_src": skipped_unknown_src,
             "pips_skipped_unknown_dst": skipped_unknown_dst,
         },
@@ -260,7 +434,8 @@ try:
 except ImportError:
     Loc = globals().get("Loc")  # provided by --run environment
 
-_delay = ctx.getDelayFromNS(0.5)  # placeholder, non-timing-driven
+_delay1 = ctx.getDelayFromNS(0.5)   # direct pips
+_delay10 = ctx.getDelayFromNS(5.0)  # hop pips (10× cost, steers pathfinder)
 
 for w in _DATA["wires"]:
     ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
@@ -277,14 +452,15 @@ for bp in _DATA["belpins"]:
         ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
+    d = _delay10 if p["delay"] > 1 else _delay1
     ctx.addPip(name=p["name"], type=p["type"],
                srcWire=p["src"], dstWire=p["dst"],
-               delay=_delay, loc=Loc(p["x"], p["y"], 0))
+               delay=d, loc=Loc(p["x"], p["y"], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",
       _DATA["stats"]["n_wires"], "wires,",
-      _DATA["stats"]["n_pips"], "pips")
+      _DATA["stats"]["n_pips_total"], "pips")
 '''
 
 
@@ -300,7 +476,8 @@ def main() -> None:
     print(f"bels:    {s['n_bels']:>7d}")
     print(f"wires:   {s['n_wires']:>7d}")
     print(f"belpins: {s['n_belpins']:>7d}")
-    print(f"pips:    {s['n_pips']:>7d}")
+    print(f"pips total: {s['n_pips_total']:>7d} "
+          f"(sig {s['n_pips_sig']} + local {s['n_pips_local']})")
     print(f"pips skipped (unknown src slice): "
           f"{s['pips_skipped_unknown_src']}")
     print(f"pips skipped (unknown dst slice): "
