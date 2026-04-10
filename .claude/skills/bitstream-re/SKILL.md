@@ -98,6 +98,34 @@ If the same die ships as multiple SKUs in the same package, test whether the sma
 
 5. **Do NOT auto-enable the extended fabric in your codec** until you've done Stage 3 for at least one new column and run a green-zone regression on a source in the jailbroken region. The model might hold, but "probably" isn't good enough for something that flashes to real silicon.
 
+## Stage 8 — Open-source toolchain integration
+
+Once the codec and sig-cache are mature enough, build the full open-source flow:
+
+1. **Chipdb generator**. Convert your project's routing corpus (sig-cache, geometry config) into a nextpnr-generic Python chipdb. Key design choices:
+   - Pip cost hierarchy: sig-cache-backed pips get lowest cost so PathFinder prefers FASM-resolvable routes over abstract hops
+   - Intra-LAB direct pips: bypass LOCAL track contention for carry chains and tight feedback
+   - GCLK broadcast: dedicated global clock wire from IOB to every slice CLK (avoids clock competing for data bus)
+   - Use `--router router2` (PathFinder) not router1 — router1 can't explore multi-hop chains
+   - Use `--pre-pack` to inject chipdb, NOT `--run` (which replaces the entire flow)
+
+2. **Yosys techmap**. Map generic cells to your target primitives:
+   - LUT4 → single-output combinational cell with INIT parameter
+   - DFF → D/CLK/Q register cell
+   - BRAM → M9K primitive with INIT attribute (if M9K codec is done)
+   - Use `read_verilog -lib prims.v` to declare primitives without synthesizing them
+
+3. **np2fasm bridge**. Convert nextpnr's placed-and-routed JSON to FASM directives:
+   - Extract **logical connectivity** from cell connections + port_directions, not from abstract routing pips
+   - For each (source_bel → sink_bel.port) arc, look up the sig-cache
+   - Emit `LUT`, `ROUTE`, and `M9K.INIT` directives that `fasm2rbf` already parses
+   - Map nextpnr I[n] indices to vendor port names (dataa/datab/datac/datad)
+
+4. **Coverage gap management**. The sig-cache won't cover every possible placement:
+   - Constrain placement to stay within covered regions, OR
+   - Expand the sig-cache with targeted pair-diff compiles for uncovered arcs
+   - Track coverage: `np2fasm` should report hit/miss/skip counts
+
 ## When to stop
 
 Chase a signal if a decision tree can pick it up at >70% from a balanced corpus. Drop it if two rounds of corpus expansion leave the middle leaf at ~50%: the signal probably isn't in the input space at all (it's in the vendor's placement seed or internal cost-function ties you can't observe). Mark it NEGATIVE in the project log and move on. Don't sink compute into un-mineable phenomena.

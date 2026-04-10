@@ -53,10 +53,17 @@ EP4CE6/
 │   ├── source_overhead_build.py           # per-source overhead vs baseline
 │   ├── test_fasm_*.py / test_cross_source.py / test_multiroute_decompose.py
 │   └── bitstream-re.SKILL.md # Methodology playbook (also at .claude/skills/)
+├── synth/                   # Open-source toolchain (Phase 5.3)
+│   ├── ep4ce6_map.v         # Cyclone IV techmap (LUT4/DFF primitives)
+│   ├── prims.v              # nextpnr-generic primitive library
+│   ├── m9k.lib              # M9K BRAM library stub
+│   ├── synth_ep4ce6.ys      # Yosys synthesis script
+│   └── np2fasm.py           # nextpnr routed JSON → FASM converter
 ├── jailbreak/               # CE10 fitter probes (X=32/33, Y=15 dead-cell scans)
 ├── results/
 │   ├── rbf/                 # Collected .rbf files (~2,500 files)
 │   ├── fingerprint_{sx}_{sy}.json  # Green-zone island corpora (15)
+│   ├── route_cells_full.json      # 13,487 sig-cache (7-tuple, Plan D' + legacy)
 │   ├── r4_iindex_table.json # 942-entry route_synth I-index hint table
 │   ├── ep4ce6_bitdb.sqlite  # Bit mapping database
 │   └── FINDINGS.md          # Detailed findings report
@@ -359,6 +366,32 @@ M9K_INIT_ANCHORS[("X15_Y2_N0", 9, 512)] = 261142
 **Unblocks Phase 5.3**: NEORV32 boot ROM can be written as FASM `M9K.INIT = <hex>` once the anchor table covers the used M9K sites — self-contained RISC-V bitstream synthesis without Quartus MIF recompiles.
 
 See memories `m9k_stage_a_complete.md` and `m9k_stage_b_complete.md`.
+
+### Phase 5.3 — Open-source toolchain (IN PROGRESS, 2026-04-10)
+
+Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`.
+
+**Completed components**:
+- `fuzz/chipdb_gen.py` — generates nextpnr-generic Python chipdb from project artifacts. Stats: 8,241 bels (520+ LAB × 16 SLICE + IOB + M9K), 59,611 wires, 1,380,670 pips (13,049 sig-cache-backed + 1,367,621 local/hop). Key features:
+  - **GCLK broadcast wire**: dedicated global clock with IOB→GCLK→every slice CLK pips
+  - **Intra-LAB direct pips**: 16×16×4 Q/F→I pips per LAB bypass LOCAL track contention
+  - **4-level pip cost hierarchy**: SIG_DELAY=1, INTRA_DELAY=2, LOCAL_DELAY=5, HOP_DELAY=20 — steers PathFinder toward FASM-backed routes
+  - 4-neighbor orthogonal hops only (diagonals removed — caused router thrashing)
+  - NUM_LOCAL_TRACKS=4 per LAB
+  - Runner template uses `--pre-pack` (not `--run`), `--router router2` (router1 can't explore multi-hop)
+- `synth/ep4ce6_map.v` + `synth/prims.v` — Cyclone IV techmap for Yosys: LUT4 → `LUT` cell, `$_DFF_P_` → `DFF` cell
+- `synth/synth_ep4ce6.ys` — Yosys synthesis script with `read_verilog -lib prims.v`, techmap chain
+- `synth/np2fasm.py` — nextpnr routed JSON → FASM converter. Extracts **logical connectivity** from cell connections + placement (not from routing pips). For each (src_bel→sink_bel.port) arc, looks up `results/route_cells_full.json` sig-cache key `"sx,sy,sn->dx,dy,dn,port"`. Maps I[n] → port name via `_IDX_TO_PORT = {0:dataa, 1:datab, 2:datac, 3:datad}`
+
+**M5α counter smoke test** (2026-04-10):
+- 24-bit counter (31 LUT + 24 DFF) synthesized via Yosys, routed by nextpnr-generic router2 in <2s (122 arcs)
+- np2fasm extracts 97 (src→dst.port) arcs from logical connectivity
+- **Blocker**: 0/97 arcs hit sig-cache — counter placed at X=3,4 Y=18,19 which has no Plan D' factory coverage
+- Options: (1) placement constraints to steer into covered region, (2) targeted sig-cache expansion, (3) accept partial FASM
+
+**Not yet implemented**: DFF FASM directives, IOB FASM cell map, M9K INIT via FASM
+
+**nextpnr-generic invocation**: requires `source /home/test/opt/oss-cad-suite/environment` first; binary at `/home/test/opt/oss-cad-suite/bin/nextpnr-generic`
 
 ### Phase 3.27 — M9K CRAM probe (superseded by Phase 5.0 real-pin re-mine)
 - `fuzz/m9k_probe_mine.py` (locked-PIN) and `fuzz/m9k_probe_clean.py` (VIRTUAL_PIN, worse).

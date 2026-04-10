@@ -1,8 +1,6 @@
 # Quartus build directories (large, reproducible)
 work/
-work_gp/
-work_route/
-work_verify/
+work_*/
 work_tcl.qpf
 work_tcl.qsf
 
@@ -17,6 +15,7 @@ results/*.sqlite-shm
 __pycache__/
 *.pyc
 *.pyo
+.venv/
 
 # OS
 .DS_Store

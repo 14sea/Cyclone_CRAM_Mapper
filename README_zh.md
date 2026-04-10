@@ -182,12 +182,19 @@ EP4CE6/
 │   ├── route_synth.py      ← 绿区路由综合引擎
 │   ├── fasm2rbf.py / rbf2fasm.py ← Phase 4 FASM 写入器 + 反向工具
 │   └── route_signatures.py / route_decompose.py ← 签名后端 + 集合覆盖分解
+├── synth/                  ← 开源工具链（Yosys + nextpnr-generic）
+│   ├── ep4ce6_map.v        ← Cyclone IV techmap（LUT4/DFF 原语）
+│   ├── prims.v             ← nextpnr-generic 原语库
+│   ├── m9k.lib             ← M9K BRAM 库桩
+│   ├── synth_ep4ce6.ys     ← Yosys 综合脚本
+│   └── np2fasm.py          ← nextpnr 布线 JSON → FASM 转换器
 ├── jailbreak/              ← CE10 fitter 探针（X=32/33、Y=15 坏点扫描）
 ├── results/
 │   ├── rbf/                ← 收集的 .rbf 文件（~2,500 个，各 368 KB）
 │   ├── fingerprint_*.json  ← 15 个绿区 island 语料
-│   ├── route_cells.json    ← 1050 条路由 signature 后端
-│   ├── source_overhead.json ← per-source 相对 baseline 的开销
+│   ├── route_cells_full.json ← 13,487 条 sig-cache（7-tuple，Plan D' + legacy）
+│   ├── route_cells_consolidated.json ← port-MUX 合并版 loader
+│   ├── nv_fingerprints/    ← NEORV32 per-source 指纹
 │   ├── r4_iindex_table.json ← 942 条 R4 I-index 提示表
 │   ├── ep4ce6_bitdb.sqlite ← Bit 映射数据库
 │   └── FINDINGS.md         ← 详细发现报告
@@ -1789,11 +1796,20 @@ BASE 在所测试 wire 上的命中率都能靠巧合达到 55–61%。null test
 
 - [x] Phase 4：**FASM 工具链在矽片上收案（2026-04-08）** —— `fuzz/fasm2rbf.py` + `fuzz/rbf2fasm.py` 实现最小 FASM 方言（`LUT`、`ROUTE`、`BIT`、`SRC`），驱动 `LutCodec` + `RouteCodec` + `patch_rbf_crc`。signature 后端（`fuzz/route_signatures.py`，**1725** 条路由 cell-set）对黄区和 Y=15 越狱源直接短路 `synth_route`。**Port-MUX 合并版 loader（2026-04-08）**：每个 `(src,dst,dn)` 组分解为共享 `common` 前缀 + 每个 port 恰好 4 个 delta cells（2 对相邻字节对，相距 840 字节 = LI-pair×4）。225/225 个完整 4-port 组符合「3+1」等价类，datab 永远是独立端口。`route_signatures.load_cells()` 优先加载 `results/route_cells_consolidated.json`（34% 文件 / 37% cell 压缩），语义不变式 `common ∪ port_delta[p] == route_cells[key+",p"]` 自检 1725/1725。set-cover 分解器（`fuzz/route_decompose.py`）把多路由 + 跨 source 的 CRAM diff 折叠成干净的 directives。回归：单路由 **1725/1725**、多路由 41/42（1 个先存在）、跨 source 3/3、绿区 15/15 岛屿（686/686）—— 全部 bit-perfect。硬件收案：`X10Y10N0.LUT = 0x8888`（AND(K1,K2)）一行 FASM 经 `fasm2rbf` 烧到 AX301，矽片行为一致
 
+- [x] Phase 4.5：**Plan D' sig-cache —— NEORV32 覆盖率（2026-04-09）** —— 12-worker 并行工厂（`fuzz/plan_d_prime_factory.py`）从 NEORV32 STA edge 编译 11,715 对位置锁定的 2-LUT 对。7-tuple sig-cache `results/route_cells_full.json` = **13,487 条目**（legacy 1725 提升至 sn=0 + 工厂 11,762）。覆盖率：**NEORV32 edge 的 95.9%**（可 place 的 100%）。英雄测试 X=5 越狱列 FASM → AX301 矽片验收通过。
+- [x] Phase 5.0：**非 LAB 块（DSPMULT + M9K）—— 实物 pin 重挖（2026-04-08）** —— 详见上方「进行中」章节
+- [x] Phase 5.2：**M9K init 内容编解码器 —— Stage A+B 闭合（2026-04-09）** —— 三带分区（data/mode/clock）；2D 线性公式 `byte(w,bit) = anchor + (w//2)*210 - (w%2) - 2*bit, bp=6`；31 个 NEORV32 M9K 点位校准（`M9K_INIT_ANCHORS` = 33 条目）；LOC 修复（用实例名 `-to "u"`）；READ 512/512，WRITE 与 Quartus 0 CRAM diff。`fuzz/m9k_init_basis.py`
+
 ### 未来工作
 
 - [ ] Phase 5.1：完善布线编解码器覆盖率（目标：所有线类型 >90%；C16 + 剩余 R4 I-index 仍未结）—— 与已完成的 Phase 5.0 非 LAB 工作不同
-- [ ] Phase 5.2：非 LAB 块参数解码（CLOCK_ENABLE 之外）—— 需要「块内差分探针」绕过 header 噪声地板、STA 黑盒、以及每点位配置不可观察这三堵墙；PLL 探针（用 `PLL_1`/`PLL_2` 单例 LOC）延到这里做
-- [ ] Phase 6：NextPNR EP4CE6 后端开发（从 bit dictionary 生成 chipdb + nextpnr-generic 对接）
+- [ ] Phase 5.2b：非 LAB 块参数解码（CLOCK_ENABLE 和 M9K INIT 之外）—— 需要「块内差分探针」绕过 header 噪声地板、STA 黑盒、以及每点位配置不可观察这三堵墙；PLL 探针（用 `PLL_1`/`PLL_2` 单例 LOC）延到这里做
+- [~] Phase 5.3：**开源工具链 —— Yosys + nextpnr-generic + FASM（进行中）**。目标：用 `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader` 取代 Quartus。当前状态：
+  - `fuzz/chipdb_gen.py`：生成 nextpnr-generic Python chipdb（8,241 bel、59,611 wire、138 万 pip），含 GCLK broadcast、LAB 内直连 pip、4 级 pip 代价阶梯（SIG=1 < INTRA=2 < LOCAL=5 < HOP=20）
+  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`：Yosys techmap 链（LUT4 + DFF）
+  - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令
+  - **M5α counter 冒烟测试**：24-bit 计数器（31 LUT + 24 DFF）经 router2 < 2 秒布通。np2fasm 提取 97 条弧，但 0/97 命中 sig-cache（当前放置在 X=3,4 Y=18,19）—— sig-cache 覆盖缺口是 M5β 阻塞点
+  - DFF FASM 和 IOB FASM 尚未实现
 
 ### 长期方向：我们究竟可能在哪里赢过 Quartus
 
@@ -1849,7 +1865,8 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 这些都不是「ML 打败 Quartus」。它们是「ML 帮我们学一些我们不想手动推的
 规则」。
 
-**建议优先级。** 先把 Phase 5.1 → 6 做完（布线覆盖率 → chipdb → nextpnr 后端）。
+**建议优先级。** 把 Phase 5.3 做完（开源工具链已在进行中 —— chipdb + Yosys
+techmap + np2fasm 都已跑通，counter 已能布线）。
 一旦端到端的 `.v → bitstream` 开源流程能跑起来，问题就从「能不能在 PPA 上
 打败 Quartus」变成「我们能做哪些 Quartus 根本做不了的事」—— 而解锁这些
 答案的是 codec，不是模型。
@@ -1871,9 +1888,11 @@ Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个�
 | C16 长距离线 | **0%** | 尚未开始 |
 | 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
 | 路由综合（绿区岛） | **15/392 源** | (4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12) — 686/686 路由对 Quartus bit-perfect |
-| FASM signature 后端 | **1050 条路由** | `results/route_cells.json` —— 对全部挖到的路由（含黄区 + Y=15 越狱行）短路 `synth_route` |
+| FASM sig-cache（Phase 4.5） | **13,487 条目** | `results/route_cells_full.json` —— 7-tuple（支持 sn>0）；Plan D' 工厂覆盖 NEORV32 95.9% edge；英雄 X=5 矽片验证 |
+| M9K init 编解码器（Phase 5.2） | **闭合** | 2D 线性公式，33 条 anchor，31 个 NEORV32 点位校准；READ 512/512，WRITE 与 Quartus 0 CRAM diff |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
 | FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
+| 开源工具链（Phase 5.3） | **进行中** | `chipdb_gen.py` + Yosys techmap + `np2fasm.py`；counter < 2s 布通；sig-cache 覆盖缺口阻塞 M5β |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
 
 ---

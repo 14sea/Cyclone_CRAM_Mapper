@@ -183,12 +183,19 @@ EP4CE6/
 │   ├── route_synth.py      ← Green-island route synthesis engine
 │   ├── fasm2rbf.py / rbf2fasm.py ← Phase 4 FASM writer + reverse tool
 │   └── route_signatures.py / route_decompose.py ← sig backend + set-cover
+├── synth/                  ← Open-source toolchain (Yosys + nextpnr-generic)
+│   ├── ep4ce6_map.v        ← Cyclone IV techmap (LUT4/DFF primitives)
+│   ├── prims.v             ← nextpnr-generic primitive library
+│   ├── m9k.lib             ← M9K BRAM library stub
+│   ├── synth_ep4ce6.ys     ← Yosys synthesis script
+│   └── np2fasm.py          ← nextpnr routed JSON → FASM converter
 ├── jailbreak/              ← CE10 fitter probes (X=32/33, Y=15 dead-cell scans)
 ├── results/
 │   ├── rbf/                ← Collected .rbf files (~2,500 files, 368 KB each)
 │   ├── fingerprint_*.json  ← 15 green-zone island corpora
-│   ├── route_cells.json    ← 1050 route sig backend
-│   ├── source_overhead.json ← per-source overhead vs baseline
+│   ├── route_cells_full.json ← 13,487 sig-cache (7-tuple, Plan D' + legacy)
+│   ├── route_cells_consolidated.json ← port-MUX consolidated loader
+│   ├── nv_fingerprints/    ← NEORV32 per-source fingerprints
 │   ├── r4_iindex_table.json ← 942-entry R4 I-index hint table
 │   ├── ep4ce6_bitdb.sqlite ← Bit-mapping database
 │   └── FINDINGS.md         ← Detailed findings report
@@ -1939,11 +1946,20 @@ template cannot reach. Both numbers are worth writing down.
 
 - [x] Phase 4: **FASM toolchain CLOSED on silicon (2026-04-08)** — `fuzz/fasm2rbf.py` + `fuzz/rbf2fasm.py` implement a minimal FASM dialect (`LUT`, `ROUTE`, `BIT`, `SRC`) driving `LutCodec` + `RouteCodec` + `patch_rbf_crc`. Signature backend (`fuzz/route_signatures.py`, **1725** route cell-sets) short-circuits `synth_route` for yellow-zone and Y=15 jailbreak sources. **Port-MUX consolidated loader (2026-04-08)**: every `(src,dst,dn)` group resolves into a shared `common` preamble + per-port `delta` of exactly 4 cells (2 adjacent byte pairs at 840-byte LI-pair×4 spacing); 225/225 full 4-port groups match a "3+1" equivalence class with datab always the odd port. `route_signatures.load_cells()` now prefers `results/route_cells_consolidated.json` (34% file / 37% cell savings) with invariant `common ∪ port_delta[p] == route_cells[key+",p"]` self-tested 1725/1725. Set-cover decomposer (`fuzz/route_decompose.py`) collapses multi-route + cross-source CRAM diffs into clean directives. Regression suite: **1725/1725** single-route, 41/42 multi-route (1 pre-existing), 3/3 cross-source, 15/15 green-zone islands (686/686) — all bit-perfect. Hardware closure: `X10Y10N0.LUT = 0x8888` (AND(K1,K2)) one-liner flashed to AX301 via `fasm2rbf`, silicon behavior matched
 
+- [x] Phase 4.5: **Plan D' sig-cache — NEORV32 coverage (2026-04-09)** — 12-worker parallel factory (`fuzz/plan_d_prime_factory.py`) compiled 11,715 placement-forced 2-LUT pairs from NEORV32 STA edges. 7-tuple sig-cache `results/route_cells_full.json` = **13,487 entries** (legacy 1725 lifted to sn=0 + 11,762 factory). Coverage: **95.9% of NEORV32 edges** (100% of placeable). Hero test X=5 jailbreak column FASM → AX301 silicon-accepted.
+- [x] Phase 5.0: **Non-LAB blocks (DSPMULT + M9K) — real-pin re-mine (2026-04-08)** — see In Progress section above for full detail
+- [x] Phase 5.2: **M9K init content codec — Stage A+B CLOSED (2026-04-09)** — 3-band partition (data/mode/clock); 2D linear formula `byte(w,bit) = anchor + (w//2)*210 - (w%2) - 2*bit, bp=6`; 31 NEORV32 M9K sites calibrated (`M9K_INIT_ANCHORS` = 33 entries); LOC fix (use instance name `-to "u"`); READ 512/512, WRITE 0 CRAM diffs vs Quartus. `fuzz/m9k_init_basis.py`
+
 ### Future Work
 
 - [ ] Phase 5.1: Complete routing codec coverage (target: all wire types >90%; C16 + remaining R4 I-indices still open) — distinct from the already-done Phase 5.0 non-LAB work
-- [ ] Phase 5.2: Non-LAB block parameter decoding beyond CLOCK_ENABLE — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
-- [ ] Phase 6: NextPNR EP4CE6 backend (chipdb from the bit dictionary, nextpnr-generic port)
+- [ ] Phase 5.2b: Non-LAB block parameter decoding beyond CLOCK_ENABLE and M9K INIT — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
+- [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (IN PROGRESS)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
+  - `fuzz/chipdb_gen.py`: generates nextpnr-generic Python chipdb (8,241 bels, 59,611 wires, 1.38M pips) with GCLK broadcast, intra-LAB direct pips, 4-level pip cost hierarchy (SIG=1 < INTRA=2 < LOCAL=5 < HOP=20)
+  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF)
+  - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives
+  - **M5α counter smoke test**: 24-bit counter (31 LUT + 24 DFF) routes successfully in <2s via router2. np2fasm extracts 97 arcs, but 0/97 hit sig-cache at current placement — sig-cache coverage gap at X=3,4 Y=18,19 is the M5β blocker
+  - DFF FASM and IOB FASM not yet implemented
 
 ### Long-term direction: where we can actually beat Quartus
 
@@ -2004,8 +2020,9 @@ modest place in this project:
 None of these are "ML beats Quartus." They are "ML helps us write rules we do
 not want to hand-derive."
 
-**Recommended priority.** Finish Phase 5.1 → 6 first (routing coverage → chipdb →
-nextpnr backend). Once a `.v → bitstream` open-source flow runs end-to-end,
+**Recommended priority.** Finish Phase 5.3 (the open-source toolchain is already
+in progress — chipdb + Yosys techmap + np2fasm are working, the counter routes).
+Once a `.v → bitstream` open-source flow runs end-to-end,
 the question shifts from "can we beat Quartus on PPA" to "what can we do that
 Quartus cannot do at all" — and the codec, not a model, is what unlocks those
 answers.
@@ -2027,9 +2044,11 @@ answers.
 | C16 long-distance wires | **0%** | Not yet started |
 | Bitstream codec | **~85%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; **CRC patcher integrated; HW-verified on silicon** |
 | Route synthesis (green islands) | **15/392 sources** | (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12) — 686/686 routes bit-perfect against Quartus |
-| FASM signature backend | **1050 routes** | `results/route_cells.json` — short-circuits `synth_route` for all mined routes incl. yellow zone + Y=15 jailbreak row |
+| FASM sig-cache (Phase 4.5) | **13,487 entries** | `results/route_cells_full.json` — 7-tuple (sn>0 supported); Plan D' factory covers 95.9% of NEORV32 edges; hero X=5 silicon-validated |
+| M9K init codec (Phase 5.2) | **closed** | 2D linear formula, 33 anchor entries, 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs |
 | RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
 | FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
+| Open-source toolchain (Phase 5.3) | **in progress** | `chipdb_gen.py` + Yosys techmap + `np2fasm.py`; counter routes in <2s; sig-cache coverage gap blocks M5β |
 | Hardware loopback (codec → flash → silicon) | **closed** | LutCodec + FASM path both running on AX301 |
 
 ---
