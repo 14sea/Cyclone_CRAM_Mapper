@@ -27,8 +27,9 @@ Thumbs.db
 # Mining run logs
 results/*.log
 
-# Regenerable derived artifacts
+# Regenerable derived artifacts (rebuild with respective scripts)
 results/route_signatures.json
+results/chipdb_ep4ce6_data.json
 results/ep4ce6_chipdb.json
 results/nv_route_cells.json
 results/nv_fingerprints/
