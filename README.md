@@ -1176,6 +1176,8 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 4. **`sof2rbf.py` produces invalid bitstreams** — always use `quartus_cpf -c -o bitstream_compression=off`
 5. **Some LAB locations are invalid**: combinations with X∈{3,4,6,7,8} and Y∈{12,13,14,16} are rejected by Quartus (those positions may be occupied by M9K or other hard blocks)
 6. **Disk space**: Phase 3's `work/` directory grows very rapidly; clean it after each compilation (`compile.py` provides `clean_work_dir()`)
+7. **Cross-check against Quartus before chasing codec bugs** — if a design doesn't work through the open-source toolchain, first build the exact same Verilog through Quartus and flash that reference RBF. If Quartus's version blinks and yours doesn't, *then* do the cell diff to see whether the difference is where you expected. In the M5 counter episode we spent two days chasing five "real but irrelevant" low-level bugs because we skipped this 30-second experiment — the real problem wasn't in the codec at all, it was that nextpnr-generic has no carry-chain primitive
+8. **Self-loop sig-cache entries are unmineable with current templates** — for routes where src LE == dst LE (an LE feeding back into one of its own dataX inputs), the two-LUT pair mining template cannot structurally represent `src==dst`, and the diff-vs-baseline strategy fails because Quartus re-fits between compiles (including pin reassignment). Any design that relies on self-feedback (canonical example: a ripple adder that doesn't use the carry chain) cannot produce a valid bitstream through the open-source toolchain until Phase 5.4 lands — use the Quartus reference RBF in the meantime
 
 ---
 
@@ -1894,6 +1896,197 @@ hides the 4.1% of NEORV32 structure that our current compile
 template cannot reach. Both numbers are worth writing down.
 
 
+### The 24-bit counter that wouldn't blink: a missing primitive, not a codec bug (2026-04-11)
+
+This is the most expensive lesson in the project so far, and it's worth
+telling at university-textbook level because the same trap is going to
+catch every open-source FPGA toolchain that bolts an old vendor chip
+onto a generic place-and-route engine.
+
+**Setup.** Phase 5.3 finally had the whole open flow assembled: Yosys
+synthesizes the Verilog into LUT4+DFF cells; nextpnr-generic places
+them on the EP4CE6 with our hand-written `chipdb_gen.py`; `np2fasm.py`
+walks the routed JSON and converts each LE+arc into FASM directives;
+`fasm2rbf.py` consumes the FASM, looks up our 13,487-entry sig-cache
+for each route, and writes a CRC-valid 368,011-byte `.rbf`. The smoke
+test was the simplest sequential design we could think of:
+
+```verilog
+module counter_top(input CLK, output LED);
+    reg [23:0] cnt;
+    always @(posedge CLK) cnt <= cnt + 1;
+    assign LED = cnt[23];
+endmodule
+```
+
+24-bit counter. With a 50 MHz clock the top bit toggles roughly 3
+times a second — the LED should be visibly blinking. The build
+ran end-to-end in about 5 seconds: 31 LUT directives, 24 DFF
+directives, 97 ROUTE directives, all CRC frames clean, all LI MUX
+safety checks green. We flashed it.
+
+The LED was constantly on. We tried again. Constantly off. We
+tried 10 different rebuilds with various phase-ordering and stripping
+fixes; the LED stayed in one state or the other but never blinked.
+
+**The two days of red herrings.** Each time we flashed and saw a
+constant LED, we assumed the codec was *almost* right and one more
+small fix would make it run. We chased — and actually fixed — five
+real bugs in `fasm2rbf.py` and the sig-cache:
+
+1. The `LutCodec` was using a "union of all minterm patterns" set
+   to figure out which CRAM cells belonged to a LUT. That works on a
+   sparsely-populated LAB (one or two LEs in use), but the counter
+   needed 30 LEs in two adjacent LABs, and the 50+ LAB-shared bits
+   in each LE's calibration started cross-contaminating each other.
+   Workaround: use `predict_sram(0xFFFF)`, which XOR-cancels every cell
+   that appears in an even number of minterm patterns and leaves
+   exactly the 16 true truth-table cells per LE.
+
+2. 160 sig-cache entries for routes inside the (X=4, Y=18) and
+   (X=4, Y=19) LABs were missing. We re-mined them with a clean
+   two-LUT pair template and got beautiful 135-cell-per-entry results.
+
+3. A "self-loop mining template" we found in an earlier session had
+   actually been mining the wrong port — its Verilog put a flip-flop
+   *between* the two LUTs and hard-coded `lut2.dataa(reg)` regardless
+   of which port the caller asked for. The 160 entries it produced
+   were unusable. (We threw them out and re-mined cleanly.)
+
+4. Per-LAB clock-distribution cells overlapped, in two cases, with
+   the truth-table cells of one specific LE (X4Y19N4). The build
+   was clearing the clock cells when it reset the LUT region.
+   Fix: SET the per-LAB CLK *after* the LUT phase, not before.
+
+5. The sig-cache mining baseline was `nv_zero_global.rbf`, which
+   itself contains a small lut1+lut2 stub at (X10Y10/X10Y11). Routes
+   mined against it leak 1-3 LI MUX cells in those baseline LABs.
+   Fix: post-bitgen, walk the LI structure and toggle any cells in
+   non-design LABs back to baseline.
+
+Every one of those fixes was real. None of them was the actual
+problem. After applying all five, the LED was still constant.
+
+**The thirty-second test we should have run on day one.** Eventually,
+out of frustration, we did the obvious thing: take the same Verilog
+above, hand it to Quartus directly, and flash whatever Quartus
+produced. The Quartus build was a 368,011-byte `.rbf`, just like
+ours. We flashed it.
+
+It blinked. Visibly, at about 3 Hz, exactly as expected.
+
+So the silicon worked. The clock worked. The pin map (CLK on E1,
+LED on G15) was right. The `openFPGALoader` was right. The board
+was right. The Verilog was right. **The only thing wrong was our
+bitstream.**
+
+That meant we could now compare two `.rbf` files for the same
+Verilog: ours and Quartus's. We diffed each against the empty
+baseline `nv_zero_global.rbf` and counted cells:
+
+```
+Quartus reference (blinks):    367 cells, mostly in CRAM cols 47-48
+Our codec build (constant):  1,185 cells, mostly in CRAM cols  4-7
+Cells in common:                55
+```
+
+The two builds barely overlapped at all. They weren't fighting over
+the same region of the chip — they were placing the design in
+**completely different physical locations** using **completely
+different LE primitives**.
+
+**The actual root cause.** Cyclone IV LEs have a special direct
+wire called the "carry chain": each LE's `cout` output goes
+straight into the next LE's `cin` input as a dedicated wire that
+**does not pass through the local interconnect MUX at all**.
+Hardware adders use this to propagate the carry bit at the speed
+of a wire, instead of the speed of a routing decision.
+
+Quartus, when it sees `cnt + 1`, recognizes that this is an
+arithmetic operation, switches the LE into "arithmetic mode," and
+chains 24 LEs in a column with `cout → cin` direct wires. **One
+LE per counter bit**, no LI MUX at all for the carry signal.
+
+Yosys + nextpnr-generic don't know any of this. Our `chipdb_gen.py`
+declares the LEs and the LI MUX wires and the C4/R4/R24 routing
+tracks, but it does **not** declare the carry-chain `cout → cin`
+direct wires, because we never modeled them. So when Yosys saw
+`cnt + 1`, it had no carry primitive to map to, and it expanded the
+addition the only way it knew how — into ordinary 4-input LUTs.
+A ripple adder where each output bit is computed as something like
+`A ⊕ B ⊕ Cin`, and the carry-out is `(A ∧ B) ∨ (Cin ∧ (A ⊕ B))`.
+Each counter bit needed about 4 LEs to express that, so the 24-bit
+counter exploded into 30+ LEs. And each bit needed its own *previous
+value* as an input — which means a wire from the LE's flip-flop
+output back into one of its own LUT input ports. **A self-loop**.
+
+That's where our toolchain hit a wall it couldn't get over with any
+amount of patching. The sig-cache mining template is built on
+"compile two LUTs at two different locations and diff the resulting
+bitstreams against the empty baseline." It cannot represent a
+self-loop, because you can't put two distinct LUTs at the *same*
+LE coordinate. We tried a different template that swaps the same
+LUT between an external input and a self-feedback input — but
+between the two compiles Quartus was free to re-pick I/O pins,
+re-route everything, and the diff included so much unrelated noise
+that the resulting "self-loop entries" were 100-700 cells of random
+junk instead of the small handful of LI MUX bits we actually needed.
+
+Without clean self-loop sig-cache entries, the 24 self-feedback
+routes the design needed delivered no signal. Without those signals,
+every counter bit's flip-flop saw a constant input. The flip-flops
+latched their power-up value and never changed. The LED stayed on
+the power-up state of bit 23 — which happened to be 1 with one
+build and 0 with the next.
+
+**The lesson, in three sentences.**
+
+> When an open-source toolchain produces a bitstream that "should"
+> work but doesn't, **always cross-check against the vendor's own
+> build of the same Verilog as ground truth before patching the
+> codec.** A 30-second compile of the test design in Quartus,
+> followed by a flash and a byte-diff, will tell you immediately
+> whether you're hunting a codec bug (cells in the right column,
+> wrong values) or a missing-primitive bug (cells in the wrong
+> column entirely, because the front-end emitted a different
+> topology). The two cases need very different fixes, and treating
+> them the same wastes days.
+
+**For students reading this** — there's a subtler lesson underneath.
+A modern FPGA is not "a sea of LUTs and a routing fabric." It's a
+*deliberately heterogeneous* collection of primitives: LUTs, FFs,
+carry chains, BRAMs, DSP multipliers, PLLs, IOBs, GCLK trees. The
+vendor's tools know every one of those primitives exists and treat
+them as first-class citizens. A generic place-and-route tool only
+sees what your chipdb tells it about. **Anything you forgot to put
+in the chipdb, the vendor will quietly out-perform you on by 3-10×
+in cell count and infinity-times in performance.** The whole point
+of the next phase of this project (Phase 5.4) is to teach the chipdb
+about the carry chain so that `cnt + 1` becomes 24 LEs in a column
+again, the way it physically wants to be.
+
+This is also why open-source FPGA toolchains have historically
+focused on the smallest possible devices first. iCE40 has almost no
+heterogeneous primitives — it's mostly LUTs, FFs, and BRAMs — and
+that's why Project IceStorm could land a complete open flow first.
+Cyclone IV is one or two device generations richer (it has carry
+chains, DSP multipliers, M9K BRAMs, PLLs, soft I/O standards), and
+each one of those richer features is a separate cliff that the
+generic flow falls off until someone teaches the chipdb about it.
+The good news is that each cliff is climbed exactly once: once you
+have a carry primitive in your chipdb, *every* future design that
+does arithmetic gets it for free.
+
+The fixes we earned during the wild-goose chase are still valuable
+for any future design that needs to share a LAB between many LEs —
+the LutCodec workaround, the cleanly re-mined inter-LE pair entries,
+the per-LAB clock ordering rule, the post-bitgen LI cleanup.
+None of them fix the counter, but together they form a working
+template (`/tmp/m5_counter/build_counter_sigcache.py`) for
+high-density combinational and FF-only designs. Phase 5.4 will turn
+the carry chain into the next cliff we climb.
+
+
 ## Current Progress and Next Steps
 
 ### Completed ✓
@@ -1954,12 +2147,16 @@ template cannot reach. Both numbers are worth writing down.
 
 - [ ] Phase 5.1: Complete routing codec coverage (target: all wire types >90%; C16 + remaining R4 I-indices still open) — distinct from the already-done Phase 5.0 non-LAB work
 - [ ] Phase 5.2b: Non-LAB block parameter decoding beyond CLOCK_ENABLE and M9K INIT — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
-- [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (IN PROGRESS)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
+- [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (PARTIALLY OPEN)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
   - `fuzz/chipdb_gen.py`: generates nextpnr-generic Python chipdb (8,241 bels, 59,611 wires, 1.38M pips) with GCLK broadcast, intra-LAB direct pips, 4-level pip cost hierarchy (SIG=1 < INTRA=2 < LOCAL=5 < HOP=20)
   - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF)
   - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives
-  - **M5α counter smoke test**: 24-bit counter (31 LUT + 24 DFF) routes successfully in <2s via router2. np2fasm extracts 97 arcs, but 0/97 hit sig-cache at current placement — sig-cache coverage gap at X=3,4 Y=18,19 is the M5β blocker
-  - DFF FASM and IOB FASM not yet implemented
+  - `fuzz/fasm2rbf.py` directives that work end-to-end: `LUT`, `ROUTE` (6/7-tuple), `GCLK`, `DFF`, `BIT`, `SRC`. CRC patcher integrated.
+  - **M5 counter — 24-bit counter does NOT yet blink via the open flow.** The pipeline runs end-to-end (Yosys → nextpnr → np2fasm → fasm2rbf → CRC-valid 368,011-byte RBF, LI-safety SAFE), but the LED stays constant on hardware. Root cause discovered 2026-04-11 by flashing Quartus's own build of the same Verilog as ground truth: **Quartus places the 24 counter LEs in CRAM cols 47-48 using carry-chain wires (`cout→cin` direct, 1 LE per bit, 367 cells total), while our build places 31 LEs in (4,18)/(4,19) using 4 LEs per bit to emulate `+1` (1185 cells, 24 self-feedback routes that have no clean sig-cache mining template).** This is a missing-primitive bug in `chipdb_gen.py`/Yosys techmap, not a codec or FASM bug — see Phase 5.4 below. Quartus reference RBF at `/tmp/m5_counter/quartus_ref/counter_top.rbf` blinks correctly on AX301.
+  - **Real fixes earned chasing M5 (still useful for future multi-LE-per-LAB designs)**: LutCodec high-density LAB workaround (`predict_sram(0xFFFF)` filters LAB-shared cells); sig-cache mining template pitfall documented (must use `gen_two_luts_single_input_clocked` from `verilog_gen.py`); 160 cleanly re-mined (4,18)/(4,19) inter-LE pair entries added to `route_cells_full.json`; per-LAB CLK ordering fix (must run after the LUT phase reset); post-bitgen LI cleanup for sig-cache infrastructure leakage. Working multi-LE-per-LAB build template at `/tmp/m5_counter/build_counter_sigcache.py`.
+  - DFF FASM is implemented (via the `DFF` directive); IOB FASM cell map and GCLK clock-pin routing not yet, currently use `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as a baseline.
+
+- [ ] Phase 5.4: **LE carry chain in the open flow (NEW, blocks all arithmetic designs)** — declare `cout→cin` direct pips between adjacent LE bels in `chipdb_gen.py`; add a CARRY primitive to `synth/ep4ce6_map.v` + `synth/prims.v` so Yosys lands `+1` on chained LEs instead of the 4-LE-per-bit ripple; teach `synth/np2fasm.py` to emit the carry chain as a FASM directive; mine the arith-mode LE CRAM cells from a Quartus reference RBF (first ground truth: `/tmp/m5_counter/quartus_ref/counter_top.rbf`, 367 cells in cols 47-48). Until this lands, route any arithmetic via Quartus and use the open toolchain only for combinational and FF-only designs.
 
 ### Long-term direction: where we can actually beat Quartus
 
@@ -2048,7 +2245,8 @@ answers.
 | M9K init codec (Phase 5.2) | **closed** | 2D linear formula, 33 anchor entries, 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs |
 | RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
 | FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
-| Open-source toolchain (Phase 5.3) | **in progress** | `chipdb_gen.py` + Yosys techmap + `np2fasm.py`; counter routes in <2s; sig-cache coverage gap blocks M5β |
+| Open-source toolchain (Phase 5.3) | **partially open** | end-to-end pipeline runs (Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe). Combinational designs flashable. Arithmetic designs **blocked** on Phase 5.4 (carry chain primitive missing from chipdb / techmap). Working ground truth for the next mining round: `/tmp/m5_counter/quartus_ref/counter_top.rbf`. |
+| LE carry chain in open flow (Phase 5.4) | **0%** | Required for any `+`/counter/arith design. Three-piece work: chipdb pip, Yosys techmap CARRY cell, np2fasm + FASM `LUT mode=arith` directive. Mining target: diff Quartus carry-chain RBF vs nv_zero. |
 | Hardware loopback (codec → flash → silicon) | **closed** | LutCodec + FASM path both running on AX301 |
 
 ---

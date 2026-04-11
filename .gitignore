@@ -7,6 +7,8 @@ work_tcl.qsf
 # Collected RBF files (~300 MB, reproducible via fuzzing)
 results/rbf/
 
+# SQLite bitdb (105MB, frequent churn, regenerable from mining JSONs)
+results/ep4ce6_bitdb.sqlite
 # SQLite WAL/SHM (temporary journal files)
 results/*.sqlite-wal
 results/*.sqlite-shm
@@ -43,6 +45,11 @@ results/m9k_mode_t20_probe.json
 results/m9k_persite_analyze.json
 results/ff_y4_sweep.json
 results/ff_y10_sweep.json
+results/r4_full_audit.json
+results/row_dependency_report*.json
+results/source_overhead_*.json
+results/a0_virgin_*.json
+results/neorv32_lab_targets.txt
 
 # Accidental files with embedded spaces (from earlier shell-arg quoting bugs)
 fuzz/fill_*\ *_corpus.py

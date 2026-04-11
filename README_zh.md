@@ -1138,6 +1138,8 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 4. **`sof2rbf.py` 产生无效比特流**——必须用 `quartus_cpf -c -o bitstream_compression=off`
 5. **某些 LAB 位置无效**：X∈{3,4,6,7,8}, Y∈{12,13,14,16} 的组合会被 Quartus 拒绝（这些位置可能被 M9K 或其他硬核占用）
 6. **磁盘空间**：Phase 3 的 `work/` 目录会急剧膨胀，每次编译后应清理（`compile.py` 提供了 `clean_work_dir()` 函数）
+7. **追 codec bug 之前先和 Quartus 对一下** —— 如果一个设计在开源工具链里不工作，先让 Quartus 编一份同样 Verilog 的参考 RBF 烧进去。如果 Quartus 版能跑而你的不能，**然后**再去对比 cell diff 判断差异是否集中在你意想之中的区域。M5 计数器事件里，我们花了两天追五个"真实但无关"的低层 bug，就因为少做了这个 30 秒的实验 —— 问题根本不在 codec，而在 nextpnr-generic 没有 carry chain primitive
+8. **自环 sig-cache 条目在当前挖矿模板下不可修复** —— 对于 src LE == dst LE 的路由（LE 反馈到自己的某个 dataX 输入），双 LUT 配对模板从结构上就无法表达；diff-vs-baseline 策略也会失败，因为 Quartus 在两次编译间会重新 fit（包括重新分配管脚）。任何依赖自反馈的设计（典型例子：不走 carry chain 的 ripple 加法器）在 Phase 5.4 完成之前都无法通过开源工具链生成有效比特流 —— 暂时用 Quartus 的参考 RBF 代替
 
 ---
 
@@ -1744,6 +1746,165 @@ BASE 在所测试 wire 上的命中率都能靠巧合达到 55–61%。null test
 
 ---
 
+### 那个不肯闪烁的 24-bit 计数器：缺一个 primitive，不是 codec 的 bug（2026-04-11）
+
+这是项目至今为止学费最贵的一课。值得用大学课本的语气讲一遍，因为
+同样的坑会捧着每一条把老牌 vendor 芯片硬接到 generic place-and-route
+引擎上的开源 FPGA 工具链摔一遍。
+
+**起点。** Phase 5.3 终于把整条开源流程拼齐了：Yosys 把 Verilog 综合成
+LUT4 + DFF；nextpnr-generic 用我们手写的 `chipdb_gen.py` 把 cell 摆到
+EP4CE6 上；`np2fasm.py` 走一遍布线后的 JSON，把每个 LE 和每条弧变成
+FASM 指令；`fasm2rbf.py` 吃掉 FASM，对每条 route 在我们的 13,487 条
+sig-cache 里查一次，写出一个 CRC 合规的 368,011 字节 `.rbf`。冒烟
+测试就是我们能想到的最简单的时序设计：
+
+```verilog
+module counter_top(input CLK, output LED);
+    reg [23:0] cnt;
+    always @(posedge CLK) cnt <= cnt + 1;
+    assign LED = cnt[23];
+endmodule
+```
+
+24-bit 计数器。50 MHz 时钟下最高位每秒翻 3 次左右 —— LED 应该清楚地
+肉眼可见地闪烁。整条管线 5 秒跑完：31 条 LUT 指令、24 条 DFF 指令、
+97 条 ROUTE 指令，所有 CRC 帧干净，所有 LI MUX 安全检查全绿。烧。
+
+LED 恒亮。再试，恒灭。我们换了 10 种重建方式（顺序、剥离策略各种
+fix），LED 一直只在「全亮」和「全灭」两个状态里来回跳，从来不闪。
+
+**两天的红鲱鱼。** 每次烧完看到 LED 不动，我们都假设 codec *快*对了，
+再来一个小修就能跑。我们真的修出 —— 而且确实是真 bug —— `fasm2rbf.py`
+和 sig-cache 的五个错误：
+
+1. `LutCodec` 用「所有 minterm pattern 的并集」算一个 LUT 占了哪些
+   CRAM cell。这在 LAB 稀疏占用（一两个 LE 在用）时是对的。但 counter
+   要在两个相邻 LAB 里塞 30 个 LE，每个 LE 校准里 50+ 个 LAB-shared
+   bit 就开始互相污染。Workaround：用 `predict_sram(0xFFFF)` —— 它
+   会 XOR 抵消每一个出现在偶数个 minterm pattern 里的 cell，正好剩
+   每个 LE 的 16 个真实 truth-table cell。
+
+2. (X=4, Y=18) 和 (X=4, Y=19) 这两个 LAB 内部少了 160 条 sig-cache
+   条目。我们用一个干净的 two-LUT pair 模板重挖了一遍，得到漂亮的
+   每条 135 cell 的结果。
+
+3. 早些 session 里出现的「self-loop 挖掘模板」其实在挖错的 port ——
+   它的 Verilog 把一个 flip-flop 塞在两个 LUT *中间*，并且把
+   `lut2.dataa(reg)` 写死了，不管调用方要的是哪个 port。它产出的
+   160 条条目都是废的。（我们扔掉重挖。）
+
+4. Per-LAB 的时钟分发 cell，在两个特殊位置上正好和某个 LE（X4Y19N4）
+   的 truth-table cell 重叠。我们的 build 在重置 LUT 区域的时候顺手
+   把时钟 cell 也清掉了。Fix：把 per-LAB CLK 的 SET 移到 LUT phase
+   *之后*，而不是之前。
+
+5. sig-cache 挖掘的 baseline 是 `nv_zero_global.rbf`，它本身在
+   (X10Y10/X10Y11) 上含一个 lut1+lut2 的小桩。基于它挖出来的 route
+   会漏 1-3 个 LI MUX cell 在那两个 baseline LAB 里。Fix：bitgen
+   之后再走一遍 LI 结构，把任何不在 design LAB 的 cell 翻回 baseline
+   状态。
+
+每一个修复都是真的。**没有一个是真正的问题。** 把五个修都打上之后，
+LED 还是不动。
+
+**我们应该在 Day 1 跑的那个 30 秒测试。** 终于，气得我们做了一件
+显然该做的事：把上面这份 Verilog 直接喂给 Quartus，把 Quartus 出来
+的东西烧上去。Quartus 出来的也是一份 368,011 字节的 `.rbf`，跟我们
+的一样大。烧。
+
+它闪了。3 Hz 左右，肉眼可见，正如预期。
+
+所以矽片好的。时钟好的。pin map（CLK 接 E1，LED 接 G15）对的。
+`openFPGALoader` 对的。板子对的。Verilog 对的。**唯一不对的是我们
+的比特流。**
+
+这意味着我们现在能比较两个对应同一份 Verilog 的 `.rbf`：我们的和
+Quartus 的。各自和空 baseline `nv_zero_global.rbf` 做差，数 cell：
+
+```
+Quartus reference（会闪）：    367 cells，主要在 CRAM 第 47-48 列
+我们 codec build（不动）：  1,185 cells，主要在 CRAM 第  4-7 列
+两者重合的 cell：               55
+```
+
+两份 build 几乎完全不相交。它们不是在同一块芯片区域里抢 cell ——
+它们把这个设计放到了**完全不同的物理位置**，用着**完全不同的 LE
+原语**。
+
+**真正的根因。** Cyclone IV 的 LE 之间有一种特殊的直连线叫做
+「进位链」：每个 LE 的 `cout` 输出直接走进下一个 LE 的 `cin` 输入，
+是一根专用的硬连线，**根本不经过 local interconnect MUX**。硬件
+加法器靠它把进位以「一根线」的速度传上去，而不是「一次布线决策」
+的速度。
+
+Quartus 看到 `cnt + 1`，识别出这是算术操作，就把 LE 切到「算术
+模式」，把 24 个 LE 在一列里串起来，`cout → cin` 全是直连线。
+**每个 counter bit 一个 LE**，进位信号完全不经过 LI MUX。
+
+Yosys + nextpnr-generic 不知道这件事。我们的 `chipdb_gen.py` 声明了
+LE、声明了 LI MUX 线、声明了 C4/R4/R24 路由 track，但是**没有**声明
+进位链 `cout → cin` 的直连线，因为我们从来没建过这个模型。所以
+Yosys 看到 `cnt + 1` 时，没有 carry primitive 能映射，就只能用它
+唯一会的方式去展开加法 —— 拆成普通的 4-input LUT。一个 ripple
+adder，每个输出 bit 算成类似 `A ⊕ B ⊕ Cin`，进位算成
+`(A ∧ B) ∨ (Cin ∧ (A ⊕ B))`。每个 counter bit 大约要 4 个 LE 才能
+表达完，所以 24-bit counter 炸成 30+ 个 LE。而且每个 bit 都要把*
+自己上一拍的值*作为输入 —— 也就是一根从 LE 的 flip-flop 输出回到
+它自己 LUT 的某个输入 port 的线。**一个 self-loop**。
+
+这就是我们工具链怎么修都修不过去的那堵墙。sig-cache 挖掘模板的
+基本假设是「在两个不同位置各放一个 LUT，把得到的 bitstream 跟空
+baseline 做 diff」。它没法表达 self-loop —— 你不可能把两个不同的
+LUT 摆在*同一个* LE 坐标上。我们试过另一个模板：把同一个 LUT 在
+「外部输入」和「self-feedback 输入」之间换一下；但两次 compile
+之间 Quartus 想换 I/O pin 就换、想重新布线就重新布线，diff 出来
+的「self-loop entry」是 100-700 cell 的随机噪音，不是我们要的
+那一小撮 LI MUX bit。
+
+没有干净的 self-loop sig-cache 条目，设计需要的 24 条 self-feedback
+路由就没有信号传过去。每个 counter bit 的 flip-flop 看到的就是
+一个常数输入。flip-flop 锁住开机时的初始值不再变。LED 永远停在
+bit 23 上电后的状态 —— 一种 build 下是 1，另一种 build 下是 0。
+
+**教训，三句话写完。**
+
+> 当一条开源工具链产出一个「应该」能跑但不跑的 bitstream 时，
+> **一定要先用 vendor 自己编译同一份 Verilog 当 ground truth，
+> 再去动 codec。** 30 秒在 Quartus 里编一遍测试设计、烧一次、做
+> 一次 byte diff，立刻就能告诉你：你是在追一个 codec bug（cell 列
+> 对的、值不对），还是在追一个 missing primitive bug（cell 完全
+> 在另一列，因为前端发出来的是一种完全不同的拓扑）。这两种情形
+> 需要的修复完全不同，混为一谈会浪费整整两天。
+
+**给学生读者的话** —— 底下还有一个更细的教训。一颗现代 FPGA
+不是「一片 LUT 海加一张布线网」。它是一组**故意做成异质的**原语
+集合：LUT、FF、进位链、BRAM、DSP 乘法器、PLL、IOB、GCLK 树。vendor
+的工具知道这每一种原语的存在，并把它们当作一等公民。一条 generic
+place-and-route 工具只能看到你 chipdb 告诉它的东西。**任何你
+忘了塞进 chipdb 的原语，vendor 都会在 cell count 上以 3-10× 的
+优势、在性能上以无穷倍的优势悄悄把你压在地上。** 这就是这个项目
+下一个阶段（Phase 5.4）的全部意义所在：教 chipdb 认识进位链，让
+`cnt + 1` 重新变回 24 个 LE 一列，回到它物理上本来的样子。
+
+这也是为什么开源 FPGA 工具链历史上最先做的都是最小最简单的器件。
+iCE40 几乎没有异质原语 —— 主要就是 LUT、FF、BRAM —— 所以
+Project IceStorm 才能最先落地一条完整的开源流程。Cyclone IV 比它
+丰富一两代（有进位链、有 DSP 乘法器、有 M9K BRAM、有 PLL、有软
+I/O 标准），每一种丰富出来的特性都是一道悬崖，generic 流程在没
+有人去教 chipdb 认识它之前就会从那里摔下去。好消息是每道悬崖
+只需要爬一次：一旦 chipdb 里有了 carry primitive，*所有*以后做
+算术的设计都白嫖到了。
+
+这次乱追过程里赚到的修复，对未来任何「在一个 LAB 里塞很多 LE」
+的设计都仍然有用 —— LutCodec workaround、干净重挖的 inter-LE
+配对条目、per-LAB clock 顺序规则、bitgen 后 LI 清理。它们没救
+得了 counter，但合在一起构成一个高密度组合逻辑和 FF-only 设计
+的可工作模板（`/tmp/m5_counter/build_counter_sigcache.py`）。
+Phase 5.4 会把进位链变成我们爬的下一道悬崖。
+
+---
+
 ## 当前进度和下一步
 
 ### 已完成 ✓
@@ -1804,12 +1965,16 @@ BASE 在所测试 wire 上的命中率都能靠巧合达到 55–61%。null test
 
 - [ ] Phase 5.1：完善布线编解码器覆盖率（目标：所有线类型 >90%；C16 + 剩余 R4 I-index 仍未结）—— 与已完成的 Phase 5.0 非 LAB 工作不同
 - [ ] Phase 5.2b：非 LAB 块参数解码（CLOCK_ENABLE 和 M9K INIT 之外）—— 需要「块内差分探针」绕过 header 噪声地板、STA 黑盒、以及每点位配置不可观察这三堵墙；PLL 探针（用 `PLL_1`/`PLL_2` 单例 LOC）延到这里做
-- [~] Phase 5.3：**开源工具链 —— Yosys + nextpnr-generic + FASM（进行中）**。目标：用 `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader` 取代 Quartus。当前状态：
+- [~] Phase 5.3：**开源工具链 —— Yosys + nextpnr-generic + FASM（部分开通）**。目标：用 `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader` 取代 Quartus。当前状态：
   - `fuzz/chipdb_gen.py`：生成 nextpnr-generic Python chipdb（8,241 bel、59,611 wire、138 万 pip），含 GCLK broadcast、LAB 内直连 pip、4 级 pip 代价阶梯（SIG=1 < INTRA=2 < LOCAL=5 < HOP=20）
   - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`：Yosys techmap 链（LUT4 + DFF）
   - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令
-  - **M5α counter 冒烟测试**：24-bit 计数器（31 LUT + 24 DFF）经 router2 < 2 秒布通。np2fasm 提取 97 条弧，但 0/97 命中 sig-cache（当前放置在 X=3,4 Y=18,19）—— sig-cache 覆盖缺口是 M5β 阻塞点
-  - DFF FASM 和 IOB FASM 尚未实现
+  - `fuzz/fasm2rbf.py` 已端到端跑通的指令：`LUT`、`ROUTE`（6/7-tuple）、`GCLK`、`DFF`、`BIT`、`SRC`。CRC patcher 已整合
+  - **M5 counter —— 24-bit 计数器还无法经开源流程闪烁。** 端到端管线全程跑通（Yosys → nextpnr → np2fasm → fasm2rbf → CRC 合规的 368,011 字节 RBF，LI safety SAFE），但 LED 烧上去恒亮或恒灭。2026-04-11 用 Quartus 自己编同一份 Verilog 当 ground truth 才查出根因：**Quartus 把 24 个 counter LE 放在 CRAM 第 47-48 列，用进位链直连线（`cout→cin`，每 bit 1 个 LE，367 cells），而我们的 build 把 31 个 LE 摆在 (4,18)/(4,19)，每 bit 用 4 个 LE 模拟 `+1`（1185 cells，含 24 条 self-feedback 路由 —— 这种路由用现行 sig-cache 挖掘模板挖不出干净条目）。** 这是 `chipdb_gen.py`/Yosys techmap 缺一个 primitive，不是 codec 或 FASM 的 bug —— 见下方 Phase 5.4。Quartus reference RBF 在 `/tmp/m5_counter/quartus_ref/counter_top.rbf`，烧 AX301 正常闪烁
+  - **追 M5 过程中赚到的真实修复（对未来 multi-LE-per-LAB 设计仍然有用）**：LutCodec 高密度 LAB workaround（`predict_sram(0xFFFF)` 过滤掉 LAB-shared 干扰）；sig-cache 挖掘模板坑已写入文档（必须用 `verilog_gen.py` 的 `gen_two_luts_single_input_clocked`）；160 个干净重挖的 (4,18)/(4,19) inter-LE 配对条目并入 `route_cells_full.json`；per-LAB CLK 顺序修复（必须在 LUT phase 重置之后再 set）；bitgen 后的 LI 清理（去掉 sig-cache 挖掘的 baseline LAB infrastructure 漏出来的 cell）。可用的 multi-LE-per-LAB build 模板：`/tmp/m5_counter/build_counter_sigcache.py`
+  - DFF FASM 已实现（用 `DFF` 指令）；IOB FASM cell map 和 GCLK 时钟引脚布线尚未，目前用 `nv_zero_global.rbf`（PIN_E1→GCLK 已预先布通）作为基底
+
+- [ ] Phase 5.4：**开源流程里的 LE 进位链（NEW，阻塞所有算术设计）** —— 在 `chipdb_gen.py` 里声明相邻 LE bel 之间的 `cout→cin` 直连 pip；在 `synth/ep4ce6_map.v` + `synth/prims.v` 里加一个 CARRY primitive，让 Yosys 把 `+1` 落到链式 LE 上而不是 4-LE-per-bit ripple；让 `synth/np2fasm.py` 把进位链编成 FASM 指令；再从 Quartus reference RBF 里挖出算术模式 LE 的 CRAM cell（首个 ground truth：`/tmp/m5_counter/quartus_ref/counter_top.rbf`，367 cells 集中在第 47-48 列）。这条路通之前，所有算术设计走 Quartus，开源工具链只给纯组合逻辑和 FF-only 设计用
 
 ### 长期方向：我们究竟可能在哪里赢过 Quartus
 
@@ -1892,7 +2057,8 @@ techmap + np2fasm 都已跑通，counter 已能布线）。
 | M9K init 编解码器（Phase 5.2） | **闭合** | 2D 线性公式，33 条 anchor，31 个 NEORV32 点位校准；READ 512/512，WRITE 与 Quartus 0 CRAM diff |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
 | FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
-| 开源工具链（Phase 5.3） | **进行中** | `chipdb_gen.py` + Yosys techmap + `np2fasm.py`；counter < 2s 布通；sig-cache 覆盖缺口阻塞 M5β |
+| 开源工具链（Phase 5.3） | **部分开通** | 端到端管线已跑通（Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe）。组合逻辑设计可烧录。算术设计**阻塞**在 Phase 5.4（chipdb / techmap 缺进位链 primitive）。下一轮挖掘的 ground truth：`/tmp/m5_counter/quartus_ref/counter_top.rbf` |
+| 开源流程的 LE 进位链（Phase 5.4） | **0%** | 所有 `+`/计数器/算术设计的前置条件。三件事一起做：chipdb pip、Yosys techmap CARRY cell、np2fasm + FASM `LUT mode=arith` 指令。挖掘目标：Quartus 进位链 RBF 与 nv_zero 的 diff |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
 
 ---
