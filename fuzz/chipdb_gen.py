@@ -72,6 +72,9 @@ LE_N = config.LE_N
 M9K_X = [15, 27]
 M9K_Y = list(range(2, 22))
 
+CARRY_DELAY = 1          # cout→cin direct pip — cheapest (dedicated wire,
+                         # no LI MUX, no LOCAL bus contention). Equal to
+                         # SIG so the router prefers it for chain arcs.
 SIG_DELAY = 1            # SIG pips (FASM-backed) — cheapest
 INTRA_DELAY = 2          # intra-LAB direct pips — within-LAB
 LOCAL_DELAY = 5          # LOCAL_IN / LOCAL_OUT — entering/leaving bus
@@ -88,6 +91,14 @@ NUM_LOCAL_TRACKS = 4
 SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
 # Map sig-cache port labels to nextpnr-generic SLICE pin indices.
 PORT_TO_PIN_IDX = {"dataa": 0, "datab": 1, "datac": 2, "datad": 3}
+
+
+def _wire_slice_cout(x: int, y: int, n: int) -> str:
+    return f"slice_X{x}_Y{y}_N{n}_COUT"
+
+
+def _wire_slice_cin(x: int, y: int, n: int) -> str:
+    return f"slice_X{x}_Y{y}_N{n}_CIN"
 
 
 def _wire_slice_out(x: int, y: int, n: int) -> str:
@@ -155,6 +166,21 @@ def build_chipdb() -> dict:
                                   "x": x, "y": y})
                     belpins.append({"bel": name, "pin": f"I[{idx}]",
                                     "wire": iw, "output": False})
+                # Carry chain pins — COUT (output) drives the next LE's
+                # CIN (input) through a dedicated direct pip. No LI MUX
+                # involved, so the packer must not route these through
+                # LOCAL. Chain topology is declared in the pip section
+                # below, per cycloneive_carry_chain_topology memory.
+                cow = _wire_slice_cout(x, y, n)
+                wires.append({"name": cow, "type": "SLICE_COUT",
+                              "x": x, "y": y})
+                belpins.append({"bel": name, "pin": "COUT",
+                                "wire": cow, "output": True})
+                ciw = _wire_slice_cin(x, y, n)
+                wires.append({"name": ciw, "type": "SLICE_CIN",
+                              "x": x, "y": y})
+                belpins.append({"bel": name, "pin": "CIN",
+                                "wire": ciw, "output": False})
 
     # ---------- M9K bels ----------
     for x in M9K_X:
@@ -216,6 +242,41 @@ def build_chipdb() -> dict:
     local_wires: set[tuple[int, int]] = set()
     valid_labs = [(x, y) for x in LAB_X_FULL for y in LAB_Y_FULL
                   if (x, y) not in config.INVALID_LABS]
+    valid_lab_set = set(valid_labs)
+
+    # ---------- Carry chain direct pips ----------
+    # cout→cin is a dedicated silicon wire, not routed via LI MUX or
+    # LOCAL. Within LAB: N→N+2 for N in [0,2,...,28]. Between LABs:
+    # N30 of (x,y) → N0 of (x, y-1) in the same column, only when
+    # Y-1 is physically adjacent (no gap). See memory
+    # cycloneive_carry_chain_topology.md for the two-fit verification.
+    n_pips_carry = 0
+    for (x, y) in valid_labs:
+        # Within-LAB chain (LE_N ascending; N=30 is terminal).
+        for i in range(len(LE_N) - 1):
+            n_src, n_dst = LE_N[i], LE_N[i + 1]
+            pips.append({
+                "name": f"pip_carry_X{x}_Y{y}_N{n_src}__N{n_dst}",
+                "type": "CARRY",
+                "src": _wire_slice_cout(x, y, n_src),
+                "dst": _wire_slice_cin(x, y, n_dst),
+                "delay": CARRY_DELAY,
+                "x": x, "y": y,
+            })
+            n_pips_carry += 1
+        # Between-LAB chain: N30 → (x, y-1).N0 if the LAB directly
+        # below is also valid. INVALID_LABS gaps break the chain.
+        if (x, y - 1) in valid_lab_set:
+            pips.append({
+                "name": f"pip_carry_X{x}_Y{y}_N30__X{x}_Y{y - 1}_N0",
+                "type": "CARRY",
+                "src": _wire_slice_cout(x, y, 30),
+                "dst": _wire_slice_cin(x, y - 1, 0),
+                "delay": CARRY_DELAY,
+                "x": x, "y": y - 1,
+            })
+            n_pips_carry += 1
+
     for (x, y) in valid_labs:
         for t in range(NUM_LOCAL_TRACKS):
             wires.append({
@@ -412,6 +473,7 @@ def build_chipdb() -> dict:
             "n_pips_total": len(pips),
             "n_pips_sig": pip_count,
             "n_pips_local": n_local_pips,
+            "n_pips_carry": n_pips_carry,
             "pips_skipped_unknown_src": skipped_unknown_src,
             "pips_skipped_unknown_dst": skipped_unknown_dst,
         },
@@ -504,7 +566,8 @@ def main() -> None:
     print(f"wires:   {s['n_wires']:>7d}")
     print(f"belpins: {s['n_belpins']:>7d}")
     print(f"pips total: {s['n_pips_total']:>7d} "
-          f"(sig {s['n_pips_sig']} + local {s['n_pips_local']})")
+          f"(sig {s['n_pips_sig']} + local {s['n_pips_local']} "
+          f"+ carry {s['n_pips_carry']})")
     print(f"pips skipped (unknown src slice): "
           f"{s['pips_skipped_unknown_src']}")
     print(f"pips skipped (unknown dst slice): "
