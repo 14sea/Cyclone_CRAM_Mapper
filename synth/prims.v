@@ -35,6 +35,33 @@ module GENERIC_SLICE #(
 );
 endmodule
 
+// Carry chain primitive — one per bit of an arithmetic operation.
+// Placed into an arith-mode LE; chained cells occupy contiguous N
+// slots in a LAB, with N30 wrapping to N0 of the LAB directly below
+// (per cycloneive_carry_chain_topology memory, validated at X=10).
+//
+// CI routing: CI is a real port. For mid-chain cells it's driven
+//   by the previous CE6_CARRY's CO, which nextpnr will route via
+//   the dedicated cout→cin carry pip (no LI MUX). For the LSB of
+//   each chain it's driven by a Verilog constant (1'b0 for $add,
+//   1'b1 for $sub); np2fasm detects this and programs the Cyclone
+//   IV silicon chain-start CRAM bit accordingly.
+// LUT_MASK: 16-bit arith-mode LUT encoding. Upper byte = sum LUT,
+//   lower byte = cout LUT (see cycloneive_arith_mode_lut_encoding).
+//   Techmap hardcodes this to 0x96E8 for $alu (a+b+ci); arbitrary
+//   user-supplied arith LUTs are out of scope for this pass.
+(* blackbox *)
+module CE6_CARRY #(
+	parameter [15:0] LUT_MASK = 16'h0000
+) (
+	input  A,
+	input  B,
+	input  CI,
+	output S,
+	output CO
+);
+endmodule
+
 (* blackbox *)
 module GENERIC_IOB #(
 	parameter INPUT_USED = 1'b0,
