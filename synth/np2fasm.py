@@ -80,6 +80,7 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
             cell_bel[cell_name] = bel
 
     # --- LUT / DFF directives from cells ---
+    has_dff = False
     for cell_name, cell in cells.items():
         bel = cell_bel.get(cell_name)
         if bel is None:
@@ -95,11 +96,16 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                     fasm.append(f"X{x}Y{y}N{n}.LUT = 0x{mask:04x}")
             ff_bin = params.get("FF_USED", "0")
             if int(ff_bin, 2):
-                fasm.append(f"# DFF at X{x}Y{y}N{n} (no FASM directive yet)")
+                fasm.append(f"X{x}Y{y}N{n}.DFF")
+                has_dff = True
         elif kind == "IOB":
             fasm.append(
                 f"# IOB {cell.get('attributes',{}).get('NEXTPNR_BEL','?')}"
                 f" (no FASM IO cell map yet)")
+
+    # --- GCLK if any DFF is present ---
+    if has_dff:
+        fasm.append("GCLK")
 
     # --- ROUTE directives from logical connectivity ---
     # For each net, find driver bel and all sink bels+ports, then look up
@@ -153,11 +159,10 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                 continue  # dedup
             seen_routes.add(key)
 
+            fasm.append(
+                f"ROUTE X{sx}Y{sy}N{sn} -> "
+                f"X{dx}Y{dy}N{dn}.{port_name}")
             if _SIG_CACHE and key in _SIG_CACHE:
-                sn_part = f"N{sn}" if sn != 0 else ""
-                fasm.append(
-                    f"ROUTE X{sx}Y{sy}{sn_part} -> "
-                    f"X{dx}Y{dy}N{dn}.{port_name}")
                 n_sig += 1
             else:
                 n_miss += 1

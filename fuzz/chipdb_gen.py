@@ -469,6 +469,29 @@ print("[chipdb_ep4ce6] loaded:",
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser(description="Generate nextpnr-generic chipdb for EP4CE6")
+    ap.add_argument("--region", metavar="X0,Y0,X1,Y1",
+                    help="Restrict SLICE placement to bounding box "
+                         "(e.g. --region 13,6,18,14)")
+    ap.add_argument("--no-jailbreak", action="store_true",
+                    help="Exclude jailbreak columns/rows (CE6 whitelist only)")
+    args = ap.parse_args()
+
+    global LAB_X_FULL, LAB_Y_FULL
+
+    if args.no_jailbreak:
+        LAB_X_FULL = sorted(config.LAB_X)
+        LAB_Y_FULL = sorted(config.LAB_Y)
+        print(f"[no-jailbreak] CE6 whitelist only: {len(LAB_X_FULL)} cols × {len(LAB_Y_FULL)} rows")
+
+    if args.region:
+        x0, y0, x1, y1 = (int(v) for v in args.region.split(","))
+        LAB_X_FULL = [x for x in LAB_X_FULL if x0 <= x <= x1]
+        LAB_Y_FULL = [y for y in LAB_Y_FULL if y0 <= y <= y1]
+        print(f"[region] placement restricted to X=[{x0},{x1}] Y=[{y0},{y1}]"
+              f" → {len(LAB_X_FULL)} cols × {len(LAB_Y_FULL)} rows")
+
     data = build_chipdb()
     DATA_PATH.write_text(json.dumps(data, indent=1))
     SCRIPT_PATH.write_text(_RUNNER_TEMPLATE)

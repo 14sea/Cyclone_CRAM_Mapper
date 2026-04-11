@@ -15,6 +15,12 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # Inter-LAB route from source LAB to a destination LE input port
     ROUTE X{sx}Y{sy} -> X{dx}Y{dy}N{dn}.{port}
 
+    # Enable global clock network (PIN_E1 → all LAB CLK inputs)
+    GCLK
+
+    # Enable DFF register at a specific LE
+    X{x}Y{y}N{n}.DFF
+
 The base RBF must be a valid "zero" baseline for the source LAB (e.g.
 results/rbf/lits_zero_{sx}_{sy}.rbf). Multiple ROUTE lines are merged
 into a single apply_routing call. LUT writes are XOR-deltas, applied on
@@ -56,6 +62,10 @@ _SRC_RE = re.compile(r"^SRC\s+X(?P<sx>\d+)Y(?P<sy>\d+)$")
 _DFF_RE = re.compile(
     r"^DFF\s+X(?P<x>\d+)Y(?P<y>\d+)\.(?P<mode>ARST|ENA)$"
 )
+# Per-LE DFF enable: X{x}Y{y}N{n}.DFF
+_DFF_LE_RE = re.compile(
+    r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.DFF$"
+)
 # M9K init content: X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x<hex>
 # The hex payload is depth words, word 0 first, each `width` bits wide,
 # MSB-first within the byte string (standard Python int.to_bytes style).
@@ -63,6 +73,50 @@ _M9K_INIT_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.INIT_"
     r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
 )
+_GCLK_RE = re.compile(r"^GCLK$")
+
+# 17 position-independent, seed-stable GCLK cells mined 2026-04-10
+# from 4-position × 4-seed intersection of comb-vs-reg pair-diffs.
+# These enable the global clock network that routes PIN_E1 (CLK) to
+# every LAB's clock input.
+_GCLK_CELLS = [
+    (11746, 4), (12167, 4), (13191, 4), (13401, 4), (13613, 4),
+    (15292, 4), (15923, 4), (18001, 4), (18218, 2), (18869, 2),
+    (19678, 4), (20099, 4), (247550, 2), (248189, 2), (363039, 2),
+    (363459, 2), (363883, 2),
+]
+
+
+_DFF_CELLS_CACHE = None
+
+
+def _load_dff_cells():
+    global _DFF_CELLS_CACHE
+    if _DFF_CELLS_CACHE is not None:
+        return _DFF_CELLS_CACHE
+    path = ROOT / "results" / "dff_cells_mined.json"
+    if path.exists():
+        import json
+        raw = json.loads(path.read_text())
+        _DFF_CELLS_CACHE = {
+            k: [(off, bp) for off, bp in v] for k, v in raw.items()
+        }
+    else:
+        _DFF_CELLS_CACHE = {}
+    return _DFF_CELLS_CACHE
+
+
+def _dff_le_cells(x, y, n):
+    """Return per-LE DFF enable CRAM cells for LE at (x, y, n).
+
+    Uses lookup table from multi-seed comb-vs-reg pair-diff mining
+    (results/dff_cells_mined.json).  Falls back to empty list if
+    unmined — under-mining is safe because unstripped DFF cells in
+    the sig-cache route ops survive as single-flip routing.
+    """
+    table = _load_dff_cells()
+    key = f"{x},{y},{n}"
+    return table.get(key, [])
 
 
 class FasmError(ValueError):
@@ -80,7 +134,9 @@ def parse_fasm(text):
     bits = []
     srcs = []
     dffs = []  # list[(x, y, mode)] mode in {"ARST","ENA"}
+    dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
+    gclk = False
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
@@ -127,9 +183,17 @@ def parse_fasm(text):
             bp = int(m["bp"])
             bits.append((off, bp))
             continue
+        m = _DFF_LE_RE.match(line)
+        if m:
+            dff_les.append((int(m["x"]), int(m["y"]), int(m["n"])))
+            continue
         m = _DFF_RE.match(line)
         if m:
             dffs.append((int(m["x"]), int(m["y"]), m["mode"]))
+            continue
+        m = _GCLK_RE.match(line)
+        if m:
+            gclk = True
             continue
         m = _M9K_INIT_RE.match(line)
         if m:
@@ -150,7 +214,7 @@ def parse_fasm(text):
             m9k_inits.append((x, y, n, width, depth, words))
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
-    return luts, routes, bits, srcs, dffs, m9k_inits
+    return luts, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -223,7 +287,7 @@ def _load_overhead():
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
-    luts, routes, bits, srcs, dffs, m9k_inits = parse_fasm(fasm_text)
+    luts, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -246,7 +310,39 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     if routes or src_cells:
         cells_table = route_signatures.load_cells_full() if routes else None
         ops = build_route_ops(routes, cells_table=cells_table, extra_cells=src_cells)
+        # The sig-cache was mined from pair-diff compiles that included LUT TT,
+        # GCLK, and DFF cells alongside actual routing cells.  Strip known
+        # non-routing cells so they don't double-flip with the dedicated GCLK /
+        # DFF / LUT sections below.
+        strip = set()
+        if gclk:
+            strip.update(_GCLK_CELLS)
+        if dff_les:
+            for x, y, n in dff_les:
+                strip.update(_dff_le_cells(x, y, n))
+        if strip:
+            ops = [
+                op for op in ops
+                if (op["offset"], op["bp"]) not in strip
+            ]
         work = codec.apply_routing(work, ops)
+
+    if gclk:
+        buf = bytearray(work)
+        for off, bp in _GCLK_CELLS:
+            buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
+        work = bytes(buf)
+
+    if dff_les:
+        buf = bytearray(work)
+        # Union all DFF cells before emitting — prevents double-flip
+        # of LAB-level cells shared across multiple LEs in the same LAB.
+        dff_all = set()
+        for x, y, n in dff_les:
+            dff_all.update(_dff_le_cells(x, y, n))
+        for off, bp in dff_all:
+            buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
+        work = bytes(buf)
 
     if bits:
         buf = bytearray(work)
@@ -270,23 +366,51 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     if luts:
         db = sqlite3.connect(db_path)
         try:
+            # The sig-cache includes LUT TT cells from factory pair-diffs
+            # (masks 0x8888/0xAAAA), so routing contaminates LUT cell
+            # positions.  Fix: reset every LUT cell to the pre-routing
+            # base_rbf state, then apply the accumulated predict_sram XOR
+            # for all LUTs simultaneously.
+            #
+            # LUT cells within a LAB share "data" bytes across N values.
+            # The accumulated XOR (symmetric difference of predict_sram
+            # sets) produces the correct multi-LE CRAM state because the
+            # encoding is XOR-linear across LEs.  Per-LE read_tt can't
+            # verify this (ctrl cells are shared), but the cell-level math
+            # is proven correct.
+            buf = bytearray(work)
+
+            # Phase 1: reset each LUT cell to its minterm_0 (mask=0)
+            # state.  This undoes both route sig-cache contamination AND
+            # the "presence delta" between nv_zero_global (no LEs) and
+            # minterm_0 (one LE placed at mask 0).  For shared cells
+            # (rare: 8/113 disagree across LEs), last-processed LE wins —
+            # functionally irrelevant per hardware verification.
+            _m0_cache = {}
             for x, y, n, mask in luts:
                 lut = LutCodec.from_db(db, x, y, n)
-                # FASM semantics: the mask is the ABSOLUTE target TT. We need
-                # a true 0x0000 baseline to compute base_tt (the "LutCodec
-                # XOR semantics" footgun). Prefer results/rbf/minterm_0_X{x}_
-                # Y{y}_N{n}.rbf when present; otherwise fall back to treating
-                # base_rbf as zero (user accepts XOR-delta semantics).
                 zero_path = (
-                    ROOT / "results" / "rbf" / f"minterm_0_X{x}_Y{y}_N{n}.rbf"
+                    ROOT / "results" / "rbf"
+                    / f"minterm_0_X{x}_Y{y}_N{n}.rbf"
                 )
                 if zero_path.exists():
-                    lut_zero = zero_path.read_bytes()
-                    base_tt = lut.read_tt(base_rbf, lut_zero)
-                else:
-                    base_tt = 0
-                delta = mask ^ base_tt
-                work = lut.write_tt(work, delta)
+                    if zero_path not in _m0_cache:
+                        _m0_cache[zero_path] = zero_path.read_bytes()
+                    m0 = _m0_cache[zero_path]
+                    for addr, bitpos in lut.all_cells:
+                        m0_bit = (m0[addr] >> bitpos) & 1
+                        cur_bit = (buf[addr] >> bitpos) & 1
+                        if cur_bit != m0_bit:
+                            buf[addr] ^= (1 << bitpos)
+
+            # Phase 2: accumulate XOR flips for all LUTs.
+            # predict_sram(mask) gives cells relative to minterm_0, so
+            # after Phase 1 alignment the XOR is exact.
+            for x, y, n, mask in luts:
+                lut = LutCodec.from_db(db, x, y, n)
+                for addr, bitpos in lut.predict_sram(mask):
+                    buf[addr] ^= (1 << bitpos)
+            work = bytes(buf)
         finally:
             db.close()
 
