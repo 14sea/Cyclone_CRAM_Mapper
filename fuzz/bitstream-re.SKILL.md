@@ -5,7 +5,7 @@ description: Black-box reverse engineering of FPGA configuration bitstreams (Alt
 
 # FPGA Bitstream Reverse Engineering — Playbook
 
-Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated on both axes — X=32 column AND Y=15 row; 686/686 bit-perfect route synthesis across 15 green-zone source LABs; HW-verified end-to-end on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean.
+Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated on both axes — X=32 column AND Y=15 row; **CE6 standard 686/686 bit-perfect + jailbreak/edge 8/45 explored** across 24 green-zone source LABs; HW-verified end-to-end on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean. The jailbreak 8/45 figure represents a frontier, not a regression — physical fingerprints are captured for all 9 new islands (Y=15 row × 7, Y=5 edge × 2); sig-cache mining + formula-path Y=15 support is still in progress (see Phase 5.4).
 
 ## Core principles
 
@@ -14,6 +14,7 @@ Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated
 3. **The vendor's fitter is a whitelist, not a hardware lock.** If the same package ships as multiple SKUs, the cheaper SKU almost always has all of the expensive SKU's silicon, disabled only in the fitter. This is testable in minutes (see "Jailbreak probe").
 4. **Codec round-trip ≠ hardware safety.** A codec that reads a cell and writes it back faithfully can still produce a bitstream that shorts a MUX on real silicon. Maintain a separate `validate_safe_for_hardware()` that classifies every touched structure against known-safe Quartus envelopes, and run it before every flash.
 5. **Negative results are deliverables.** If a feature isn't in the input space (we spent two rounds proving the paired/alternating LI mode isn't a function of the routing key), document it and stop — don't quietly keep mining.
+6. **Always reach for the vendor's RBF as ground truth before patching the codec.** When a codec-built bitstream doesn't behave on hardware, the natural reflex is to dig into the codec, the sig-cache, the FASM front-end. Resist it for 30 seconds: compile *the same Verilog* in Quartus and flash that. If Quartus's RBF doesn't blink either, your test design is wrong. If Quartus's RBF blinks but yours doesn't, byte-diff the two and look at *where* the cells live, not how many — Quartus may be using a primitive (carry chain, BRAM port, DSP cascade) that your front-end never emitted, putting the whole design in a different physical region of the die. We burned two days on a 24-bit counter chasing real-but-irrelevant LutCodec / sig-cache / phase-ordering bugs before flashing Quartus's `counter_top.rbf` and discovering it lived in CRAM cols 47-48 (carry chain) while ours lived in cols (4,18)/(4,19) (4-LE-per-bit ripple emulating `+1` because nextpnr-generic doesn't model `cout→cin` direct wires). One vendor flash on day one would have closed the case in minutes.
 
 ## Stage 1 — Infrastructure (build once, reuse forever)
 
@@ -125,6 +126,10 @@ Once the codec and sig-cache are mature enough, build the full open-source flow:
    - Constrain placement to stay within covered regions, OR
    - Expand the sig-cache with targeted pair-diff compiles for uncovered arcs
    - Track coverage: `np2fasm` should report hit/miss/skip counts
+
+5. **Carry chains and other vendor-specific direct wires must be modeled in the chipdb from day one, or arithmetic designs are dead on arrival.** nextpnr-generic only sees the bel/wire/pip graph you give it. If you don't declare `cout→cin` direct pips between adjacent LEs (and a CARRY primitive in the techmap to land on them), Yosys will emit `+1` as a normal LUT ripple — typically 4 LEs per bit with self-feedback for the "previous value" input. Self-feedback routes (LE → same LE.dataX) are pathological for the standard two-LUT pair-diff mining template (you can't place lut1 and lut2 at the same site), so the resulting sig-cache entries are bloated noise and the design won't run on silicon. The fix is structural, not a sig-cache patch: declare carry chain pips, write a CARRY techmap, emit an `LUT mode=arith` FASM directive, and mine the arith-mode CRAM cells from a Quartus reference build (which uses `cout→cin` natively).
+
+6. **Cross-check before sinking time into the codec.** After every np2fasm change, build the same Verilog in Quartus and flash both. If they behave differently, byte-diff the RBFs and look at *which CRAM columns* the cells live in. A column mismatch means the front-end emitted a different topology (missing primitive); a column match with cell mismatch means a real codec bug. Treating the two cases the same wastes days.
 
 ## When to stop
 

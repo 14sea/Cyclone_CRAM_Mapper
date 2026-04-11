@@ -2240,11 +2240,11 @@ answers.
 | R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
 | C16 long-distance wires | **0%** | Not yet started |
 | Bitstream codec | **~85%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; **CRC patcher integrated; HW-verified on silicon** |
-| Route synthesis (green islands) | **15/392 sources** | (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12) — 686/686 routes bit-perfect against Quartus |
+| Route synthesis (green islands) | **24/520 sources** | CE6 standard 15 islands — **686/686 routes bit-perfect** against Quartus. Jailbreak/edge frontier 9 islands — **8/45 routes** (Y=15 × {10,11,12,13,14,17,18}, Y=5 × {18,19}): physical fingerprints captured, sig-cache pair-diff mining pending, `route_synth.parse_need` formula path doesn't yet model Y=15. Total harness: **694/731**. |
 | FASM sig-cache (Phase 4.5) | **13,487 entries** | `results/route_cells_full.json` — 7-tuple (sn>0 supported); Plan D' factory covers 95.9% of NEORV32 edges; hero X=5 silicon-validated |
 | M9K init codec (Phase 5.2) | **closed** | 2D linear formula, 33 anchor entries, 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs |
 | RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
-| FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
+| FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
 | Open-source toolchain (Phase 5.3) | **partially open** | end-to-end pipeline runs (Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe). Combinational designs flashable. Arithmetic designs **blocked** on Phase 5.4 (carry chain primitive missing from chipdb / techmap). Working ground truth for the next mining round: `/tmp/m5_counter/quartus_ref/counter_top.rbf`. |
 | LE carry chain in open flow (Phase 5.4) | **0%** | Required for any `+`/counter/arith design. Three-piece work: chipdb pip, Yosys techmap CARRY cell, np2fasm + FASM `LUT mode=arith` directive. Mining target: diff Quartus carry-chain RBF vs nv_zero. |
 | Hardware loopback (codec → flash → silicon) | **closed** | LutCodec + FASM path both running on AX301 |

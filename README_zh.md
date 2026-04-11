@@ -2052,11 +2052,11 @@ techmap + np2fasm 都已跑通，counter 已能布线）。
 | R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
 | C16 长距离线 | **0%** | 尚未开始 |
 | 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
-| 路由综合（绿区岛） | **15/392 源** | (4,4)、(10,4)、(10,10)、(10,14)、(13,10)、(16,4)、(16,8)、(16,14)、(19,14)、(22,12)、(22,16)、(25,6)、(28,10)、(28,18)、(31,12) — 686/686 路由对 Quartus bit-perfect |
+| 路由综合（绿区岛） | **24/520 源** | CE6 标准 15 岛 —— **686/686 路由对 Quartus bit-perfect**。越狱 / 边缘前沿 9 岛 —— **8/45 路由**（Y=15 × {10,11,12,13,14,17,18}、Y=5 × {18,19}）：物理 fingerprint 已采集，sig-cache pair-diff 挖掘尚未跑，`route_synth.parse_need` formula 回退路径尚未支持 Y=15。当前 harness 总分：**694/731**。 |
 | FASM sig-cache（Phase 4.5） | **13,487 条目** | `results/route_cells_full.json` —— 7-tuple（支持 sn>0）；Plan D' 工厂覆盖 NEORV32 95.9% edge；英雄 X=5 矽片验证 |
 | M9K init 编解码器（Phase 5.2） | **闭合** | 2D 线性公式，33 条 anchor，31 个 NEORV32 点位校准；READ 512/512，WRITE 与 Quartus 0 CRAM diff |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
-| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
+| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
 | 开源工具链（Phase 5.3） | **部分开通** | 端到端管线已跑通（Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe）。组合逻辑设计可烧录。算术设计**阻塞**在 Phase 5.4（chipdb / techmap 缺进位链 primitive）。下一轮挖掘的 ground truth：`/tmp/m5_counter/quartus_ref/counter_top.rbf` |
 | 开源流程的 LE 进位链（Phase 5.4） | **0%** | 所有 `+`/计数器/算术设计的前置条件。三件事一起做：chipdb pip、Yosys techmap CARRY cell、np2fasm + FASM `LUT mode=arith` 指令。挖掘目标：Quartus 进位链 RBF 与 nv_zero 的 diff |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
