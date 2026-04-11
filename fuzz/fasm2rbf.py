@@ -102,10 +102,11 @@ _GCLK_CELLS = [
 
 _DFF_CELLS_CACHE = None
 _ARITH_CELLS_CACHE = None
+_ARITH_V2_CACHE = None
 
 
 def _load_arith_cells():
-    """Load the per-LAB arith-mode blob library.
+    """Load the legacy (v1) per-LAB arith-mode blob library.
 
     Structure (see /tmp/arith_campaign/emit_mined_json.py):
       mined["labs"]["X,Y"]["by_w"]["W"] = {
@@ -113,7 +114,13 @@ def _load_arith_cells():
           "cells":    [[off, bp], ...]
       }
       mined["labs"]["X,Y"]["full"] = fallback full-chain blob
-      mined["labs"]["X,Y"]["core"] = 13-cell universal LAB activation core
+
+    KNOWN PROBLEM (2026-04-11): every legacy entry cross-checked so far
+    (4,18 and 10,10) has ~200/208 cells that don't appear in a clean
+    toggle-subtraction 4-way diff, AND 17+ cells that also appear in a
+    pure-toggle build (contamination). See arith_cells_mined_contamination
+    + arith_crossmethod_validation_7cell memories. The v2 loader below
+    prefers the cleaner 4-way ∩ width-sweep schema; v1 is fallback only.
     """
     global _ARITH_CELLS_CACHE
     if _ARITH_CELLS_CACHE is not None:
@@ -127,27 +134,123 @@ def _load_arith_cells():
     return _ARITH_CELLS_CACHE
 
 
+def _load_arith_cells_v2():
+    """Load the v2 per-LAB arith blob — 2-tier schema.
+
+    Structure:
+      v2["labs"]["X,Y"]["lab_activation_core"]["cells"] = [[off, bp], ...]
+      v2["labs"]["X,Y"]["per_config"]["w{W}_n={n1,n2,...}"] = {
+          "cells": [[off, bp], ...],
+          "source": str,
+      }
+
+    Gold core = 4-way toggle subtraction ∩ width-sweep stable core.
+    Typically 7 cells per LAB (observed at both (4,18) and (10,10)).
+    per_config stores the **position-invariant 4-way intersection**
+    (cA-cB) ∩ (cA2-cB2) for a given (width, start-N) chain configuration.
+    Because this is position-invariant, the lower-half and upper-half
+    entries hold the SAME cells — they're indexed by both N-set keys for
+    lookup convenience, not because the halves differ. NEVER store raw
+    single-half (cA-cB) diffs here: at (10,10) that over-counted 517
+    vs the true 157-cell golden, adding fit-specific routing/FF noise.
+    bitgen composes a full blob by unioning the core with the best-
+    matching per_config entry.
+    """
+    global _ARITH_V2_CACHE
+    if _ARITH_V2_CACHE is not None:
+        return _ARITH_V2_CACHE
+    import json
+    path = ROOT / "results" / "arith_cells_mined_v2.json"
+    if not path.exists():
+        _ARITH_V2_CACHE = None
+        return None
+    _ARITH_V2_CACHE = json.loads(path.read_text())
+    return _ARITH_V2_CACHE
+
+
+def _match_arith_blob_v2(v2, x, y, active_ns):
+    """v2 lookup: core ∪ best-matching per_config.
+
+    Selection order inside per_config:
+      1. Exact N-set match (including width prefix for bookkeeping)
+      2. Smallest config whose N-set ⊇ active_ns
+      3. Fail loudly — v2 refuses to silently fall through to contaminated
+         data. The caller can catch FasmError and try the v1 path.
+    """
+    lab_key = f"{x},{y}"
+    labs = v2.get("labs", {})
+    if lab_key not in labs:
+        raise FasmError(
+            f"LUT_ARITH X{x}Y{y}: no v2 data for this LAB; "
+            f"have {sorted(labs.keys())}"
+        )
+    lab = labs[lab_key]
+    core_cells = {(int(o), int(b)) for o, b in lab["lab_activation_core"]["cells"]}
+    want = set(active_ns)
+
+    def _parse_ns(key):
+        # key like "w8_n=1,3,5,7,9,11,13,15"
+        try:
+            ns_part = key.split("_n=", 1)[1]
+            return {int(s) for s in ns_part.split(",")}
+        except (IndexError, ValueError):
+            return set()
+
+    configs = lab.get("per_config", {})
+
+    # 1) exact
+    for key, entry in configs.items():
+        if _parse_ns(key) == want:
+            config_cells = {(int(o), int(b)) for o, b in entry["cells"]}
+            return sorted(core_cells | config_cells)
+
+    # 2) smallest superset
+    supers = []
+    for key, entry in configs.items():
+        ns = _parse_ns(key)
+        if ns.issuperset(want):
+            supers.append((len(ns), key, entry))
+    if supers:
+        supers.sort()
+        _, _, entry = supers[0]
+        config_cells = {(int(o), int(b)) for o, b in entry["cells"]}
+        return sorted(core_cells | config_cells)
+
+    raise FasmError(
+        f"LUT_ARITH X{x}Y{y} ns={sorted(want)}: no v2 per_config match; "
+        f"have configs {sorted(configs.keys())}. Mine with the gold "
+        f"recipe (4-way toggle subtraction at this W,N) before use."
+    )
+
+
 def _match_arith_blob(mined, x, y, active_ns):
     """Pick the smallest pre-mined W-blob whose arith_ns covers active_ns.
 
-    Strategy (in order of preference):
+    Tries v2 schema first (cleaner, validated). Falls back to legacy v1
+    only if v2 has no entry for this LAB. Legacy v1 is known contaminated
+    (see _load_arith_cells docstring) — a WARN is emitted when it's used.
+
+    Strategy (v1 fallback):
       1. Exact arith_ns match — zero waste
       2. Smallest W whose arith_ns ⊇ active_ns — superset, a few extra
          LAB-activation cells (harmless; they're presence bits)
       3. Full chain (W=16) — last-resort fallback
-
-    The "Union Filling" semantics when multiple LUT_ARITH land in the same
-    LAB is implemented at the call site: all active N positions are collected
-    per-LAB *before* calling this, so a single lookup covers every arith LE
-    in the LAB.
     """
+    v2 = _load_arith_cells_v2()
+    if v2 is not None and f"{x},{y}" in v2.get("labs", {}):
+        return _match_arith_blob_v2(v2, x, y, active_ns)
+
     lab_key = f"{x},{y}"
     labs = mined.get("labs", {})
     if lab_key not in labs:
         raise FasmError(
-            f"LUT_ARITH X{x}Y{y}: no mined data for this LAB; "
-            f"have {sorted(labs.keys())}"
+            f"LUT_ARITH X{x}Y{y}: no mined data for this LAB "
+            f"(checked v2 and v1); have v1 {sorted(labs.keys())}"
         )
+    sys.stderr.write(
+        f"warn: LUT_ARITH X{x}Y{y}: using legacy v1 blob — known "
+        f"contaminated. Re-mine with the 4-way gold recipe.\n"
+    )
     lab = labs[lab_key]
     want = set(active_ns)
     # 1) exact
