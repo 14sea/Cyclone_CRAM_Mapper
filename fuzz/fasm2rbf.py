@@ -12,6 +12,13 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # LUT truth table at a specific LE
     X{x}Y{y}N{n}.LUT = 0xHHHH
 
+    # Arith-mode LUT (carry chain) — same 16-bit mask layout as .LUT
+    # (upper byte = sum LUT, lower byte = cout LUT in Cyclone IV arith
+    # encoding) but also triggers the LAB-wide carry-chain activation
+    # cells from results/arith_cells_mined.json.  Multiple arith LEs in
+    # the same LAB union-fill from a single blob lookup.
+    X{x}Y{y}N{n}.LUT_ARITH = 0xHHHH
+
     # Inter-LAB route from source LAB to a destination LE input port
     ROUTE X{sx}Y{sy} -> X{dx}Y{dy}N{dn}.{port}
 
@@ -51,6 +58,12 @@ DB_PATH = ROOT / "results" / "ep4ce6_bitdb.sqlite"
 _LUT_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.LUT\s*=\s*0x(?P<mask>[0-9a-fA-F]+)$"
 )
+# Arith-mode LUT: same 16-bit mask layout as normal LUT (upper byte = sum,
+# lower byte = cout in Cyclone IV arith encoding), but also triggers LAB-
+# wide carry-chain activation cells from results/arith_cells_mined.json.
+_LUT_ARITH_RE = re.compile(
+    r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.LUT_ARITH\s*=\s*0x(?P<mask>[0-9a-fA-F]+)$"
+)
 _ROUTE_RE = re.compile(
     r"^ROUTE\s+X(?P<sx>\d+)Y(?P<sy>\d+)(?:N(?P<sn>\d+))?\s*->\s*"
     r"X(?P<dx>\d+)Y(?P<dy>\d+)N(?P<dn>\d+)\.(?P<port>\w+)$"
@@ -88,6 +101,69 @@ _GCLK_CELLS = [
 
 
 _DFF_CELLS_CACHE = None
+_ARITH_CELLS_CACHE = None
+
+
+def _load_arith_cells():
+    """Load the per-LAB arith-mode blob library.
+
+    Structure (see /tmp/arith_campaign/emit_mined_json.py):
+      mined["labs"]["X,Y"]["by_w"]["W"] = {
+          "arith_ns": [sorted N positions],
+          "cells":    [[off, bp], ...]
+      }
+      mined["labs"]["X,Y"]["full"] = fallback full-chain blob
+      mined["labs"]["X,Y"]["core"] = 13-cell universal LAB activation core
+    """
+    global _ARITH_CELLS_CACHE
+    if _ARITH_CELLS_CACHE is not None:
+        return _ARITH_CELLS_CACHE
+    import json
+    path = ROOT / "results" / "arith_cells_mined.json"
+    if not path.exists():
+        _ARITH_CELLS_CACHE = None
+        return None
+    _ARITH_CELLS_CACHE = json.loads(path.read_text())
+    return _ARITH_CELLS_CACHE
+
+
+def _match_arith_blob(mined, x, y, active_ns):
+    """Pick the smallest pre-mined W-blob whose arith_ns covers active_ns.
+
+    Strategy (in order of preference):
+      1. Exact arith_ns match — zero waste
+      2. Smallest W whose arith_ns ⊇ active_ns — superset, a few extra
+         LAB-activation cells (harmless; they're presence bits)
+      3. Full chain (W=16) — last-resort fallback
+
+    The "Union Filling" semantics when multiple LUT_ARITH land in the same
+    LAB is implemented at the call site: all active N positions are collected
+    per-LAB *before* calling this, so a single lookup covers every arith LE
+    in the LAB.
+    """
+    lab_key = f"{x},{y}"
+    labs = mined.get("labs", {})
+    if lab_key not in labs:
+        raise FasmError(
+            f"LUT_ARITH X{x}Y{y}: no mined data for this LAB; "
+            f"have {sorted(labs.keys())}"
+        )
+    lab = labs[lab_key]
+    want = set(active_ns)
+    # 1) exact
+    for w_str, entry in lab["by_w"].items():
+        if set(entry["arith_ns"]) == want:
+            return [(int(o), int(b)) for o, b in entry["cells"]]
+    # 2) smallest superset
+    supers = []
+    for w_str, entry in lab["by_w"].items():
+        if set(entry["arith_ns"]).issuperset(want):
+            supers.append((int(w_str), entry))
+    if supers:
+        supers.sort(key=lambda t: t[0])
+        return [(int(o), int(b)) for o, b in supers[0][1]["cells"]]
+    # 3) fallback
+    return [(int(o), int(b)) for o, b in lab["full"]]
 
 
 def _load_dff_cells():
@@ -130,6 +206,7 @@ def parse_fasm(text):
     routes: list of (sx, sy, dx, dy, dn, port)
     """
     luts = []
+    lut_arith = []  # list[(x, y, n, mask_int)] — arith-mode LEs
     routes = []
     bits = []
     srcs = []
@@ -140,6 +217,12 @@ def parse_fasm(text):
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
+            continue
+        m = _LUT_ARITH_RE.match(line)
+        if m:
+            lut_arith.append(
+                (int(m["x"]), int(m["y"]), int(m["n"]), int(m["mask"], 16))
+            )
             continue
         m = _LUT_RE.match(line)
         if m:
@@ -214,7 +297,7 @@ def parse_fasm(text):
             m9k_inits.append((x, y, n, width, depth, words))
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
-    return luts, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk
+    return luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -287,7 +370,8 @@ def _load_overhead():
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
-    luts, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk = parse_fasm(fasm_text)
+    (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
+     gclk) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -363,7 +447,14 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             "CRC byte artifacts, not real FF mode bits. Needs re-mining."
         )
 
-    if luts:
+    # LUT TT phase processes *both* normal and arith LUTs — the 16-bit
+    # mask layout is the same as far as the CRAM TT cells are concerned
+    # (Quartus reuses the same LUT SRAM for the sum/cout concatenation in
+    # arith mode).  Merge the two lists so a single reset+XOR pass handles
+    # every LE that has a mask.
+    all_luts = list(luts) + list(lut_arith)
+
+    if all_luts:
         db = sqlite3.connect(db_path)
         try:
             # The sig-cache includes LUT TT cells from factory pair-diffs
@@ -387,8 +478,32 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             # (rare: 8/113 disagree across LEs), last-processed LE wins —
             # functionally irrelevant per hardware verification.
             _m0_cache = {}
-            for x, y, n, mask in luts:
-                lut = LutCodec.from_db(db, x, y, n)
+            # Cache LutCodec per (x,y,n); fall through gracefully if a
+            # position lacks minterm calibration (common for N>0 at most
+            # LABs).  LUT_ARITH still applies its LAB-wide activation
+            # cells even when the per-LE TT write is skipped.
+            lut_cache = {}
+            arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
+            for x, y, n, mask in all_luts:
+                key = (x, y, n)
+                if key in lut_cache:
+                    continue
+                try:
+                    lut_cache[key] = LutCodec.from_db(db, x, y, n)
+                except ValueError as e:
+                    if key in arith_keys:
+                        sys.stderr.write(
+                            f"warn: LUT_ARITH X{x}Y{y}N{n}: "
+                            f"no minterm calibration — skipping TT write "
+                            f"(activation cells still applied)\n"
+                        )
+                        lut_cache[key] = None
+                    else:
+                        raise
+            for x, y, n, mask in all_luts:
+                lut = lut_cache[(x, y, n)]
+                if lut is None:
+                    continue
                 zero_path = (
                     ROOT / "results" / "rbf"
                     / f"minterm_0_X{x}_Y{y}_N{n}.rbf"
@@ -406,13 +521,41 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             # Phase 2: accumulate XOR flips for all LUTs.
             # predict_sram(mask) gives cells relative to minterm_0, so
             # after Phase 1 alignment the XOR is exact.
-            for x, y, n, mask in luts:
-                lut = LutCodec.from_db(db, x, y, n)
+            for x, y, n, mask in all_luts:
+                lut = lut_cache[(x, y, n)]
+                if lut is None:
+                    continue
                 for addr, bitpos in lut.predict_sram(mask):
                     buf[addr] ^= (1 << bitpos)
             work = bytes(buf)
         finally:
             db.close()
+
+    if lut_arith:
+        # LAB-wide carry-chain activation cells.  Applied AFTER the LUT TT
+        # phase so that any activation cell which happens to overlap with
+        # a lut.all_cells reset isn't clobbered: the TT phase's minterm_0
+        # reset can clear presence bits that LUT_ARITH needs on; this
+        # SET-OR restores them as the final word.
+        #
+        # Union Filling: multiple LUT_ARITH lines in the same LAB → one
+        # blob lookup covering every arith LE in the LAB.
+        arith_data = _load_arith_cells()
+        if arith_data is None:
+            raise FasmError(
+                "LUT_ARITH: results/arith_cells_mined.json missing; "
+                "run the /tmp/arith_campaign/ sweep + emit_mined_json.py"
+            )
+        from collections import defaultdict
+        by_lab = defaultdict(set)
+        for x, y, n, _mask in lut_arith:
+            by_lab[(x, y)].add(n)
+        buf = bytearray(work)
+        for (x, y), ns in by_lab.items():
+            blob = _match_arith_blob(arith_data, x, y, sorted(ns))
+            for off, bp in blob:
+                buf[off] |= (1 << bp)       # absolute SET of presence bits
+        work = bytes(buf)
 
     if m9k_inits:
         from m9k_init_basis import (
