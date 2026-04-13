@@ -4,33 +4,21 @@
 
 nextpnr-generic has no chain-aware placer, so a counter synthesized
 through ``synth/ep4ce6_map.v`` will be scattered across the fabric and
-will not close routing against our sig-cache. This script does the
-placement we can't yet teach nextpnr to do: it reads a post-Yosys JSON,
-walks the ``$alu``-replacement chain, and stamps every CE6_CARRY,
-matching b_buf LUT, and sibling DFF with an explicit ``NEXTPNR_BEL``
-attribute. The annotated JSON is consumed *directly* by ``np2fasm.py``
-— nextpnr-generic is skipped for the first-flash path because its
-built-in packer rejects the ``CE6_CARRY`` cell type (only
-``GENERIC_SLICE`` bels exist in the chipdb), and all routing is
-already covered by the sig-cache at the chosen LAB.
+will not close routing against our sig-cache. This script reads a
+post-Yosys JSON, walks the ``$alu``-replacement chain, and stamps every
+CE6_CARRY and sibling DFF with an explicit ``NEXTPNR_BEL`` attribute.
+The annotated JSON is consumed *directly* by ``np2fasm.py`` — nextpnr-
+generic is skipped for the first-flash path because its built-in packer
+rejects ``CE6_CARRY`` cells.
 
-First-flash target LAB: **(4, 18)**. This is the only LAB on chip
-that is (a) fully calibrated in ep4ce6_bitdb.sqlite (all 16 N slots ×
-all 16 LUT minterms, so fasm2rbf can bake arbitrary LUT masks at every
-LE) and (b) has enough sig-cache entries to carry a 3-bit CE6_CARRY
-chain with Route-A feedback buffers. The uniform-datab (6,17) layout
-from the earlier solver is unusable because (6,17) has zero minterm
-calibration in the bitdb. The (4,18) layout is mixed-port on the
-buffer input side:
+LE-internal feedback (no Route-A buffers): Quartus carry counters have
+ZERO external route cells — DFF.Q → carry input feedback is LE-internal
+on Cyclone IV silicon. Each carry bit needs exactly one LE (CE6_CARRY +
+DFF on the same N slot). No buffer LEs are needed, so a single LAB can
+hold up to 16 carry bits.
 
-  bit 0: CARRY @ N4, buffer @ N12, feedback pip = dataa
-  bit 1: CARRY @ N6, buffer @ N14, feedback pip = datac
-  bit 2: CARRY @ N8, buffer @ N2,  feedback pip = datad
-
-``synth/ep4ce6_map.v`` uses a uniform ``INIT=0xfffe`` (LUT4 OR-identity
-on whichever single input is driven) plus a per-bit wire plug to feed
-B_used into the correct LUT4 pin so nextpnr routes the feedback onto
-the sig-cache-backed dataX pip for that bit.
+First-flash target LAB: **(4, 18)** — the only LAB with full 16×16 LUT
+minterm calibration in ep4ce6_bitdb.sqlite.
 
 Usage
 -----
@@ -47,11 +35,12 @@ import re
 import sys
 from pathlib import Path
 
-# LAB(4, 18) mixed-port 3-bit chain slots (see module docstring).
+# LAB(4, 18) — first-flash target. With LE-internal feedback (no
+# Route-A buffers), each carry bit needs exactly one LE. All 16
+# even-N slots are available for carry.
 LAB_X = 4
 LAB_Y = 18
-CARRY_NS = (4, 6, 8)    # contiguous arith-mode LEs
-BUF_NS   = (12, 14, 2)  # b_buf LUTs (normal-mode LEs in same LAB)
+ALL_NS = (0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30)
 
 _CHAIN_RE = re.compile(r"chain\[(\d+)\]")
 
@@ -80,7 +69,6 @@ def prepack(design: dict) -> tuple[dict, list[str]]:
     cells = modules[mod_name]["cells"]
 
     carries: dict[int, tuple[str, dict]] = {}
-    bufs:    dict[int, tuple[str, dict]] = {}
     dffs_by_d_net: dict[int, tuple[str, dict]] = {}
 
     for name, cell in cells.items():
@@ -91,11 +79,6 @@ def prepack(design: dict) -> tuple[dict, list[str]]:
                 warns.append(f"CARRY without chain[]: {name}")
                 continue
             carries[bit] = (name, cell)
-        elif ctype == "LUT":
-            bit = _chain_bit(name)
-            if bit is None:
-                continue  # some other LUT — leave alone
-            bufs[bit] = (name, cell)
         elif ctype in ("DFF", "$_DFF_P_", "$_DFF_PP0_"):
             d_bits = cell.get("connections", {}).get("D", [])
             if len(d_bits) == 1 and isinstance(d_bits[0], int):
@@ -105,29 +88,23 @@ def prepack(design: dict) -> tuple[dict, list[str]]:
     if n_chain == 0:
         warns.append("no CE6_CARRY chain found — nothing to pre-pack")
         return design, warns
-    if n_chain > len(CARRY_NS):
+    if n_chain > len(ALL_NS):
         warns.append(
-            f"ERROR: chain length {n_chain} exceeds LAB(6,17) capacity "
-            f"{len(CARRY_NS)} — re-target a different LAB or split")
+            f"ERROR: chain length {n_chain} exceeds single-LAB capacity "
+            f"{len(ALL_NS)} — re-target multiple LABs or split")
         return design, warns
 
-    # Sort bit indices ascending and assign N slots in chain order.
+    # Sort bit indices ascending and assign contiguous N slots.
     sorted_bits = sorted(carries.keys())
     for rank, bit in enumerate(sorted_bits):
         carry_name, carry_cell = carries[bit]
-        carry_n = CARRY_NS[rank]
+        carry_n = ALL_NS[rank]
         carry_cell.setdefault("attributes", {})[
             "NEXTPNR_BEL"] = f"SLICE_X{LAB_X}_Y{LAB_Y}_N{carry_n}"
 
-        # Matching buffer for this bit.
-        if bit in bufs:
-            buf_name, buf_cell = bufs[bit]
-            buf_cell.setdefault("attributes", {})[
-                "NEXTPNR_BEL"] = f"SLICE_X{LAB_X}_Y{LAB_Y}_N{BUF_NS[rank]}"
-        else:
-            warns.append(f"WARN: bit {bit} has no b_buf — route won't close")
-
         # Matching DFF: its D input is the CARRY.S output net.
+        # DFF is placed on the SAME LE as the CARRY — LE-internal
+        # feedback means no external routing needed.
         s_bits = carry_cell.get("connections", {}).get("S", [])
         if len(s_bits) == 1 and isinstance(s_bits[0], int):
             dff_entry = dffs_by_d_net.get(s_bits[0])

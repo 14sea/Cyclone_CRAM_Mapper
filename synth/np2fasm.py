@@ -57,56 +57,6 @@ def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
     return (m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)))
 
 
-def _port_const(cell: dict, port: str) -> int | None:
-    """Return 0/1 if the port's single-bit connection is a Yosys
-    constant literal, else None (real wire / unknown / multi-bit)."""
-    bits = cell.get("connections", {}).get(port, [])
-    if len(bits) != 1:
-        return None
-    v = bits[0]
-    if isinstance(v, str) and v in ("0", "1"):
-        return int(v)
-    return None
-
-
-def fold_arith_mask(a_const: int | None,
-                    b_const: int | None,
-                    cin_const: int | None) -> int:
-    """Compute a CE6_CARRY arith-mode LUT mask, folding any constant
-    A/B/CI inputs into the 16-bit truth table.
-
-    Encoding: upper byte = Sum TT, lower byte = Cout TT, indexed by
-    ``i = (cin<<2) | (b<<1) | a``. The adder functions are
-    ``Sum = A ^ B ^ CI`` and ``Cout = majority(A, B, CI)``.
-
-    If a port is `None` (a real net wire), the loop iterates that
-    index bit over 0/1, so the TT depends on it as normal. If a port
-    is 0 or 1 (a Yosys constant), the value is frozen for every row,
-    making the TT *independent* of that index bit. This matters
-    because our chipdb has no VCC/GND routing — datab of a CARRY
-    cell whose B operand is constant has no physical wire driving
-    it, so the silicon pin reads an undefined value. An
-    independent-of-b mask guarantees the LE output is still correct
-    regardless of what datab floats to.
-
-    Calling with ``(None, None, None)`` returns ``0x96E8`` — the
-    techmap's hardcoded default for a plain 3-input adder cell —
-    so this function is a drop-in replacement for the previous
-    fixed-mask readout.
-    """
-    sum_tt = 0
-    cout_tt = 0
-    for i in range(8):
-        a = a_const if a_const is not None else (i & 1)
-        b = b_const if b_const is not None else ((i >> 1) & 1)
-        c = cin_const if cin_const is not None else ((i >> 2) & 1)
-        s = a ^ b ^ c
-        co = 1 if (a + b + c) >= 2 else 0
-        if s:
-            sum_tt |= (1 << i)
-        if co:
-            cout_tt |= (1 << i)
-    return (sum_tt << 8) | cout_tt
 
 
 def convert(routed_json: dict) -> tuple[list[str], list[str]]:
@@ -157,21 +107,12 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
         params = cell.get("parameters", {})
 
         if kind == "SLICE" and ctype == "CE6_CARRY":
-            # Compute the per-cell arith mask by const-folding whatever
-            # A/B/CI ports happen to be Yosys literals. A "fully real"
-            # cell (no constants) recovers 0x96E8 — the techmap's
-            # hardcoded placeholder — so this path is a strict
-            # superset of the previous verbatim LUT_MASK readout.
-            # Rationale: our chipdb has no VCC/GND routing, so when a
-            # CARRY port is a Verilog constant there is no wire to
-            # drive the silicon pin; we fold the constant directly
-            # into the LUT truth table, making the emitted mask
-            # independent of whatever that pin floats to.
-            a_c = _port_const(cell, "A")
-            b_c = _port_const(cell, "B")
-            ci_c = _port_const(cell, "CI")
-            mask = fold_arith_mask(a_c, b_c, ci_c)
-            fasm.append(f"X{x}Y{y}N{n}.LUT_ARITH = 0x{mask:04x}")
+            # Arith-mode LUT SRAM = 0x0000 for standard carry-chain
+            # operations (+1, +, -). The block-band cells configure
+            # dedicated XOR/AND circuitry that implements the adder
+            # function independently of LUT SRAM content. Quartus
+            # uses 0x0000 for all arith LEs (HW-verified 2026-04-13).
+            fasm.append(f"X{x}Y{y}N{n}.LUT_ARITH = 0x0000")
         elif kind == "SLICE" and ctype in ("DFF", "$_DFF_P_"):
             # Yosys-level DFF cell placed on its own SLICE bel. In
             # Cyclone IV the FF lives inside the LE alongside the
@@ -350,13 +291,13 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                 continue
             _, dx, dy, dn = sink_bel
 
-            # Intra-LE LUT→FF path: if a CE6_CARRY or LUT drives a
-            # DFF placed on the SAME (x,y,n), the LUT-to-FF connection
-            # is internal to the LE and does not need a ROUTE.
+            # Intra-LE path: any connection within the same (x,y,n)
+            # is LE-internal and needs no ROUTE. This covers:
+            #   - LUT/CARRY → DFF (combinational output to register)
+            #   - DFF.Q → CARRY input (LE-internal feedback in arith
+            #     mode — Quartus carry counters have 0 external routes)
             if (sx, sy, sn) == (dx, dy, dn):
-                sink_ctype = cells[sink_cell].get("type", "")
-                if sink_ctype in ("DFF", "$_DFF_P_"):
-                    continue
+                continue
 
             # Map sink port to Cyclone IV input name. CE6_CARRY uses
             # named single-bit ports (A→dataa, B→datab); plain SLICE

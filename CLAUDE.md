@@ -129,12 +129,14 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 
 **Pieces landed**:
 1. `chipdb_gen.py` — 8,126 `cout→cin` direct pips between adjacent LE bels
-2. `synth/ep4ce6_map.v` + `synth/prims.v` — `$alu` → per-bit CE6_CARRY chain + Route-A LUT1 buffers
-3. `synth/np2fasm.py` — CE6_CARRY chain walker, emits `LUT_ARITH` + `DFF` + `ROUTE`
+2. `synth/ep4ce6_map.v` + `synth/prims.v` — `$alu` → per-bit CE6_CARRY chain (LE-internal feedback, no Route-A buffers)
+3. `synth/np2fasm.py` — CE6_CARRY chain walker, emits `LUT_ARITH = 0x0000` + `DFF`, skips intra-LE ROUTE
 4. `fuzz/fasm2rbf.py` — `LUT_ARITH` directive loads `results/arith_blockband_v3.json` (v3 block-band blob)
-5. `fuzz/prepack_carry.py` — BEL pinning for 3-bit chain at LAB(4,18), skips nextpnr
+5. `fuzz/prepack_carry.py` — BEL pinning for up to 16-bit chain at LAB(4,18), skips nextpnr
 
 **Hardware verified (2026-04-13 on AX301)**: identity_led + 8×LUT_ARITH=0x0000 overlay → LED constant-on, identical to Quartus counter_led.rbf. Identity Q<=Q negative control → LED off.
+
+**LE-internal feedback (2026-04-13, Route-A eliminated)**: Quartus carry counters have ZERO external route cells — DFF.Q → carry input feedback is LE-internal on Cyclone IV silicon. The techmap connects `B_used` directly to `CE6_CARRY.B` (no LUT1 buffer), and np2fasm skips ROUTE emission for same-LE arcs. 8-bit counter: 8 LEs (was 16 with Route-A), 0 ROUTE directives, 0 sig-cache dependency.
 
 **Key facts**:
 - Arith blob is per-LAB, not per-LE (same 100 cells regardless of which LEs use arith)
@@ -142,7 +144,7 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 - Quartus carry counter has ZERO external route cells — DFF→carry feedback is LE-internal
 - Currently calibrated at LAB(4,18) only; other LABs need Quartus counter+identity diff mining
 
-**Remaining gaps**: DFF cells wrong at (4,18) (formula has zero overlap with Quartus), IOB FASM cell map, arith blob mining at other LABs, determine if Route-A buffer or LE-internal feedback is the right open-toolchain architecture.
+**Remaining gaps**: DFF cells wrong at (4,18) (formula has zero overlap with Quartus), IOB FASM cell map, arith blob mining at other LABs.
 
 **nextpnr**: `source /home/test/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 
