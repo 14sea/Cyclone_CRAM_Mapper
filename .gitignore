@@ -25,6 +25,7 @@ Thumbs.db
 
 # Claude local settings (skills are tracked, settings are not)
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # Mining run logs
 results/*.log
@@ -50,6 +51,23 @@ results/row_dependency_report*.json
 results/source_overhead_*.json
 results/a0_virgin_*.json
 results/neorv32_lab_targets.txt
+results/dff_n_sweep.json
+
+# Contaminated arith mining (superseded by arith_blockband_v3.json)
+results/arith_cells_mined.json
+results/arith_cells_mined_v2.json
+
+# Scratch/experimental scripts (one-off investigations, not part of pipeline)
+fuzz/a0_virgin_*.py
+fuzz/analytic_i6_i8_x33.py
+fuzz/analyze_calibration_sweep.py
+fuzz/calibration_sweep_2d.py
+fuzz/clk_gclk_probe.py
+fuzz/dff_n_sweep.py
+fuzz/r4_full_audit.py
+fuzz/reanalyze_sweep_pure_xor.py
+fuzz/route_synth_v2_dryrun.py
+fuzz/PATCH_PLAN_overhead_injection.md
 
 # Accidental files with embedded spaces (from earlier shell-arg quoting bugs)
 fuzz/fill_*\ *_corpus.py

@@ -62,6 +62,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `DFF` | `X10Y10N0.DFF` | OK — 4 per-LE cells, formula-driven |
 | `BIT` | `BIT offset bp` | OK — raw cell flip |
 | `SRC` | `SRC X10Y10` | OK — per-source overhead |
+| `LUT_ARITH` | `X4Y18N0.LUT_ARITH = 0x0000` | OK — v3 block-band blob, HW verified at (4,18) |
 | `DFF.ARST/ENA` | — | **DISABLED** — header-band noise unresolved |
 | `M9K.INIT` | — | **NOT YET** — anchor table incomplete |
 
@@ -79,7 +80,7 @@ All switch types use the same Y-address (slot/group/bp). Key differences:
 | R24 I=0 | **prev** LAB col | fixed byte (no slot/group adj) | 66% accuracy |
 | LOCAL_INTERCONNECT | **self** col | base 70 + pair×210 + SLOT_OFFSET | 70% cross-val, 22 cols |
 
-Sig-cache (`route_cells_full.json`, 13,487 entries) **short-circuits all formula paths** for production routing. Formulas are fallback only.
+Sig-cache (`route_cells_full.json`, 13,762 entries) **short-circuits all formula paths** for production routing. Formulas are fallback only.
 
 ## Route Synthesis (`fuzz/route_synth.py`)
 
@@ -108,7 +109,7 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **Completed**: chipdb_gen.py (8,241 bels, 59,611 wires, 1.38M pips), techmap (LUT4+DFF), np2fasm.py (logical connectivity → sig-cache lookup), `fasm2rbf` GCLK/DFF/LUT/ROUTE/SRC/BIT directives.
 
-**Status**: pipeline runs end-to-end on combinational designs. **Cannot yet produce working arithmetic designs** because nextpnr-generic does not model the LE carry chain. See Phase 5.4 below.
+**Status**: pipeline runs end-to-end on combinational designs. Arithmetic designs work via the `LUT_ARITH` FASM directive (see Phase 5.4), **hardware-verified on AX301** (2026-04-13). Full Yosys→prepack→np2fasm→fasm2rbf path produces CRC-valid RBFs; the identity_led + arith-overlay path achieves zero data-region diffs vs Quartus.
 
 **Real fixes earned chasing the M5 counter (2026-04-11)**:
 - LutCodec high-density LAB workaround (`predict_sram(0xFFFF)` → 16 true TT cells, XOR-cancels LAB-shared cells from sloppy minterm calibration). Required when >2 LEs share a LAB. See `lutcodec_high_density_lab_bug.md`.
@@ -122,15 +123,26 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **Not yet implemented**: IOB FASM cell map, GCLK clock-pin routing (uses `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as baseline), carry chain (Phase 5.4).
 
-## Phase 5.4 — Carry Chain (BLOCKED on toolchain work)
+## Phase 5.4 — Carry Chain (HW VERIFIED at LAB(4,18))
 
-Required to make any arithmetic design work end-to-end via the open-source flow. Three pieces need to be added together:
-1. `chipdb_gen.py` — declare `cout→cin` direct pip between adjacent LE bels (no LI MUX involved)
-2. `synth/ep4ce6_map.v` + `synth/prims.v` — Yosys techmap to a CARRY primitive that nextpnr can place into chained LEs
-3. `synth/np2fasm.py` — emit FASM directive for arith-mode LE TT encoding (different from normal LUT mask)
-4. New FASM directive in `fasm2rbf.py` (or extend `LUT` with a `mode=arith` flag) and corresponding CRAM cells. Mining: diff Quartus carry-chain RBF vs nv_zero — `/tmp/m5_counter/quartus_ref/counter_top.rbf` is the first ground truth (367 cells, mostly cols 47-48).
+Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2), NOT in LAB CRAM columns. The `LUT_ARITH` FASM directive applies a per-LAB blob of ~100 cells. All prior v1/v2 arith mining was VIRTUAL_PIN routing contamination.
 
-Until this lands, route any arithmetic via Quartus and use the open toolchain only for combinational/FF-only designs.
+**Pieces landed**:
+1. `chipdb_gen.py` — 8,126 `cout→cin` direct pips between adjacent LE bels
+2. `synth/ep4ce6_map.v` + `synth/prims.v` — `$alu` → per-bit CE6_CARRY chain + Route-A LUT1 buffers
+3. `synth/np2fasm.py` — CE6_CARRY chain walker, emits `LUT_ARITH` + `DFF` + `ROUTE`
+4. `fuzz/fasm2rbf.py` — `LUT_ARITH` directive loads `results/arith_blockband_v3.json` (v3 block-band blob)
+5. `fuzz/prepack_carry.py` — BEL pinning for 3-bit chain at LAB(4,18), skips nextpnr
+
+**Hardware verified (2026-04-13 on AX301)**: identity_led + 8×LUT_ARITH=0x0000 overlay → LED constant-on, identical to Quartus counter_led.rbf. Identity Q<=Q negative control → LED off.
+
+**Key facts**:
+- Arith blob is per-LAB, not per-LE (same 100 cells regardless of which LEs use arith)
+- LUT SRAM = 0x0000 for standard +1 counter (function encoded in block-band, not LUT SRAM)
+- Quartus carry counter has ZERO external route cells — DFF→carry feedback is LE-internal
+- Currently calibrated at LAB(4,18) only; other LABs need Quartus counter+identity diff mining
+
+**Remaining gaps**: DFF cells wrong at (4,18) (formula has zero overlap with Quartus), IOB FASM cell map, arith blob mining at other LABs, determine if Route-A buffer or LE-internal feedback is the right open-toolchain architecture.
 
 **nextpnr**: `source /home/test/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 

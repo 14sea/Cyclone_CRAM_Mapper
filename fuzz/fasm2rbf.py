@@ -101,172 +101,54 @@ _GCLK_CELLS = [
 
 
 _DFF_CELLS_CACHE = None
-_ARITH_CELLS_CACHE = None
-_ARITH_V2_CACHE = None
+_ARITH_V3_CACHE = None
 
 
-def _load_arith_cells():
-    """Load the legacy (v1) per-LAB arith-mode blob library.
+def _load_arith_v3():
+    """Load v3 arith block-band blob library.
 
-    Structure (see /tmp/arith_campaign/emit_mined_json.py):
-      mined["labs"]["X,Y"]["by_w"]["W"] = {
-          "arith_ns": [sorted N positions],
-          "cells":    [[off, bp], ...]
-      }
-      mined["labs"]["X,Y"]["full"] = fallback full-chain blob
-
-    KNOWN PROBLEM (2026-04-11): every legacy entry cross-checked so far
-    (4,18 and 10,10) has ~200/208 cells that don't appear in a clean
-    toggle-subtraction 4-way diff, AND 17+ cells that also appear in a
-    pure-toggle build (contamination). See arith_cells_mined_contamination
-    + arith_crossmethod_validation_7cell memories. The v2 loader below
-    prefers the cleaner 4-way ∩ width-sweep schema; v1 is fallback only.
-    """
-    global _ARITH_CELLS_CACHE
-    if _ARITH_CELLS_CACHE is not None:
-        return _ARITH_CELLS_CACHE
-    import json
-    path = ROOT / "results" / "arith_cells_mined.json"
-    if not path.exists():
-        _ARITH_CELLS_CACHE = None
-        return None
-    _ARITH_CELLS_CACHE = json.loads(path.read_text())
-    return _ARITH_CELLS_CACHE
-
-
-def _load_arith_cells_v2():
-    """Load the v2 per-LAB arith blob — 2-tier schema.
+    v3 data comes from Quartus counter vs identity diffs with matching
+    LOCs/pins, isolating ONLY arith-activation cells.  These live in the
+    block band (frames 1692-1738, bp=2) plus a few infrastructure cells
+    in the data region.  The blob is per-LAB, not per-LE — activating
+    arith for ANY LE in a LAB requires the full blob.
 
     Structure:
-      v2["labs"]["X,Y"]["lab_activation_core"]["cells"] = [[off, bp], ...]
-      v2["labs"]["X,Y"]["per_config"]["w{W}_n={n1,n2,...}"] = {
-          "cells": [[off, bp], ...],
-          "source": str,
-      }
-
-    Gold core = 4-way toggle subtraction ∩ width-sweep stable core.
-    Typically 7 cells per LAB (observed at both (4,18) and (10,10)).
-    per_config stores the **position-invariant 4-way intersection**
-    (cA-cB) ∩ (cA2-cB2) for a given (width, start-N) chain configuration.
-    Because this is position-invariant, the lower-half and upper-half
-    entries hold the SAME cells — they're indexed by both N-set keys for
-    lookup convenience, not because the halves differ. NEVER store raw
-    single-half (cA-cB) diffs here: at (10,10) that over-counted 517
-    vs the true 157-cell golden, adding fit-specific routing/FF noise.
-    bitgen composes a full blob by unioning the core with the best-
-    matching per_config entry.
+      v3["labs"]["X,Y"]["cells"] = [[cram_off, bp], ...]
     """
-    global _ARITH_V2_CACHE
-    if _ARITH_V2_CACHE is not None:
-        return _ARITH_V2_CACHE
+    global _ARITH_V3_CACHE
+    if _ARITH_V3_CACHE is not None:
+        return _ARITH_V3_CACHE
     import json
-    path = ROOT / "results" / "arith_cells_mined_v2.json"
+    path = ROOT / "results" / "arith_blockband_v3.json"
     if not path.exists():
-        _ARITH_V2_CACHE = None
+        _ARITH_V3_CACHE = None
         return None
-    _ARITH_V2_CACHE = json.loads(path.read_text())
-    return _ARITH_V2_CACHE
+    _ARITH_V3_CACHE = json.loads(path.read_text())
+    return _ARITH_V3_CACHE
 
 
-def _match_arith_blob_v2(v2, x, y, active_ns):
-    """v2 lookup: core ∪ best-matching per_config.
+def _match_arith_blob(x, y):
+    """Return the arith activation blob for LAB (x, y).
 
-    Selection order inside per_config:
-      1. Exact N-set match (including width prefix for bookkeeping)
-      2. Smallest config whose N-set ⊇ active_ns
-      3. Fail loudly — v2 refuses to silently fall through to contaminated
-         data. The caller can catch FasmError and try the v1 path.
+    The blob is a list of (cram_offset, bitpos) pairs to SET on the
+    base RBF.  These are LAB-wide — the same blob is applied regardless
+    of which or how many LEs within the LAB use arith mode.
     """
+    v3 = _load_arith_v3()
+    if v3 is None:
+        raise FasmError(
+            "LUT_ARITH: results/arith_blockband_v3.json missing; "
+            "mine with Quartus counter vs identity diff at this LAB"
+        )
     lab_key = f"{x},{y}"
-    labs = v2.get("labs", {})
+    labs = v3.get("labs", {})
     if lab_key not in labs:
         raise FasmError(
-            f"LUT_ARITH X{x}Y{y}: no v2 data for this LAB; "
+            f"LUT_ARITH X{x}Y{y}: no v3 block-band data for this LAB; "
             f"have {sorted(labs.keys())}"
         )
-    lab = labs[lab_key]
-    core_cells = {(int(o), int(b)) for o, b in lab["lab_activation_core"]["cells"]}
-    want = set(active_ns)
-
-    def _parse_ns(key):
-        # key like "w8_n=1,3,5,7,9,11,13,15"
-        try:
-            ns_part = key.split("_n=", 1)[1]
-            return {int(s) for s in ns_part.split(",")}
-        except (IndexError, ValueError):
-            return set()
-
-    configs = lab.get("per_config", {})
-
-    # 1) exact
-    for key, entry in configs.items():
-        if _parse_ns(key) == want:
-            config_cells = {(int(o), int(b)) for o, b in entry["cells"]}
-            return sorted(core_cells | config_cells)
-
-    # 2) smallest superset
-    supers = []
-    for key, entry in configs.items():
-        ns = _parse_ns(key)
-        if ns.issuperset(want):
-            supers.append((len(ns), key, entry))
-    if supers:
-        supers.sort()
-        _, _, entry = supers[0]
-        config_cells = {(int(o), int(b)) for o, b in entry["cells"]}
-        return sorted(core_cells | config_cells)
-
-    raise FasmError(
-        f"LUT_ARITH X{x}Y{y} ns={sorted(want)}: no v2 per_config match; "
-        f"have configs {sorted(configs.keys())}. Mine with the gold "
-        f"recipe (4-way toggle subtraction at this W,N) before use."
-    )
-
-
-def _match_arith_blob(mined, x, y, active_ns):
-    """Pick the smallest pre-mined W-blob whose arith_ns covers active_ns.
-
-    Tries v2 schema first (cleaner, validated). Falls back to legacy v1
-    only if v2 has no entry for this LAB. Legacy v1 is known contaminated
-    (see _load_arith_cells docstring) — a WARN is emitted when it's used.
-
-    Strategy (v1 fallback):
-      1. Exact arith_ns match — zero waste
-      2. Smallest W whose arith_ns ⊇ active_ns — superset, a few extra
-         LAB-activation cells (harmless; they're presence bits)
-      3. Full chain (W=16) — last-resort fallback
-    """
-    v2 = _load_arith_cells_v2()
-    if v2 is not None and f"{x},{y}" in v2.get("labs", {}):
-        return _match_arith_blob_v2(v2, x, y, active_ns)
-
-    lab_key = f"{x},{y}"
-    labs = mined.get("labs", {})
-    if lab_key not in labs:
-        raise FasmError(
-            f"LUT_ARITH X{x}Y{y}: no mined data for this LAB "
-            f"(checked v2 and v1); have v1 {sorted(labs.keys())}"
-        )
-    sys.stderr.write(
-        f"warn: LUT_ARITH X{x}Y{y}: using legacy v1 blob — known "
-        f"contaminated. Re-mine with the 4-way gold recipe.\n"
-    )
-    lab = labs[lab_key]
-    want = set(active_ns)
-    # 1) exact
-    for w_str, entry in lab["by_w"].items():
-        if set(entry["arith_ns"]) == want:
-            return [(int(o), int(b)) for o, b in entry["cells"]]
-    # 2) smallest superset
-    supers = []
-    for w_str, entry in lab["by_w"].items():
-        if set(entry["arith_ns"]).issuperset(want):
-            supers.append((int(w_str), entry))
-    if supers:
-        supers.sort(key=lambda t: t[0])
-        return [(int(o), int(b)) for o, b in supers[0][1]["cells"]]
-    # 3) fallback
-    return [(int(o), int(b)) for o, b in lab["full"]]
+    return [(int(o), int(b)) for o, b in labs[lab_key]["cells"]]
 
 
 def _load_dff_cells():
@@ -550,41 +432,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             "CRC byte artifacts, not real FF mode bits. Needs re-mining."
         )
 
-    # LUT TT phase processes *both* normal and arith LUTs — the 16-bit
-    # mask layout is the same as far as the CRAM TT cells are concerned
-    # (Quartus reuses the same LUT SRAM for the sum/cout concatenation in
-    # arith mode).  Merge the two lists so a single reset+XOR pass handles
-    # every LE that has a mask.
+    # LUT TT phase processes normal and arith LUTs differently.
+    #
+    # Normal-mode LEs: reset to minterm_0 baseline (undo routing
+    # contamination + presence delta), then XOR predict_sram(mask).
+    #
+    # Arith-mode LEs: skip the minterm_0 reset entirely.  In arith mode
+    # the LE has zero normal-mode "presence" cells — the minterm_0 RBF
+    # was compiled in normal mode and its 35+ presence cells are wrong
+    # for arith configuration.  predict_sram(mask) still works because
+    # the TT-cell → mask mapping is the same physical SRAM; only the
+    # baseline differs (arith baseline = nv_zero, not minterm_0).
+    # Verified: predict_sram output doesn't overlap with minterm_0
+    # presence cells, so the XOR produces correct results either way.
     all_luts = list(luts) + list(lut_arith)
 
     if all_luts:
         db = sqlite3.connect(db_path)
         try:
-            # The sig-cache includes LUT TT cells from factory pair-diffs
-            # (masks 0x8888/0xAAAA), so routing contaminates LUT cell
-            # positions.  Fix: reset every LUT cell to the pre-routing
-            # base_rbf state, then apply the accumulated predict_sram XOR
-            # for all LUTs simultaneously.
-            #
-            # LUT cells within a LAB share "data" bytes across N values.
-            # The accumulated XOR (symmetric difference of predict_sram
-            # sets) produces the correct multi-LE CRAM state because the
-            # encoding is XOR-linear across LEs.  Per-LE read_tt can't
-            # verify this (ctrl cells are shared), but the cell-level math
-            # is proven correct.
             buf = bytearray(work)
 
-            # Phase 1: reset each LUT cell to its minterm_0 (mask=0)
-            # state.  This undoes both route sig-cache contamination AND
-            # the "presence delta" between nv_zero_global (no LEs) and
-            # minterm_0 (one LE placed at mask 0).  For shared cells
-            # (rare: 8/113 disagree across LEs), last-processed LE wins —
-            # functionally irrelevant per hardware verification.
             _m0_cache = {}
-            # Cache LutCodec per (x,y,n); fall through gracefully if a
-            # position lacks minterm calibration (common for N>0 at most
-            # LABs).  LUT_ARITH still applies its LAB-wide activation
-            # cells even when the per-LE TT write is skipped.
             lut_cache = {}
             arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
             for x, y, n, mask in all_luts:
@@ -603,7 +471,12 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                         lut_cache[key] = None
                     else:
                         raise
+
+            # Phase 1: reset normal-mode LUT cells to minterm_0 baseline.
+            # SKIP for arith-mode LEs — arith has no normal-mode presence.
             for x, y, n, mask in all_luts:
+                if (x, y, n) in arith_keys:
+                    continue  # arith: no minterm_0 reset
                 lut = lut_cache[(x, y, n)]
                 if lut is None:
                     continue
@@ -622,8 +495,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                             buf[addr] ^= (1 << bitpos)
 
             # Phase 2: accumulate XOR flips for all LUTs.
-            # predict_sram(mask) gives cells relative to minterm_0, so
-            # after Phase 1 alignment the XOR is exact.
+            # For normal LEs: relative to minterm_0 (Phase 1 aligned).
+            # For arith LEs: relative to nv_zero (Phase 1 skipped).
             for x, y, n, mask in all_luts:
                 lut = lut_cache[(x, y, n)]
                 if lut is None:
@@ -635,27 +508,19 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             db.close()
 
     if lut_arith:
-        # LAB-wide carry-chain activation cells.  Applied AFTER the LUT TT
-        # phase so that any activation cell which happens to overlap with
-        # a lut.all_cells reset isn't clobbered: the TT phase's minterm_0
-        # reset can clear presence bits that LUT_ARITH needs on; this
-        # SET-OR restores them as the final word.
+        # LAB-wide carry-chain activation cells (block band + infra).
+        # Applied AFTER the LUT TT phase so that any activation cell
+        # which overlaps with a lut.all_cells reset isn't clobbered.
         #
-        # Union Filling: multiple LUT_ARITH lines in the same LAB → one
-        # blob lookup covering every arith LE in the LAB.
-        arith_data = _load_arith_cells()
-        if arith_data is None:
-            raise FasmError(
-                "LUT_ARITH: results/arith_cells_mined.json missing; "
-                "run the /tmp/arith_campaign/ sweep + emit_mined_json.py"
-            )
+        # The arith blob is per-LAB, not per-LE: the same cells are SET
+        # regardless of which LEs within the LAB use arith mode.
         from collections import defaultdict
         by_lab = defaultdict(set)
         for x, y, n, _mask in lut_arith:
             by_lab[(x, y)].add(n)
         buf = bytearray(work)
         for (x, y), ns in by_lab.items():
-            blob = _match_arith_blob(arith_data, x, y, sorted(ns))
+            blob = _match_arith_blob(x, y)
             for off, bp in blob:
                 buf[off] |= (1 << bp)       # absolute SET of presence bits
         work = bytes(buf)
