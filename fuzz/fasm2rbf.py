@@ -25,7 +25,7 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # Enable global clock network (PIN_E1 → all LAB CLK inputs)
     GCLK
 
-    # Enable DFF register at a specific LE
+    # DFF register marker (no-op — DFF is intrinsic to every LE)
     X{x}Y{y}N{n}.DFF
 
 The base RBF must be a valid "zero" baseline for the source LAB (e.g.
@@ -100,7 +100,6 @@ _GCLK_CELLS = [
 ]
 
 
-_DFF_CELLS_CACHE = None
 _ARITH_V3_CACHE = None
 
 
@@ -151,33 +150,21 @@ def _match_arith_blob(x, y):
     return [(int(o), int(b)) for o, b in labs[lab_key]["cells"]]
 
 
-def _load_dff_cells():
-    global _DFF_CELLS_CACHE
-    if _DFF_CELLS_CACHE is not None:
-        return _DFF_CELLS_CACHE
-    path = ROOT / "results" / "dff_cells_mined.json"
-    if path.exists():
-        import json
-        raw = json.loads(path.read_text())
-        _DFF_CELLS_CACHE = {
-            k: [(off, bp) for off, bp in v] for k, v in raw.items()
-        }
-    else:
-        _DFF_CELLS_CACHE = {}
-    return _DFF_CELLS_CACHE
-
-
 def _dff_le_cells(x, y, n):
-    """Return per-LE DFF enable CRAM cells for LE at (x, y, n).
+    """Return per-LE DFF enable CRAM cells — currently EMPTY.
 
-    Uses lookup table from multi-seed comb-vs-reg pair-diff mining
-    (results/dff_cells_mined.json).  Falls back to empty list if
-    unmined — under-mining is safe because unstripped DFF cells in
-    the sig-cache route ops survive as single-flip routing.
+    Cyclone IV's flip-flop is intrinsic to every LE — always present,
+    no per-LE enable CRAM cell exists.  The registered vs combinational
+    output is selected by downstream routing (which LE output the next
+    stage reads).  For LE-internal feedback (carry counters, Q<=Q),
+    zero DFF-specific CRAM cells are needed.
+
+    HW-verified 2026-04-13: identity_led (16 DFFs at LAB(4,18)) vs
+    nv_zero shows ZERO diffs in the LAB CRAM column.  15-vs-16 DFF
+    controlled test also shows 0 LAB column diffs.  The former
+    dff_cells_mined.json contained routing infrastructure noise.
     """
-    table = _load_dff_cells()
-    key = f"{x},{y},{n}"
-    return table.get(key, [])
+    return []
 
 
 class FasmError(ValueError):
@@ -386,9 +373,6 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         strip = set()
         if gclk:
             strip.update(_GCLK_CELLS)
-        if dff_les:
-            for x, y, n in dff_les:
-                strip.update(_dff_le_cells(x, y, n))
         if strip:
             ops = [
                 op for op in ops
@@ -402,16 +386,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
         work = bytes(buf)
 
-    if dff_les:
-        buf = bytearray(work)
-        # Union all DFF cells before emitting — prevents double-flip
-        # of LAB-level cells shared across multiple LEs in the same LAB.
-        dff_all = set()
-        for x, y, n in dff_les:
-            dff_all.update(_dff_le_cells(x, y, n))
-        for off, bp in dff_all:
-            buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
-        work = bytes(buf)
+    # DFF directives are parsed but intentionally no-op: Cyclone IV's
+    # flip-flop is intrinsic to every LE (no per-LE enable cell in CRAM).
+    # Registered vs combinational output is selected by downstream routing.
+    # See _dff_le_cells() docstring for HW verification details.
 
     if bits:
         buf = bytearray(work)

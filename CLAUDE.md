@@ -59,7 +59,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `ROUTE` | `ROUTE X10Y10 -> X10Y12N4.datab` | OK — sig-cache lookup (6 or 7-tuple) |
 | `ROUTE` (sn>0) | `ROUTE X5Y3N4 -> X4Y3N6.datad` | OK — 7-tuple key |
 | `GCLK` | `GCLK` | OK — 17 position-independent cells |
-| `DFF` | `X10Y10N0.DFF` | OK — 4 per-LE cells, formula-driven |
+| `DFF` | `X10Y10N0.DFF` | **NO-OP** — DFF is silicon default (no CRAM cells) |
 | `BIT` | `BIT offset bp` | OK — raw cell flip |
 | `SRC` | `SRC X10Y10` | OK — per-source overhead |
 | `LUT_ARITH` | `X4Y18N0.LUT_ARITH = 0x0000` | OK — v3 block-band blob, HW verified at (4,18) |
@@ -144,7 +144,9 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 - Quartus carry counter has ZERO external route cells — DFF→carry feedback is LE-internal
 - Currently calibrated at LAB(4,18) only; other LABs need Quartus counter+identity diff mining
 
-**Remaining gaps**: DFF cells wrong at (4,18) (formula has zero overlap with Quartus), IOB FASM cell map, arith blob mining at other LABs.
+**DFF resolved (2026-04-13)**: DFF is the silicon default — no per-LE enable CRAM cell exists. The FF is intrinsic to every LE; registered vs combinational output is selected by downstream routing. The former `dff_cells_mined.json` contained routing infrastructure noise (zero overlap with any real RBF). FASM `DFF` directive is now a parsed no-op.
+
+**Remaining gaps**: IOB FASM cell map, arith blob mining at other LABs, GCLK cells may conflict with some bases (17 cells mined from nv_zero; Quartus counter doesn't use all of them).
 
 **nextpnr**: `source /home/test/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 
@@ -171,3 +173,4 @@ Code: **GPL-3.0-or-later** (all .py/.v/.tcl must have SPDX header). Docs: **CC B
 7. Disk: Phase 3 needs work-dir cleanup (`compile.clean_work_dir()`) or in-memory diff
 8. **Always cross-check codec output against Quartus's own build of the same Verilog before chasing low-level bugs.** The M5 counter session burned two days on real-but-not-blocking bugs (LutCodec, sig-cache mining, phase ordering) before someone flashed `quartus_ref/counter_top.rbf` and discovered Quartus places the design in completely different columns using carry-chain wires that nextpnr-generic doesn't model. A 30-second `quartus_map → fit → asm → cpf` and a flash would have nailed the root cause on day one. Rule: if your open-toolchain build of design D doesn't behave as expected, build D in Quartus, flash it, and diff the two RBFs *before* you start patching the codec.
 9. **Self-loop sig-cache entries are unmineable with the two-LUT pair template.** The 61 self-loop entries in `route_cells_full.json` are bloated noise (90-754 cells vs corpus median 135) and cannot be repaired by re-running `selfloop_factory.py` (Quartus refits the design between baseline and feedback compiles, so the diff includes pin reassignments and routing churn unrelated to the LI MUX). If your design needs self-feedback (LE → same LE.dataX), the toolchain currently has no clean route. Avoid self-loops at the synthesis level, or wait for a single-LE differential mining strategy.
+10. **DFF has no per-LE CRAM enable cell.** Cyclone IV's flip-flop is intrinsic — always present in every LE. `dff_cells_mined.json` is confirmed bogus (routing infrastructure noise). The FASM `DFF` directive is a parsed no-op. Registered output is selected by downstream routing, not a dedicated FF enable bit.
