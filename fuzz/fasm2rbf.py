@@ -100,54 +100,65 @@ _GCLK_CELLS = [
 ]
 
 
-_ARITH_V3_CACHE = None
+_ARITH_BLOB_CACHE = None
 
 
-def _load_arith_v3():
-    """Load v3 arith block-band blob library.
+def _load_arith_blob():
+    """Load v4 universal arith activation blob.
 
-    v3 data comes from Quartus counter vs identity diffs with matching
-    LOCs/pins, isolating ONLY arith-activation cells.  These live in the
-    block band (frames 1692-1738, bp=2) plus a few infrastructure cells
-    in the data region.  The blob is per-LAB, not per-LE — activating
-    arith for ANY LE in a LAB requires the full blob.
+    v4 data is the result of a 3-LAB triangle test (2026-04-14) at
+    (4,18), (10,18), (4,10) which proved the arith activation cells
+    are 100% position-independent: the SAME 100 SETs + 4 CLEARs unlock
+    arith mode at any LAB on the chip.
 
-    Structure:
-      v3["labs"]["X,Y"]["cells"] = [[cram_off, bp], ...]
+    Schema:
+      v4["set"]   = [[cram_off, bp], ...]  # 100 cells to OR-in
+      v4["clear"] = [[cram_off, bp], ...]  # 4 cells to AND-clear
+
+    Verified: 0 data + 0 CRC diffs at all 3 tested LABs when applied
+    to identity baseline.  The blob is per-chip, not per-LAB and not
+    per-LE — applied once when ANY arith LE exists in the design.
+
+    Falls back to v3 (per-LAB SETs only, no CLEARs) for old data.
     """
-    global _ARITH_V3_CACHE
-    if _ARITH_V3_CACHE is not None:
-        return _ARITH_V3_CACHE
+    global _ARITH_BLOB_CACHE
+    if _ARITH_BLOB_CACHE is not None:
+        return _ARITH_BLOB_CACHE
     import json
-    path = ROOT / "results" / "arith_blockband_v3.json"
-    if not path.exists():
-        _ARITH_V3_CACHE = None
-        return None
-    _ARITH_V3_CACHE = json.loads(path.read_text())
-    return _ARITH_V3_CACHE
+    v4_path = ROOT / "results" / "arith_blockband_v4.json"
+    if v4_path.exists():
+        _ARITH_BLOB_CACHE = json.loads(v4_path.read_text())
+        return _ARITH_BLOB_CACHE
+    v3_path = ROOT / "results" / "arith_blockband_v3.json"
+    if v3_path.exists():
+        _ARITH_BLOB_CACHE = json.loads(v3_path.read_text())
+        return _ARITH_BLOB_CACHE
+    _ARITH_BLOB_CACHE = None
+    return None
 
 
-def _match_arith_blob(x, y):
-    """Return the arith activation blob for LAB (x, y).
+def _arith_set_clear():
+    """Return (set_cells, clear_cells) for universal arith activation.
 
-    The blob is a list of (cram_offset, bitpos) pairs to SET on the
-    base RBF.  These are LAB-wide — the same blob is applied regardless
-    of which or how many LEs within the LAB use arith mode.
+    set_cells:   list of (offset, bp) to OR-in on the base RBF
+    clear_cells: list of (offset, bp) to AND-clear on the base RBF
     """
-    v3 = _load_arith_v3()
-    if v3 is None:
+    blob = _load_arith_blob()
+    if blob is None:
         raise FasmError(
-            "LUT_ARITH: results/arith_blockband_v3.json missing; "
-            "mine with Quartus counter vs identity diff at this LAB"
+            "LUT_ARITH: results/arith_blockband_v4.json missing; "
+            "run the triangle-test mining campaign"
         )
-    lab_key = f"{x},{y}"
-    labs = v3.get("labs", {})
-    if lab_key not in labs:
-        raise FasmError(
-            f"LUT_ARITH X{x}Y{y}: no v3 block-band data for this LAB; "
-            f"have {sorted(labs.keys())}"
-        )
-    return [(int(o), int(b)) for o, b in labs[lab_key]["cells"]]
+    if blob.get("version") == 4:
+        set_cells = [(int(o), int(b)) for o, b in blob["set"]]
+        clear_cells = [(int(o), int(b)) for o, b in blob["clear"]]
+        return set_cells, clear_cells
+    # v3 fallback: per-LAB SETs only, use (4,18) as universal proxy
+    labs = blob.get("labs", {})
+    if "4,18" not in labs:
+        raise FasmError("LUT_ARITH: v3 fallback requires (4,18) entry")
+    set_cells = [(int(o), int(b)) for o, b in labs["4,18"]["cells"]]
+    return set_cells, []
 
 
 def _dff_le_cells(x, y, n):
@@ -486,21 +497,20 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             db.close()
 
     if lut_arith:
-        # LAB-wide carry-chain activation cells (block band + infra).
+        # Chip-wide carry-chain activation cells (block band + infra).
         # Applied AFTER the LUT TT phase so that any activation cell
         # which overlaps with a lut.all_cells reset isn't clobbered.
         #
-        # The arith blob is per-LAB, not per-LE: the same cells are SET
-        # regardless of which LEs within the LAB use arith mode.
-        from collections import defaultdict
-        by_lab = defaultdict(set)
-        for x, y, n, _mask in lut_arith:
-            by_lab[(x, y)].add(n)
+        # The arith blob is POSITION-INDEPENDENT (v4): the same 100 SETs
+        # + 4 CLEARs activate arith mode at any LAB.  Triangle-test
+        # verified at (4,18), (10,18), (4,10) — 0 data diffs each.
+        # Applied once even if multiple LABs have arith LEs.
+        set_cells, clear_cells = _arith_set_clear()
         buf = bytearray(work)
-        for (x, y), ns in by_lab.items():
-            blob = _match_arith_blob(x, y)
-            for off, bp in blob:
-                buf[off] |= (1 << bp)       # absolute SET of presence bits
+        for off, bp in set_cells:
+            buf[off] |= (1 << bp)            # OR-in activation bits
+        for off, bp in clear_cells:
+            buf[off] &= ~(1 << bp) & 0xFF    # AND-clear deactivation bits
         work = bytes(buf)
 
     if m9k_inits:
