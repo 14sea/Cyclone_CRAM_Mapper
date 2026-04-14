@@ -65,6 +65,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `BIT` | `BIT offset bp` | OK — raw cell flip |
 | `SRC` | `SRC X10Y10` | OK — per-source overhead |
 | `LUT_ARITH` | `X4Y18N0.LUT_ARITH = 0x0000` | OK — v4 universal blob (100 SETs + 4 CLEARs) for 8-LE half-LAB chains at ANY LAB. Other widths see per-width table below. |
+| `IOB_IN`/`IOB_OUT` | `IOB_IN PIN_M16` / `IOB_OUT PIN_F15` | OK single-axis (44/44 bit-perfect) — XOR delta from `iob_in_E15.rbf` baseline (K=E15, LED=G15). Cross-axis combos leak ~50-60 joint-placement bytes; needs 2D K×LED sweep to close. |
 | `DFF.ARST/ENA` | — | **DISABLED** — header-band noise unresolved |
 | `M9K.INIT` | — | **NOT YET** — anchor table incomplete |
 
@@ -123,7 +124,9 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **M5 counter blocker (NOT a codec bug — a missing primitive)**: Quartus compiles a 24-bit counter to 367 cells in CRAM cols 47-48 using **LE carry-chain wires** (`cout→cin` direct, 1 LE per bit). nextpnr-generic does not model these wires, so Yosys emulates `+1` as a 4-LE-per-bit ripple producing 24 self-feedback routes (LE → same LE.dataX). Self-feedback routes cannot be cleanly mined: the two-LUT pair template can't represent `src==dst`, and the diff-based selfloop_factory gets refit by Quartus producing 110-754-cell noise. Working ground truth: `tmp/m5_counter/quartus_ref/counter_top.rbf` (Quartus build, blinks on AX301; rebuild under the repo-local scratch dir). Diagnostic memory: `m5_counter_root_cause_carry_chain.md`.
 
-**Not yet implemented**: IOB FASM cell map, GCLK clock-pin routing (uses `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as baseline), carry chain (Phase 5.4).
+**Not yet implemented**: GCLK clock-pin routing (uses `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as baseline), carry chain (Phase 5.4), 2D IOB K×LED sweep to close cross-axis joint-placement gap.
+
+**Partially landed (2026-04-14)**: IOB FASM cell map — `IOB_IN PIN_X` / `IOB_OUT PIN_X` directives reproduce all 44 single-axis ground-truth RBFs bit-perfect via XOR delta from `iob_in_E15.rbf` baseline. Mining: `fuzz/iob_sweep.py` (parallel Quartus builds) + `fuzz/iob_analyze.py` (pair-delta vs anchor) → `results/iob_cell_map.json`. Validator: `fuzz/iob_validate.py`.
 
 ## Phase 5.4 — Carry Chain (HW VERIFIED at LAB(4,18))
 
