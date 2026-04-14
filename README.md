@@ -616,11 +616,9 @@ Formula: delta(N) = -(half * 38) - (kh // 2) * 8 - (kh % 2) * 2
 - Adding a basic DFF changes ~362 bits, of which ~90% are routing and ~10% are LE config
 - FF mode bits (async reset / sync enable): 82 shared mode bits + feature-specific routing
 
-#### Phase 2.4: Arithmetic Mode
+#### Phase 2.4: Arithmetic Mode (initial claim — later revised)
 
-Compile an adder using a behavioral description (`a + b`); Quartus uses the LE's arithmetic mode and carry chain.
-
-By diffing against a normal-mode LUT, we isolate **92 pure arithmetic/carry-chain bits**, distributed on both sides of the LUT TT region (same split pattern as FF).
+Early mining compiled an adder using `a + b` with VIRTUAL_PIN and, by diffing against a normal-mode LUT, reported "~92 arithmetic/carry-chain bits per LE" distributed on both sides of the LUT TT region. That claim turned out to be wrong: VIRTUAL_PIN produces ghost routing bits that vanish on real-pin recompiles (same lesson as Phase 5.0 for M9K/DSP). The real arithmetic activation is a **LAB-level mode switch in the block band** (frames 1692-1738), not a per-LE cell region — see the Phase 5.4 follow-up narrative for details.
 
 ---
 
@@ -2087,6 +2085,108 @@ high-density combinational and FF-only designs. Phase 5.4 will turn
 the carry chain into the next cliff we climb.
 
 
+### Phase 5.4 follow-up: the carry chain cliff, climbed (2026-04-13 → 04-14)
+
+The counter forensics story above ends at the edge of a cliff. This
+section is what happened on the climb. It is written for students and
+tries to stay concrete.
+
+**Where the arithmetic bits actually live.** Phase 2.4 once claimed
+"92 arithmetic/carry-chain bits per LE" inside each LE's CRAM region.
+That finding turned out to be **wrong** — it had been mined with
+`VIRTUAL_PIN`, which (as Phase 5.0 later discovered for M9K/DSP) makes
+Quartus emit ghost routing cells that disappear the moment you
+recompile with real pins. When we re-mined with real pins, the
+per-LE arithmetic cells vanished; they had never been there.
+
+What is actually there: arithmetic mode is a **LAB-level mode
+switch**, not a per-LE setting. When *any* LE in LAB (X, Y) turns on
+arith mode, a specific pattern of ~100 bits lights up in the
+**block band** (frames 1692-1738) — the same region of the bitstream
+that enables M9K RAM blocks and DSP multipliers. There are **no
+per-LE arithmetic CRAM cells**. The mental model: a LAB has 16 LEs
+all sharing the same arith-mode configuration, so the bits that
+configure it are stored once per LAB, not 16 times. This mirrors how
+a CPU works — you don't have a separate ALU for every register pair,
+you have one ALU with a mode field.
+
+**The blob is position-independent across LABs.** Once we had the
+~100 cells that activate arith mode in LAB (4,18), we asked: does
+LAB (10,18) use a different 100 cells? LAB (4,10)? The "triangle
+test" (2026-04-14) built the same 8-bit counter at all three LABs and
+diffed each against its own identity twin. All three diffs produced
+**byte-identical cell sets** — the same 100 offsets in the block band
+light up regardless of which LAB hosts the counter. We named this the
+**v4 universal blob** and shipped it as
+`results/arith_blockband_v4.json` (100 SETs + 4 CLEARs). Teach the
+FASM codec one table and it works everywhere on the chip.
+
+**The blob is per-WIDTH, not per-N-slot.** A 16-bit counter needs
+197 block-band cells, not 100. A 24-bit counter crossing two LABs
+needs 295. So the blob depends on how many LEs are in the carry chain
+— but does it also depend on *which* N-slots within a LAB you use?
+A Cyclone IV LAB has 16 LEs at N slots 0, 2, 4, …, 30; placing eight
+of them in the lower half (N=0..14) versus the upper half
+(N=16..30) is two physically distinct placements.
+
+Phase 1 sweep (2026-04-14, 42 Quartus builds, no hardware): for each
+width `w ∈ {2, 3, …, 16}`, build a `w`-bit counter at LAB (4,18)
+twice — once lower-half, once upper-half. The fitter report confirmed
+both placements were honored. Then diff each counter against a
+matching identity design. Result: at every width, the lower-half
+diff and the upper-half diff were **byte-identical** — same offsets,
+same bit positions. Placing the same eight LEs in a different half
+of the same LAB does not change a single arith bit in CRAM. We had
+feared needing to mine `2^16` N-slot combinations; it turns out a
+per-width table (one entry per chain length) is enough. That table
+now lives at `results/arith_blockband_by_width.json` and covers
+widths 2..16 single-LAB plus the 16+8 cross-LAB case; round-trip
+verification (apply blob to identity, diff against counter) gives
+zero data and zero block-band differences for every entry.
+
+**Two myths debunked on the way.**
+
+*Myth 1 — "every LE has a FF-enable CRAM bit."* We tried to mine
+that bit three different ways and always got noise. Cross-checking
+against Quartus: every Cyclone IV LE has a flip-flop that is
+**always physically present**. Whether you *use* the flip-flop or
+the combinational output is selected by downstream routing, not by a
+CRAM bit. Our old `dff_cells_mined.json` was routing infrastructure
+noise. The FASM `DFF` directive is now a parsed no-op.
+
+*Myth 2 — "carry chain needs external feedback routes."* An `N`-bit
+counter is `Q <= Q + 1`, so each FF's `Q` output feeds back into the
+ALU's B input. Our early Yosys techmap inserted a "Route-A buffer"
+LUT to carry that feedback through the local interconnect. Doing so
+doubled the LE count and created self-feedback routes that the
+sig-cache cannot mine cleanly. When we looked at Quartus's own
+counter: **zero external route cells for the feedback.** Cyclone IV
+has an internal wire from the FF output directly into the ALU's B
+input; no LI MUX is involved. The fix in `synth/ep4ce6_map.v` was to
+bind the FF's `Q` directly to `CE6_CARRY.B` with no intermediate
+buffer. An 8-bit counter now uses 8 LEs and 0 route cells, same as
+Quartus.
+
+**What's on silicon right now.** On 2026-04-13 we flashed an 8-bit
+counter assembled entirely from FASM (identity baseline + eight
+`LUT_ARITH = 0x0000` directives) onto an AX301 board. The LED
+blinked at the expected rate, behavior bit-identical to Quartus's
+own compile of the same Verilog. An identity `Q <= Q` negative
+control produced a dark LED. That is the full proof: the block-band
+arith blob is the real activation, the universal blob works at the
+chosen LAB, LE-internal feedback is sufficient, and the FASM
+`LUT_ARITH` directive is end-to-end wired up correctly. Widths 9..16
+and the 24-bit cross-LAB pattern are shown byte-identical to Quartus
+output under `diff`, but await hardware re-verification when the
+board is next on the desk.
+
+**One sentence take-away.** The carry chain was not a second set of
+cells per LE (as we had guessed); it is a single LAB-wide mode switch
+stored in the same block band that holds M9K and DSP activation, and
+its bit pattern depends on the chain's *length* but not on *which*
+LEs in the LAB are part of it.
+
+
 ## Current Progress and Next Steps
 
 ### Completed ✓
@@ -2143,20 +2243,22 @@ the carry chain into the next cliff we climb.
 - [x] Phase 5.0: **Non-LAB blocks (DSPMULT + M9K) — real-pin re-mine (2026-04-08)** — see In Progress section above for full detail
 - [x] Phase 5.2: **M9K init content codec — Stage A+B CLOSED (2026-04-09)** — 3-band partition (data/mode/clock); 2D linear formula `byte(w,bit) = anchor + (w//2)*210 - (w%2) - 2*bit, bp=6`; 31 NEORV32 M9K sites calibrated (`M9K_INIT_ANCHORS` = 33 entries); LOC fix (use instance name `-to "u"`); READ 512/512, WRITE 0 CRAM diffs vs Quartus. `fuzz/m9k_init_basis.py`
 
+- [x] Phase 5.4: **LE carry chain in open flow — HARDWARE-VERIFIED on AX301 (2026-04-13)** — arith activation is a LAB-level mode switch in the block band (frames 1692-1738), not a per-LE cell region; position-independent across LABs (v4 universal blob, `arith_blockband_v4.json`); per-width table covers widths 2..16 single-LAB + 16+8 cross-LAB (`arith_blockband_by_width.json`, all entries round-trip zero-diff vs Quartus). Four pieces landed: chipdb `cout→cin` pips (8,126), CE6_CARRY techmap primitive (LE-internal FF→ALU feedback, no Route-A buffer), np2fasm `LUT_ARITH` emission, fasm2rbf `LUT_ARITH` directive. Identity + 8× `LUT_ARITH=0x0000` blinks on AX301 bit-identically to Quartus counter RBF; identity `Q<=Q` negative control stays dark. DFF confirmed silicon-default (no per-LE CRAM enable cell — FASM `DFF` is now a parsed no-op). Pedagogical narrative at "Phase 5.4 follow-up" section above.
+
 ### Future Work
 
 - [ ] Phase 5.1: Complete routing codec coverage (target: all wire types >90%; C16 + remaining R4 I-indices still open) — distinct from the already-done Phase 5.0 non-LAB work
 - [ ] Phase 5.2b: Non-LAB block parameter decoding beyond CLOCK_ENABLE and M9K INIT — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
-- [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (PARTIALLY OPEN)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
-  - `fuzz/chipdb_gen.py`: generates nextpnr-generic Python chipdb (8,241 bels, 59,611 wires, 1.38M pips) with GCLK broadcast, intra-LAB direct pips, 4-level pip cost hierarchy (SIG=1 < INTRA=2 < LOCAL=5 < HOP=20)
-  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF)
-  - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives
-  - `fuzz/fasm2rbf.py` directives that work end-to-end: `LUT`, `ROUTE` (6/7-tuple), `GCLK`, `DFF`, `BIT`, `SRC`. CRC patcher integrated.
-  - **M5 counter — 24-bit counter does NOT yet blink via the open flow.** The pipeline runs end-to-end (Yosys → nextpnr → np2fasm → fasm2rbf → CRC-valid 368,011-byte RBF, LI-safety SAFE), but the LED stays constant on hardware. Root cause discovered 2026-04-11 by flashing Quartus's own build of the same Verilog as ground truth: **Quartus places the 24 counter LEs in CRAM cols 47-48 using carry-chain wires (`cout→cin` direct, 1 LE per bit, 367 cells total), while our build places 31 LEs in (4,18)/(4,19) using 4 LEs per bit to emulate `+1` (1185 cells, 24 self-feedback routes that have no clean sig-cache mining template).** This is a missing-primitive bug in `chipdb_gen.py`/Yosys techmap, not a codec or FASM bug — see Phase 5.4 below. Quartus reference RBF at `/tmp/m5_counter/quartus_ref/counter_top.rbf` blinks correctly on AX301.
+- [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (PARTIALLY OPEN, arithmetic designs now hardware-verified via Phase 5.4)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
+  - `fuzz/chipdb_gen.py`: generates nextpnr-generic Python chipdb (8,241 bels, 59,611 wires, 1.38M pips) with GCLK broadcast, intra-LAB direct pips, 4-level pip cost hierarchy (SIG=1 < INTRA=2 < LOCAL=5 < HOP=20), plus **8,126 `cout→cin` direct pips** for carry chain (Phase 5.4).
+  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF + CE6_CARRY for `$alu`)
+  - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives, walks the carry chain and emits `LUT_ARITH`
+  - `fuzz/fasm2rbf.py` directives that work end-to-end: `LUT`, `ROUTE` (6/7-tuple), `GCLK`, `DFF` (parsed no-op — FF is silicon default), `BIT`, `SRC`, `LUT_ARITH`. CRC patcher integrated.
+  - **M5 counter — 8-bit counter now hardware-verified via the open flow (2026-04-13).** The FASM path (identity baseline + 8× `LUT_ARITH = 0x0000`) blinks on AX301 with bit-identical behavior to Quartus's own compile. Widths 2..16 single-LAB and the 16+8 cross-LAB case are byte-identical to Quartus output under `diff`; hardware re-verification pending. See Phase 5.4 follow-up section above for the climb.
   - **Real fixes earned chasing M5 (still useful for future multi-LE-per-LAB designs)**: LutCodec high-density LAB workaround (`predict_sram(0xFFFF)` filters LAB-shared cells); sig-cache mining template pitfall documented (must use `gen_two_luts_single_input_clocked` from `verilog_gen.py`); 160 cleanly re-mined (4,18)/(4,19) inter-LE pair entries added to `route_cells_full.json`; per-LAB CLK ordering fix (must run after the LUT phase reset); post-bitgen LI cleanup for sig-cache infrastructure leakage. Working multi-LE-per-LAB build template at `/tmp/m5_counter/build_counter_sigcache.py`.
-  - DFF FASM is implemented (via the `DFF` directive); IOB FASM cell map and GCLK clock-pin routing not yet, currently use `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as a baseline.
+  - IOB FASM cell map and GCLK clock-pin routing not yet complete; designs currently use `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as a baseline.
 
-- [ ] Phase 5.4: **LE carry chain in the open flow (NEW, blocks all arithmetic designs)** — declare `cout→cin` direct pips between adjacent LE bels in `chipdb_gen.py`; add a CARRY primitive to `synth/ep4ce6_map.v` + `synth/prims.v` so Yosys lands `+1` on chained LEs instead of the 4-LE-per-bit ripple; teach `synth/np2fasm.py` to emit the carry chain as a FASM directive; mine the arith-mode LE CRAM cells from a Quartus reference RBF (first ground truth: `/tmp/m5_counter/quartus_ref/counter_top.rbf`, 367 cells in cols 47-48). Until this lands, route any arithmetic via Quartus and use the open toolchain only for combinational and FF-only designs.
+- [x] Phase 5.4: **LE carry chain in the open flow (HARDWARE-VERIFIED 2026-04-13)** — arith mode activation lives in the block band (frames 1692-1738, bp=2), not in LAB CRAM columns, and is a per-LAB mode switch, not a per-LE cell. Four pieces landed: (1) `chipdb_gen.py` declares 8,126 `cout→cin` direct pips between adjacent LE bels; (2) `synth/ep4ce6_map.v` + `synth/prims.v` add the CE6_CARRY primitive so Yosys lands `$alu` on chained LEs with the FF's `Q` wired directly into `CE6_CARRY.B` (no external "Route-A" buffer); (3) `synth/np2fasm.py` walks the carry chain and emits `LUT_ARITH` directives; (4) `fuzz/fasm2rbf.py` applies the arith blob from `results/arith_blockband_v4.json` (universal, position-independent at any LAB) for 8-LE half-LAB chains, or from `results/arith_blockband_by_width.json` (widths 2..16 single-LAB + 16+8 cross-LAB) for other chain lengths. AX301 silicon-accepted: identity + 8× `LUT_ARITH=0x0000` blinks bit-identically to Quartus's counter RBF; identity `Q<=Q` negative control stays dark.
 
 ### Long-term direction: where we can actually beat Quartus
 
@@ -2245,8 +2347,8 @@ answers.
 | M9K init codec (Phase 5.2) | **closed** | 2D linear formula, 33 anchor entries, 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs |
 | RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
 | FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
-| Open-source toolchain (Phase 5.3) | **partially open** | end-to-end pipeline runs (Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe). Combinational designs flashable. Arithmetic designs **blocked** on Phase 5.4 (carry chain primitive missing from chipdb / techmap). Working ground truth for the next mining round: `/tmp/m5_counter/quartus_ref/counter_top.rbf`. |
-| LE carry chain in open flow (Phase 5.4) | **0%** | Required for any `+`/counter/arith design. Three-piece work: chipdb pip, Yosys techmap CARRY cell, np2fasm + FASM `LUT mode=arith` directive. Mining target: diff Quartus carry-chain RBF vs nv_zero. |
+| Open-source toolchain (Phase 5.3) | **mostly open** | end-to-end pipeline runs (Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe). Combinational, FF-only **and arithmetic** designs flashable. 8-bit counter hardware-verified on AX301 (2026-04-13). IOB FASM cell map and GCLK clock-pin routing still pending. |
+| LE carry chain in open flow (Phase 5.4) | **hardware-verified** | chipdb `cout→cin` pips (8,126 added), CE6_CARRY techmap primitive with LE-internal FF→ALU feedback (no Route-A buffer), np2fasm `LUT_ARITH` emission, FASM `LUT_ARITH` directive. Arith blob lives in block band (frames 1692-1738), **not** in LE columns as Phase 2.4 had claimed; position-independent across LABs (v4 universal blob); per-width table mined for widths 2..16 plus 16+8 cross-LAB, all round-trip zero-diff vs Quartus. |
 | Hardware loopback (codec → flash → silicon) | **closed** | LutCodec + FASM path both running on AX301 |
 
 ---

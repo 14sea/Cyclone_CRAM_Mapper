@@ -1903,6 +1903,93 @@ I/O 标准），每一种丰富出来的特性都是一道悬崖，generic 流�
 的可工作模板（`/tmp/m5_counter/build_counter_sigcache.py`）。
 Phase 5.4 会把进位链变成我们爬的下一道悬崖。
 
+
+### Phase 5.4 后续：那道悬崖，已经爬上来了（2026-04-13 → 04-14）
+
+上面那段 counter 破案故事停在悬崖边。这一段是爬上来的过程，特地
+写给学生读者，尽量讲具体。
+
+**算术位到底在哪里。** Phase 2.4 当年声称在每个 LE 的 CRAM 区里
+挖到了「92 bit 的纯算术/进位链位」。那个结论**是错的** —— 它是
+用 `VIRTUAL_PIN` 编译挖到的，而 Phase 5.0 后来在 M9K/DSP 工作里
+发现，`VIRTUAL_PIN` 会让 Quartus 吐一大堆幽灵布线 cell，换成实物
+pin 再编一次就消失。我们换成实物 pin 重挖，每 LE 的「算术位」全
+部消失了 —— 它们根本就没存在过。
+
+真正存在的是：算术模式是个 **LAB 级的模式开关**，不是 per-LE
+设置。一旦 LAB (X, Y) 里**任何一个** LE 开了算术模式，大约 100
+个 bit 会在 **block band**（frames 1692-1738）里点亮 —— 就是那块
+用来启用 M9K RAM 块和 DSP 乘法器的带子。**不存在 per-LE 的算术
+CRAM cell**。心里的模型是这样的：一个 LAB 里 16 个 LE 共用同一
+份算术模式配置，所以配置位是按 LAB 存一份，不是 16 份。这和 CPU
+的做法一模一样 —— 你不会给每对寄存器都配一个 ALU，你只有一个
+ALU 加一个 mode 字段。
+
+**这份 blob 在所有 LAB 上位置无关。** 挖到 LAB (4,18) 的 ~100 个
+cell 后，我们问：LAB (10,18) 是不是用另外 100 个？LAB (4,10)
+呢？「三角测试」（2026-04-14）在这三个 LAB 各做一次 8 位 counter，
+每个都跟自己的 identity 双胞胎做 diff。三份 diff 产生的 cell 集
+**逐字节相同** —— 不管把 counter 放在哪个 LAB，block band 里亮
+起来的都是同样那 100 个 offset。我们把它叫 **v4 universal blob**
+（100 个 SET + 4 个 CLEAR），落盘成
+`results/arith_blockband_v4.json`。FASM codec 学一张表，全片通用。
+
+**这份 blob 按 WIDTH 分类，不按 N-slot 分类。** 16 位 counter 需
+要 197 个 block-band cell，不是 100 个；24 位跨两个 LAB 的 counter
+需要 295 个。所以 blob 跟进位链有多长是相关的 —— 但它是不是也跟
+你用了 LAB 里**哪几个** N-slot 相关呢？Cyclone IV 的一个 LAB 有
+16 个 LE，分别在 N=0, 2, 4, …, 30 的槽位；把其中 8 个放在下半
+（N=0..14）和放在上半（N=16..30）是两种物理上完全不同的摆法。
+
+Phase 1 全面扫荡（2026-04-14，42 次 Quartus build，不需要硬件）：
+对每个 `w ∈ {2, 3, …, 16}`，在 LAB (4,18) 各做两次 `w` 位 counter
+—— 一次下半（N=1..2w-1），一次上半（N=17..2w+15）。fit 报告确认
+两种摆法都被尊重了。然后每个 counter 跟匹配的 identity 做 diff。
+结果：**每一个 width 下，下半和上半的 diff 都是逐字节相同的** ——
+一模一样的 offset，一模一样的 bit 位置。把同样 8 个 LE 搬到同一个
+LAB 的另一半，CRAM 里的算术 bit **一个都不变**。我们本来害怕要
+挖 `2^16` 种 N-slot 组合，结果只需要**按 width 做一张表**（一个
+chain 长度一个条目）就够用了。那张表现在在
+`results/arith_blockband_by_width.json`，覆盖单 LAB width 2..16
+加一个 16+8 跨 LAB 组合；往返验证（blob 贴到 identity 上，跟
+counter 做 diff）每一条都是 0 data diff + 0 block-band diff。
+
+**路上顺便拆穿两个迷思。**
+
+*迷思 1 —— 「每个 LE 有一个 FF-enable CRAM 位」。* 我们用三种方法
+挖那一位，每次挖回来都是噪声。拿 Quartus 做对照：Cyclone IV 的
+每个 LE 都有一个**永远物理存在**的 flip-flop。你到底是**用**
+flip-flop 还是**用**组合输出，是由下游布线决定的，**不是由 CRAM
+位决定的**。之前那份 `dff_cells_mined.json` 其实是布线基础设施
+的噪声。FASM `DFF` 指令现在变成 parse 出来就丢弃的 no-op。
+
+*迷思 2 —— 「进位链需要外部反馈布线」。* `N` 位 counter 是
+`Q <= Q + 1`，所以每个 FF 的 `Q` 要回到 ALU 的 B 输入。我们最早
+的 Yosys techmap 加了一个「Route-A buffer」LUT，把反馈信号走
+local interconnect 送回去。这么做 LE 数量翻倍，而且制造出 24 条
+sig-cache 无法干净挖掘的 self-feedback 路由。后来我们扒 Quartus
+自己编的 counter：**反馈路径上零条外部布线 cell**。Cyclone IV 的
+LE 内部有一条直通线，从 FF 输出直接接到 ALU 的 B 输入，**根本不
+经过 LI MUX**。`synth/ep4ce6_map.v` 的修法是：让 FF 的 `Q` 直接
+连到 `CE6_CARRY.B`，中间不插任何 buffer。现在 8 位 counter 用 8
+个 LE + 0 条 route cell，跟 Quartus 一致。
+
+**硬件上跑到哪一步了。** 2026-04-13 那天，我们把一颗完全用 FASM
+组装的 8 位 counter（identity 基底 + 8 条 `LUT_ARITH = 0x0000`）
+烧进 AX301。LED 以预期频率闪烁，行为跟 Quartus 自己编同一份
+Verilog **逐 bit 相同**。identity `Q <= Q` 的阴性对照组产生熄灭
+的 LED。这就是完整证据：block-band arith blob 就是真的算术激活、
+universal blob 在目标 LAB 上成立、LE 内部反馈够用（不需要外部布
+线）、FASM `LUT_ARITH` 指令端到端正确接通。Width 9..16 和 24 位
+跨 LAB 的情况，diff 跟 Quartus 输出逐字节相同，但硬件复验要等
+板子下次回到桌面再做。
+
+**一句话结论。** 进位链不是我们原本猜的「每个 LE 一套另外的 cell」，
+而是**一个 LAB 级的模式开关**，存在跟 M9K、DSP 启用共用的 block
+band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个** LE
+参与无关。
+
+
 ---
 
 ## 当前进度和下一步
@@ -1968,13 +2055,13 @@ Phase 5.4 会把进位链变成我们爬的下一道悬崖。
 - [~] Phase 5.3：**开源工具链 —— Yosys + nextpnr-generic + FASM（部分开通）**。目标：用 `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader` 取代 Quartus。当前状态：
   - `fuzz/chipdb_gen.py`：生成 nextpnr-generic Python chipdb（8,241 bel、59,611 wire、138 万 pip），含 GCLK broadcast、LAB 内直连 pip、4 级 pip 代价阶梯（SIG=1 < INTRA=2 < LOCAL=5 < HOP=20）
   - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`：Yosys techmap 链（LUT4 + DFF）
-  - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令
-  - `fuzz/fasm2rbf.py` 已端到端跑通的指令：`LUT`、`ROUTE`（6/7-tuple）、`GCLK`、`DFF`、`BIT`、`SRC`。CRC patcher 已整合
-  - **M5 counter —— 24-bit 计数器还无法经开源流程闪烁。** 端到端管线全程跑通（Yosys → nextpnr → np2fasm → fasm2rbf → CRC 合规的 368,011 字节 RBF，LI safety SAFE），但 LED 烧上去恒亮或恒灭。2026-04-11 用 Quartus 自己编同一份 Verilog 当 ground truth 才查出根因：**Quartus 把 24 个 counter LE 放在 CRAM 第 47-48 列，用进位链直连线（`cout→cin`，每 bit 1 个 LE，367 cells），而我们的 build 把 31 个 LE 摆在 (4,18)/(4,19)，每 bit 用 4 个 LE 模拟 `+1`（1185 cells，含 24 条 self-feedback 路由 —— 这种路由用现行 sig-cache 挖掘模板挖不出干净条目）。** 这是 `chipdb_gen.py`/Yosys techmap 缺一个 primitive，不是 codec 或 FASM 的 bug —— 见下方 Phase 5.4。Quartus reference RBF 在 `/tmp/m5_counter/quartus_ref/counter_top.rbf`，烧 AX301 正常闪烁
+  - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令，并走进位链发射 `LUT_ARITH` 指令
+  - `fuzz/fasm2rbf.py` 已端到端跑通的指令：`LUT`、`ROUTE`（6/7-tuple）、`GCLK`、`DFF`（parse 出来即 no-op —— FF 是矽片默认）、`BIT`、`SRC`、`LUT_ARITH`。CRC patcher 已整合
+  - **M5 counter —— 8 位 counter 已经可以经开源流程在硬件上闪烁（2026-04-13）。** FASM 路径（identity 基底 + 8 条 `LUT_ARITH = 0x0000`）在 AX301 上烧出跟 Quartus 自己编的 counter 逐 bit 一致的行为。Width 2..16 单 LAB 以及 16+8 跨 LAB 的情况，diff 跟 Quartus 输出逐字节相同，硬件复验待板子回到桌面再做。详见上方「Phase 5.4 后续」叙事章节
   - **追 M5 过程中赚到的真实修复（对未来 multi-LE-per-LAB 设计仍然有用）**：LutCodec 高密度 LAB workaround（`predict_sram(0xFFFF)` 过滤掉 LAB-shared 干扰）；sig-cache 挖掘模板坑已写入文档（必须用 `verilog_gen.py` 的 `gen_two_luts_single_input_clocked`）；160 个干净重挖的 (4,18)/(4,19) inter-LE 配对条目并入 `route_cells_full.json`；per-LAB CLK 顺序修复（必须在 LUT phase 重置之后再 set）；bitgen 后的 LI 清理（去掉 sig-cache 挖掘的 baseline LAB infrastructure 漏出来的 cell）。可用的 multi-LE-per-LAB build 模板：`/tmp/m5_counter/build_counter_sigcache.py`
-  - DFF FASM 已实现（用 `DFF` 指令）；IOB FASM cell map 和 GCLK 时钟引脚布线尚未，目前用 `nv_zero_global.rbf`（PIN_E1→GCLK 已预先布通）作为基底
+  - IOB FASM cell map 和 GCLK 时钟引脚布线尚未完结，当前设计仍以 `nv_zero_global.rbf`（PIN_E1→GCLK 已预先布通）作为基底
 
-- [ ] Phase 5.4：**开源流程里的 LE 进位链（NEW，阻塞所有算术设计）** —— 在 `chipdb_gen.py` 里声明相邻 LE bel 之间的 `cout→cin` 直连 pip；在 `synth/ep4ce6_map.v` + `synth/prims.v` 里加一个 CARRY primitive，让 Yosys 把 `+1` 落到链式 LE 上而不是 4-LE-per-bit ripple；让 `synth/np2fasm.py` 把进位链编成 FASM 指令；再从 Quartus reference RBF 里挖出算术模式 LE 的 CRAM cell（首个 ground truth：`/tmp/m5_counter/quartus_ref/counter_top.rbf`，367 cells 集中在第 47-48 列）。这条路通之前，所有算术设计走 Quartus，开源工具链只给纯组合逻辑和 FF-only 设计用
+- [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
 
 ### 长期方向：我们究竟可能在哪里赢过 Quartus
 
