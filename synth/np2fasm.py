@@ -134,9 +134,44 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                 has_dff = True
                 dff_les.add((x, y, n))
         elif kind == "IOB":
-            fasm.append(
-                f"# IOB {cell.get('attributes',{}).get('NEXTPNR_BEL','?')}"
-                f" (no FASM IO cell map yet)")
+            # Bel name format: "IOB_{logical}_{PIN_LOC}", e.g. IOB_B_PIN_M16.
+            # Direction: in chipdb_gen.py the BEL's "O" pin is an output from
+            # the BEL into the fabric (input pad path), and the "I" pin is an
+            # input to the BEL from the fabric (output pad path). So:
+            #   - cell drives "O" port → IOB is configured as INPUT (pad→fabric)
+            #   - cell receives on "I" port → IOB is OUTPUT (fabric→pad)
+            bel_str = cell.get("attributes", {}).get("NEXTPNR_BEL", "")
+            m = re.match(r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
+            if not m:
+                warnings.append(
+                    f"cell {cell_name}: IOB BEL name {bel_str!r} "
+                    f"doesn't match IOB_<name>_PIN_<loc>; skipped"
+                )
+                continue
+            pin_loc = m.group(1)  # already includes "PIN_" prefix
+            conns = cell.get("connections", {})
+            dirs = cell.get("port_directions", {})
+            has_O = bool(conns.get("O"))
+            has_I = bool(conns.get("I"))
+            if has_O and not has_I:
+                fasm.append(f"IOB_IN {pin_loc}")
+            elif has_I and not has_O:
+                fasm.append(f"IOB_OUT {pin_loc}")
+            elif has_O and has_I:
+                # Bidirectional — emit both directions; fasm2rbf treats
+                # them independently.  Document the rare case.
+                warnings.append(
+                    f"cell {cell_name}: IOB on {pin_loc} is bidirectional; "
+                    f"emitting both IOB_IN and IOB_OUT"
+                )
+                fasm.append(f"IOB_IN {pin_loc}")
+                fasm.append(f"IOB_OUT {pin_loc}")
+            else:
+                # No connections — likely an unused IOB BEL placeholder.
+                warnings.append(
+                    f"cell {cell_name}: IOB on {pin_loc} has no I/O "
+                    f"connections; no FASM emitted"
+                )
 
     # --- Carry chain analysis ---
     # Walk every CE6_CARRY whose CI is a Verilog constant — that's a
