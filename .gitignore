@@ -62,7 +62,6 @@ fuzz/a0_virgin_*.py
 fuzz/analytic_i6_i8_x33.py
 fuzz/analyze_calibration_sweep.py
 fuzz/calibration_sweep_2d.py
-fuzz/clk_gclk_probe.py
 fuzz/dff_n_sweep.py
 fuzz/r4_full_audit.py
 fuzz/reanalyze_sweep_pure_xor.py
