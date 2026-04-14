@@ -12,7 +12,7 @@ python3 runner.py --node lut_inst lut_single 10 10 0  # fuzz LUT at (10,10,0)
 python3 runner.py n_sweep 10 10                   # calibrate 16 minterms
 python3 analyze.py read_tt design.rbf zero.rbf 10 10 0
 python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
-python3 fuzz/test_green_zone_harden.py            # 24 islands, CE6 686/686 + jailbreak 8/45
+python3 fuzz/test_green_zone_harden.py            # 24 islands, 731/731 bit-perfect
 ```
 
 ## Directory Layout
@@ -88,10 +88,10 @@ Sig-cache (`route_cells_full.json`, 13,762 entries) **short-circuits all formula
 
 `synth_route(zero, src, dst)` → bit-perfect RBF. Sig-cache path serves all CE6-standard green-zone + Plan D' factory routes. CRAM is interleaved (NOT topologically isomorphic to layout) — cross-source fingerprint intersection = 0 → no universal source-entry formula at cell level.
 
-Current harness score: **CE6 standard 686/686 bit-perfect + jailbreak/edge 8/45 frontier** (total 694/731 across 24 islands). The 37 failing routes are all in Y=15 jailbreak or Y=5 edge islands added 2026-04-11 where physical fingerprints exist but (a) sig-cache pair-diff mining hasn't run yet and (b) `route_synth.parse_need` fallback doesn't model Y=15. This is a known frontier, not a regression — closing it is Phase 5.4 work.
+Current harness score: **731/731 bit-perfect across all 24 islands** (CE6 standard 686/686 + jailbreak/edge 45/45) — closed 2026-04-14. `synth_route` does a snapshot lookup (`_snapshot_ops_if_present`) BEFORE `parse_need`, so jailbreak/edge LABs (Y=15, Y=5, X=5/9/14/30/32/33) hit the exact Quartus cell set directly from the fingerprint snapshot without needing a formula/geometry model. The edge-island fingerprint snapshots were re-mined from on-disk pair RBFs via `fuzz/fingerprint_edge_remine.py` (the original snapshots were stale — produced by an older classifier that disagreed with current `RouteCodec.read_switches`, so `per_route_delta` was missing ~14 switch cells per route).
 
 15 CE6 green islands: (4,4), (10,4), (10,10), (10,14), (13,10), (16,4), (16,8), (16,14), (19,14), (22,12), (22,16), (25,6), (28,10), (28,18), (31,12).
-9 jailbreak/edge islands (fingerprinted, sig-cache pending): Y=15 × {10,11,12,13,14,17,18}, Y=5 × {18,19}.
+9 jailbreak/edge islands: Y=15 × {10,11,12,13,14,17,18}, Y=5 × {18,19}.
 
 ## Non-LAB Blocks (Phase 5.0)
 
