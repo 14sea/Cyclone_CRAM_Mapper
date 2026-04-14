@@ -186,7 +186,8 @@ EP4CE6/
 │   ├── ep4ce6_map.v        ← Cyclone IV techmap（LUT4/DFF 原语）
 │   ├── prims.v             ← nextpnr-generic 原语库
 │   ├── m9k.lib             ← M9K BRAM 库桩
-│   ├── synth_ep4ce6.ys     ← Yosys 综合脚本
+│   ├── synth_ep4ce6.ys     ← Yosys 综合脚本（NEORV32 源码路径使用 $HOME）
+│   ├── synth_ep4ce6.sh     ← 包装脚本 —— 跑这个而非 .ys；会用 envsubst 展开 $HOME / $NEORV32_ROOT
 │   └── np2fasm.py          ← nextpnr 布线 JSON → FASM 转换器
 ├── jailbreak/              ← CE10 fitter 探针（X=32/33、Y=15 坏点扫描）
 ├── results/
@@ -2054,7 +2055,7 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
 - [ ] Phase 5.2b：非 LAB 块参数解码（CLOCK_ENABLE 和 M9K INIT 之外）—— 需要「块内差分探针」绕过 header 噪声地板、STA 黑盒、以及每点位配置不可观察这三堵墙；PLL 探针（用 `PLL_1`/`PLL_2` 单例 LOC）延到这里做
 - [~] Phase 5.3：**开源工具链 —— Yosys + nextpnr-generic + FASM（部分开通）**。目标：用 `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader` 取代 Quartus。当前状态：
   - `fuzz/chipdb_gen.py`：生成 nextpnr-generic Python chipdb（8,241 bel、59,611 wire、138 万 pip），含 GCLK broadcast、LAB 内直连 pip、4 级 pip 代价阶梯（SIG=1 < INTRA=2 < LOCAL=5 < HOP=20）
-  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`：Yosys techmap 链（LUT4 + DFF）
+  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`：Yosys techmap 链（LUT4 + DFF + `$alu` 走 CE6_CARRY）。通过 `synth/synth_ep4ce6.sh` 调用 —— 包装脚本会 envsubst 展开 `$HOME` / `$NEORV32_ROOT`，VHDL 路径跟着仓库走
   - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令，并走进位链发射 `LUT_ARITH` 指令
   - `fuzz/fasm2rbf.py` 已端到端跑通的指令：`LUT`、`ROUTE`（6/7-tuple）、`GCLK`、`DFF`（parse 出来即 no-op —— FF 是矽片默认）、`BIT`、`SRC`、`LUT_ARITH`。CRC patcher 已整合
   - **M5 counter —— 8 位 counter 已经可以经开源流程在硬件上闪烁（2026-04-13）。** FASM 路径（identity 基底 + 8 条 `LUT_ARITH = 0x0000`）在 AX301 上烧出跟 Quartus 自己编的 counter 逐 bit 一致的行为。Width 2..16 单 LAB 以及 16+8 跨 LAB 的情况，diff 跟 Quartus 输出逐字节相同，硬件复验待板子回到桌面再做。详见上方「Phase 5.4 后续」叙事章节

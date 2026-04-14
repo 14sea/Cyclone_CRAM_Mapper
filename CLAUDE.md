@@ -18,7 +18,7 @@ python3 fuzz/test_green_zone_harden.py            # 24 islands, CE6 686/686 + ja
 ## Directory Layout
 
 - `fuzz/` — fuzzing pipeline (~96 Python modules): `config.py` (constants), `bitstream.py` (LutCodec/RouteCodec/FFCodec/CRC), `fasm2rbf.py`/`rbf2fasm.py` (FASM toolchain), `route_synth.py` (green-island synthesis), `route_signatures.py` (sig-cache backend), `chipdb_gen.py` (nextpnr chipdb), `runner.py`/`compile.py`/`analyze.py` (orchestration)
-- `synth/` — open-source toolchain: `ep4ce6_map.v` + `prims.v` (Yosys techmap), `synth_ep4ce6.ys`, `np2fasm.py` (nextpnr JSON → FASM)
+- `synth/` — open-source toolchain: `ep4ce6_map.v` + `prims.v` (Yosys techmap), `synth_ep4ce6.ys` + `synth_ep4ce6.sh` (run the `.sh` wrapper, not `.ys` directly — it envsubst's `$HOME` / `$NEORV32_ROOT` so the VHDL paths travel), `np2fasm.py` (nextpnr JSON → FASM)
 - `scripts/` — one-off investigation scripts kept for reproducibility (e.g. `scripts/arith_sweep/` — Phase 1 per-width arith blob sweep harness)
 - `tmp/` — **local scratch only, gitignored**. House rule: do NOT drop experimental work under `/tmp/`; use this dir instead. The moment a script is cited from docs or memory, move it out of `tmp/` into `scripts/` (or another proper location) so it survives reboots and is reachable from a clone.
 - `jailbreak/` — CE10 fitter probes (CE6≡CE10 same die, +65% fabric unlocked)

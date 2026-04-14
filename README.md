@@ -187,7 +187,8 @@ EP4CE6/
 │   ├── ep4ce6_map.v        ← Cyclone IV techmap (LUT4/DFF primitives)
 │   ├── prims.v             ← nextpnr-generic primitive library
 │   ├── m9k.lib             ← M9K BRAM library stub
-│   ├── synth_ep4ce6.ys     ← Yosys synthesis script
+│   ├── synth_ep4ce6.ys     ← Yosys synthesis script (NEORV32 source paths use $HOME)
+│   ├── synth_ep4ce6.sh     ← wrapper — run this instead of the .ys; envsubst's $HOME / $NEORV32_ROOT
 │   └── np2fasm.py          ← nextpnr routed JSON → FASM converter
 ├── jailbreak/              ← CE10 fitter probes (X=32/33, Y=15 dead-cell scans)
 ├── results/
@@ -2251,7 +2252,7 @@ LEs in the LAB are part of it.
 - [ ] Phase 5.2b: Non-LAB block parameter decoding beyond CLOCK_ENABLE and M9K INIT — need an intra-block differential probe that bypasses the header noise floor, STA opacity, and the lack of observable per-site configuration; PLL probe via `PLL_1`/`PLL_2` singleton LOCs deferred here
 - [~] Phase 5.3: **Open-source toolchain — Yosys + nextpnr-generic + FASM (PARTIALLY OPEN, arithmetic designs now hardware-verified via Phase 5.4)**. Target: replace Quartus with `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`. Current state:
   - `fuzz/chipdb_gen.py`: generates nextpnr-generic Python chipdb (8,241 bels, 59,611 wires, 1.38M pips) with GCLK broadcast, intra-LAB direct pips, 4-level pip cost hierarchy (SIG=1 < INTRA=2 < LOCAL=5 < HOP=20), plus **8,126 `cout→cin` direct pips** for carry chain (Phase 5.4).
-  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF + CE6_CARRY for `$alu`)
+  - `synth/ep4ce6_map.v` + `synth/prims.v` + `synth/synth_ep4ce6.ys`: Yosys techmap chain (LUT4 + DFF + CE6_CARRY for `$alu`). Run via `synth/synth_ep4ce6.sh` — the wrapper envsubst's `$HOME` / `$NEORV32_ROOT` so the VHDL paths travel.
   - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives, walks the carry chain and emits `LUT_ARITH`
   - `fuzz/fasm2rbf.py` directives that work end-to-end: `LUT`, `ROUTE` (6/7-tuple), `GCLK`, `DFF` (parsed no-op — FF is silicon default), `BIT`, `SRC`, `LUT_ARITH`. CRC patcher integrated.
   - **M5 counter — 8-bit counter now hardware-verified via the open flow (2026-04-13).** The FASM path (identity baseline + 8× `LUT_ARITH = 0x0000`) blinks on AX301 with bit-identical behavior to Quartus's own compile. Widths 2..16 single-LAB and the 16+8 cross-LAB case are byte-identical to Quartus output under `diff`; hardware re-verification pending. See Phase 5.4 follow-up section above for the climb.
