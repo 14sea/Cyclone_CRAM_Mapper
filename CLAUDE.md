@@ -110,7 +110,7 @@ Current harness score: **731/731 bit-perfect across all 24 islands** (CE6 standa
 
 Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`
 
-**Completed**: chipdb_gen.py (8,241 bels, 59,611 wires, 1.38M pips), techmap (LUT4+DFF), np2fasm.py (logical connectivity → sig-cache lookup), `fasm2rbf` GCLK/DFF/LUT/ROUTE/SRC/BIT directives.
+**Completed**: chipdb_gen.py (8,241 bels, 59,611 wires, 1.38M pips), techmap (LUT4+DFF), np2fasm.py (logical connectivity → sig-cache lookup; emits `IOB_IN`/`IOB_OUT` per direction of each placed GENERIC_IOB cell), `fasm2rbf` GCLK/DFF/LUT/ROUTE/SRC/BIT directives.
 
 **Status**: pipeline runs end-to-end on combinational designs. Arithmetic designs work via the `LUT_ARITH` FASM directive (see Phase 5.4), **hardware-verified on AX301** (2026-04-13). Full Yosys→prepack→np2fasm→fasm2rbf path produces CRC-valid RBFs; the identity_led + arith-overlay path achieves zero data-region diffs vs Quartus.
 
@@ -126,7 +126,7 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **Not yet implemented**: GCLK clock-pin routing (uses `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as baseline), carry chain (Phase 5.4), 2D IOB K×LED sweep to close cross-axis joint-placement gap.
 
-**Partially landed (2026-04-14)**: IOB FASM cell map — `IOB_IN PIN_X` / `IOB_OUT PIN_X` directives reproduce all 44 single-axis ground-truth RBFs bit-perfect via XOR delta from `iob_in_E15.rbf` baseline. Mining: `fuzz/iob_sweep.py` (parallel Quartus builds) + `fuzz/iob_analyze.py` (pair-delta vs anchor) → `results/iob_cell_map.json`. Validator: `fuzz/iob_validate.py`.
+**Partially landed (2026-04-14)**: IOB FASM cell map — `IOB_IN PIN_X` / `IOB_OUT PIN_X` directives reproduce all 44 single-axis ground-truth RBFs bit-perfect via XOR delta from `iob_in_E15.rbf` baseline. Mining: `fuzz/iob_sweep.py` (parallel Quartus builds) + `fuzz/iob_analyze.py` (pair-delta vs anchor) → `results/iob_cell_map.json`. Validator: `fuzz/iob_validate.py`. `np2fasm` passes each placed GENERIC_IOB through as `IOB_IN`/`IOB_OUT` using the BEL's fabric-facing port direction (unit-tested in `fuzz/test_np2fasm_iob.py`, 6/6).
 
 ## Phase 5.4 — Carry Chain (HW VERIFIED at LAB(4,18))
 
