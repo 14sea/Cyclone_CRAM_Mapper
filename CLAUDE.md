@@ -60,7 +60,9 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `LUT` | `X10Y10N0.LUT = 0x8888` | OK — auto-compensates XOR base via minterm_0 |
 | `ROUTE` | `ROUTE X10Y10 -> X10Y12N4.datab` | OK — sig-cache lookup (6 or 7-tuple) |
 | `ROUTE` (sn>0) | `ROUTE X5Y3N4 -> X4Y3N6.datad` | OK — 7-tuple key |
-| `GCLK` | `GCLK` | OK — 17 position-independent cells |
+| `GCLK` | `GCLK` | OK — 17 position-independent cells (legacy local-clock, not real GCLK_BUS) |
+| `GCLK_PIN` | `GCLK_PIN PIN_E1` | OK — per-pin one-hot activate (XOR). E1=3, R8=5 cells. `results/clk_cross_pin_spine_check.json`. |
+| `LAB_CLK_SEL` | `LAB_CLK_SEL X10Y4` | OK — per-LAB CLK_SEL (XOR). Mined: (10,4)=26, (10,16)=53, (22,10)=45. Re-mine with `fuzz/clk_lab_sel_probe.py --lab X,Y`. |
 | `DFF` | `X10Y10N0.DFF` | **NO-OP** — DFF is silicon default (no CRAM cells) |
 | `BIT` | `BIT offset bp` | OK — raw cell flip |
 | `SRC` | `SRC X10Y10` | OK — per-source overhead |
@@ -152,7 +154,7 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 
 **DFF resolved (2026-04-13)**: DFF is the silicon default — no per-LE enable CRAM cell exists. The FF is intrinsic to every LE; registered vs combinational output is selected by downstream routing. The former `dff_cells_mined.json` contained routing infrastructure noise (zero overlap with any real RBF). FASM `DFF` directive is now a parsed no-op.
 
-**Remaining gaps**: IOB FASM cell map, GCLK cells may conflict with some bases (17 cells mined from nv_zero; Quartus counter doesn't use all of them).
+**Remaining gaps**: IOB FASM cell map, legacy 17-cell `GCLK` directive may conflict with some bases. **Real GCLK pipeline landed (2026-04-14)**: `GCLK_PIN` + `LAB_CLK_SEL` FASM directives compose as XOR-delta on an AUTO-mode baseline. Data: per-pin one-hot activate set (E1=3, R8=5 cells; zero cross-pin overlap — proved by triangulation at `fuzz/clk_pin_triangulate_probe.py` + `fuzz/clk_cross_pin_spine_check.py`), plus per-LAB CLK_SEL mined via `fuzz/clk_lab_sel_probe.py` (LAB(10,4)=26, LAB(10,16)=53, LAB(22,10)=45). 17 cells of the LAB(10,4) set overlap LAB(22,10) — row-GCLK-tree cells shared between Y=4 and Y=10; XOR parity makes unions idempotent. Tests: `fuzz/test_gclk_pin_directive.py` (8/8). Remaining: PIN_N1 direct forced-vs-auto probe (currently inferred), and retiring `nv_zero_global.rbf` dependency end-to-end.
 
 **nextpnr**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 
