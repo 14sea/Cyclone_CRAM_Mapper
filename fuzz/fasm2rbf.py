@@ -28,6 +28,10 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # DFF register marker (no-op — DFF is intrinsic to every LE)
     X{x}Y{y}N{n}.DFF
 
+    # I/O block pin assignment (XOR-delta from K=E15 / LED=G15 baseline)
+    IOB_IN  PIN_M16    # K input wired to chip pin M16
+    IOB_OUT PIN_F15    # LED output wired to chip pin F15
+
 The base RBF must be a valid "zero" baseline for the source LAB (e.g.
 results/rbf/lits_zero_{sx}_{sy}.rbf). Multiple ROUTE lines are merged
 into a single apply_routing call. LUT writes are XOR-deltas, applied on
@@ -87,6 +91,72 @@ _M9K_INIT_RE = re.compile(
     r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
 )
 _GCLK_RE = re.compile(r"^GCLK$")
+# IOB pin assignment.  ROLE is INPUT or OUTPUT; PIN follows the AX301
+# pin-name convention (e.g. PIN_E15, PIN_G15, PIN_M16).
+#
+#   IOB_IN  PIN_M16   # K input wired to chip pin M16
+#   IOB_OUT PIN_F15   # LED output wired to chip pin F15
+#
+# Cells come from results/iob_cell_map.json (per-pin mining campaign,
+# 2026-04-14).  XOR-applied as a delta against the iob_in_E15 baseline,
+# which is byte-identical to iob_out_G15 — that file is the canonical
+# (K=E15, LED=G15) reference for IOB synthesis.
+#
+# Single-axis use is bit-perfect (44/44 ground-truth match): hold the
+# input at PIN_E15 OR the output at PIN_G15 and vary the other.  Cross-
+# axis combinations (both pins non-anchor) leak ~50-60 bytes of joint-
+# placement state that Quartus chose differently in the single-axis
+# sweep — those bits live in frame 0 (header) and frames 1720-1736
+# (block band).  The bitstream may still be functional on hardware
+# (multiple valid encodings exist), but byte-for-byte parity with a
+# fresh Quartus build of the same (K, LED) pair is not guaranteed.
+# Closing the cross-axis gap would need a 2D K×LED sweep.
+_IOB_RE = re.compile(r"^IOB_(?P<role>IN|OUT)\s+PIN_(?P<pin>[A-Z]\d+)$")
+
+# Reference pins: the iob_in_E15.rbf / iob_out_G15.rbf baselines were
+# compiled with K=E15 (input) and LED=G15 (output).  Any FASM IOB_IN
+# at PIN_E15 or IOB_OUT at PIN_G15 reduces to a no-op delta.
+_IOB_K_REF = "E15"
+_IOB_LED_REF = "G15"
+_IOB_MAP_CACHE = None
+
+
+def _load_iob_map():
+    """Load results/iob_cell_map.json once (per-pin signature corpus)."""
+    global _IOB_MAP_CACHE
+    if _IOB_MAP_CACHE is not None:
+        return _IOB_MAP_CACHE
+    import json
+    path = ROOT / "results" / "iob_cell_map.json"
+    if not path.exists():
+        _IOB_MAP_CACHE = None
+        return None
+    _IOB_MAP_CACHE = json.loads(path.read_text())
+    return _IOB_MAP_CACHE
+
+
+def _iob_delta_cells(role, pin, iob_map):
+    """Return XOR-delta cells (off, bp) from baseline to pin for one role.
+
+    role in {'IN','OUT'}.  Reads pre-computed pair-delta sets written by
+    iob_analyze.py — these are full XOR diffs vs the iob_in_E15 (K=E15)
+    or iob_out_G15 (LED=G15) anchor RBFs and capture every cell that
+    flips going from anchor to target, including semi-shared cells that
+    the legacy per_pin_unique decomposition misses.
+    """
+    table_key = "input_delta" if role == "IN" else "output_delta"
+    if table_key not in iob_map:
+        raise FasmError(
+            f"IOB directive needs iob_map['{table_key}']; re-run "
+            f"fuzz/iob_analyze.py to regenerate iob_cell_map.json"
+        )
+    table = iob_map[table_key]
+    if pin not in table:
+        raise FasmError(
+            f"IOB_{role} PIN_{pin}: no entry in iob_cell_map.json "
+            f"(known: {sorted(table)})"
+        )
+    return [tuple(c) for c in table[pin]]
 
 # 17 position-independent, seed-stable GCLK cells mined 2026-04-10
 # from 4-position × 4-seed intersection of comb-vs-reg pair-diffs.
@@ -196,6 +266,7 @@ def parse_fasm(text):
     dffs = []  # list[(x, y, mode)] mode in {"ARST","ENA"}
     dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
+    iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     gclk = False
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
@@ -261,6 +332,10 @@ def parse_fasm(text):
         if m:
             gclk = True
             continue
+        m = _IOB_RE.match(line)
+        if m:
+            iobs.append((m["role"], m["pin"]))
+            continue
         m = _M9K_INIT_RE.match(line)
         if m:
             x = int(m["x"]); y = int(m["y"]); n = int(m["n"])
@@ -280,7 +355,8 @@ def parse_fasm(text):
             m9k_inits.append((x, y, n, width, depth, words))
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
-    return luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits, gclk
+    return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
+            iobs, gclk)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -354,7 +430,7 @@ def _load_overhead():
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-     gclk) = parse_fasm(fasm_text)
+     iobs, gclk) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -406,6 +482,28 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         buf = bytearray(work)
         for off, bp in bits:
             buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if iobs:
+        iob_map = _load_iob_map()
+        if iob_map is None:
+            raise FasmError(
+                "IOB directive used but results/iob_cell_map.json missing; "
+                "run fuzz/iob_sweep.py + fuzz/iob_analyze.py"
+            )
+        # Collect all flips into a multiset so a cell flipped by both an
+        # IOB_IN and IOB_OUT line cancels (currently the per_pin_input /
+        # per_pin_output sets are disjoint, but defensive XOR-counting
+        # keeps the directive safe under future overlap).
+        flips = {}
+        for role, pin in iobs:
+            for off, bp in _iob_delta_cells(role, pin, iob_map):
+                key = (off, bp)
+                flips[key] = flips.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in flips.items():
+            if v:
+                buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     if dffs:
