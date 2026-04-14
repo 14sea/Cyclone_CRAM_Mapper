@@ -15,7 +15,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from config import LAB_X, LAB_Y
+from config import LAB_X, LAB_Y, JAILBREAK_LAB_Y, JAILBREAK_LAB_X
+
+# Snapshot-shortcut accepts jailbreak/edge LABs; formula path stays narrow.
+_ALLOWED_X = set(LAB_X) | set(JAILBREAK_LAB_X)
+_ALLOWED_Y = set(LAB_Y) | set(JAILBREAK_LAB_Y)
 
 
 # ----------------------------------------------------------------------
@@ -54,10 +58,10 @@ def parse_need(src, dst) -> Need:
     dx, dy = dst[0], dst[1]
     dn = dst[2] if len(dst) > 2 else 0
     dp = dst[3] if len(dst) > 3 else "datab"
-    if sx not in LAB_X or dx not in LAB_X:
-        raise ValueError(f"non-LAB X: src_x={sx} dst_x={dx} (LAB_X={LAB_X})")
-    if sy not in LAB_Y or dy not in LAB_Y:
-        raise ValueError(f"non-LAB Y: src_y={sy} dst_y={dy}")
+    if sx not in _ALLOWED_X or dx not in _ALLOWED_X:
+        raise ValueError(f"non-LAB X: src_x={sx} dst_x={dx} (allowed={sorted(_ALLOWED_X)})")
+    if sy not in _ALLOWED_Y or dy not in _ALLOWED_Y:
+        raise ValueError(f"non-LAB Y: src_y={sy} dst_y={dy} (allowed={sorted(_ALLOWED_Y)})")
     return Need(sx=sx, sy=sy, dx=dx, dy=dy, sn=sn, dn=dn, src_port=sp, dst_port=dp)
 
 
@@ -399,6 +403,37 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     return ops
 
 
+def _snapshot_ops_if_present(src, dst):
+    """Return raw ops from a fingerprint snapshot if available, else None.
+
+    Runs BEFORE parse_need so it works for jailbreak/edge sources (Y=15,
+    X=5/9/14/30/32/33) whose formula path is unimplemented. The 15 green
+    CE6 islands + 9 jailbreak/edge islands all have snapshots under
+    results/fingerprint_{sx}_{sy}.json; when the requested dst is present
+    in per_route_delta, we can emit the exact Quartus cell set as raw ops.
+    """
+    sx, sy = src[0], src[1]
+    dx, dy = dst[0], dst[1]
+    port = dst[3] if len(dst) > 3 else "datab"
+    # same-LAB routes don't use the snapshot path (matches emit_ops guard).
+    if sx == dx and sy == dy:
+        return None
+    fp = _load_fp(sx, sy)
+    if fp is None:
+        return None
+    key = f"{dx},{dy},{port}"
+    if key not in fp["per_route_delta"]:
+        return None
+    seen: set[tuple[int, int]] = set()
+    ops: list[dict] = []
+    for _t, off, bp in list(fp["fingerprint"]) + list(fp["per_route_delta"][key]):
+        if (off, bp) in seen:
+            continue
+        seen.add((off, bp))
+        ops.append({"type": "raw", "offset": off, "bp": bp, "value": True})
+    return ops
+
+
 def synth_route(base_rbf: bytes, src, dst, patch_crc: bool = True) -> tuple[bytes, dict]:
     """Top-level entry. Returns (output_rbf, debug_info).
 
@@ -407,12 +442,29 @@ def synth_route(base_rbf: bytes, src, dst, patch_crc: bool = True) -> tuple[byte
     positions, so patching no longer breaks bit-perfect comparisons.
     """
     from bitstream import RouteCodec, patch_rbf_crc
+    codec = RouteCodec()
+
+    # Snapshot shortcut — supports jailbreak/edge LABs whose formula path
+    # (plan_hops / pick_li_envelope) isn't implemented. Must run BEFORE
+    # parse_need so Y=15 sources don't trip LAB_Y.index() downstream.
+    snap_ops = _snapshot_ops_if_present(src, dst)
+    if snap_ops is not None:
+        out = codec.apply_routing(base_rbf, snap_ops)
+        codec.validate_safe_for_hardware(out, base_rbf)
+        sw = codec.read_switches(out, base_rbf)
+        if patch_crc:
+            out = patch_rbf_crc(out)
+        return out, {
+            "source": "snapshot",
+            "ops": snap_ops,
+            "read_back": sw,
+        }
+
     need = parse_need(src, dst)
     plan = plan_hops(need)
     li = pick_li_envelope(need)
     ops = emit_ops(plan, li, need)
 
-    codec = RouteCodec()
     out = codec.apply_routing(base_rbf, ops)
 
     # Stage 5 — L1 validation: round-trip + hardware safety
