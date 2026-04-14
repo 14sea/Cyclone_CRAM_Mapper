@@ -265,25 +265,23 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                     f"carry cell {name} not reached from any chain start "
                     f"(cascaded CI not supported)")
 
-    # --- GCLK if any DFF is present ---
-    if has_dff:
-        fasm.append("GCLK")
-
     # --- ROUTE directives from logical connectivity ---
     # For each net, find driver bel and all sink bels+ports, then look up
     # the sig-cache for each (src→dst.port) arc.
     #
-    # Build bit→cell mapping first.
+    # Build bit→cell mapping first (also used by the GCLK pipeline below
+    # to trace DFF.CLK nets back to their IOB driver).
     bit_driver: dict[int, tuple[str, str]] = {}   # bit_id → (cell_name, port)
     bit_sinks: dict[int, list[tuple[str, str, int]]] = {}  # bit_id → [(cell, port, idx)]
 
-    # Blackbox cells (CE6_CARRY, LUT) from prims.v don't carry
+    # Blackbox cells (CE6_CARRY, LUT, DFF) from prims.v don't always carry
     # port_directions in the JSON. Hardcode them so the net walker
     # can distinguish drivers from sinks.
     _BLACKBOX_DIRS = {
         "CE6_CARRY": {"A": "input", "B": "input", "CI": "input",
                        "S": "output", "CO": "output"},
         "LUT":       {"I": "input", "Q": "output"},
+        "DFF":       {"CLK": "input", "D": "input", "Q": "output"},
     }
 
     for cell_name, cell in cells.items():
@@ -307,6 +305,87 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                 elif d == "input":
                     bit_sinks.setdefault(bit_id, []).append(
                         (cell_name, port, idx))
+
+    # --- GCLK pipeline: GCLK_PIN (per-pin one-hot activate) + per-LAB
+    # LAB_CLK_SEL (per-LAB clock-select XOR delta). ---
+    #
+    # For every DFF / CE6_CARRY cell that has a CLK/clock net, walk the
+    # net back to its IOB driver and collect the pin location. Each
+    # distinct IOB gets a `GCLK_PIN` directive; each distinct LAB that
+    # contains a clocked LE gets a `LAB_CLK_SEL` directive.
+    #
+    # Falls back to legacy `GCLK` only when:
+    #   - has_dff is True AND
+    #   - no CLK net resolves to an IOB driver (e.g. on designs routed
+    #     through non-IOB paths, or tests built without IOB cells).
+    # This path exists so pre-GCLK_PIN test artifacts keep working.
+    gclk_pins: list[str] = []
+    lab_clk_sels: list[tuple[int, int]] = []
+    unresolved_clk = False
+    if has_dff or any(
+            cells[c].get("type") == "CE6_CARRY" for c in cells):
+        seen_pins: set[str] = set()
+        seen_labs: set[tuple[int, int]] = set()
+        for cell_name, cell in cells.items():
+            ctype = cell.get("type", "")
+            # Which port carries the clock on this cell type?
+            clk_port = None
+            if ctype in ("DFF", "$_DFF_P_"):
+                clk_port = "CLK"
+            # CE6_CARRY is combinational — no CLK port — but its
+            # sibling DFF (if any) in the same LE provides the clock.
+            if clk_port is None:
+                continue
+            conns = cell.get("connections", {}).get(clk_port, [])
+            if len(conns) != 1 or isinstance(conns[0], str):
+                continue
+            clk_bit = conns[0]
+            drv = bit_driver.get(clk_bit)
+            if drv is None:
+                unresolved_clk = True
+                continue
+            drv_cell_name, drv_port = drv
+            drv_cell = cells.get(drv_cell_name, {})
+            if drv_cell.get("type") != "GENERIC_IOB":
+                unresolved_clk = True
+                continue
+            bel_str = drv_cell.get("attributes", {}).get(
+                "NEXTPNR_BEL", "")
+            m = re.match(
+                r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
+            if not m:
+                unresolved_clk = True
+                continue
+            pin_loc = m.group(1)
+            if pin_loc not in seen_pins:
+                seen_pins.add(pin_loc)
+                gclk_pins.append(pin_loc)
+
+            sink_bel = cell_bel.get(cell_name)
+            if sink_bel and sink_bel[0] == "SLICE":
+                _, sx, sy, _ = sink_bel
+                if (sx, sy) not in seen_labs:
+                    seen_labs.add((sx, sy))
+                    lab_clk_sels.append((sx, sy))
+
+        # Emit resolved directives
+        for pin_loc in gclk_pins:
+            fasm.append(f"GCLK_PIN {pin_loc}")
+        for (x, y) in lab_clk_sels:
+            fasm.append(f"LAB_CLK_SEL X{x}Y{y}")
+
+        # Fallback: legacy 17-cell local-clock directive only when we
+        # couldn't resolve any clock pin. Downstream bitgen still
+        # depends on the `nv_zero_global.rbf` base in that case.
+        if has_dff and not gclk_pins:
+            fasm.append("GCLK")
+            warnings.append(
+                "no IOB driver found for any DFF.CLK net — "
+                "falling back to legacy GCLK (requires nv_zero_global base)")
+        elif unresolved_clk:
+            warnings.append(
+                "some DFF.CLK nets did not resolve to an IOB driver; "
+                "emitted GCLK_PIN/LAB_CLK_SEL for the ones that did")
 
     n_sig = 0
     n_miss = 0
