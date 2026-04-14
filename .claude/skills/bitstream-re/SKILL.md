@@ -5,7 +5,7 @@ description: Black-box reverse engineering of FPGA configuration bitstreams (Alt
 
 # FPGA Bitstream Reverse Engineering — Playbook
 
-Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated on both axes — X=32 column AND Y=15 row; **CE6 standard 686/686 bit-perfect + jailbreak/edge 8/45 explored** across 24 green-zone source LABs; HW-verified end-to-end on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean. The jailbreak 8/45 figure represents a frontier, not a regression — physical fingerprints are captured for all 9 new islands (Y=15 row × 7, Y=5 edge × 2); sig-cache mining + formula-path Y=15 support is still in progress (see Phase 5.4).
+Distilled from the EP4CE6 project (6,272→10,320 LE jailbreak silicon-validated on both axes — X=32 column AND Y=15 row; **731/731 bit-perfect across all 24 green-zone + jailbreak/edge islands**; HW-verified end-to-end on AX301). Every step in here has been silicon-validated at least once; don't skip the verification steps just because the math looks clean.
 
 ## Core principles
 
@@ -46,6 +46,18 @@ For each wire type:
 2. **Pair-diff two routes that differ only in that wire's presence**. The common bits = the wire's CRAM cells
 3. **Baseline-diff mapper**: for a candidate (X, I) combo, find which (byte, bit) positions are uniquely correlated with Y across the corpus. This is how the 44 C4 I≠0 mappings and 24 R4 I-index models were found. **Audit what you mine**: a 2026-04-08 mass audit of the EP4CE6 R4 table (Methods B+D against absolute route_cells.json) found 11/16 testable entries at <40% hit rate — mining results rot when the corpus shifts and the formula path becomes dead code behind a signature short-circuit. Periodically cross-check mined tables against a ground-truth absolute cell set, not just per-route differentials.
 4. **Expect per-wire-type address styles**: C4/R4 have slot/group/group-indexed formulas; R24 has fixed per-wire bytes (no Y offset); LOCAL_INTERCONNECT lives in the *self* column not the prev column. Don't assume uniformity.
+
+### Stage 3b — Source-side routes (IOB → fabric, GCLK → LAB, etc.)
+
+Source-side routes are structurally harder than wire-internal mining because the start of a route lives in a different fabric domain (pad ring / clock tree) than the end, so a single pair-diff mixes three contributions: the source's fabric-entry cells, the destination's MUX cells, and a shared skeleton that's invariant across both axes. Mining one (src, dst) pair and calling the whole delta "the route" gives you a bloated, non-reusable cell set. Instead, sweep both axes and **decompose the delta by intersection**:
+
+1. **Paired template, not single-LE**: compile a two-LE design where one LE is the target (driven by the source pin) and the other is a fixed secondary LE driven by a fixed secondary pin. Subtract a `zero` variant where both LEs exist but neither routes from the pin. This cancels most of the vendor's placement overhead up front and makes the diff diff-able. The paired RBF itself is usable as a functional silicon design (HW-verified on EP4CE6 for `iob_pair_E16_10_4_0_dataa.rbf` driving KEY2→LED0), so you can flash the mining artifact directly to cross-check the template before trusting any downstream decomposition.
+2. **Sweep the source axis** (pin A, pin B, pin C, …) with destination fixed → intersection over pins isolates `pin_footprint(pin)` (pin-specific, target-invariant) once `universal_infra` is subtracted.
+3. **Sweep the destination axis** (LAB 1, LAB 2, …) with source fixed → intersection over destinations isolates `universal_infra` (pin- AND target-invariant). What's left per destination is `pure_common(tgt)` — pin-invariant, target-specific, i.e. the destination-dominated portion of the route.
+4. **Verify closure**: `raw_delta = universal_infra ∪ pin_footprint(pin) ∪ pure_common(tgt) ∪ residual`. On EP4CE6 IOB→SLICE the residual is ≤2 cells per entry across 15 (pin × target) pairs — that's the "am I done?" check.
+5. **Sweep the secondary axis** (fixed-secondary-pin-A vs fixed-secondary-pin-B) once to quantify how much of the skeleton is truly invariant vs. absorbed from your secondary pin choice. On EP4CE6, switching sec_src from A11 to M15 shifted 26 cells inside `universal_infra` but only moved 3-10 cells out of `pure_common` per target — i.e. most of the "universal" skeleton is secondary-source contamination, not chip-universal wiring. The refined `pc(src_A) ∩ pc(src_B)` is closer to a true R(IOB→target) but diminishing returns kick in fast.
+6. **Vendor canonicalization**: single-input designs may get their input port rewritten by the synthesizer before placement — on EP4CE6 a 4-port sweep (dataa/datab/datac/datad) produced byte-identical deltas because Quartus canonicalizes to a single port-MUX form. Don't mine the port axis until you've got a multi-input template that actually exercises port diversity.
+7. **Baseline mismatch caveat**: `pure_common(tgt)` is expressed relative to whatever baseline your `zero` template uses. If your real design's zero baseline is a different bitstream (e.g. a globally-routed baseline with clock pre-wired), you need either a single-LE template whose `zero` approximates that baseline, or a one-time bridge delta (`nv_zero_global XOR iob_zero`) to align the two frames.
 
 ## Stage 4 — Codec + safety envelope
 
