@@ -62,7 +62,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `DFF` | `X10Y10N0.DFF` | **NO-OP** — DFF is silicon default (no CRAM cells) |
 | `BIT` | `BIT offset bp` | OK — raw cell flip |
 | `SRC` | `SRC X10Y10` | OK — per-source overhead |
-| `LUT_ARITH` | `X4Y18N0.LUT_ARITH = 0x0000` | OK — v4 universal blob (100 SETs + 4 CLEARs), works at ANY LAB |
+| `LUT_ARITH` | `X4Y18N0.LUT_ARITH = 0x0000` | OK — v4 universal blob (100 SETs + 4 CLEARs) for 8-LE half-LAB chains at ANY LAB. Other widths see per-width table below. |
 | `DFF.ARST/ENA` | — | **DISABLED** — header-band noise unresolved |
 | `M9K.INIT` | — | **NOT YET** — anchor table incomplete |
 
@@ -143,6 +143,7 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 - LUT SRAM = 0x0000 for standard +1 counter (function encoded in block-band, not LUT SRAM)
 - Quartus carry counter has ZERO external route cells — DFF→carry feedback is LE-internal
 - **Arith blob is POSITION-INDEPENDENT (v4, 2026-04-14)**: triangle test at (4,18)/(10,18)/(4,10) proved the 100 SETs + 4 CLEARs are byte-identical across LABs. The same `arith_blockband_v4.json` activates carry chain at ANY LAB — no per-LAB mining needed.
+- **Arith blob is per-WIDTH, NOT per-N-slot (Phase 1 sweep 2026-04-14)**: 42-build offline sweep at LAB(4,18) verified `c{w}_lo` and `c{w}_up` produce byte-identical cell sets for all widths 2..8 (Quartus honored LOC; fit.rpt-verified). The arith blob depends on chain length, not which specific N slots are used. Table at `results/arith_blockband_by_width.json` covers widths 2..16 single-LAB + 16+8 multi-LAB. Round-trip 0 data + 0 block_band diffs for every width. 4 CLEAR cells are constant across all single-LAB widths (universal LAB arith-enable reset). v4 blob superseded for non-8-LE widths.
 
 **DFF resolved (2026-04-13)**: DFF is the silicon default — no per-LE enable CRAM cell exists. The FF is intrinsic to every LE; registered vs combinational output is selected by downstream routing. The former `dff_cells_mined.json` contained routing infrastructure noise (zero overlap with any real RBF). FASM `DFF` directive is now a parsed no-op.
 
