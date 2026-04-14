@@ -43,6 +43,25 @@ _CACHE_PATH = HERE.parent / "results" / "route_cells_full.json"
 if _CACHE_PATH.exists():
     _SIG_CACHE = json.loads(_CACHE_PATH.read_text())
 
+# Load IOB cell map to decide whether a given pin has a per-pin IOB
+# cell set (normal I/O pads do; dedicated clock pads like PIN_E1 don't
+# — they were excluded from the IOB sweep because GCLK_PIN handles
+# their CRAM configuration directly).
+_IOB_MAP: dict | None = None
+_IOB_MAP_PATH = HERE.parent / "results" / "iob_cell_map.json"
+if _IOB_MAP_PATH.exists():
+    _IOB_MAP = json.loads(_IOB_MAP_PATH.read_text())
+
+
+def _pin_has_iob_entry(pin_loc: str, direction: str) -> bool:
+    """Return True if pin_loc (e.g. 'PIN_E1') has a per-pin IOB entry
+    for the given direction ('input' or 'output')."""
+    if _IOB_MAP is None:
+        return True  # assume yes when map unavailable
+    short = pin_loc[4:] if pin_loc.startswith("PIN_") else pin_loc
+    key = "per_pin_input" if direction == "input" else "per_pin_output"
+    return short in _IOB_MAP.get(key, {})
+
 # I[n] index → Cyclone IV port name
 _IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
 
@@ -94,6 +113,68 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
     # Pre-compute CE6_CARRY cell set for chain analysis.
     carry_cells = {n: c for n, c in cells.items()
                    if c.get("type") == "CE6_CARRY"}
+
+    # --- Build net driver/sink index up-front ---
+    # Needed BEFORE the cell iteration so the IOB emission pass can
+    # identify clock-driving IOBs (whose only sinks are DFF.CLK) and
+    # skip IOB_IN emission for them — clock pads aren't in
+    # iob_cell_map.json (the IOB sweep excluded clock pins) and
+    # GCLK_PIN already handles clock-pad CRAM configuration.
+    bit_driver: dict[int, tuple[str, str]] = {}   # bit_id → (cell_name, port)
+    bit_sinks: dict[int, list[tuple[str, str, int]]] = {}  # bit_id → [(cell, port, idx)]
+
+    # Blackbox cells (CE6_CARRY, LUT, DFF) from prims.v don't always carry
+    # port_directions in the JSON. Hardcode them so the net walker
+    # can distinguish drivers from sinks.
+    _BLACKBOX_DIRS = {
+        "CE6_CARRY": {"A": "input", "B": "input", "CI": "input",
+                       "S": "output", "CO": "output"},
+        "LUT":       {"I": "input", "Q": "output"},
+        "DFF":       {"CLK": "input", "D": "input", "Q": "output"},
+    }
+
+    for _cn, _c in cells.items():
+        _ct = _c.get("type", "")
+        _conns = _c.get("connections", {})
+        _dirs = _c.get("port_directions", {})
+        if not _dirs and _ct in _BLACKBOX_DIRS:
+            _dirs = _BLACKBOX_DIRS[_ct]
+        for _port, _port_bits in _conns.items():
+            if _ct == "CE6_CARRY" and _port in ("CI", "CO"):
+                continue
+            _d = _dirs.get(_port, "")
+            for _idx, _bit_id in enumerate(_port_bits):
+                if isinstance(_bit_id, str):
+                    continue
+                if _d == "output":
+                    bit_driver[_bit_id] = (_cn, _port)
+                elif _d == "input":
+                    bit_sinks.setdefault(_bit_id, []).append(
+                        (_cn, _port, _idx))
+
+    # Identify IOB cells that drive ONLY DFF.CLK sinks. For these we
+    # MAY want to suppress IOB_IN — but only if the pin has no entry
+    # in iob_cell_map.json (dedicated clock pads like E1). Normal I/O
+    # pads used as clocks still need IOB_IN so the pad buffer stays
+    # enabled.
+    clock_only_iobs: set[str] = set()
+    for cell_name, cell in cells.items():
+        if cell.get("type") != "GENERIC_IOB":
+            continue
+        conns = cell.get("connections", {})
+        o_bits = conns.get("O", [])
+        if not o_bits or isinstance(o_bits[0], str):
+            continue
+        net_bit = o_bits[0]
+        sinks = bit_sinks.get(net_bit, [])
+        if not sinks:
+            continue
+        if all(
+            cells.get(sc, {}).get("type") in ("DFF", "$_DFF_P_")
+            and sp == "CLK"
+            for sc, sp, _ in sinks
+        ):
+            clock_only_iobs.add(cell_name)
 
     # --- LUT / LUT_ARITH / DFF directives from cells ---
     has_dff = False
@@ -153,8 +234,17 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
             dirs = cell.get("port_directions", {})
             has_O = bool(conns.get("O"))
             has_I = bool(conns.get("I"))
+            # Dedicated clock pads (e.g. PIN_E1) aren't in
+            # iob_cell_map.json because the IOB sweep excluded them —
+            # GCLK_PIN handles their CRAM directly. For clock-only IOBs
+            # whose pin lacks an IOB entry, silently suppress the
+            # IOB_IN/IOB_OUT directive (it would fail bitgen lookup).
+            clock_only = cell_name in clock_only_iobs
             if has_O and not has_I:
-                fasm.append(f"IOB_IN {pin_loc}")
+                if clock_only and not _pin_has_iob_entry(pin_loc, "input"):
+                    pass  # clock pad — GCLK_PIN covers it
+                else:
+                    fasm.append(f"IOB_IN {pin_loc}")
             elif has_I and not has_O:
                 fasm.append(f"IOB_OUT {pin_loc}")
             elif has_O and has_I:
@@ -266,45 +356,8 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
                     f"(cascaded CI not supported)")
 
     # --- ROUTE directives from logical connectivity ---
-    # For each net, find driver bel and all sink bels+ports, then look up
-    # the sig-cache for each (src→dst.port) arc.
-    #
-    # Build bit→cell mapping first (also used by the GCLK pipeline below
-    # to trace DFF.CLK nets back to their IOB driver).
-    bit_driver: dict[int, tuple[str, str]] = {}   # bit_id → (cell_name, port)
-    bit_sinks: dict[int, list[tuple[str, str, int]]] = {}  # bit_id → [(cell, port, idx)]
-
-    # Blackbox cells (CE6_CARRY, LUT, DFF) from prims.v don't always carry
-    # port_directions in the JSON. Hardcode them so the net walker
-    # can distinguish drivers from sinks.
-    _BLACKBOX_DIRS = {
-        "CE6_CARRY": {"A": "input", "B": "input", "CI": "input",
-                       "S": "output", "CO": "output"},
-        "LUT":       {"I": "input", "Q": "output"},
-        "DFF":       {"CLK": "input", "D": "input", "Q": "output"},
-    }
-
-    for cell_name, cell in cells.items():
-        ctype = cell.get("type", "")
-        conns = cell.get("connections", {})
-        dirs = cell.get("port_directions", {})
-        if not dirs and ctype in _BLACKBOX_DIRS:
-            dirs = _BLACKBOX_DIRS[ctype]
-        for port, port_bits in conns.items():
-            # CE6_CARRY's CI/CO are routed via the dedicated silicon
-            # carry pip, not LI MUX — skip from the sig-cache routing
-            # pass entirely.
-            if ctype == "CE6_CARRY" and port in ("CI", "CO"):
-                continue
-            d = dirs.get(port, "")
-            for idx, bit_id in enumerate(port_bits):
-                if isinstance(bit_id, str):  # constant "0"/"1"
-                    continue
-                if d == "output":
-                    bit_driver[bit_id] = (cell_name, port)
-                elif d == "input":
-                    bit_sinks.setdefault(bit_id, []).append(
-                        (cell_name, port, idx))
+    # bit_driver / bit_sinks were built up-front (see above) so the IOB
+    # emission pass could identify clock-only IOBs.
 
     # --- GCLK pipeline: GCLK_PIN (per-pin one-hot activate) + per-LAB
     # LAB_CLK_SEL (per-LAB clock-select XOR delta). ---

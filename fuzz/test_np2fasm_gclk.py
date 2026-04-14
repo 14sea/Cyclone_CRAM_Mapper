@@ -154,6 +154,21 @@ def test_partial_resolution_warns():
     assert any("did not resolve" in w for w in warns), warns
 
 
+def test_clock_only_iob_on_dedicated_pin_suppresses_iob_in():
+    """Clock-only IOB on a pin NOT in iob_cell_map.json (e.g. PIN_E1)
+    must NOT emit IOB_IN — GCLK_PIN handles the pad CRAM, and bitgen
+    would fail on a missing per-pin entry otherwise."""
+    cells = {
+        "clkpad": _iob("IOB_CLK_PIN_E1", O_net=1),
+        "ff":     _dff(10, 4, 0, clk_net=1, d_net=2, q_net=3),
+    }
+    fasm, warns = convert(_wrap(cells))
+    # GCLK_PIN must still be emitted
+    assert "GCLK_PIN PIN_E1" in fasm, fasm
+    # But NO IOB_IN for the clock pad
+    assert "IOB_IN PIN_E1" not in fasm, fasm
+
+
 def main():
     tests = [
         test_gclk_pin_single_dff_to_iob_clk,
@@ -162,6 +177,7 @@ def main():
         test_gclk_fallback_when_no_iob_driver,
         test_no_dff_no_gclk_anything,
         test_partial_resolution_warns,
+        test_clock_only_iob_on_dedicated_pin_suppresses_iob_in,
     ]
     n_pass = n_fail = 0
     for t in tests:
