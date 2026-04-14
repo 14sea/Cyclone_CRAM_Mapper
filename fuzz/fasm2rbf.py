@@ -22,8 +22,23 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # Inter-LAB route from source LAB to a destination LE input port
     ROUTE X{sx}Y{sy} -> X{dx}Y{dy}N{dn}.{port}
 
-    # Enable global clock network (PIN_E1 → all LAB CLK inputs)
+    # Legacy GCLK directive (17-cell hardcoded list) — actually local-
+    # clock distribution at LAB(10,4), NOT a real GCLK_BUS.  Works for
+    # tiny test designs where Quartus refuses auto-promotion.  Absolute
+    # OR (not XOR), so composes additively with any baseline.
     GCLK
+
+    # Per-pin GCLK source activate (XOR-delta).  Flips the cells that
+    # Quartus would flip when forcing GLOBAL_SIGNAL on CLK at PIN_X.
+    # Cells from results/clk_cross_pin_spine_check.json.  Known pins:
+    # PIN_E1 (3 cells → GCLK2), PIN_R8 (5 cells → GCLK3).
+    GCLK_PIN PIN_E1
+
+    # Per-LAB CLK_SEL (XOR-delta).  Flips the cells that route a global
+    # clock into this LAB.  Cells from results/clk_lab_sel_probe_X{x}Y{y}
+    # .json.  Known LABs: (10,4)=26 cells, (10,16)=53 cells,
+    # (22,10)=45 cells.  Mine more with fuzz/clk_lab_sel_probe.py.
+    LAB_CLK_SEL X10Y4
 
     # DFF register marker (no-op — DFF is intrinsic to every LE)
     X{x}Y{y}N{n}.DFF
@@ -91,6 +106,18 @@ _M9K_INIT_RE = re.compile(
     r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
 )
 _GCLK_RE = re.compile(r"^GCLK$")
+# Per-pin GCLK source-activate: GCLK_PIN PIN_E1
+# XOR-delta semantic (diff from AUTO-mode baseline → forced-GCLK).  Cell
+# sets live in results/clk_cross_pin_spine_check.json under
+# per_pin_forced_vs_auto_intersection.PIN_X.  E1 → GCLK2 (3 cells),
+# R8 → GCLK3 (5 cells), others TBD.  See memory gclk_per_pin_one_hot.md.
+_GCLK_PIN_RE = re.compile(r"^GCLK_PIN\s+PIN_(?P<pin>[A-Z]\d+)$")
+# Per-LAB CLK_SEL: LAB_CLK_SEL X{x}Y{y}
+# XOR-delta semantic.  Cell sets live in
+# results/clk_lab_sel_probe_X{x}Y{y}.json under "lab_clk_sel" key.
+# Mined 2026-04-14 for LAB(10,4), LAB(10,16), LAB(22,10); additional
+# LABs require re-running fuzz/clk_lab_sel_probe.py --lab X,Y.
+_LAB_CLK_SEL_RE = re.compile(r"^LAB_CLK_SEL\s+X(?P<x>\d+)Y(?P<y>\d+)$")
 # IOB pin assignment.  ROLE is INPUT or OUTPUT; PIN follows the AX301
 # pin-name convention (e.g. PIN_E15, PIN_G15, PIN_M16).
 #
@@ -157,6 +184,65 @@ def _iob_delta_cells(role, pin, iob_map):
             f"(known: {sorted(table)})"
         )
     return [tuple(c) for c in table[pin]]
+
+_GCLK_PIN_CACHE = None
+_LAB_CLK_SEL_CACHE = {}
+
+
+def _load_gclk_pin_cells(pin):
+    """Return XOR-delta cells for `GCLK_PIN PIN_X`.
+
+    Data lives in results/clk_cross_pin_spine_check.json under
+    per_pin_forced_vs_auto_intersection.PIN_X.  These are the cells that
+    flip when PIN_X becomes the driver of a forced GCLK (vs the AUTO
+    baseline where the pin is a regular input).
+    """
+    global _GCLK_PIN_CACHE
+    if _GCLK_PIN_CACHE is None:
+        import json
+        path = ROOT / "results" / "clk_cross_pin_spine_check.json"
+        if not path.exists():
+            raise FasmError(
+                "GCLK_PIN directive used but "
+                "results/clk_cross_pin_spine_check.json missing; run "
+                "fuzz/clk_cross_pin_spine_check.py"
+            )
+        data = json.loads(path.read_text())
+        _GCLK_PIN_CACHE = data.get("per_pin_forced_vs_auto_intersection", {})
+    key = f"PIN_{pin}"
+    if key not in _GCLK_PIN_CACHE:
+        raise FasmError(
+            f"GCLK_PIN PIN_{pin}: no entry in clk_cross_pin_spine_check.json "
+            f"(known: {sorted(_GCLK_PIN_CACHE)}). Mine it with "
+            f"fuzz/clk_force_gclk_probe.py + clk_cross_pin_spine_check.py."
+        )
+    return [tuple(c) for c in _GCLK_PIN_CACHE[key]]
+
+
+def _load_lab_clk_sel_cells(x, y):
+    """Return XOR-delta cells for `LAB_CLK_SEL X{x}Y{y}`.
+
+    Per-LAB JSONs are written by fuzz/clk_lab_sel_probe.py --lab X,Y to
+    results/clk_lab_sel_probe_X{x}Y{y}.json.  The "lab_clk_sel" key is
+    the N-invariant forced-vs-auto intersection minus the E1 activate
+    spine — i.e., the cells that flip to route a global clock into this
+    LAB (plus shared row-GCLK-tree cells, idempotent under union).
+    """
+    key = (x, y)
+    if key in _LAB_CLK_SEL_CACHE:
+        return _LAB_CLK_SEL_CACHE[key]
+    import json
+    path = ROOT / "results" / f"clk_lab_sel_probe_X{x}Y{y}.json"
+    if not path.exists():
+        raise FasmError(
+            f"LAB_CLK_SEL X{x}Y{y}: no mined data at {path.name}. "
+            f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
+        )
+    data = json.loads(path.read_text())
+    cells = [tuple(c) for c in data.get("lab_clk_sel", [])]
+    _LAB_CLK_SEL_CACHE[key] = cells
+    return cells
+
 
 # 17 position-independent, seed-stable GCLK cells mined 2026-04-10
 # from 4-position × 4-seed intersection of comb-vs-reg pair-diffs.
@@ -268,6 +354,8 @@ def parse_fasm(text):
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     gclk = False
+    gclk_pins = []  # list[pin] — per-pin GCLK source activate (XOR)
+    lab_clk_sels = []  # list[(x, y)] — per-LAB CLK_SEL (XOR)
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
@@ -328,6 +416,14 @@ def parse_fasm(text):
         if m:
             dffs.append((int(m["x"]), int(m["y"]), m["mode"]))
             continue
+        m = _GCLK_PIN_RE.match(line)
+        if m:
+            gclk_pins.append(m["pin"])
+            continue
+        m = _LAB_CLK_SEL_RE.match(line)
+        if m:
+            lab_clk_sels.append((int(m["x"]), int(m["y"])))
+            continue
         m = _GCLK_RE.match(line)
         if m:
             gclk = True
@@ -356,7 +452,7 @@ def parse_fasm(text):
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-            iobs, gclk)
+            iobs, gclk, gclk_pins, lab_clk_sels)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -430,7 +526,7 @@ def _load_overhead():
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-     iobs, gclk) = parse_fasm(fasm_text)
+     iobs, gclk, gclk_pins, lab_clk_sels) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -471,6 +567,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         buf = bytearray(work)
         for off, bp in _GCLK_CELLS:
             buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
+        work = bytes(buf)
+
+    # GCLK_PIN + LAB_CLK_SEL: XOR-delta from AUTO-mode baseline.
+    # Use XOR so overlapping cells between multiple LAB_CLK_SELs (or
+    # between a GCLK_PIN and a LAB_CLK_SEL that shares row-tree cells)
+    # cancel properly under pair-wise composition.  Collect into a
+    # {cell: parity} map and apply each cell with odd parity once.
+    if gclk_pins or lab_clk_sels:
+        parity = {}
+        for pin in gclk_pins:
+            for off, bp in _load_gclk_pin_cells(pin):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        for x, y in lab_clk_sels:
+            for off, bp in _load_lab_clk_sel_cells(x, y):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
+            if v:
+                buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     # DFF directives are parsed but intentionally no-op: Cyclone IV's
