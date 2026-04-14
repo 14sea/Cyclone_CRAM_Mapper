@@ -20,8 +20,8 @@ Usage
 
     python3 fuzz/chipdb_gen.py
     nextpnr-generic --uarch generic --run results/chipdb_ep4ce6.py \\
-        --json /tmp/nv32_synth/neorv32.json --top neorv32_top \\
-        --write /tmp/nv32_synth/neorv32_routed.json
+        --json tmp/nv32_synth/neorv32.json --top neorv32_top \\
+        --write tmp/nv32_synth/neorv32_routed.json
 
 Scope / limits
 --------------

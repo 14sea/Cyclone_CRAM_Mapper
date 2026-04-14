@@ -1851,7 +1851,7 @@ reading was "the factory crashed at 96% and left 497 edges unfinished,
 we need to restart it and investigate".
 
 We almost did exactly that. What stopped us was checking the actual
-log file (`/tmp/nvfac.log`) before touching anything. The log showed
+log file (`tmp/nvfac.log`) before touching anything. The log showed
 a perfectly clean final line:
 
 ```
@@ -2080,7 +2080,7 @@ for any future design that needs to share a LAB between many LEs —
 the LutCodec workaround, the cleanly re-mined inter-LE pair entries,
 the per-LAB clock ordering rule, the post-bitgen LI cleanup.
 None of them fix the counter, but together they form a working
-template (`/tmp/m5_counter/build_counter_sigcache.py`) for
+template (`tmp/m5_counter/build_counter_sigcache.py`) for
 high-density combinational and FF-only designs. Phase 5.4 will turn
 the carry chain into the next cliff we climb.
 
@@ -2255,7 +2255,7 @@ LEs in the LAB are part of it.
   - `synth/np2fasm.py`: extracts logical connectivity from nextpnr routed JSON, looks up sig-cache for FASM ROUTE directives, walks the carry chain and emits `LUT_ARITH`
   - `fuzz/fasm2rbf.py` directives that work end-to-end: `LUT`, `ROUTE` (6/7-tuple), `GCLK`, `DFF` (parsed no-op — FF is silicon default), `BIT`, `SRC`, `LUT_ARITH`. CRC patcher integrated.
   - **M5 counter — 8-bit counter now hardware-verified via the open flow (2026-04-13).** The FASM path (identity baseline + 8× `LUT_ARITH = 0x0000`) blinks on AX301 with bit-identical behavior to Quartus's own compile. Widths 2..16 single-LAB and the 16+8 cross-LAB case are byte-identical to Quartus output under `diff`; hardware re-verification pending. See Phase 5.4 follow-up section above for the climb.
-  - **Real fixes earned chasing M5 (still useful for future multi-LE-per-LAB designs)**: LutCodec high-density LAB workaround (`predict_sram(0xFFFF)` filters LAB-shared cells); sig-cache mining template pitfall documented (must use `gen_two_luts_single_input_clocked` from `verilog_gen.py`); 160 cleanly re-mined (4,18)/(4,19) inter-LE pair entries added to `route_cells_full.json`; per-LAB CLK ordering fix (must run after the LUT phase reset); post-bitgen LI cleanup for sig-cache infrastructure leakage. Working multi-LE-per-LAB build template at `/tmp/m5_counter/build_counter_sigcache.py`.
+  - **Real fixes earned chasing M5 (still useful for future multi-LE-per-LAB designs)**: LutCodec high-density LAB workaround (`predict_sram(0xFFFF)` filters LAB-shared cells); sig-cache mining template pitfall documented (must use `gen_two_luts_single_input_clocked` from `verilog_gen.py`); 160 cleanly re-mined (4,18)/(4,19) inter-LE pair entries added to `route_cells_full.json`; per-LAB CLK ordering fix (must run after the LUT phase reset); post-bitgen LI cleanup for sig-cache infrastructure leakage. Working multi-LE-per-LAB build template at `tmp/m5_counter/build_counter_sigcache.py`.
   - IOB FASM cell map and GCLK clock-pin routing not yet complete; designs currently use `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as a baseline.
 
 - [x] Phase 5.4: **LE carry chain in the open flow (HARDWARE-VERIFIED 2026-04-13)** — arith mode activation lives in the block band (frames 1692-1738, bp=2), not in LAB CRAM columns, and is a per-LAB mode switch, not a per-LE cell. Four pieces landed: (1) `chipdb_gen.py` declares 8,126 `cout→cin` direct pips between adjacent LE bels; (2) `synth/ep4ce6_map.v` + `synth/prims.v` add the CE6_CARRY primitive so Yosys lands `$alu` on chained LEs with the FF's `Q` wired directly into `CE6_CARRY.B` (no external "Route-A" buffer); (3) `synth/np2fasm.py` walks the carry chain and emits `LUT_ARITH` directives; (4) `fuzz/fasm2rbf.py` applies the arith blob from `results/arith_blockband_v4.json` (universal, position-independent at any LAB) for 8-LE half-LAB chains, or from `results/arith_blockband_by_width.json` (widths 2..16 single-LAB + 16+8 cross-LAB) for other chain lengths. AX301 silicon-accepted: identity + 8× `LUT_ARITH=0x0000` blinks bit-identically to Quartus's counter RBF; identity `Q<=Q` negative control stays dark.

@@ -11,7 +11,7 @@ Header cells (frames <25) are stripped as seed-noise.
 import json, os
 from collections import Counter
 
-D = json.load(open("/tmp/arith_sweep/cells_by_width.json"))
+D = json.load(open("tmp/arith_sweep/cells_by_width.json"))
 
 def is_noise(off):
     """Return True for header-band seed-noise cells (frames <25)."""
@@ -29,7 +29,7 @@ def arith_cells(key):
 
 table = {
     "version": 5,
-    "source": "/tmp/arith_sweep — per-width sweep at LAB(4,18)",
+    "source": "tmp/arith_sweep — per-width sweep at LAB(4,18)",
     "method": "counter_w vs identity_w diff, header (frames<25) stripped as seed noise",
     "invariants": {
         "position_independent": "c{w}_lo and c{w}_up produce byte-identical cell sets at widths 2-8, so blob is N-slot-position-agnostic within the same LAB",
@@ -85,7 +85,7 @@ if "c24" in D:
         "n_clear": len(c),
     }
 
-with open("/tmp/arith_sweep/arith_blockband_by_width.json", "w") as f:
+with open("tmp/arith_sweep/arith_blockband_by_width.json", "w") as f:
     json.dump(table, f)
 print(f"Wrote arith_blockband_by_width.json with widths: {sorted(table['widths'].keys(), key=int)}")
 print(f"Multi-LAB entries: {list(table['multi_lab'].keys())}")

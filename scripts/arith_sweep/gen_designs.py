@@ -63,7 +63,7 @@ for w in range(2, 9):  # include width 8 for canonical c8_lo/c8_up at (4,18)
     CONFIGS.append((f"c{w}_up", "counter", 4, 18, 17, w))
     CONFIGS.append((f"i{w}_up", "identity", 4, 18, 17, w))
 
-BASE = "/tmp/arith_sweep"
+BASE = "tmp/arith_sweep"  # relative to repo root (gitignored scratch dir)
 for tag, kind, lx, ly, nst, w in CONFIGS:
     gen_pair(BASE, tag, lx, ly, nst, w, identity=(kind == "identity"))
 print(f"generated {len(CONFIGS)} design dirs under {BASE}")

@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Apply per-width blob to identity_w and verify it matches counter_w exactly
-(except header/CRC which we stripped as noise)."""
+(except header/CRC which we stripped as noise).
+
+Invoke from the repo root; all paths are relative to CWD.
+"""
 import json
 
-T = json.load(open("/tmp/arith_sweep/arith_blockband_by_width.json"))
+SWEEP = "tmp/arith_sweep"
+M5 = "tmp/m5_revenge"
+
+T = json.load(open(f"{SWEEP}/arith_blockband_by_width.json"))
 RBF = 368_011
 PRE = 32; FS = 210
 
@@ -43,31 +49,31 @@ def diff_non_crc(a, b):
 # Test each width
 print(f"{'w':>3} {'diff_vs_counter_w':>20}")
 for w in range(2, 9):
-    ident = load(f"/tmp/arith_sweep/i{w}_lo/output_files/top.rbf")
-    target = load(f"/tmp/arith_sweep/c{w}_lo/output_files/top.rbf")
+    ident = load(f"{SWEEP}/i{w}_lo/output_files/top.rbf")
+    target = load(f"{SWEEP}/c{w}_lo/output_files/top.rbf")
     blob = T["widths"][str(w)]
     got = apply_blob(ident, blob)
     d = diff_non_crc(got, target)
     print(f"{w:>3} {str(d):>20}")
 
 for w in range(9, 16):
-    ident = load(f"/tmp/arith_sweep/i{w}_xh/output_files/top.rbf")
-    target = load(f"/tmp/arith_sweep/c{w}_xh/output_files/top.rbf")
+    ident = load(f"{SWEEP}/i{w}_xh/output_files/top.rbf")
+    target = load(f"{SWEEP}/c{w}_xh/output_files/top.rbf")
     blob = T["widths"][str(w)]
     got = apply_blob(ident, blob)
     d = diff_non_crc(got, target)
     print(f"{w:>3} {str(d):>20}")
 
 # w=16 and w=24
-ident = load("/tmp/m5_revenge/identity16/output_files/top.rbf")
-target = load("/tmp/m5_revenge/counter16/output_files/top.rbf")
+ident = load(f"{M5}/identity16/output_files/top.rbf")
+target = load(f"{M5}/counter16/output_files/top.rbf")
 blob = T["widths"]["16"]
 got = apply_blob(ident, blob)
 d = diff_non_crc(got, target)
 print(f" 16 {str(d):>20}")
 
-ident = load("/tmp/m5_revenge/identity24/output_files/top.rbf")
-target = load("/tmp/m5_revenge/counter24/output_files/top.rbf")
+ident = load(f"{M5}/identity24/output_files/top.rbf")
+target = load(f"{M5}/counter24/output_files/top.rbf")
 blob = T["multi_lab"]["16+8"]
 got = apply_blob(ident, blob)
 d = diff_non_crc(got, target)

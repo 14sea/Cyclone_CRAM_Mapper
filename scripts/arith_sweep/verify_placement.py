@@ -19,14 +19,14 @@ def parse_fit_panel(path):
     return out[:40]
 
 for tag in ["c2_lo", "c2_up", "c4_lo", "c4_up", "c8_lo", "c8_up"]:
-    log = f"/tmp/arith_sweep/{tag}/fit.log"
+    log = f"tmp/arith_sweep/{tag}/fit.log"
     locs = parse_fit_panel(log)
     print(f"{tag}: found {len(locs) if locs else 0} refs; first 10: {locs[:10] if locs else 'N/A'}")
 
 # Also check the fit.rpt for actual placement
 import os
 for tag in ["c8_lo", "c8_up"]:
-    rpt = f"/tmp/arith_sweep/{tag}/output_files/top.fit.rpt"
+    rpt = f"tmp/arith_sweep/{tag}/output_files/top.fit.rpt"
     if not os.path.exists(rpt):
         print(f"{tag}: no fit.rpt")
         continue

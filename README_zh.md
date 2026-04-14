@@ -1712,7 +1712,7 @@ BASE 在所测试 wire 上的命中率都能靠巧合达到 55–61%。null test
 应是「工厂在 96% 崩了，还有 497 条 edge 没完成，得重启调查」。
 
 我们差点就这么干了。拦住我们的是在动手之前先看日志文件
-（`/tmp/nvfac.log`）。日志的最后一行干净得不能更干净：
+（`tmp/nvfac.log`）。日志的最后一行干净得不能更干净：
 
 ```
 == done ==  ok=11715  fail=0  jb_fail=0  elapsed=676.5min
@@ -1900,7 +1900,7 @@ I/O 标准），每一种丰富出来的特性都是一道悬崖，generic 流�
 的设计都仍然有用 —— LutCodec workaround、干净重挖的 inter-LE
 配对条目、per-LAB clock 顺序规则、bitgen 后 LI 清理。它们没救
 得了 counter，但合在一起构成一个高密度组合逻辑和 FF-only 设计
-的可工作模板（`/tmp/m5_counter/build_counter_sigcache.py`）。
+的可工作模板（`tmp/m5_counter/build_counter_sigcache.py`）。
 Phase 5.4 会把进位链变成我们爬的下一道悬崖。
 
 
@@ -2058,7 +2058,7 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
   - `synth/np2fasm.py`：从 nextpnr 布线 JSON 提取逻辑连通性，查 sig-cache 生成 FASM ROUTE 指令，并走进位链发射 `LUT_ARITH` 指令
   - `fuzz/fasm2rbf.py` 已端到端跑通的指令：`LUT`、`ROUTE`（6/7-tuple）、`GCLK`、`DFF`（parse 出来即 no-op —— FF 是矽片默认）、`BIT`、`SRC`、`LUT_ARITH`。CRC patcher 已整合
   - **M5 counter —— 8 位 counter 已经可以经开源流程在硬件上闪烁（2026-04-13）。** FASM 路径（identity 基底 + 8 条 `LUT_ARITH = 0x0000`）在 AX301 上烧出跟 Quartus 自己编的 counter 逐 bit 一致的行为。Width 2..16 单 LAB 以及 16+8 跨 LAB 的情况，diff 跟 Quartus 输出逐字节相同，硬件复验待板子回到桌面再做。详见上方「Phase 5.4 后续」叙事章节
-  - **追 M5 过程中赚到的真实修复（对未来 multi-LE-per-LAB 设计仍然有用）**：LutCodec 高密度 LAB workaround（`predict_sram(0xFFFF)` 过滤掉 LAB-shared 干扰）；sig-cache 挖掘模板坑已写入文档（必须用 `verilog_gen.py` 的 `gen_two_luts_single_input_clocked`）；160 个干净重挖的 (4,18)/(4,19) inter-LE 配对条目并入 `route_cells_full.json`；per-LAB CLK 顺序修复（必须在 LUT phase 重置之后再 set）；bitgen 后的 LI 清理（去掉 sig-cache 挖掘的 baseline LAB infrastructure 漏出来的 cell）。可用的 multi-LE-per-LAB build 模板：`/tmp/m5_counter/build_counter_sigcache.py`
+  - **追 M5 过程中赚到的真实修复（对未来 multi-LE-per-LAB 设计仍然有用）**：LutCodec 高密度 LAB workaround（`predict_sram(0xFFFF)` 过滤掉 LAB-shared 干扰）；sig-cache 挖掘模板坑已写入文档（必须用 `verilog_gen.py` 的 `gen_two_luts_single_input_clocked`）；160 个干净重挖的 (4,18)/(4,19) inter-LE 配对条目并入 `route_cells_full.json`；per-LAB CLK 顺序修复（必须在 LUT phase 重置之后再 set）；bitgen 后的 LI 清理（去掉 sig-cache 挖掘的 baseline LAB infrastructure 漏出来的 cell）。可用的 multi-LE-per-LAB build 模板：`tmp/m5_counter/build_counter_sigcache.py`
   - IOB FASM cell map 和 GCLK 时钟引脚布线尚未完结，当前设计仍以 `nv_zero_global.rbf`（PIN_E1→GCLK 已预先布通）作为基底
 
 - [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
@@ -2144,7 +2144,7 @@ techmap + np2fasm 都已跑通，counter 已能布线）。
 | M9K init 编解码器（Phase 5.2） | **闭合** | 2D 线性公式，33 条 anchor，31 个 NEORV32 点位校准；READ 512/512，WRITE 与 Quartus 0 CRAM diff |
 | RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
 | FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
-| 开源工具链（Phase 5.3） | **部分开通** | 端到端管线已跑通（Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe）。组合逻辑设计可烧录。算术设计**阻塞**在 Phase 5.4（chipdb / techmap 缺进位链 primitive）。下一轮挖掘的 ground truth：`/tmp/m5_counter/quartus_ref/counter_top.rbf` |
+| 开源工具链（Phase 5.3） | **部分开通** | 端到端管线已跑通（Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe）。组合逻辑设计可烧录。算术设计**阻塞**在 Phase 5.4（chipdb / techmap 缺进位链 primitive）。下一轮挖掘的 ground truth：`tmp/m5_counter/quartus_ref/counter_top.rbf` |
 | 开源流程的 LE 进位链（Phase 5.4） | **0%** | 所有 `+`/计数器/算术设计的前置条件。三件事一起做：chipdb pip、Yosys techmap CARRY cell、np2fasm + FASM `LUT mode=arith` 指令。挖掘目标：Quartus 进位链 RBF 与 nv_zero 的 diff |
 | 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
 

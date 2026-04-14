@@ -1,8 +1,9 @@
 #!/bin/bash
 # Wait for port_mine to drain, then chain downstream rebuilds.
-cd /home/test/EP4CE6/fuzz
+cd "$(dirname "$0")"    # -> fuzz/, wherever the repo lives
 export PATH=$PATH:$HOME/intelFPGA_lite/21.1/quartus/bin
-LOG=/tmp/portmine_chain.log
+LOG="$(cd "$(dirname "$0")/.." && pwd)/tmp/portmine_chain.log"
+mkdir -p "$(dirname "$LOG")"
 echo "[watch] start $(date)" > $LOG
 while pgrep -f port_mine.py > /dev/null || pgrep -f 'quartus_map.*lits_pair' > /dev/null; do
   sleep 30

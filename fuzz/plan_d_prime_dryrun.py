@@ -14,9 +14,10 @@ from pathlib import Path
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-TIMING = Path('/tmp/neorv32_timing_big.txt')
-HOLD   = Path('/tmp/neorv32_timing_hold.txt')
-OUT    = Path(__file__).resolve().parent.parent / 'results' / 'plan_d_prime_edges.json'
+_ROOT  = Path(__file__).resolve().parent.parent
+TIMING = _ROOT / 'tmp' / 'neorv32_timing_big.txt'
+HOLD   = _ROOT / 'tmp' / 'neorv32_timing_hold.txt'
+OUT    = _ROOT / 'results' / 'plan_d_prime_edges.json'
 
 # Line patterns inside a path block
 RE_LCCOMB = re.compile(r'LCCOMB_X(\d+)_Y(\d+)_N(\d+)')

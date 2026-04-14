@@ -3,7 +3,7 @@
 """What are the 8 lab_cram cells per c{w}? Same positions between lo and up?"""
 import json
 
-D = json.load(open("/tmp/arith_sweep/cells_by_width.json"))
+D = json.load(open("tmp/arith_sweep/cells_by_width.json"))
 
 def reg(off):
     if off < 32: return "pre"

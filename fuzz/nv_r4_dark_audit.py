@@ -1,16 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Task E — predict which dark R4 I-indices Plan D' will illuminate.
 
-Walks /tmp/neorv32_timing_big.txt and counts occurrences of R4 wires for
-each unmapped I-index. If Plan D' edges route through them with decent
-coverage, the dark indices can finally be mined from the factory output.
+Walks tmp/neorv32_timing_big.txt (under the repo-local scratch dir) and
+counts occurrences of R4 wires for each unmapped I-index. If Plan D'
+edges route through them with decent coverage, the dark indices can
+finally be mined from the factory output.
 """
 import re, sys, os, mmap
 from pathlib import Path
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-TIMING = Path('/tmp/neorv32_timing_big.txt')
+_ROOT = Path(__file__).resolve().parent.parent
+TIMING = _ROOT / 'tmp' / 'neorv32_timing_big.txt'
 DARK = {5, 6, 9, 24, 28, 29, 30, 31, 32, 33, 104, 116, 125}
 RE = re.compile(rb'R4_X(\d+)_Y(\d+)_N(\d+)_I(\d+)')
 

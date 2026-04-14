@@ -3,7 +3,7 @@
 """Verify c{w}_lo and c{w}_up cells are literally identical (not just same count)."""
 import json
 
-D = json.load(open("/tmp/arith_sweep/cells_by_width.json"))
+D = json.load(open("tmp/arith_sweep/cells_by_width.json"))
 
 for w in [2, 4, 8]:
     lo = D[f"c{w}_lo"]

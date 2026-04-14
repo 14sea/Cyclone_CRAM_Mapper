@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Diff counter vs identity RBFs, extract per-width arith cell set.
 
-Output: /tmp/arith_sweep/cells_by_width.json
-        /tmp/arith_sweep/summary.json
+Output: tmp/arith_sweep/cells_by_width.json
+        tmp/arith_sweep/summary.json
+
+Invoke from the repo root; all paths below are relative to CWD.
 """
 import os, json, sys
 
@@ -12,6 +14,10 @@ PREAMBLE = 32
 FRAME_SIZE = 210
 N_FRAMES = 1752
 POSTAMBLE = PREAMBLE + N_FRAMES * FRAME_SIZE  # = 368_012 ... off by one?
+
+# Scratch dir roots (relative to repo root; both gitignored under tmp/).
+SWEEP_ROOT = "tmp/arith_sweep"
+M5_ROOT = "tmp/m5_revenge"
 
 def load(path):
     with open(path, "rb") as f:
@@ -64,14 +70,14 @@ def classify_region(off):
 
 def build_config(tag):
     """tag = 'c{w}_{lo|up}' or already-built legacy dirs."""
-    return os.path.join("/tmp/arith_sweep", tag)
+    return os.path.join(SWEEP_ROOT, tag)
 
 LEGACY = {
     # (counter_rbf_path, identity_rbf_path, width, half)
-    "c16":    ("/tmp/m5_revenge/counter16/output_files/top.rbf",
-               "/tmp/m5_revenge/identity16/output_files/top.rbf", 16, "full"),
-    "c24":    ("/tmp/m5_revenge/counter24/output_files/top.rbf",
-               "/tmp/m5_revenge/identity24/output_files/top.rbf", 24, "crossLAB"),
+    "c16":    (os.path.join(M5_ROOT, "counter16/output_files/top.rbf"),
+               os.path.join(M5_ROOT, "identity16/output_files/top.rbf"), 16, "full"),
+    "c24":    (os.path.join(M5_ROOT, "counter24/output_files/top.rbf"),
+               os.path.join(M5_ROOT, "identity24/output_files/top.rbf"), 24, "crossLAB"),
 }
 
 def sweep_items():
@@ -80,14 +86,14 @@ def sweep_items():
         for half in ["lo", "up"]:
             c = f"c{w}_{half}"
             i = f"i{w}_{half}"
-            yield (c, os.path.join("/tmp/arith_sweep", c, "output_files/top.rbf"),
-                      os.path.join("/tmp/arith_sweep", i, "output_files/top.rbf"),
+            yield (c, os.path.join(SWEEP_ROOT, c, "output_files/top.rbf"),
+                      os.path.join(SWEEP_ROOT, i, "output_files/top.rbf"),
                       w, half)
     for w in range(9, 16):
         c = f"c{w}_xh"
         i = f"i{w}_xh"
-        yield (c, os.path.join("/tmp/arith_sweep", c, "output_files/top.rbf"),
-                  os.path.join("/tmp/arith_sweep", i, "output_files/top.rbf"),
+        yield (c, os.path.join(SWEEP_ROOT, c, "output_files/top.rbf"),
+                  os.path.join(SWEEP_ROOT, i, "output_files/top.rbf"),
                   w, "xh")
     for k, (c, i, w, half) in LEGACY.items():
         yield (k, c, i, w, half)
@@ -139,10 +145,10 @@ def main():
         summary_rows.append({"key": key, "width": width, "half": half,
                              "set": len(sets), "clear": len(clears),
                              "total": len(diffs), "regions": region_counts})
-    with open("/tmp/arith_sweep/cells_by_width.json", "w") as f:
+    with open(os.path.join(SWEEP_ROOT, "cells_by_width.json"), "w") as f:
         # compact: convert tuples
         json.dump({k: v for k, v in results.items()}, f)
-    with open("/tmp/arith_sweep/summary.json", "w") as f:
+    with open(os.path.join(SWEEP_ROOT, "summary.json"), "w") as f:
         json.dump(summary_rows, f, indent=2)
     print(json.dumps(summary_rows, indent=2))
 

@@ -10,8 +10,8 @@ a current snapshot). Steps:
      - merged 7-tuple entries (total)
      - coverage % of 12,259 strict-deduped NEORV32 edges
      - sources fully covered / 4,291
-  4. Substitute those numbers into /tmp/claude_md_phase45_draft.md
-     placeholders and emit /tmp/claude_md_phase45_final.md
+  4. Substitute those numbers into tmp/claude_md_phase45_draft.md
+     placeholders and emit tmp/claude_md_phase45_final.md
   5. Print a commit-ready summary block
 
 Zero risk — all inputs are already stable, output is a text replace.
@@ -26,8 +26,8 @@ import os, sys, json, subprocess, re, argparse
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUZZ = os.path.join(ROOT, "fuzz")
 RESULTS = os.path.join(ROOT, "results")
-DRAFT = "/tmp/claude_md_phase45_draft.md"
-FINAL = "/tmp/claude_md_phase45_final.md"
+DRAFT = os.path.join(ROOT, "tmp", "claude_md_phase45_draft.md")
+FINAL = os.path.join(ROOT, "tmp", "claude_md_phase45_final.md")
 
 
 def run(script):

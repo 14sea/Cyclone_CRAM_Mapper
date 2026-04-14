@@ -16,7 +16,7 @@ Parallelism:        WORKERS env var (default 12).
 
 Launch:
     WORKERS=12 nohup python3 -u fuzz/plan_d_prime_factory.py \
-        > /tmp/nvfac.log 2>&1 &
+        > tmp/nvfac.log 2>&1 &
 """
 import json, os, sys, signal, shutil, time, traceback
 from pathlib import Path

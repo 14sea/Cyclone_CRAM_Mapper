@@ -10,7 +10,7 @@ Key questions:
 """
 import json, collections
 
-D = json.load(open("/tmp/arith_sweep/cells_by_width.json"))
+D = json.load(open("tmp/arith_sweep/cells_by_width.json"))
 
 def cells(key, kind=None):
     """Return set of (off, bp) cells. kind in {None, 'set', 'clear', 'block_band_only'}"""

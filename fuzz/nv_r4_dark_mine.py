@@ -33,9 +33,9 @@ from bitstream import (
     CRC_FIRST_CRAM_FRAME, CRC_LAST_FRAME,
 )
 
-NEORV32_RBF = Path('/home/test/see_neorv32_run_linux/output/neorv32_demo.rbf')
+NEORV32_RBF = Path(os.path.expandvars('$HOME/see_neorv32_run_linux/output/neorv32_demo.rbf'))
 BASE_RBF = ROOT / 'results' / 'rbf' / 'nv_zero_global.rbf'
-STA_DUMP = Path('/tmp/neorv32_timing_big.txt')
+STA_DUMP = ROOT / 'tmp' / 'neorv32_timing_big.txt'
 OUT = ROOT / 'results' / 'r4_dark_mine.json'
 
 DARK = [5, 6, 9, 24, 28, 29, 30, 31, 32, 33, 104, 116, 125]

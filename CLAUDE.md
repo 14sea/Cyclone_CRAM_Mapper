@@ -119,9 +119,9 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 - Per-LAB CLK SET must run AFTER the LUT phase reset (some clock cells overlap with LUT TT cells in high-density LABs).
 - Post-bitgen, strip 1-3 LI cells in non-design LABs (sig-cache mining infrastructure leakage from baseline lut1/lut2 LABs).
 - 160 cleanly re-mined (4,18)/(4,19) inter-LE pair entries now in `route_cells_full.json`.
-- Working multi-LE-per-LAB build template: `/tmp/m5_counter/build_counter_sigcache.py`.
+- Working multi-LE-per-LAB build template: `tmp/m5_counter/build_counter_sigcache.py` (workspace from the M5 session, regenerate locally if needed).
 
-**M5 counter blocker (NOT a codec bug — a missing primitive)**: Quartus compiles a 24-bit counter to 367 cells in CRAM cols 47-48 using **LE carry-chain wires** (`cout→cin` direct, 1 LE per bit). nextpnr-generic does not model these wires, so Yosys emulates `+1` as a 4-LE-per-bit ripple producing 24 self-feedback routes (LE → same LE.dataX). Self-feedback routes cannot be cleanly mined: the two-LUT pair template can't represent `src==dst`, and the diff-based selfloop_factory gets refit by Quartus producing 110-754-cell noise. Working ground truth: `/tmp/m5_counter/quartus_ref/counter_top.rbf` (Quartus build, blinks on AX301). Diagnostic memory: `m5_counter_root_cause_carry_chain.md`.
+**M5 counter blocker (NOT a codec bug — a missing primitive)**: Quartus compiles a 24-bit counter to 367 cells in CRAM cols 47-48 using **LE carry-chain wires** (`cout→cin` direct, 1 LE per bit). nextpnr-generic does not model these wires, so Yosys emulates `+1` as a 4-LE-per-bit ripple producing 24 self-feedback routes (LE → same LE.dataX). Self-feedback routes cannot be cleanly mined: the two-LUT pair template can't represent `src==dst`, and the diff-based selfloop_factory gets refit by Quartus producing 110-754-cell noise. Working ground truth: `tmp/m5_counter/quartus_ref/counter_top.rbf` (Quartus build, blinks on AX301; rebuild under the repo-local scratch dir). Diagnostic memory: `m5_counter_root_cause_carry_chain.md`.
 
 **Not yet implemented**: IOB FASM cell map, GCLK clock-pin routing (uses `nv_zero_global.rbf` with PIN_E1→GCLK pre-routed as baseline), carry chain (Phase 5.4).
 
@@ -151,7 +151,7 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 
 **Remaining gaps**: IOB FASM cell map, GCLK cells may conflict with some bases (17 cells mined from nv_zero; Quartus counter doesn't use all of them).
 
-**nextpnr**: `source /home/test/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
+**nextpnr**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 
 ## Tools
 
