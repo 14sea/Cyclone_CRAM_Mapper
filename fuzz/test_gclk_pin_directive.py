@@ -32,10 +32,10 @@ def test_parse_new_directives():
             "LAB_CLK_SEL X10Y4\nLAB_CLK_SEL X22Y10\n"
             "LAB_CLK_SEL_LE X10Y4N0\nLAB_CLK_SEL_LE X22Y10N4\n")
     out = f.parse_fasm(text)
-    assert len(out) == 13, f"parse_fasm arity {len(out)} != 13"
-    gclk_pins = out[10]
-    lab_clk_sels = out[11]
-    lab_clk_sel_les = out[12]
+    assert len(out) == 14, f"parse_fasm arity {len(out)} != 14"
+    gclk_pins = out[11]
+    lab_clk_sels = out[12]
+    lab_clk_sel_les = out[13]
     assert gclk_pins == ["E1", "R8"], gclk_pins
     assert lab_clk_sels == [(10, 4), (22, 10)], lab_clk_sels
     assert lab_clk_sel_les == [(10, 4, 0), (22, 10, 4)], lab_clk_sel_les

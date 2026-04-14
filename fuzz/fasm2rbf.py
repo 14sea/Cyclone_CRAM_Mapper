@@ -58,6 +58,17 @@ Supported lines (whitespace + blank + '#' comments ignored):
     IOB_IN  PIN_M16    # K input wired to chip pin M16
     IOB_OUT PIN_F15    # LED output wired to chip pin F15
 
+    # IOB→SLICE route (XOR-delta, nv_zero_global frame).  Applies the
+    # absolute cell set from results/iob_to_slice_sigcache.json, which
+    # was derived by translating pair-vs-iob_zero mining deltas through
+    # the pin bridge delta bridge(pin) = iob_zero(pin) ^ nv_zero_global.
+    # Requires the base RBF to be nv_zero_global (or a design built on
+    # top of it).  Known entries: E16/E15/M16 × {10,4,0}/{10,10,0}/
+    # {16,4,0}/{10,4,2}/{10,4,4}, port=dataa.  Port canonicalization:
+    # Quartus rewrites single-input LUTs to dataa, so other ports for
+    # single-input designs resolve to the same cell set.
+    IOB_ROUTE PIN_E16 -> X10Y4N0.dataa
+
 The base RBF must be a valid "zero" baseline for the source LAB (e.g.
 results/rbf/lits_zero_{sx}_{sy}.rbf). Multiple ROUTE lines are merged
 into a single apply_routing call. LUT writes are XOR-deltas, applied on
@@ -159,6 +170,15 @@ _LAB_CLK_SEL_LE_RE = re.compile(
 # fresh Quartus build of the same (K, LED) pair is not guaranteed.
 # Closing the cross-axis gap would need a 2D K×LED sweep.
 _IOB_RE = re.compile(r"^IOB_(?P<role>IN|OUT)\s+PIN_(?P<pin>[A-Z]\d+)$")
+# IOB→SLICE route directive (XOR-delta, nv_zero_global frame).  Applies
+# absolute cells from results/iob_to_slice_sigcache.json — the
+# bridge-translated R(IOB→target LE) footprint for pins mined under
+# scripts/iob_slice_mining/.  See memory iob_slice_bridge_delta_unblocks_
+# injection.md for the algebra (abs = delta ^ bridge(pin)).
+_IOB_ROUTE_RE = re.compile(
+    r"^IOB_ROUTE\s+PIN_(?P<pin>[A-Z]\d+)\s*->\s*"
+    r"X(?P<dx>\d+)Y(?P<dy>\d+)N(?P<dn>\d+)\.(?P<port>\w+)$"
+)
 
 # Reference pins: the iob_in_E15.rbf / iob_out_G15.rbf baselines were
 # compiled with K=E15 (input) and LED=G15 (output).  Any FASM IOB_IN
@@ -204,6 +224,49 @@ def _iob_delta_cells(role, pin, iob_map):
             f"(known: {sorted(table)})"
         )
     return [tuple(c) for c in table[pin]]
+
+_IOB_ROUTE_CACHE = None
+
+
+def _load_iob_route_cells(pin, dx, dy, dn, port):
+    """Return XOR-delta cells (off, bp) for IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}.
+
+    Cells come from results/iob_to_slice_sigcache.json, which was built
+    by scripts/iob_slice_mining/compute_absolute_cells.py as
+      abs_cells = delta(pin, tgt) ^ bridge(pin)
+    with bridge(pin) = iob_zero(pin) ^ nv_zero_global.  So the cells
+    reproduce, when XOR'd against nv_zero_global, the exact pair RBF
+    that Quartus would emit for the (pin, tgt) two-LE design — which is
+    HW-verified on AX301 for the (E16, 10,4,0, dataa) entry.
+
+    Caller must be applying this delta on top of nv_zero_global (or a
+    design built on top of nv_zero_global).  Applying it on any other
+    baseline produces bit-garbage silently.
+    """
+    global _IOB_ROUTE_CACHE
+    if _IOB_ROUTE_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_to_slice_sigcache.json"
+        if not path.exists():
+            raise FasmError(
+                "IOB_ROUTE directive used but "
+                "results/iob_to_slice_sigcache.json missing; run "
+                "scripts/iob_slice_mining/compute_absolute_cells.py"
+            )
+        data = json.loads(path.read_text())
+        _IOB_ROUTE_CACHE = data.get("absolute_cells", {})
+    key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
+    if key not in _IOB_ROUTE_CACHE:
+        raise FasmError(
+            f"IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}: no entry in "
+            f"iob_to_slice_sigcache.json. Known entries: "
+            f"{sorted(_IOB_ROUTE_CACHE)[:5]}... "
+            f"({len(_IOB_ROUTE_CACHE)} total). "
+            f"Mine more with scripts/iob_slice_mining/mine_iob_routes.py "
+            f"then rerun compute_absolute_cells.py."
+        )
+    return [tuple(c) for c in _IOB_ROUTE_CACHE[key]]
+
 
 _GCLK_PIN_CACHE = None
 _LAB_CLK_SEL_CACHE = {}
@@ -411,6 +474,7 @@ def parse_fasm(text):
     dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
+    iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
     gclk = False
     gclk_pins = []  # list[pin] — per-pin GCLK source activate (XOR)
     lab_clk_sels = []  # list[(x, y)] — per-LAB CLK_SEL (XOR)
@@ -493,6 +557,13 @@ def parse_fasm(text):
         if m:
             gclk = True
             continue
+        m = _IOB_ROUTE_RE.match(line)
+        if m:
+            iob_routes.append(
+                (m["pin"], int(m["dx"]), int(m["dy"]),
+                 int(m["dn"]), m["port"])
+            )
+            continue
         m = _IOB_RE.match(line)
         if m:
             iobs.append((m["role"], m["pin"]))
@@ -517,7 +588,7 @@ def parse_fasm(text):
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-            iobs, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les)
+            iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -591,7 +662,7 @@ def _load_overhead():
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-     iobs, gclk, gclk_pins, lab_clk_sels,
+     iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
@@ -689,6 +760,22 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 flips[key] = flips.get(key, 0) ^ 1
         buf = bytearray(work)
         for (off, bp), v in flips.items():
+            if v:
+                buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if iob_routes:
+        # IOB_ROUTE cells are in the nv_zero_global frame.  Apply as XOR;
+        # overlap between multiple IOB_ROUTEs (e.g. two pins driving the
+        # same target but different ports — which Quartus canonicalizes
+        # to the same dataa anyway) will cancel correctly under parity.
+        parity = {}
+        for pin, dx, dy, dn, port in iob_routes:
+            for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
             if v:
                 buf[off] ^= (1 << bp)
         work = bytes(buf)
