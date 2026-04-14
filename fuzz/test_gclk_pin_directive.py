@@ -41,11 +41,16 @@ def test_parse_new_directives():
 def test_gclk_pin_loader():
     cells_e1 = f._load_gclk_pin_cells("E1")
     cells_r8 = f._load_gclk_pin_cells("R8")
+    cells_n1 = f._load_gclk_pin_cells("N1")
     assert len(cells_e1) == 3, f"E1 = {len(cells_e1)} cells"
     assert len(cells_r8) == 5, f"R8 = {len(cells_r8)} cells"
+    assert len(cells_n1) == 38, f"N1 = {len(cells_n1)} cells"
     # Cross-pin overlap must be zero (per-pin one-hot model)
     assert not (set(cells_e1) & set(cells_r8)), "E1 ∩ R8 should be empty"
-    print("  test_gclk_pin_loader: OK (E1=3, R8=5, ∩=0)")
+    assert not (set(cells_e1) & set(cells_n1)), "E1 ∩ N1 should be empty"
+    assert not (set(cells_r8) & set(cells_n1)), "R8 ∩ N1 should be empty"
+    print(f"  test_gclk_pin_loader: OK "
+          f"(E1=3, R8=5, N1=38, all pairwise ∩=0)")
 
 
 def test_lab_clk_sel_loader():
