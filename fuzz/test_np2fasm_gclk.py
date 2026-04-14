@@ -77,6 +77,7 @@ def test_gclk_pin_single_dff_to_iob_clk():
     fasm, warns = convert(_wrap(cells))
     assert "GCLK_PIN PIN_M16" in fasm, fasm
     assert "LAB_CLK_SEL X10Y4" in fasm, fasm
+    assert "LAB_CLK_SEL_LE X10Y4N0" in fasm, fasm
     assert "GCLK" not in fasm, fasm  # no legacy fallback
     assert "IOB_IN PIN_M16" in fasm, fasm
 
@@ -91,6 +92,9 @@ def test_gclk_pin_multiple_dffs_same_clk_same_lab():
     fasm, warns = convert(_wrap(cells))
     assert fasm.count("GCLK_PIN PIN_E1") == 1, fasm
     assert fasm.count("LAB_CLK_SEL X10Y4") == 1, fasm
+    # Per-LE layer: N=0 and N=2 each get their own directive
+    assert "LAB_CLK_SEL_LE X10Y4N0" in fasm, fasm
+    assert "LAB_CLK_SEL_LE X10Y4N2" in fasm, fasm
 
 
 def test_gclk_pin_multiple_dffs_different_labs():
@@ -104,6 +108,8 @@ def test_gclk_pin_multiple_dffs_different_labs():
     assert fasm.count("GCLK_PIN PIN_R8") == 1, fasm
     assert "LAB_CLK_SEL X10Y4" in fasm, fasm
     assert "LAB_CLK_SEL X22Y10" in fasm, fasm
+    assert "LAB_CLK_SEL_LE X10Y4N0" in fasm, fasm
+    assert "LAB_CLK_SEL_LE X22Y10N0" in fasm, fasm
 
 
 def test_gclk_fallback_when_no_iob_driver():
@@ -142,7 +148,9 @@ def test_partial_resolution_warns():
     fasm, warns = convert(_wrap(cells))
     assert "GCLK_PIN PIN_M16" in fasm, fasm
     assert "LAB_CLK_SEL X10Y4" in fasm, fasm
+    assert "LAB_CLK_SEL_LE X10Y4N0" in fasm, fasm
     assert "LAB_CLK_SEL X22Y10" not in fasm, fasm
+    assert "LAB_CLK_SEL_LE X22Y10N0" not in fasm, fasm
     assert any("did not resolve" in w for w in warns), warns
 
 

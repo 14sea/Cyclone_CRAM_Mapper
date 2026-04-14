@@ -28,13 +28,17 @@ def _flat_zero_rbf() -> bytes:
 
 
 def test_parse_new_directives():
-    text = "GCLK_PIN PIN_E1\nGCLK_PIN PIN_R8\nLAB_CLK_SEL X10Y4\nLAB_CLK_SEL X22Y10\n"
+    text = ("GCLK_PIN PIN_E1\nGCLK_PIN PIN_R8\n"
+            "LAB_CLK_SEL X10Y4\nLAB_CLK_SEL X22Y10\n"
+            "LAB_CLK_SEL_LE X10Y4N0\nLAB_CLK_SEL_LE X22Y10N4\n")
     out = f.parse_fasm(text)
-    assert len(out) == 12, f"parse_fasm arity {len(out)} != 12"
+    assert len(out) == 13, f"parse_fasm arity {len(out)} != 13"
     gclk_pins = out[10]
     lab_clk_sels = out[11]
+    lab_clk_sel_les = out[12]
     assert gclk_pins == ["E1", "R8"], gclk_pins
     assert lab_clk_sels == [(10, 4), (22, 10)], lab_clk_sels
+    assert lab_clk_sel_les == [(10, 4, 0), (22, 10, 4)], lab_clk_sel_les
     print("  test_parse_new_directives: OK")
 
 
@@ -128,6 +132,52 @@ def test_unmined_lab_raises():
     raise AssertionError("expected FasmError for unmined LAB")
 
 
+def test_lab_clk_sel_le_loader():
+    # LAB(10,4) N=0-specific = 33 cells (HW verified 2026-04-14)
+    c = f._load_lab_clk_sel_le_cells(10, 4, 0)
+    assert len(c) == 33, len(c)
+    # Disjoint from the N-invariant LAB_CLK_SEL layer
+    inv = set(f._load_lab_clk_sel_cells(10, 4))
+    assert not (set(c) & inv), "LAB_CLK_SEL_LE must be disjoint from LAB_CLK_SEL"
+    print(f"  test_lab_clk_sel_le_loader: OK ((10,4)N=0 = {len(c)} cells, "
+          f"disjoint from LAB_CLK_SEL)")
+
+
+def test_bitgen_full_n0_diff_round_trip():
+    """LAB_CLK_SEL X10Y4 + LAB_CLK_SEL_LE X10Y4N0 == full N=0 forced^auto diff.
+
+    This is the HW-verified (2026-04-14) composition that replaces the
+    incomplete N-invariant subset.  Ground truth from the probe's
+    per_n_forced_vs_auto["0"] key.
+    """
+    import json as _j
+    path = ROOT / "results" / "clk_lab_sel_probe_X10Y4.json"
+    data = _j.loads(path.read_text())
+    full_n0 = set(tuple(c) for c in data["per_n_forced_vs_auto"]["0"])
+    base = _flat_zero_rbf()
+    # GCLK_PIN PIN_E1 carries the 3 universal local-clock / GCLK-enable
+    # cells that the probe explicitly subtracts out of lab_clk_sel (so
+    # they can't double-flip when both GCLK_PIN and LAB_CLK_SEL are
+    # emitted for an E1-driven design).
+    fasm = ("GCLK_PIN PIN_E1\n"
+            "LAB_CLK_SEL X10Y4\n"
+            "LAB_CLK_SEL_LE X10Y4N0\n")
+    out = f.bitgen(fasm, base, patch_crc=False)
+    for off, bp in full_n0:
+        assert (out[off] >> bp) & 1 == 1, (
+            f"cell ({off},{bp}) of full N=0 diff not flipped"
+        )
+    # And only those cells
+    diffs = {(i, bp) for i in range(len(base)) for bp in range(8)
+             if (base[i] ^ out[i]) & (1 << bp)}
+    assert diffs == full_n0, (
+        f"bitgen produced {len(diffs - full_n0)} extra and "
+        f"{len(full_n0 - diffs)} missing cells vs full N=0 diff"
+    )
+    print(f"  test_bitgen_full_n0_diff_round_trip: OK "
+          f"({len(full_n0)} cells, exact round-trip)")
+
+
 def main():
     tests = [
         test_parse_new_directives,
@@ -138,11 +188,14 @@ def main():
         test_bitgen_lab_clk_sel_overlap_cancels,
         test_unknown_pin_raises,
         test_unmined_lab_raises,
+        test_lab_clk_sel_le_loader,
+        test_bitgen_full_n0_diff_round_trip,
     ]
     for t in tests:
         # clear caches so each test sees a cold load
         f._GCLK_PIN_CACHE = None
         f._LAB_CLK_SEL_CACHE.clear()
+        f._LAB_CLK_SEL_LE_CACHE = None
         t()
     print(f"\n{len(tests)}/{len(tests)} tests OK")
 

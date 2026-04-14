@@ -40,6 +40,17 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # (22,10)=45 cells.  Mine more with fuzz/clk_lab_sel_probe.py.
     LAB_CLK_SEL X10Y4
 
+    # Per-LE CLK_SEL layer (XOR-delta).  The N-invariant LAB_CLK_SEL above
+    # captures only cells that are shared between N=0 and N=4 sinks.  Per-
+    # LE sink routing (e.g. the clock network fanin to LE N=0) lives in
+    # cells that the N-invariant intersection filters out as "noise".  HW
+    # verified 2026-04-14 at LAB(10,4).N=0: the N-invariant subset alone
+    # is not functional, the full N=0 forced-vs-auto diff is.  Emit this
+    # directive alongside LAB_CLK_SEL for every LE that needs a clock.
+    # Disjoint from LAB_CLK_SEL (by construction: N-invariant = ∩, per-LE
+    # = difference), so XOR composition is safe.
+    LAB_CLK_SEL_LE X10Y4N0
+
     # DFF register marker (no-op — DFF is intrinsic to every LE)
     X{x}Y{y}N{n}.DFF
 
@@ -118,6 +129,15 @@ _GCLK_PIN_RE = re.compile(r"^GCLK_PIN\s+PIN_(?P<pin>[A-Z]\d+)$")
 # Mined 2026-04-14 for LAB(10,4), LAB(10,16), LAB(22,10); additional
 # LABs require re-running fuzz/clk_lab_sel_probe.py --lab X,Y.
 _LAB_CLK_SEL_RE = re.compile(r"^LAB_CLK_SEL\s+X(?P<x>\d+)Y(?P<y>\d+)$")
+# Per-LE CLK_SEL layer: LAB_CLK_SEL_LE X{x}Y{y}N{n}
+# XOR-delta semantic, disjoint from LAB_CLK_SEL.  Cell sets come from
+# results/clk_lab_sel_per_le.json (derived by fuzz/clk_lab_sel_per_le.py
+# from the per-LAB probe JSONs; uses "n0_specific" / "n4_specific"
+# buckets = per_n_forced_vs_auto[N] − N-invariant).  N must be in
+# {0, 4} with the current probe; extend probe to mine more N slots.
+_LAB_CLK_SEL_LE_RE = re.compile(
+    r"^LAB_CLK_SEL_LE\s+X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)$"
+)
 # IOB pin assignment.  ROLE is INPUT or OUTPUT; PIN follows the AX301
 # pin-name convention (e.g. PIN_E15, PIN_G15, PIN_M16).
 #
@@ -187,6 +207,7 @@ def _iob_delta_cells(role, pin, iob_map):
 
 _GCLK_PIN_CACHE = None
 _LAB_CLK_SEL_CACHE = {}
+_LAB_CLK_SEL_LE_CACHE = None
 
 
 def _load_gclk_pin_cells(pin):
@@ -242,6 +263,43 @@ def _load_lab_clk_sel_cells(x, y):
     cells = [tuple(c) for c in data.get("lab_clk_sel", [])]
     _LAB_CLK_SEL_CACHE[key] = cells
     return cells
+
+
+def _load_lab_clk_sel_le_cells(x, y, n):
+    """Return XOR-delta cells for `LAB_CLK_SEL_LE X{x}Y{y}N{n}`.
+
+    Data lives in results/clk_lab_sel_per_le.json under the "X{x}Y{y}"
+    entry.  Only n ∈ {0, 4} are mined today (probe uses two N slots to
+    compute the N-invariant intersection; everything outside those two
+    slots would need an extension of clk_lab_sel_probe.py).
+    """
+    global _LAB_CLK_SEL_LE_CACHE
+    if _LAB_CLK_SEL_LE_CACHE is None:
+        import json
+        path = ROOT / "results" / "clk_lab_sel_per_le.json"
+        if not path.exists():
+            raise FasmError(
+                "LAB_CLK_SEL_LE directive used but "
+                "results/clk_lab_sel_per_le.json missing; run "
+                "fuzz/clk_lab_sel_per_le.py"
+            )
+        _LAB_CLK_SEL_LE_CACHE = json.loads(path.read_text())
+    key = f"X{x}Y{y}"
+    if key not in _LAB_CLK_SEL_LE_CACHE:
+        raise FasmError(
+            f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: no mined data for LAB. "
+            f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
+            f" then python3 fuzz/clk_lab_sel_per_le.py"
+        )
+    entry = _LAB_CLK_SEL_LE_CACHE[key]
+    bucket = f"n{n}_specific"
+    if bucket not in entry:
+        raise FasmError(
+            f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: N={n} not mined "
+            f"(available buckets: {[k for k in entry if k.endswith('_specific')]}). "
+            f"clk_lab_sel_probe.py currently mines N ∈ {{0, 4}} only."
+        )
+    return [tuple(c) for c in entry[bucket]]
 
 
 # 17 position-independent, seed-stable GCLK cells mined 2026-04-10
@@ -356,6 +414,7 @@ def parse_fasm(text):
     gclk = False
     gclk_pins = []  # list[pin] — per-pin GCLK source activate (XOR)
     lab_clk_sels = []  # list[(x, y)] — per-LAB CLK_SEL (XOR)
+    lab_clk_sel_les = []  # list[(x, y, n)] — per-LE CLK_SEL layer (XOR)
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
@@ -420,6 +479,12 @@ def parse_fasm(text):
         if m:
             gclk_pins.append(m["pin"])
             continue
+        m = _LAB_CLK_SEL_LE_RE.match(line)
+        if m:
+            lab_clk_sel_les.append(
+                (int(m["x"]), int(m["y"]), int(m["n"]))
+            )
+            continue
         m = _LAB_CLK_SEL_RE.match(line)
         if m:
             lab_clk_sels.append((int(m["x"]), int(m["y"])))
@@ -452,7 +517,7 @@ def parse_fasm(text):
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-            iobs, gclk, gclk_pins, lab_clk_sels)
+            iobs, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -526,7 +591,8 @@ def _load_overhead():
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-     iobs, gclk, gclk_pins, lab_clk_sels) = parse_fasm(fasm_text)
+     iobs, gclk, gclk_pins, lab_clk_sels,
+     lab_clk_sel_les) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -574,7 +640,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     # between a GCLK_PIN and a LAB_CLK_SEL that shares row-tree cells)
     # cancel properly under pair-wise composition.  Collect into a
     # {cell: parity} map and apply each cell with odd parity once.
-    if gclk_pins or lab_clk_sels:
+    if gclk_pins or lab_clk_sels or lab_clk_sel_les:
         parity = {}
         for pin in gclk_pins:
             for off, bp in _load_gclk_pin_cells(pin):
@@ -582,6 +648,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 parity[key] = parity.get(key, 0) ^ 1
         for x, y in lab_clk_sels:
             for off, bp in _load_lab_clk_sel_cells(x, y):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        for x, y, n in lab_clk_sel_les:
+            for off, bp in _load_lab_clk_sel_le_cells(x, y, n):
                 key = (off, bp)
                 parity[key] = parity.get(key, 0) ^ 1
         buf = bytearray(work)

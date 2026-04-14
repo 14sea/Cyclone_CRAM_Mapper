@@ -321,11 +321,13 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
     # This path exists so pre-GCLK_PIN test artifacts keep working.
     gclk_pins: list[str] = []
     lab_clk_sels: list[tuple[int, int]] = []
+    lab_clk_sel_les: list[tuple[int, int, int]] = []
     unresolved_clk = False
     if has_dff or any(
             cells[c].get("type") == "CE6_CARRY" for c in cells):
         seen_pins: set[str] = set()
         seen_labs: set[tuple[int, int]] = set()
+        seen_les: set[tuple[int, int, int]] = set()
         for cell_name, cell in cells.items():
             ctype = cell.get("type", "")
             # Which port carries the clock on this cell type?
@@ -363,16 +365,24 @@ def convert(routed_json: dict) -> tuple[list[str], list[str]]:
 
             sink_bel = cell_bel.get(cell_name)
             if sink_bel and sink_bel[0] == "SLICE":
-                _, sx, sy, _ = sink_bel
+                _, sx, sy, sn = sink_bel
                 if (sx, sy) not in seen_labs:
                     seen_labs.add((sx, sy))
                     lab_clk_sels.append((sx, sy))
+                # Per-LE layer. HW verified 2026-04-14: the N-invariant
+                # LAB_CLK_SEL alone is insufficient — per-LE clock
+                # routing cells (N-specific) must also flip.
+                if (sx, sy, sn) not in seen_les:
+                    seen_les.add((sx, sy, sn))
+                    lab_clk_sel_les.append((sx, sy, sn))
 
         # Emit resolved directives
         for pin_loc in gclk_pins:
             fasm.append(f"GCLK_PIN {pin_loc}")
         for (x, y) in lab_clk_sels:
             fasm.append(f"LAB_CLK_SEL X{x}Y{y}")
+        for (x, y, n) in lab_clk_sel_les:
+            fasm.append(f"LAB_CLK_SEL_LE X{x}Y{y}N{n}")
 
         # Fallback: legacy 17-cell local-clock directive only when we
         # couldn't resolve any clock pin. Downstream bitgen still
