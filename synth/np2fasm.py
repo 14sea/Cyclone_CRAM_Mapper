@@ -62,6 +62,57 @@ def _pin_has_iob_entry(pin_loc: str, direction: str) -> bool:
     key = "per_pin_input" if direction == "input" else "per_pin_output"
     return short in _IOB_MAP.get(key, {})
 
+
+# IOB_CLK_INPUT is a hdr-band delta activating a dedicated clock-bank
+# pin as a GCLK driver.  Currently 12 F17 pins are mined; GCLK_PIN
+# paired with IOB_CLK_INPUT closes the nv-baseline hdr frame for
+# IOB-driven DFF.CLK nets.  Missing entries fall through silently —
+# designs that use a CLK pin outside this set still get GCLK_PIN but
+# the hdr band may need a separate delta.
+_IOB_CLK_PIN_SET: set[str] | None = None
+_IOB_CLK_PIN_PATH = HERE.parent / "results" / "iob_clk_pin_hdr_cells.json"
+
+
+def _pin_has_iob_clk_entry(pin_loc: str) -> bool:
+    """True if pin_loc has an IOB_CLK_INPUT hdr-band delta mined."""
+    global _IOB_CLK_PIN_SET
+    if _IOB_CLK_PIN_SET is None:
+        if _IOB_CLK_PIN_PATH.exists():
+            data = json.loads(_IOB_CLK_PIN_PATH.read_text())
+            _IOB_CLK_PIN_SET = set(data.get("cells", {}).keys())
+        else:
+            _IOB_CLK_PIN_SET = set()
+    short = pin_loc[4:] if pin_loc.startswith("PIN_") else pin_loc
+    return short in _IOB_CLK_PIN_SET
+
+
+# IOB_ROUTE sig-cache — direct IOB-pad → SLICE.port routes.  When an
+# IOB's `O` net drives a LUT input (or CE6_CARRY.A/.B), look up the
+# (pin, dx, dy, dn, port) key here to decide whether to emit
+# `IOB_ROUTE PIN_X -> X{dx}Y{dy}N{dn}.{port}` in place of the missing
+# slice-driven ROUTE (the main ROUTE pass below only fires on SLICE
+# drivers).
+_IOB_ROUTE_KEYS: set[str] | None = None
+_IOB_ROUTE_PATH = HERE.parent / "results" / "iob_to_slice_sigcache.json"
+
+
+def _iob_route_available(pin_loc: str, dx: int, dy: int, dn: int,
+                         port: str) -> bool:
+    """True if the IOB→SLICE route is in the sig-cache (either
+    absolute_cells or single_le_cells bucket — fasm2rbf's
+    `_iob_route_cells` loader merges both)."""
+    global _IOB_ROUTE_KEYS
+    if _IOB_ROUTE_KEYS is None:
+        if _IOB_ROUTE_PATH.exists():
+            data = json.loads(_IOB_ROUTE_PATH.read_text())
+            keys = set(data.get("absolute_cells", {}).keys())
+            keys |= set(data.get("single_le_cells", {}).keys())
+            _IOB_ROUTE_KEYS = keys
+        else:
+            _IOB_ROUTE_KEYS = set()
+    short = pin_loc[4:] if pin_loc.startswith("PIN_") else pin_loc
+    return f"IOB_{short}->{dx},{dy},{dn},{port}" in _IOB_ROUTE_KEYS
+
 # I[n] index → Cyclone IV port name
 _IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
 
@@ -286,6 +337,15 @@ def convert(
     # --- LUT / LUT_ARITH / DFF directives from cells ---
     has_dff = False
     dff_les: set[tuple[int, int, int]] = set()
+    # Tracks whether any IOB_IN / IOB_OUT was emitted — determines if we
+    # also need IOB_BASELINE_NV to bridge the nv_zero_global base into
+    # the iob_in_E15 frame that IOB pair-deltas assume.
+    iob_emitted = False
+    # IOB_ROUTE lines queued during the cell pass — appended after the
+    # main IOB block so per-pin IOB_IN and its IOB_ROUTE drives stay
+    # adjacent in the FASM output.
+    iob_routes: list[tuple[str, int, int, int, str]] = []  # (pin_loc, dx, dy, dn, port)
+    iob_route_missing: list[tuple[str, int, int, int, str]] = []  # for warnings
     for cell_name, cell in cells.items():
         bel = cell_bel.get(cell_name)
         if bel is None:
@@ -352,8 +412,10 @@ def convert(
                     pass  # clock pad — GCLK_PIN covers it
                 else:
                     fasm.append(f"IOB_IN {pin_loc}")
+                    iob_emitted = True
             elif has_I and not has_O:
                 fasm.append(f"IOB_OUT {pin_loc}")
+                iob_emitted = True
             elif has_O and has_I:
                 # Bidirectional — emit both directions; fasm2rbf treats
                 # them independently.  Document the rare case.
@@ -363,6 +425,7 @@ def convert(
                 )
                 fasm.append(f"IOB_IN {pin_loc}")
                 fasm.append(f"IOB_OUT {pin_loc}")
+                iob_emitted = True
             else:
                 # No connections — likely an unused IOB BEL placeholder.
                 warnings.append(
@@ -536,9 +599,19 @@ def convert(
                     seen_les.add((sx, sy, sn))
                     lab_clk_sel_les.append((sx, sy, sn))
 
-        # Emit resolved directives
+        # Emit resolved directives. GCLK_PIN activates the per-pin
+        # fabric-side one-hot; IOB_CLK_INPUT activates the matching
+        # hdr-band pad-side clock driver (12 F17 pins mined).  Pins
+        # without an IOB_CLK_INPUT entry still get GCLK_PIN alone.
         for pin_loc in gclk_pins:
             fasm.append(f"GCLK_PIN {pin_loc}")
+            if _pin_has_iob_clk_entry(pin_loc):
+                fasm.append(f"IOB_CLK_INPUT {pin_loc}")
+            else:
+                warnings.append(
+                    f"GCLK_PIN {pin_loc} emitted without matching "
+                    f"IOB_CLK_INPUT (pin not in iob_clk_pin_hdr_cells.json)"
+                )
         for (x, y) in lab_clk_sels:
             fasm.append(f"LAB_CLK_SEL X{x}Y{y}")
         for (x, y, n) in lab_clk_sel_les:
@@ -560,11 +633,63 @@ def convert(
     n_sig = 0
     n_miss = 0
     n_skip = 0
+    n_iob_route = 0
+    n_iob_route_miss = 0
     seen_routes: set[str] = set()
+    seen_iob_routes: set[tuple[str, int, int, int, str]] = set()
+    route_srcs: set[tuple[int, int]] = set()
+
+    def _sink_port_name(sink_cell, sink_port, sink_idx):
+        sink_ctype = cells[sink_cell].get("type", "")
+        if sink_ctype == "CE6_CARRY":
+            return {"A": "dataa", "B": "datab"}.get(sink_port)
+        return _IDX_TO_PORT.get(sink_idx)
 
     for bit_id, (drv_cell, drv_port) in bit_driver.items():
         drv_bel = cell_bel.get(drv_cell)
-        if drv_bel is None or drv_bel[0] != "SLICE":
+        if drv_bel is None:
+            continue
+
+        # IOB driver — candidate for IOB_ROUTE.  The net's "O" output
+        # of a GENERIC_IOB becomes a direct pad → SLICE.port drive.
+        # Skip CLK-only IOBs: those are handled by GCLK_PIN +
+        # IOB_CLK_INPUT, no IOB_ROUTE sig-cache entry exists.
+        if drv_bel[0] == "IOB":
+            drv_cell_obj = cells.get(drv_cell, {})
+            if drv_cell_obj.get("type") != "GENERIC_IOB":
+                continue
+            if drv_cell in clock_only_iobs:
+                continue
+            bel_str = drv_cell_obj.get("attributes", {}).get(
+                "NEXTPNR_BEL", "")
+            m = re.match(r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
+            if not m:
+                continue
+            pin_loc = m.group(1)
+            for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
+                sink_bel = cell_bel.get(sink_cell)
+                if sink_bel is None or sink_bel[0] != "SLICE":
+                    continue
+                _, dx, dy, dn = sink_bel
+                port_name = _sink_port_name(sink_cell, sink_port, sink_idx)
+                if port_name is None:
+                    continue
+                tup = (pin_loc, dx, dy, dn, port_name)
+                if tup in seen_iob_routes:
+                    continue
+                seen_iob_routes.add(tup)
+                if _iob_route_available(pin_loc, dx, dy, dn, port_name):
+                    iob_routes.append(tup)
+                    n_iob_route += 1
+                else:
+                    iob_route_missing.append(tup)
+                    n_iob_route_miss += 1
+                    warnings.append(
+                        f"no iob_to_slice sig-cache: "
+                        f"IOB_{pin_loc[4:]}->{dx},{dy},{dn},{port_name}")
+            continue
+
+        if drv_bel[0] != "SLICE":
             continue
         _, sx, sy, sn = drv_bel
 
@@ -586,17 +711,10 @@ def convert(
             # Map sink port to Cyclone IV input name. CE6_CARRY uses
             # named single-bit ports (A→dataa, B→datab); plain SLICE
             # LUT uses a 4-bit I[] vector indexed 0..3.
-            sink_ctype = cells[sink_cell].get("type", "")
-            if sink_ctype == "CE6_CARRY":
-                port_name = {"A": "dataa", "B": "datab"}.get(sink_port)
-                if port_name is None:
-                    n_skip += 1
-                    continue
-            else:
-                port_name = _IDX_TO_PORT.get(sink_idx)
-                if port_name is None:
-                    n_skip += 1
-                    continue
+            port_name = _sink_port_name(sink_cell, sink_port, sink_idx)
+            if port_name is None:
+                n_skip += 1
+                continue
 
             # Sig-cache lookup
             key = f"{sx},{sy},{sn}->{dx},{dy},{dn},{port_name}"
@@ -607,15 +725,40 @@ def convert(
             fasm.append(
                 f"ROUTE X{sx}Y{sy}N{sn} -> "
                 f"X{dx}Y{dy}N{dn}.{port_name}")
+            route_srcs.add((sx, sy))
             if _SIG_CACHE and key in _SIG_CACHE:
                 n_sig += 1
             else:
                 n_miss += 1
                 warnings.append(f"no sig-cache: {key}")
 
+    # Emit IOB_ROUTE lines after the main ROUTE block for readability.
+    for (pin_loc, dx, dy, dn, port_name) in iob_routes:
+        fasm.append(
+            f"IOB_ROUTE {pin_loc} -> X{dx}Y{dy}N{dn}.{port_name}"
+        )
+
+    # Emit SRC X{x}Y{y} once per unique LAB that sourced any SLICE→SLICE
+    # ROUTE.  SRC lines add per-source overhead that fasm2rbf unions
+    # with route cells before XOR-flipping (protects against the
+    # double-flip footgun documented in feedback_fasm_xor_doubleflip.md).
+    for (sx, sy) in sorted(route_srcs):
+        fasm.append(f"SRC X{sx}Y{sy}")
+
+    # IOB_BASELINE_NV: bridge hdr band from nv_zero_global → iob_in_E15
+    # so IOB_IN / IOB_OUT pair-deltas land correctly.  Boolean,
+    # idempotent, and required whenever any IOB direction directive is
+    # emitted; IOB_ROUTE cells are already in the nv frame so they
+    # don't need the bridge on their own.
+    if iob_emitted:
+        # Place right after NV_BASELINE_PACK if present, else at the top.
+        insert_at = 1 if (fasm and fasm[0] == "NV_BASELINE_PACK") else 0
+        fasm.insert(insert_at, "IOB_BASELINE_NV")
+
     warnings.insert(0,
         f"# {n_sig} ROUTE (FASM-backed), {n_miss} missing, "
-        f"{n_skip} skipped (non-slice/CLK)")
+        f"{n_skip} skipped (non-slice/CLK); "
+        f"{n_iob_route} IOB_ROUTE, {n_iob_route_miss} IOB_ROUTE missing")
 
     return fasm, warnings
 
