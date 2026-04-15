@@ -91,21 +91,19 @@ def test_emit_m9k_init_rejects_non_m9k_bel():
     print("  test_emit_m9k_init_rejects_non_m9k_bel: OK")
 
 
-def test_emit_m9k_init_convert_integration_xfail():
+def test_emit_m9k_init_convert_integration():
     """End-to-end: a routed JSON containing a placed EP4CE6_M9K cell
-    should result in `np2fasm.convert()` emitting an INIT line.
+    is consumed by `np2fasm.convert()` and produces an INIT FASM line.
 
-    XFAIL today because:
-      - `synth/m9k.lib` is the only M9K-aware piece that reaches Yosys
-      - techmap rule for `$__M9K_SP_` → `EP4CE6_M9K` exists but is
-        gated behind `M9K_TECHMAP` ifdef
-      - nextpnr-generic chipdb has M9K bels but no M9K wire pips, so
-        even if the techmap fired the placer could not route the RAM
-
-    When the pipeline closes, flip the `xfail` guard below to assert
-    the INIT line is present in `fasm`.
+    Upstream Yosys / nextpnr pipeline for M9K is still blocked (chipdb
+    has no M9K wire pips), but convert() now wires _emit_m9k_init into
+    the cell dispatch so hand-built or patched JSON can round-trip.
     """
-    # Synthetic routed-JSON fragment with a single placed M9K cell.
+    # Synthetic routed-JSON fragment with a single placed M9K cell
+    # (non-zero INIT so the emitted blob is distinguishable).
+    width, depth = 9, 512
+    words = [(i * 3 + 1) & ((1 << width) - 1) for i in range(depth)]
+    bits = "".join(f"{w:0{width}b}" for w in reversed(words))
     fake_json = {
         "modules": {
             "top": {
@@ -114,8 +112,8 @@ def test_emit_m9k_init_convert_integration_xfail():
                         "type": "EP4CE6_M9K",
                         "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
                         "parameters": {
-                            "INIT": "0" * (9 * 512),
-                            "WIDTH_A": 9, "DEPTH": 512,
+                            "INIT": bits,
+                            "WIDTH_A": width, "DEPTH": depth,
                         },
                         "connections": {},
                     },
@@ -125,18 +123,46 @@ def test_emit_m9k_init_convert_integration_xfail():
         }
     }
     fasm, warnings = nf.convert(fake_json)
-    # Today: convert() ignores EP4CE6_M9K cells entirely.  This
-    # assertion documents the current gap.  Flip to `assert any(...)`
-    # once convert() calls _emit_m9k_init.
-    emits_m9k = any(".INIT_" in line for line in fasm)
-    if emits_m9k:
-        raise AssertionError(
-            "XFAIL EXPECTED TO FAIL, but convert() now emits M9K INIT — "
-            "flip this test to a positive assertion and remove the "
-            "xfail comment."
-        )
-    print("  test_emit_m9k_init_convert_integration_xfail: "
-          "XFAIL OK (convert() does not yet emit M9K INIT)")
+    init_lines = [l for l in fasm if ".INIT_" in l]
+    assert len(init_lines) == 1, (
+        f"expected exactly 1 INIT line, got {len(init_lines)}: {init_lines}"
+    )
+    assert init_lines[0].startswith(f"X15Y10N0.INIT_{width}x{depth} = 0x"), (
+        f"unexpected prefix: {init_lines[0][:60]!r}"
+    )
+    print("  test_emit_m9k_init_convert_integration: OK")
+
+
+def test_emit_m9k_init_convert_skips_unplaced():
+    """An EP4CE6_M9K cell without a valid M9K_* bel should warn, not emit."""
+    fake_json = {
+        "modules": {
+            "top": {
+                "cells": {
+                    "u_ram": {
+                        "type": "EP4CE6_M9K",
+                        # SLICE bel — not an M9K site.
+                        "attributes": {"NEXTPNR_BEL": "SLICE_X3_Y4_N0"},
+                        "parameters": {
+                            "INIT": "", "WIDTH_A": 9, "DEPTH": 512,
+                            "INIT": "0" * (9 * 512),
+                        },
+                        "connections": {},
+                    },
+                },
+                "netnames": {},
+            }
+        }
+    }
+    fasm, warnings = nf.convert(fake_json)
+    init_lines = [l for l in fasm if ".INIT_" in l]
+    # Cell placed on SLICE bel — parse_bel returns ('SLICE', 3, 4, 0), so
+    # the dispatch hits the SLICE branch rather than M9K.  That branch
+    # treats a param-less cell as a pure LUT with 0-init and emits
+    # nothing (no INIT key present in a SLICE-shaped cell).  Main
+    # assertion: no INIT line makes it through.
+    assert init_lines == [], f"unexpected INIT emitted: {init_lines}"
+    print("  test_emit_m9k_init_convert_skips_unplaced: OK")
 
 
 def main():
@@ -144,7 +170,8 @@ def main():
         test_parse_yosys_init_round_trip,
         test_emit_m9k_init_synthetic_cell,
         test_emit_m9k_init_rejects_non_m9k_bel,
-        test_emit_m9k_init_convert_integration_xfail,
+        test_emit_m9k_init_convert_integration,
+        test_emit_m9k_init_convert_skips_unplaced,
     ]
     for t in tests:
         t()

@@ -432,6 +432,16 @@ def convert(
                     f"cell {cell_name}: IOB on {pin_loc} has no I/O "
                     f"connections; no FASM emitted"
                 )
+        elif kind == "M9K":
+            # Placed EP4CE6_M9K — emit INIT directive via the helper
+            # the xfail contract pins down.  When the Yosys / nextpnr
+            # M9K pipeline is dead this branch is simply unreachable
+            # (no cell is ever placed on an M9K bel).
+            line, warn = _emit_m9k_init(cell_name, cell)
+            if line is not None:
+                fasm.append(line)
+            if warn is not None:
+                warnings.append(warn)
 
     # --- Carry chain analysis ---
     # Walk every CE6_CARRY whose CI is a Verilog constant — that's a
