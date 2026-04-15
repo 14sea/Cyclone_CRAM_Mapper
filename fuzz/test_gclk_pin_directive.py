@@ -49,12 +49,53 @@ def test_gclk_pin_loader():
     assert len(cells_e1) == 3, f"E1 = {len(cells_e1)} cells"
     assert len(cells_r8) == 5, f"R8 = {len(cells_r8)} cells"
     assert len(cells_n1) == 38, f"N1 = {len(cells_n1)} cells"
-    # Cross-pin overlap must be zero (per-pin one-hot model)
+    # Cross-pin overlap must be zero across the legacy E1/R8/N1 triad
+    # (per-pin one-hot model proved by triangulation in 2026-04-14).
     assert not (set(cells_e1) & set(cells_r8)), "E1 ∩ R8 should be empty"
     assert not (set(cells_e1) & set(cells_n1)), "E1 ∩ N1 should be empty"
     assert not (set(cells_r8) & set(cells_n1)), "R8 ∩ N1 should be empty"
     print(f"  test_gclk_pin_loader: OK "
           f"(E1=3, R8=5, N1=38, all pairwise ∩=0)")
+
+
+def test_gclk_pin_all_mined_pins_loader():
+    """Generic loader sanity for every PIN_X in the spine JSON.
+
+    Each entry must be a non-empty list of (off, bp) tuples in the
+    valid CRAM range.  We log per-pin cell counts and pairwise overlaps
+    so any unexpected sharing across the extended pin set is visible.
+    """
+    f._GCLK_PIN_CACHE = None
+    spine = json.loads((ROOT / "results"
+                        / "clk_cross_pin_spine_check.json").read_text())
+    sect = spine["per_pin_forced_vs_auto_intersection"]
+    pins = sorted(k.removeprefix("PIN_") for k in sect)
+    assert len(pins) >= 10, (
+        f"expected ≥10 mined GCLK pins, got {len(pins)}: {pins}"
+    )
+    sets = {}
+    for pin in pins:
+        f._GCLK_PIN_CACHE = None
+        cells = f._load_gclk_pin_cells(pin)
+        assert len(cells) > 0, f"PIN_{pin} empty"
+        for off, bp in cells:
+            assert 0 <= off, f"PIN_{pin} bad off {off}"
+            assert 0 <= bp < 8, f"PIN_{pin} bad bp {bp}"
+        sets[pin] = set(cells)
+    counts = {p: len(s) for p, s in sets.items()}
+    # Pairwise overlap report (small overlaps are tolerable; the
+    # legacy E1/R8/N1 triad must stay disjoint).
+    legacy = ["E1", "R8", "N1"]
+    for i, a in enumerate(legacy):
+        for b in legacy[i + 1:]:
+            if a in sets and b in sets:
+                inter = sets[a] & sets[b]
+                assert not inter, (
+                    f"PIN_{a} ∩ PIN_{b} broke disjointness ({len(inter)} "
+                    f"cells): {sorted(inter)[:5]}"
+                )
+    print(f"  test_gclk_pin_all_mined_pins_loader: OK "
+          f"({len(pins)} pins; counts={counts})")
 
 
 def test_lab_clk_sel_loader():
@@ -182,6 +223,7 @@ def main():
     tests = [
         test_parse_new_directives,
         test_gclk_pin_loader,
+        test_gclk_pin_all_mined_pins_loader,
         test_lab_clk_sel_loader,
         test_bitgen_gclk_pin_xor_single,
         test_bitgen_gclk_pin_xor_double_cancels,
