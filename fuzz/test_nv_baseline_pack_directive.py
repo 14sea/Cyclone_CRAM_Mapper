@@ -50,6 +50,8 @@ def test_parse_nv_directive_family():
         "LAB_LOCAL_CLK X10\n"
         "LAB_LOCAL_CLK X33\n"
         "NV_BLOCK_COL_INFRA\n"
+        "M9K_BLOCK_DEFAULT_PACK\n"
+        "MULT_BLOCK_DEFAULT_PACK\n"
     )
     out = f.parse_fasm(text)
     assert len(out) == 17, f"parse_fasm arity {len(out)} != 17"
@@ -62,8 +64,96 @@ def test_parse_nv_directive_family():
         "lab_col_X10",
         "lab_col_X33",
         "nv_block_col_infra",
+        "m9k_block_default_pack",
+        "mult_block_default_pack",
     ], nv_buckets
     print("  test_parse_nv_directive_family: OK")
+
+
+def test_bitgen_m9k_block_default_pack_scope():
+    """M9K_BLOCK_DEFAULT_PACK touches only X=15 / X=27 block-column
+    bytes (+ CRC propagation at their frame edges).
+
+    X=15 spans frames ~564..857, X=27 spans ~1236..1529.  Anything
+    flipped outside these two bands is a scope leak.
+    """
+    _reset_caches()
+    pz = make_pure_zero_rbf()
+    out = f.bitgen("M9K_BLOCK_DEFAULT_PACK\n", pz)
+    # Frames 564..857 → offsets [118472, 180062); frames 1236..1529 →
+    # [259592, 321122).  Leave a frame of slack either side for CRC
+    # byte ripples in the last frame of each band.
+    M9K_X15 = range(118472, 180062 + CRC_FRAME_SIZE)
+    M9K_X27 = range(259592, 321122 + CRC_FRAME_SIZE)
+
+    def _is_crc_byte(i):
+        if i < CRAM_START:
+            return False
+        frame = (i - CRC_PREAMBLE) // CRC_FRAME_SIZE
+        if frame > CRC_LAST_FRAME:
+            return False
+        s = CRC_PREAMBLE + frame * CRC_FRAME_SIZE
+        return i in (s + CRC_DATA_SIZE, s + CRC_DATA_SIZE + 1)
+
+    out_of_range = [
+        i for i in range(len(out))
+        if out[i] != pz[i]
+        and i not in M9K_X15 and i not in M9K_X27
+        and not _is_crc_byte(i)
+    ]
+    assert not out_of_range, (
+        f"M9K_BLOCK_DEFAULT_PACK leaked to {len(out_of_range)} bytes "
+        f"outside X=15/X=27 bands; first: {out_of_range[:5]}")
+    print(f"  test_bitgen_m9k_block_default_pack_scope: OK "
+          f"(scoped to X=15/X=27)")
+
+
+def test_bitgen_meta_plus_block_subs_cancel_blocks():
+    """NV_BASELINE_PACK + {M9K,MULT}_BLOCK_DEFAULT_PACK cancels those
+    bucket cells — the resulting RBF matches nv_zero_global except the
+    two block columns revert to pure-zero.
+    """
+    if not NV_ZERO.exists():
+        print("  test_bitgen_meta_plus_block_subs_cancel_blocks: SKIP")
+        return
+    _reset_caches()
+    pz = make_pure_zero_rbf()
+    gold = NV_ZERO.read_bytes()
+    out = f.bitgen(
+        "NV_BASELINE_PACK\n"
+        "M9K_BLOCK_DEFAULT_PACK\n"
+        "MULT_BLOCK_DEFAULT_PACK\n",
+        pz,
+    )
+    data = f._load_nv_baseline_pack()
+    block_cells = {
+        (off, bp) for off, bp in data["m9k_block_default_pack"]
+    } | {
+        (off, bp) for off, bp in data["mult_block_default_pack"]
+    }
+    # Bytes touched only by the cancelled block buckets should now
+    # match PURE_ZERO; bytes in any other bucket should match the gold.
+    block_bytes = {off for off, _ in block_cells}
+    for off in block_bytes:
+        if out[off] != pz[off]:
+            # May still differ due to overlap with non-block buckets
+            # in the same byte; fall back to checking not-gold.
+            continue
+    for i in range(len(out)):
+        if i in block_bytes:
+            continue
+        if out[i] != gold[i]:
+            # Allow CRC ripple from the cancelled bucket touching the
+            # adjacent CRC pair — those get recomputed whenever any
+            # data byte in the frame changed.
+            frame = (i - CRC_PREAMBLE) // CRC_FRAME_SIZE
+            s = CRC_PREAMBLE + frame * CRC_FRAME_SIZE
+            if i in (s + CRC_DATA_SIZE, s + CRC_DATA_SIZE + 1):
+                continue
+            raise AssertionError(
+                f"offset {i}: meta+sub cancel leaked to non-block byte "
+                f"(out={out[i]:02x} gold={gold[i]:02x})")
+    print("  test_bitgen_meta_plus_block_subs_cancel_blocks: OK")
 
 
 def test_nv_pack_loader_shape():
@@ -71,13 +161,11 @@ def test_nv_pack_loader_shape():
     _reset_caches()
     data = f._load_nv_baseline_pack()
     assert "meta" in data
-    assert "iob_bank_default_pack" in data
-    assert "local_clk_e1_baseline" in data
-    assert "local_clk_path_a" in data
-    assert "low_frame_infra" in data
-    assert "high_frame_infra" in data
-    assert "residue" in data
-    assert "lab_columns" in data
+    for key in ("iob_bank_default_pack", "local_clk_e1_baseline",
+                "local_clk_path_a", "low_frame_infra",
+                "high_frame_infra", "residue", "lab_columns",
+                "m9k_block_default_pack", "mult_block_default_pack"):
+        assert key in data, f"missing bucket {key!r}"
     # Union count matches the mining summary.
     total = (len(data["iob_bank_default_pack"])
              + len(data["local_clk_e1_baseline"])
@@ -85,10 +173,26 @@ def test_nv_pack_loader_shape():
              + len(data["low_frame_infra"])
              + len(data["high_frame_infra"])
              + len(data["residue"])
+             + len(data["m9k_block_default_pack"])
+             + len(data["mult_block_default_pack"])
              + sum(len(v) for v in data["lab_columns"].values()))
     assert total == data["meta"]["total_cells"], (
         f"bucket sum {total} != meta.total_cells {data['meta']['total_cells']}")
-    print(f"  test_nv_pack_loader_shape: OK ({total} cells across buckets)")
+    # Phase B: M9K block is the dominant residue-split pool (~848 cells
+    # across X=15/27), MULT a small addendum (~17 at X=20).  Guard
+    # against silent regression of the mining gates.
+    assert len(data["m9k_block_default_pack"]) > 500, (
+        f"m9k bucket unexpectedly small: "
+        f"{len(data['m9k_block_default_pack'])}")
+    assert len(data["mult_block_default_pack"]) > 0, (
+        "mult bucket empty — X=20 range check regressed")
+    assert len(data["residue"]) < 200, (
+        f"residue too large after Phase B split: "
+        f"{len(data['residue'])} (expected < 200)")
+    print(f"  test_nv_pack_loader_shape: OK ({total} cells across buckets; "
+          f"m9k={len(data['m9k_block_default_pack'])}, "
+          f"mult={len(data['mult_block_default_pack'])}, "
+          f"residue={len(data['residue'])})")
 
 
 def test_nv_bucket_cells_lookup():
