@@ -179,6 +179,29 @@ _IOB_ROUTE_RE = re.compile(
     r"^IOB_ROUTE\s+PIN_(?P<pin>[A-Z]\d+)\s*->\s*"
     r"X(?P<dx>\d+)Y(?P<dy>\d+)N(?P<dn>\d+)\.(?P<port>\w+)$"
 )
+# Baseline-bridge directive.  Resolves the frame-split between IOB_IN/
+# IOB_OUT (iob_in_E15 frame, fabric + E15/G15 pin config) and IOB_ROUTE
+# (nv_zero_global frame, zero fabric + virtual pins).  When the user
+# starts from nv_zero_global and wants IOB_IN/IOB_OUT to behave as if
+# the base were iob_in_E15, they emit `IOB_BASELINE_NV` once; the
+# directive XOR-applies results/iob_baseline_hdr_cells.json (the 74-
+# byte / 132-bit-cell hdr delta (nv_zero_global ^ iob_in_E15, scoped
+# to off < 5282)), turning the nv hdr band into the E15/G15 pin
+# baseline without touching CRAM.  After that, IOB_IN PIN_X / IOB_OUT
+# PIN_Y apply their usual pair-deltas and end up in the target pin's
+# hdr config.
+_IOB_BASELINE_NV_RE = re.compile(r"^IOB_BASELINE_NV$")
+_IOB_BASELINE_HDR_CACHE = None
+
+# Clock-bank pin directive.  Dedicated clock pins (E1 and siblings)
+# are not in iob_cell_map.json — fuzz/iob_sweep.py only covered 44
+# regular user IO pins.  IOB_CLK_INPUT PIN_X XOR-applies a hdr-band
+# cell set from results/iob_clk_pin_hdr_cells.json that activates
+# pin X as a GCLK driver (IOB bank config + GCLK mux selection).
+# Complements `GCLK_PIN PIN_X`, which controls the fabric-side
+# per-LAB clock-source activate (frames 34-35 etc.).
+_IOB_CLK_INPUT_RE = re.compile(r"^IOB_CLK_INPUT\s+PIN_(?P<pin>[A-Z]\d+)$")
+_IOB_CLK_INPUT_CACHE = None
 
 # Reference pins: the iob_in_E15.rbf / iob_out_G15.rbf baselines were
 # compiled with K=E15 (input) and LED=G15 (output).  Any FASM IOB_IN
@@ -186,6 +209,58 @@ _IOB_ROUTE_RE = re.compile(
 _IOB_K_REF = "E15"
 _IOB_LED_REF = "G15"
 _IOB_MAP_CACHE = None
+
+
+def _load_iob_clk_input_cells(pin):
+    """Return hdr-band cells activating `pin` as a clock-bank driver.
+
+    Reads results/iob_clk_pin_hdr_cells.json (keyed by pin string).
+    Raises FasmError if the pin hasn't been mined yet.
+    """
+    global _IOB_CLK_INPUT_CACHE
+    if _IOB_CLK_INPUT_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_clk_pin_hdr_cells.json"
+        if not path.exists():
+            raise FasmError(
+                "IOB_CLK_INPUT used but "
+                "results/iob_clk_pin_hdr_cells.json missing; run "
+                "scripts/iob_slice_mining/compute_clk_pin_hdr.py"
+            )
+        data = json.loads(path.read_text())
+        _IOB_CLK_INPUT_CACHE = data["cells"]
+    if pin not in _IOB_CLK_INPUT_CACHE:
+        raise FasmError(
+            f"IOB_CLK_INPUT PIN_{pin}: no entry in "
+            f"iob_clk_pin_hdr_cells.json (known: "
+            f"{sorted(_IOB_CLK_INPUT_CACHE)}).  Mine with "
+            f"scripts/iob_slice_mining/compute_clk_pin_hdr.py"
+        )
+    return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
+
+
+def _load_iob_baseline_hdr_cells():
+    """Return the 132-bit-cell hdr-band delta (nv_zero_global ^ iob_in_E15).
+
+    Source: results/iob_baseline_hdr_cells.json, produced by
+    scripts/iob_slice_mining/compute_baseline_hdr.py.  Cells are scoped
+    to the header band (off < 5282) — applying them on top of nv_zero_
+    global reproduces iob_in_E15's hdr bytes (the E15/G15 pin baseline
+    that IOB_IN and IOB_OUT pair-deltas expect).
+    """
+    global _IOB_BASELINE_HDR_CACHE
+    if _IOB_BASELINE_HDR_CACHE is not None:
+        return _IOB_BASELINE_HDR_CACHE
+    import json
+    path = ROOT / "results" / "iob_baseline_hdr_cells.json"
+    if not path.exists():
+        raise FasmError(
+            "IOB_BASELINE_NV used but results/iob_baseline_hdr_cells.json "
+            "missing; run scripts/iob_slice_mining/compute_baseline_hdr.py"
+        )
+    data = json.loads(path.read_text())
+    _IOB_BASELINE_HDR_CACHE = [tuple(c) for c in data["cells"]]
+    return _IOB_BASELINE_HDR_CACHE
 
 
 def _load_iob_map():
@@ -475,6 +550,8 @@ def parse_fasm(text):
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
+    iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
+    iob_clk_inputs = []  # list[pin] — IOB_CLK_INPUT PIN_X
     gclk = False
     gclk_pins = []  # list[pin] — per-pin GCLK source activate (XOR)
     lab_clk_sels = []  # list[(x, y)] — per-LAB CLK_SEL (XOR)
@@ -557,6 +634,14 @@ def parse_fasm(text):
         if m:
             gclk = True
             continue
+        m = _IOB_BASELINE_NV_RE.match(line)
+        if m:
+            iob_baseline_nv = True
+            continue
+        m = _IOB_CLK_INPUT_RE.match(line)
+        if m:
+            iob_clk_inputs.append(m["pin"])
+            continue
         m = _IOB_ROUTE_RE.match(line)
         if m:
             iob_routes.append(
@@ -588,7 +673,8 @@ def parse_fasm(text):
             continue
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
-            iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les)
+            iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
+            iob_baseline_nv, iob_clk_inputs)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -663,7 +749,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
-     lab_clk_sel_les) = parse_fasm(fasm_text)
+     lab_clk_sel_les, iob_baseline_nv,
+     iob_clk_inputs) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -740,6 +827,30 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         buf = bytearray(work)
         for off, bp in bits:
             buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if iob_baseline_nv:
+        # Apply the hdr-band bridge (nv_zero_global ^ iob_in_E15, scoped
+        # to off < 5282).  This must run BEFORE IOB_IN / IOB_OUT so their
+        # pair-deltas land on top of the E15/G15 baseline they expect.
+        buf = bytearray(work)
+        for off, bp in _load_iob_baseline_hdr_cells():
+            buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if iob_clk_inputs:
+        # Clock-bank pin activate (hdr band only).  Uses XOR parity so
+        # duplicate lines cancel.  Runs alongside IOB_IN / IOB_OUT; both
+        # touch the hdr band but scoped to different bytes.
+        parity = {}
+        for pin in iob_clk_inputs:
+            for off, bp in _load_iob_clk_input_cells(pin):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
+            if v:
+                buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     if iobs:
