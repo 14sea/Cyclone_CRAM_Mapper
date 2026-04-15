@@ -44,9 +44,10 @@ BASELINE_JSON = ROOT / "results" / "iob_baseline_hdr_cells.json"
 
 def test_parse_iob_baseline_nv():
     out = f.parse_fasm("IOB_BASELINE_NV\n")
-    assert len(out) == 16, f"parse_fasm arity {len(out)} != 16"
+    assert len(out) == 17, f"parse_fasm arity {len(out)} != 17"
     assert out[14] is True, "iob_baseline_nv flag not set"
     assert out[15] == [], "iob_clk_inputs should default to empty list"
+    assert out[16] == [], "nv_buckets should default to empty list"
 
     out = f.parse_fasm("")
     assert out[14] is False, "iob_baseline_nv flag leaked from empty FASM"

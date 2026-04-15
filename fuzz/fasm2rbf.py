@@ -203,6 +203,45 @@ _IOB_BASELINE_HDR_CACHE = None
 _IOB_CLK_INPUT_RE = re.compile(r"^IOB_CLK_INPUT\s+PIN_(?P<pin>[A-Z]\d+)$")
 _IOB_CLK_INPUT_CACHE = None
 
+# NV_BASELINE_PACK — Phase 3 of nv_zero_global retirement.  Expresses the
+# byte delta nv_zero_global.rbf ^ pure_zero_rbf() as layered XOR directives
+# so a caller can start from PURE_ZERO and rebuild nv_zero_global (or any
+# chosen subset of it) additively.  Data source:
+# results/nv_baseline_pack.json, produced by
+# scripts/baseline/mine_nv_baseline_pack.py.  All cells are XOR-applied
+# with parity, so double-emit (e.g. the meta NV_BASELINE_PACK plus a
+# sub-directive for the same bucket) cancels cleanly.
+#
+# Directives (see parse_fasm for the state list):
+#   NV_BASELINE_PACK           meta — applies every bucket (all 21 640
+#                              cells), reproducing nv_zero_global on top
+#                              of PURE_ZERO byte-for-byte.
+#   IOB_BANK_DEFAULT_PACK      hdr band only (off < 5282), ~5 068 cells
+#                              — per-pin LVTTL + bank-config defaults.
+#   LOCAL_CLK_E1_BASELINE      2 cells at (7312,4) & (7519,4) — universal
+#                              local-clock anchor (memory note
+#                              lab_clk_sel_decomposes_into_local_and_gclk).
+#   LOCAL_CLK_PATH_A           cells at the spine frame/bp envelope from
+#                              memory gclk_16cell_spine_9_of_13_labs that
+#                              actually flipped in nv_zero_global (only 2
+#                              of the 16-cell candidate set; the rest are
+#                              in the lab_columns buckets).
+#   LAB_LOCAL_CLK X{x}         all 28 LAB-column buckets (X=3..33) —
+#                              per-LAB default local-clk / idle-routing
+#                              cells.  X must match a key in
+#                              data["lab_columns"].
+#   NV_BLOCK_COL_INFRA         low_frame_infra ∪ high_frame_infra ∪
+#                              residue (~1 981 cells) — non-LAB-column
+#                              infrastructure (M9K X={15,27}, mult X=20,
+#                              chip-global trailer).
+_NV_BASELINE_PACK_RE = re.compile(r"^NV_BASELINE_PACK$")
+_IOB_BANK_DEFAULT_PACK_RE = re.compile(r"^IOB_BANK_DEFAULT_PACK$")
+_LOCAL_CLK_E1_BASELINE_RE = re.compile(r"^LOCAL_CLK_E1_BASELINE$")
+_LOCAL_CLK_PATH_A_RE = re.compile(r"^LOCAL_CLK_PATH_A$")
+_LAB_LOCAL_CLK_RE = re.compile(r"^LAB_LOCAL_CLK\s+X(?P<x>\d+)$")
+_NV_BLOCK_COL_INFRA_RE = re.compile(r"^NV_BLOCK_COL_INFRA$")
+_NV_BASELINE_CACHE = None
+
 # Reference pins: the iob_in_E15.rbf / iob_out_G15.rbf baselines were
 # compiled with K=E15 (input) and LED=G15 (output).  Any FASM IOB_IN
 # at PIN_E15 or IOB_OUT at PIN_G15 reduces to a no-op delta.
@@ -237,6 +276,73 @@ def _load_iob_clk_input_cells(pin):
             f"scripts/iob_slice_mining/compute_clk_pin_hdr.py"
         )
     return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
+
+
+def _load_nv_baseline_pack():
+    """Load results/nv_baseline_pack.json once and return the dict.
+
+    Schema (see scripts/baseline/mine_nv_baseline_pack.py):
+      meta.total_cells / meta.buckets.*  (counts only)
+      iob_bank_default_pack : [[off, bp], ...]   hdr band
+      local_clk_e1_baseline : [[off, bp], ...]   2 anchor cells
+      local_clk_path_a      : [[off, bp], ...]   spine-candidate hits
+      low_frame_infra       : [[off, bp], ...]
+      high_frame_infra      : [[off, bp], ...]
+      residue               : [[off, bp], ...]
+      lab_columns           : {"X": [[off, bp], ...], ...}  (str keys)
+    """
+    global _NV_BASELINE_CACHE
+    if _NV_BASELINE_CACHE is not None:
+        return _NV_BASELINE_CACHE
+    import json
+    path = ROOT / "results" / "nv_baseline_pack.json"
+    if not path.exists():
+        raise FasmError(
+            "NV_BASELINE_PACK / sub-directive used but "
+            "results/nv_baseline_pack.json missing; run "
+            "scripts/baseline/mine_nv_baseline_pack.py"
+        )
+    _NV_BASELINE_CACHE = json.loads(path.read_text())
+    return _NV_BASELINE_CACHE
+
+
+def _nv_bucket_cells(bucket):
+    """Return [(off, bp), ...] for one bucket name.
+
+    Recognised bucket names:
+      'iob_bank_default_pack'
+      'local_clk_e1_baseline'
+      'local_clk_path_a'
+      'lab_col_X<n>'        (<n> = integer column index)
+      'nv_block_col_infra'  (low + high + residue)
+      'nv_all'              (every bucket above ∪ all lab_columns)
+    """
+    data = _load_nv_baseline_pack()
+    if bucket == "nv_all":
+        out = []
+        for k in ("iob_bank_default_pack", "local_clk_e1_baseline",
+                  "local_clk_path_a", "low_frame_infra",
+                  "high_frame_infra", "residue"):
+            out.extend(data[k])
+        for v in data["lab_columns"].values():
+            out.extend(v)
+        return [tuple(c) for c in out]
+    if bucket == "nv_block_col_infra":
+        out = []
+        for k in ("low_frame_infra", "high_frame_infra", "residue"):
+            out.extend(data[k])
+        return [tuple(c) for c in out]
+    if bucket.startswith("lab_col_X"):
+        x_str = bucket[len("lab_col_X"):]
+        cols = data["lab_columns"]
+        if x_str not in cols:
+            raise FasmError(
+                f"LAB_LOCAL_CLK X{x_str}: no entry in "
+                f"nv_baseline_pack.json lab_columns "
+                f"(known: {sorted(cols, key=int)})"
+            )
+        return [tuple(c) for c in cols[x_str]]
+    return [tuple(c) for c in data[bucket]]
 
 
 def _load_iob_baseline_hdr_cells():
@@ -563,6 +669,12 @@ def parse_fasm(text):
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
     iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
     iob_clk_inputs = []  # list[pin] — IOB_CLK_INPUT PIN_X
+    # NV_BASELINE_PACK family — each entry is a bucket name consumed by
+    # _nv_bucket_cells().  All are XOR-applied with parity, so emitting
+    # both the meta NV_BASELINE_PACK and a sub-directive for the same
+    # bucket cancels that bucket out (intentional; double-emit is a
+    # no-op rather than a silent double-flip).
+    nv_buckets = []  # list[str]
     gclk = False
     gclk_pins = []  # list[pin] — per-pin GCLK source activate (XOR)
     lab_clk_sels = []  # list[(x, y)] — per-LAB CLK_SEL (XOR)
@@ -653,6 +765,30 @@ def parse_fasm(text):
         if m:
             iob_clk_inputs.append(m["pin"])
             continue
+        m = _NV_BASELINE_PACK_RE.match(line)
+        if m:
+            nv_buckets.append("nv_all")
+            continue
+        m = _IOB_BANK_DEFAULT_PACK_RE.match(line)
+        if m:
+            nv_buckets.append("iob_bank_default_pack")
+            continue
+        m = _LOCAL_CLK_E1_BASELINE_RE.match(line)
+        if m:
+            nv_buckets.append("local_clk_e1_baseline")
+            continue
+        m = _LOCAL_CLK_PATH_A_RE.match(line)
+        if m:
+            nv_buckets.append("local_clk_path_a")
+            continue
+        m = _LAB_LOCAL_CLK_RE.match(line)
+        if m:
+            nv_buckets.append(f"lab_col_X{int(m['x'])}")
+            continue
+        m = _NV_BLOCK_COL_INFRA_RE.match(line)
+        if m:
+            nv_buckets.append("nv_block_col_infra")
+            continue
         m = _IOB_ROUTE_RE.match(line)
         if m:
             iob_routes.append(
@@ -685,7 +821,7 @@ def parse_fasm(text):
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
-            iob_baseline_nv, iob_clk_inputs)
+            iob_baseline_nv, iob_clk_inputs, nv_buckets)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -761,10 +897,30 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
-     iob_clk_inputs) = parse_fasm(fasm_text)
+     iob_clk_inputs, nv_buckets) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
+
+    # NV_BASELINE_PACK family — applied FIRST so downstream directives
+    # (IOB_IN / IOB_OUT / IOB_ROUTE / ROUTE etc.) land on top of the
+    # synthesised nv_zero_global frame rather than on PURE_ZERO.  XOR-
+    # parity composition across buckets: a cell that appears in several
+    # named sub-directives is flipped only if the count of emitting
+    # directives is odd.  The meta NV_BASELINE_PACK ('nv_all') contains
+    # every bucket, so emitting it alongside a sub-directive cancels
+    # that sub — that is the intended behaviour (double-emit = no-op).
+    if nv_buckets:
+        parity = {}
+        for bucket in nv_buckets:
+            for off, bp in _nv_bucket_cells(bucket):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
+            if v:
+                buf[off] ^= (1 << bp)
+        work = bytes(buf)
 
     src_cells = set()
     if srcs:
