@@ -31,9 +31,15 @@ def main():
             print(f"  ✗ FAIL: {type(e).__name__}: {e}")
             print()
             continue
-        plan = dbg["plan"]
-        print(f"  plan ({len(plan)} hops): {[repr(h) for h in plan]}")
-        print(f"  li_mode: {dbg['li_mode']}")
+        if dbg.get("source") == "snapshot":
+            # Green-zone LABs now short-circuit through the
+            # fingerprint snapshot before the formula path; debug info
+            # reports raw ops instead of plan/li_mode.
+            print(f"  source: snapshot  ({len(dbg.get('ops', []))} raw ops)")
+        else:
+            plan = dbg["plan"]
+            print(f"  plan ({len(plan)} hops): {[repr(h) for h in plan]}")
+            print(f"  li_mode: {dbg['li_mode']}")
         sw = dbg["read_back"]
         c4 = sw.get("c4", [])
         r4 = sw.get("r4", [])
