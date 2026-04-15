@@ -69,6 +69,28 @@ def test_iob_clk_input_E1_loader():
           f"({len(cells)} hdr cells)")
 
 
+def test_iob_clk_input_R8_loader():
+    f._IOB_CLK_INPUT_CACHE = None
+    cells = f._load_iob_clk_input_cells("R8")
+    assert len(cells) > 0, "R8 entry empty"
+    for off, bp in cells:
+        assert off < CRAM_START, f"R8 cell ({off},{bp}) not in hdr band"
+        assert 0 <= bp < 8
+    print(f"  test_iob_clk_input_R8_loader: OK "
+          f"({len(cells)} hdr cells)")
+
+
+def test_iob_clk_input_N1_loader():
+    f._IOB_CLK_INPUT_CACHE = None
+    cells = f._load_iob_clk_input_cells("N1")
+    assert len(cells) > 0, "N1 entry empty"
+    for off, bp in cells:
+        assert off < CRAM_START, f"N1 cell ({off},{bp}) not in hdr band"
+        assert 0 <= bp < 8
+    print(f"  test_iob_clk_input_N1_loader: OK "
+          f"({len(cells)} hdr cells)")
+
+
 def test_iob_clk_input_unknown_pin_raises():
     f._IOB_CLK_INPUT_CACHE = None
     try:
@@ -100,6 +122,41 @@ def test_bitgen_simple_led_hdr_bit_perfect_vs_gold():
     assert diff == 0, f"{diff} hdr byte diffs vs simple_led gold"
     print("  test_bitgen_simple_led_hdr_bit_perfect_vs_gold: OK "
           "(hdr band byte-identical to simple_led_E16_to_G15.rbf)")
+
+
+def _bitgen_simple_led_hdr_vs_clk_gold(pin):
+    """Shared body for R8 / N1 hdr-band round-trip tests."""
+    f._IOB_BASELINE_HDR_CACHE = None
+    f._IOB_MAP_CACHE = None
+    f._IOB_CLK_INPUT_CACHE = None
+    base = NV_ZERO.read_bytes()
+    gold_path = (ROOT / "scripts" / "iob_slice_mining" / "work"
+                 / f"simple_led_E16_to_G15_clk{pin}" / "output_files"
+                 / f"simple_led_E16_to_G15_clk{pin}.rbf")
+    if not gold_path.exists():
+        print(f"  [skip] no gold RBF for PIN_{pin} at {gold_path}")
+        return
+    gold = gold_path.read_bytes()
+    fasm = ("IOB_BASELINE_NV\n"
+            "IOB_IN  PIN_E16\n"
+            "IOB_OUT PIN_G15\n"
+            f"IOB_CLK_INPUT PIN_{pin}\n")
+    out = f.bitgen(fasm, base, patch_crc=False)
+    diff = sum(1 for i in range(CRAM_START) if out[i] != gold[i])
+    assert diff == 0, (
+        f"PIN_{pin}: {diff} hdr byte diffs vs "
+        f"simple_led_E16_to_G15_clk{pin}.rbf"
+    )
+    print(f"  test_bitgen_simple_led_hdr_bit_perfect_vs_gold_{pin}: OK "
+          f"(hdr byte-identical to simple_led_E16_to_G15_clk{pin}.rbf)")
+
+
+def test_bitgen_simple_led_hdr_bit_perfect_vs_gold_R8():
+    _bitgen_simple_led_hdr_vs_clk_gold("R8")
+
+
+def test_bitgen_simple_led_hdr_bit_perfect_vs_gold_N1():
+    _bitgen_simple_led_hdr_vs_clk_gold("N1")
 
 
 def test_iob_baseline_hdr_cells_loader():
@@ -187,11 +244,15 @@ def main():
         test_parse_iob_clk_input,
         test_iob_baseline_hdr_cells_loader,
         test_iob_clk_input_E1_loader,
+        test_iob_clk_input_R8_loader,
+        test_iob_clk_input_N1_loader,
         test_iob_clk_input_unknown_pin_raises,
         test_bitgen_baseline_hdr_bit_perfect_vs_iob_in_E15,
         test_bitgen_baseline_double_cancels,
         test_bitgen_baseline_plus_iob_in_round_trip,
         test_bitgen_simple_led_hdr_bit_perfect_vs_gold,
+        test_bitgen_simple_led_hdr_bit_perfect_vs_gold_R8,
+        test_bitgen_simple_led_hdr_bit_perfect_vs_gold_N1,
     ]
     for t in tests:
         f._IOB_BASELINE_HDR_CACHE = None
