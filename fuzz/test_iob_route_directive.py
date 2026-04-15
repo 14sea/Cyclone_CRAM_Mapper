@@ -215,6 +215,73 @@ def test_iob_route_single_le_simple_led_end_to_end():
           "(full RBF byte-identical to simple_led_E16_to_G15.rbf)")
 
 
+def test_iob_route_single_le_sweep_all_entries():
+    """Every entry in single_le_cells must reproduce the matching
+    single-LE Quartus gold byte-for-byte through the full 8-directive
+    stack (IOB_BASELINE_NV + IOB_IN + IOB_OUT + IOB_CLK_INPUT +
+    IOB_ROUTE + GCLK_PIN + LAB_CLK_SEL + LAB_CLK_SEL_LE).
+
+    Skips entries whose gold RBF isn't built locally (run
+    `scripts/iob_slice_mining/sweep_single_le.py` first to generate
+    them).  At least one entry (E16->10,4,0,dataa via
+    simple_led_E16_to_G15) must succeed, else the test fails.
+    """
+    data = json.loads(SIGCACHE.read_text())
+    single_le = data.get("single_le_cells", {})
+    assert single_le, "no single_le_cells entries in sigcache"
+    work = ROOT / "scripts" / "iob_slice_mining" / "work"
+    base = NV_ZERO.read_bytes()
+    ok = 0
+    skipped = 0
+    for key in sorted(single_le):
+        # key: "IOB_{pin}->{dx},{dy},{dn},{port}"
+        src, dst = key.split("->")
+        pin = src[4:]
+        dx, dy, dn, port = dst.split(",")
+        # Candidate gold paths: sweep_single_le layout first, then the
+        # legacy simple_led_E16_to_G15 for the original entry.
+        cand = [
+            work / f"single_le_{pin}_to_{dx}_{dy}_{dn}_{port}"
+                 / "output_files"
+                 / f"single_le_{pin}_to_{dx}_{dy}_{dn}_{port}.rbf",
+        ]
+        if pin == "E16" and (dx, dy, dn, port) == ("10", "4", "0", "dataa"):
+            cand.append(work / "simple_led_E16_to_G15" / "output_files"
+                        / "simple_led_E16_to_G15.rbf")
+        gold_path = next((p for p in cand if p.exists()), None)
+        if gold_path is None:
+            skipped += 1
+            continue
+        gold = gold_path.read_bytes()
+        # Reset caches for a clean run
+        f._IOB_BASELINE_HDR_CACHE = None
+        f._IOB_MAP_CACHE = None
+        f._IOB_ROUTE_CACHE = None
+        f._GCLK_PIN_CACHE = None
+        f._LAB_CLK_SEL_CACHE.clear()
+        f._LAB_CLK_SEL_LE_CACHE = None
+        f._IOB_CLK_INPUT_CACHE = None
+        fasm = ("IOB_BASELINE_NV\n"
+                f"IOB_IN  PIN_{pin}\n"
+                "IOB_OUT PIN_G15\n"
+                "IOB_CLK_INPUT PIN_E1\n"
+                f"IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}\n"
+                "GCLK_PIN PIN_E1\n"
+                f"LAB_CLK_SEL X{dx}Y{dy}\n"
+                f"LAB_CLK_SEL_LE X{dx}Y{dy}N{dn}\n")
+        out = f.bitgen(fasm, base, patch_crc=True)
+        n_diff = sum(1 for i in range(len(out)) if out[i] != gold[i])
+        assert n_diff == 0, f"{key}: {n_diff} byte diffs vs gold"
+        ok += 1
+    assert ok > 0, (
+        "no single_le gold RBFs found — run "
+        "scripts/iob_slice_mining/sweep_single_le.py first"
+    )
+    print(f"  test_iob_route_single_le_sweep_all_entries: OK "
+          f"({ok} entries byte-identical vs gold, {skipped} skipped "
+          f"— gold RBF not built locally)")
+
+
 def main():
     tests = [
         test_parse_iob_route,
@@ -224,6 +291,7 @@ def main():
         test_iob_route_bit_perfect_vs_pair_rbf_in_cram,
         test_iob_route_all_entries_self_consistent,
         test_iob_route_single_le_simple_led_end_to_end,
+        test_iob_route_single_le_sweep_all_entries,
     ]
     for t in tests:
         f._IOB_ROUTE_CACHE = None
