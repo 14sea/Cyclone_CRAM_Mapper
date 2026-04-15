@@ -43,8 +43,23 @@ HDR = 32 + 25 * 210
 CRC_SLOT = 208
 
 SRC = (10, 10, 0)
-N_SLOTS = (0, 4)        # two distinct LEs within the same LAB
+SRC_ALT = (22, 10, 0)   # fallback source when target LAB == SRC LAB
+                        # (avoids "multiple nodes assigned at LCCOMB_..."
+                        # placement collision in Quartus).
+N_SLOTS = (0, 2, 4)     # three LEs within the same LAB; N=2 added so
+                        # clk_lab_sel_per_le.py can derive N2_specific
+                        # cells in addition to N0_specific / N4_specific.
+                        # Existing probe JSONs mined at (0, 4) still work
+                        # (per_le.py handles missing slots gracefully).
 CLK_PIN = "PIN_E1"
+
+
+def pick_src(target_lab: tuple[int, int]) -> tuple[int, int, int]:
+    """Return a source LE that doesn't collide with the target LAB."""
+    sx, sy, sn = SRC
+    if (sx, sy) == tuple(target_lab):
+        return SRC_ALT
+    return SRC
 
 
 def gen_qsf(placement: dict, *, clk_pin: str, forced: bool, seed: int = 1) -> str:
@@ -122,8 +137,11 @@ def main():
     print(f"  E1 spine (to subtract): {len(e1_spine)} cells")
 
     per_n = {}
-    sx, sy, sn = SRC
+    sx, sy, sn = pick_src(target_lab)
     dx, dy = target_lab
+    if (sx, sy, sn) != SRC:
+        print(f"  (target LAB coincides with default SRC; using alt "
+              f"source X{sx}Y{sy}N{sn})")
     for n in N_SLOTS:
         print(f"\n[N={n}]")
         # forced
@@ -154,7 +172,7 @@ def main():
         print(f"    off={off:6d} bp={bp}  frame={frame}")
 
     out_path.write_text(json.dumps({
-        "src": list(SRC),
+        "src": [sx, sy, sn],
         "target_lab": list(target_lab),
         "n_slots": list(N_SLOTS),
         "clk_pin": CLK_PIN,

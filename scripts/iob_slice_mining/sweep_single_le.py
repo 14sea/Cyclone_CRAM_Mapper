@@ -39,13 +39,17 @@ LAST = 1751
 CRAM_END = PRE + (LAST + 1) * FRAME
 
 
-# Immediately doable: pins × targets whose LAB_CLK_SEL + LAB_CLK_SEL_LE
-# data is already mined.  (10,10,0) and (10,4,2) need more mining first
-# and are excluded by filter_supported().
+# Full target set matching the 15 absolute_cells entries in
+# results/iob_to_slice_sigcache.json.  filter_supported() drops any
+# (pin, target) whose LAB_CLK_SEL / LAB_CLK_SEL_LE data isn't mined yet,
+# so adding new targets here is safe: the sweep will skip entries with
+# missing support data and report them.
 PINS = ["E16", "E15", "M16"]
 TARGETS = [
     (10, 4, 0, "dataa"),
+    (10, 4, 2, "dataa"),
     (10, 4, 4, "dataa"),
+    (10, 10, 0, "dataa"),
     (16, 4, 0, "dataa"),
 ]
 

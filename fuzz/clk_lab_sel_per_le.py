@@ -45,25 +45,33 @@ def main():
         x, y = int(m.group(1)), int(m.group(2))
         data = json.loads(p.read_text())
         per_n = data.get("per_n_forced_vs_auto", {})
-        if "0" not in per_n or "4" not in per_n:
+        # Require at least N=0 and N=4; N=2 is optional (older probes
+        # mined only N ∈ {0, 4}).  N-specific for a slot S is
+        # diff_S minus the intersection of all mined N's, so adding
+        # more N's tightens the "N-invariant" set.
+        present = {k: set(tuple(c) for c in per_n[k])
+                   for k in ("0", "2", "4") if k in per_n}
+        if "0" not in present or "4" not in present:
             continue
-        d0 = set(tuple(c) for c in per_n["0"])
-        d4 = set(tuple(c) for c in per_n["4"])
-        inter = d0 & d4
-        n0_only = d0 - d4
-        n4_only = d4 - d0
-        out[f"X{x}Y{y}"] = {
-            "n0_specific": sorted([list(c) for c in n0_only]),
-            "n4_specific": sorted([list(c) for c in n4_only]),
-            "n0_count": len(n0_only),
-            "n4_count": len(n4_only),
-            "n_invariant_count": len(inter),
-        }
+        inter = set.intersection(*present.values())
+        entry: dict = {"n_invariant_count": len(inter)}
+        for k, s in present.items():
+            only = s - inter
+            entry[f"n{k}_specific"] = sorted([list(c) for c in only])
+            entry[f"n{k}_count"] = len(only)
+        out[f"X{x}Y{y}"] = entry
+        n0_only = present["0"] - inter
+        n4_only = present["4"] - inter
         all_n0_specific.append(n0_only)
         all_n4_specific.append(n4_only)
         labs_loaded.append((x, y))
+        extra = ""
+        if "2" in present:
+            n2_only = present["2"] - inter
+            extra = f"  N2-only={len(n2_only):3d}"
         print(f"  LAB({x:2d},{y:2d}): N0-only={len(n0_only):3d}  "
-              f"N4-only={len(n4_only):3d}  invariant={len(inter):3d}")
+              f"N4-only={len(n4_only):3d}  invariant={len(inter):3d}"
+              f"{extra}")
 
     # Cross-LAB histogram for N0-specific
     for label, sets in (("N0-specific", all_n0_specific),

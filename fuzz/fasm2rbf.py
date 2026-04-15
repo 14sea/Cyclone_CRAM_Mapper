@@ -416,9 +416,10 @@ def _load_lab_clk_sel_le_cells(x, y, n):
     """Return XOR-delta cells for `LAB_CLK_SEL_LE X{x}Y{y}N{n}`.
 
     Data lives in results/clk_lab_sel_per_le.json under the "X{x}Y{y}"
-    entry.  Only n ∈ {0, 4} are mined today (probe uses two N slots to
-    compute the N-invariant intersection; everything outside those two
-    slots would need an extension of clk_lab_sel_probe.py).
+    entry.  Available N slots depend on which N values the per-LAB probe
+    included; the probe now mines N ∈ {0, 2, 4} by default, with older
+    probe JSONs still valid at N ∈ {0, 4}.  Additional N slots require
+    extending clk_lab_sel_probe.py N_SLOTS and rerunning.
     """
     global _LAB_CLK_SEL_LE_CACHE
     if _LAB_CLK_SEL_LE_CACHE is None:
@@ -444,7 +445,8 @@ def _load_lab_clk_sel_le_cells(x, y, n):
         raise FasmError(
             f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: N={n} not mined "
             f"(available buckets: {[k for k in entry if k.endswith('_specific')]}). "
-            f"clk_lab_sel_probe.py currently mines N ∈ {{0, 4}} only."
+            f"Extend clk_lab_sel_probe.py N_SLOTS and rerun for "
+            f"LAB X{x}Y{y}."
         )
     return [tuple(c) for c in entry[bucket]]
 
