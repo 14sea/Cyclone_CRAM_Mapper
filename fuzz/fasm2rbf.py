@@ -880,6 +880,20 @@ def build_route_ops(routes, cells_table=None, extra_cells=None):
             for off, bp in hit:
                 sig_cells.add((off, bp))
             continue
+        # Sig-cache miss — try the fingerprint-snapshot shortcut before
+        # falling through to the formula path.  synth_route uses the
+        # same snapshot lookup ahead of parse_need, which is how
+        # jailbreak/edge Y=15 and Y=5 sources get routed bit-perfect
+        # despite LAB_Y not including those rows.  Mirror that here so
+        # fasm2rbf.bitgen gets the same coverage.
+        from route_synth import _snapshot_ops_if_present
+        snap_ops = _snapshot_ops_if_present(
+            (sx, sy), (dx, dy, dn, port)
+        )
+        if snap_ops is not None:
+            for op in snap_ops:
+                sig_cells.add((op["offset"], op["bp"]))
+            continue
         need = parse_need((sx, sy), (dx, dy, dn, port))
         plan = plan_hops(need)
         li = pick_li_envelope(need)
