@@ -71,7 +71,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `IOB_IN`/`IOB_OUT` | `IOB_IN PIN_M16` / `IOB_OUT PIN_F15` | OK single-axis (44/44 bit-perfect) — XOR delta from `iob_in_E15.rbf` baseline (K=E15, LED=G15). Cross-axis combos leak ~50-60 joint-placement bytes; needs 2D K×LED sweep to close. |
 | `IOB_ROUTE` | `IOB_ROUTE PIN_E16 -> X10Y4N0.dataa` | OK — pin→LE-port sig lookup. `absolute_cells` reproduces HW-verified pair RBF byte-perfect; optional `single_le_cells` override strips pair-template secondary-LE decoration for single-LE designs (15/15 entries derived: 3 pins × 5 targets → full-RBF 0 diffs vs Quartus gold for each). Sweep tool: `scripts/iob_slice_mining/sweep_single_le.py`. |
 | `IOB_BASELINE_NV` | `IOB_BASELINE_NV` | OK — 132-cell / 74-byte hdr-band bridge (`nv_zero_global` ^ `iob_in_E15`). Emit once to let `IOB_IN`/`IOB_OUT` pair-deltas apply on `nv_zero_global`. Boolean (idempotent under double-emit). Data: `results/iob_baseline_hdr_cells.json`. |
-| `IOB_CLK_INPUT` | `IOB_CLK_INPUT PIN_E1` | OK for E1 — 40-cell hdr delta activating a dedicated clock-bank pin as GCLK driver. Mined pair-delta `simple_led_E16_to_G15.rbf` ^ `iob_in_E16.rbf`. Extensible by adding keys to `results/iob_clk_pin_hdr_cells.json`. |
+| `IOB_CLK_INPUT` | `IOB_CLK_INPUT PIN_E1` | OK for E1, R8, N1 — hdr delta activating a dedicated clock-bank pin as GCLK driver. Mined pair-delta `simple_led_E16_to_G15_clk{PIN}.rbf` ^ `iob_in_E16.rbf` (E1=40 cells, R8=64 cells, N1=70 cells). Extensible via `scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}` → `results/iob_clk_pin_hdr_cells.json`. |
 | `DFF.ARST/ENA` | — | **DISABLED** — header-band noise unresolved |
 | `M9K.INIT` | — | **NOT YET** — anchor table incomplete |
 
