@@ -329,7 +329,16 @@ def _load_iob_route_cells(pin, dx, dy, dn, port):
                 "scripts/iob_slice_mining/compute_absolute_cells.py"
             )
         data = json.loads(path.read_text())
-        _IOB_ROUTE_CACHE = data.get("absolute_cells", {})
+        # Prefer per-entry single-LE derived cells when present.  These
+        # compose cleanly with other directives (GCLK_PIN / IOB_IN /
+        # IOB_OUT / LAB_CLK_SEL_LE) without pair-template secondary-LE
+        # residue.  absolute_cells is the pair-derived fallback (still
+        # HW-verified vs the pair RBF itself).
+        single_le = data.get("single_le_cells", {})
+        absolute = data.get("absolute_cells", {})
+        merged = dict(absolute)
+        merged.update(single_le)
+        _IOB_ROUTE_CACHE = merged
     key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
     if key not in _IOB_ROUTE_CACHE:
         raise FasmError(

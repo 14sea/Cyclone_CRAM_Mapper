@@ -50,12 +50,18 @@ def test_parse_iob_route():
 def test_iob_route_loader_known_entry():
     cells = f._load_iob_route_cells("E16", 10, 4, 0, "dataa")
     assert isinstance(cells, list), type(cells)
-    assert len(cells) == 196, f"E16->10,4,0,dataa = {len(cells)} cells"
+    # Loader returns the single_le_cells override (164 cells, derived
+    # from simple_led gold) when present; otherwise the absolute_cells
+    # fallback (196 cells, pair-reconstruction).  (E16, 10,4,0, dataa)
+    # has both — the override is the active choice for single-LE
+    # designs.
+    assert len(cells) == 164, f"E16->10,4,0,dataa = {len(cells)} cells"
     # every cell is a (off, bp) tuple of plain ints
     for off, bp in cells:
         assert isinstance(off, int) and isinstance(bp, int)
         assert 0 <= bp < 8
-    print(f"  test_iob_route_loader_known_entry: OK ({len(cells)} cells)")
+    print(f"  test_iob_route_loader_known_entry: OK ({len(cells)} cells, "
+          f"single_le override)")
 
 
 def test_iob_route_loader_unknown_raises():
@@ -80,17 +86,20 @@ def test_iob_route_xor_double_cancels():
 
 
 def test_iob_route_bit_perfect_vs_pair_rbf_in_cram():
-    """Applying the bridge-translated cells on top of nv_zero_global MUST
+    """Applying the absolute-cell set on top of nv_zero_global MUST
     reproduce the pair RBF that Quartus itself emitted — in the CRAM
     range (frames 25..1751).  Outside that range (preamble, frames 0-24
     non-CRAM header band, trailer) nv_zero_global and the pair RBF
     carry different IOB-bank / chip-config bytes that the mining pass
     intentionally scoped out; those belong to IOB_IN / IOB_OUT, not
     IOB_ROUTE.
+
+    This test uses the raw `absolute_cells` entry (not the loader),
+    because for (E16, 10,4,0, dataa) the loader now prefers the
+    single_le_cells override — that override targets simple_led gold,
+    not pair RBF.  Both are valid; the directive picks the right one
+    for its context.
     """
-    # Mining-scope constants (match scripts/iob_slice_mining and
-    # fuzz/bitstream.py: CRC_PREAMBLE=32, CRC_FRAME_SIZE=210,
-    # CRC_FIRST_CRAM_FRAME=25, CRC_LAST_FRAME=1751).
     PRE = 32
     FRAME = 210
     FIRST = 25
@@ -98,11 +107,14 @@ def test_iob_route_bit_perfect_vs_pair_rbf_in_cram():
     cram_start = PRE + FIRST * FRAME               # 5282
     cram_end = PRE + (LAST + 1) * FRAME            # 368192 (exclusive)
 
-    f._IOB_ROUTE_CACHE = None
-    base = NV_ZERO.read_bytes()
+    data = json.loads(SIGCACHE.read_text())
+    key = "IOB_E16->10,4,0,dataa"
+    abs_cells = [tuple(c) for c in data["absolute_cells"][key]]
+    base = bytearray(NV_ZERO.read_bytes())
+    for off, bp in abs_cells:
+        base[off] ^= (1 << bp)
+    out = f.patch_rbf_crc(bytes(base))
     gold = PAIR_RBF.read_bytes()
-    fasm = "IOB_ROUTE PIN_E16 -> X10Y4N0.dataa\n"
-    out = f.bitgen(fasm, base, patch_crc=True)
     assert len(out) == len(gold), f"size {len(out)} vs {len(gold)}"
 
     cram_diffs = [(i, out[i], gold[i])
@@ -119,7 +131,7 @@ def test_iob_route_bit_perfect_vs_pair_rbf_in_cram():
     )
     print(f"  test_iob_route_bit_perfect_vs_pair_rbf_in_cram: OK "
           f"(CRAM frames 25..1751 byte-identical to "
-          f"iob_pair_E16_10_4_0_dataa.rbf; "
+          f"iob_pair_E16_10_4_0_dataa.rbf via absolute_cells[{key}]; "
           f"hdr_band={hdr_diffs} trl_band={trl_diffs} — "
           f"those are IOB_IN/OUT scope, not IOB_ROUTE scope)")
 
@@ -137,12 +149,11 @@ def test_iob_route_all_entries_self_consistent():
     cram_start = PRE + FIRST * FRAME
     cram_end = PRE + (LAST + 1) * FRAME
 
-    f._IOB_ROUTE_CACHE = None
     base = NV_ZERO.read_bytes()
     data = json.loads(SIGCACHE.read_text())
     work = ROOT / "scripts" / "iob_slice_mining" / "work"
     checked = 0
-    for key in data["absolute_cells"]:
+    for key, cell_list in data["absolute_cells"].items():
         # key format: "IOB_{pin}->{dx},{dy},{dn},{port}"
         src, dst = key.split("->")
         pin = src[4:]
@@ -150,8 +161,13 @@ def test_iob_route_all_entries_self_consistent():
         pair_rbf = work / f"iob_pair_{pin}_{dx}_{dy}_{dn}_{port}.rbf"
         if not pair_rbf.exists():
             continue
-        fasm = f"IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}\n"
-        out = f.bitgen(fasm, base, patch_crc=True)
+        # Apply absolute_cells directly (bypass the loader, which may
+        # prefer a single_le_cells override for some entries targeting
+        # simple_led gold instead of pair RBF).
+        buf = bytearray(base)
+        for off, bp in cell_list:
+            buf[off] ^= (1 << bp)
+        out = f.patch_rbf_crc(bytes(buf))
         gold = pair_rbf.read_bytes()
         n_cram_diff = sum(1 for i in range(cram_start, cram_end)
                           if out[i] != gold[i])
@@ -165,6 +181,40 @@ def test_iob_route_all_entries_self_consistent():
           f"in the CRAM frame range)")
 
 
+def test_iob_route_single_le_simple_led_end_to_end():
+    """End-to-end: the full directive stack + IOB_ROUTE with single_le
+    override must reproduce simple_led_E16_to_G15 gold byte-for-byte.
+
+    This is the "primary-only" path — strips pair-template secondary-LE
+    decoration so a single-LE design hits full RBF 0 diffs.
+    """
+    f._IOB_BASELINE_HDR_CACHE = None
+    f._IOB_MAP_CACHE = None
+    f._IOB_ROUTE_CACHE = None
+    f._GCLK_PIN_CACHE = None
+    f._LAB_CLK_SEL_CACHE.clear()
+    f._LAB_CLK_SEL_LE_CACHE = None
+    f._IOB_CLK_INPUT_CACHE = None
+    base = NV_ZERO.read_bytes()
+    gold_path = (ROOT / "scripts" / "iob_slice_mining" / "work"
+                 / "simple_led_E16_to_G15" / "output_files"
+                 / "simple_led_E16_to_G15.rbf")
+    gold = gold_path.read_bytes()
+    fasm = ("IOB_BASELINE_NV\n"
+            "IOB_IN  PIN_E16\n"
+            "IOB_OUT PIN_G15\n"
+            "IOB_CLK_INPUT PIN_E1\n"
+            "IOB_ROUTE PIN_E16 -> X10Y4N0.dataa\n"
+            "GCLK_PIN PIN_E1\n"
+            "LAB_CLK_SEL X10Y4\n"
+            "LAB_CLK_SEL_LE X10Y4N0\n")
+    out = f.bitgen(fasm, base, patch_crc=True)
+    n_diff = sum(1 for i in range(len(out)) if out[i] != gold[i])
+    assert n_diff == 0, f"{n_diff} byte diffs vs simple_led gold"
+    print("  test_iob_route_single_le_simple_led_end_to_end: OK "
+          "(full RBF byte-identical to simple_led_E16_to_G15.rbf)")
+
+
 def main():
     tests = [
         test_parse_iob_route,
@@ -173,6 +223,7 @@ def main():
         test_iob_route_xor_double_cancels,
         test_iob_route_bit_perfect_vs_pair_rbf_in_cram,
         test_iob_route_all_entries_self_consistent,
+        test_iob_route_single_le_simple_led_end_to_end,
     ]
     for t in tests:
         f._IOB_ROUTE_CACHE = None
