@@ -1,0 +1,84 @@
+{
+  "mode": "4in",
+  "pin_under_test": "E16",
+  "control_pin": "E15",
+  "ctrl_pins_4in": [
+    "E15",
+    "M16",
+    "M15"
+  ],
+  "target_lab": [
+    10,
+    4,
+    0
+  ],
+  "led_pin": "G15",
+  "baseline_rbf": "/home/test/EP4CE6/results/rbf/nv_zero_global.rbf",
+  "variants": {
+    "V1_putA": {
+      "put_port": "dataa",
+      "c1_port": "datab",
+      "c2_port": "datac",
+      "c3_port": "datad",
+      "lut_mask": "0x2022",
+      "abs_cells_vs_baseline": 148,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp4_E16_E15_M16_M15_10_4_0_V1_putA.rbf"
+    },
+    "V2_putB": {
+      "put_port": "datab",
+      "c1_port": "dataa",
+      "c2_port": "datac",
+      "c3_port": "datad",
+      "lut_mask": "0x4044",
+      "abs_cells_vs_baseline": 148,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp4_E16_E15_M16_M15_10_4_0_V2_putB.rbf"
+    },
+    "V3_putC": {
+      "put_port": "datac",
+      "c1_port": "dataa",
+      "c2_port": "datab",
+      "c3_port": "datad",
+      "lut_mask": "0x4050",
+      "abs_cells_vs_baseline": 148,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp4_E16_E15_M16_M15_10_4_0_V3_putC.rbf"
+    },
+    "V4_putD": {
+      "put_port": "datad",
+      "c1_port": "dataa",
+      "c2_port": "datab",
+      "c3_port": "datac",
+      "lut_mask": "0x4500",
+      "abs_cells_vs_baseline": 148,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp4_E16_E15_M16_M15_10_4_0_V4_putD.rbf"
+    }
+  },
+  "pairwise_diff": {
+    "V1_putA": {
+      "V1_putA": 0,
+      "V2_putB": 0,
+      "V3_putC": 0,
+      "V4_putD": 0
+    },
+    "V2_putB": {
+      "V1_putA": 0,
+      "V2_putB": 0,
+      "V3_putC": 0,
+      "V4_putD": 0
+    },
+    "V3_putC": {
+      "V1_putA": 0,
+      "V2_putB": 0,
+      "V3_putC": 0,
+      "V4_putD": 0
+    },
+    "V4_putD": {
+      "V1_putA": 0,
+      "V2_putB": 0,
+      "V3_putC": 0,
+      "V4_putD": 0
+    }
+  },
+  "min_pairwise": 0,
+  "max_pairwise": 0,
+  "verdict": "FAILED"
+}

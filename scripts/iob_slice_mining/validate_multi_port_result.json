@@ -1,0 +1,70 @@
+{
+  "pin_under_test": "E16",
+  "control_pin": "E15",
+  "target_lab": [
+    10,
+    4,
+    0
+  ],
+  "led_pin": "G15",
+  "baseline_rbf": "/home/test/EP4CE6/results/rbf/nv_zero_global.rbf",
+  "variants": {
+    "V1_putA_ctrlB": {
+      "port_binding": "dataa",
+      "control_port": "datab",
+      "lut_mask": "0x2222",
+      "abs_cells_vs_baseline": 138,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp_E16_E15_10_4_0_V1_putA_ctrlB.rbf"
+    },
+    "V2_putB_ctrlA": {
+      "port_binding": "datab",
+      "control_port": "dataa",
+      "lut_mask": "0x4444",
+      "abs_cells_vs_baseline": 138,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp_E16_E15_10_4_0_V2_putB_ctrlA.rbf"
+    },
+    "V3_putC_ctrlA": {
+      "port_binding": "datac",
+      "control_port": "dataa",
+      "lut_mask": "0x0A0A",
+      "abs_cells_vs_baseline": 138,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp_E16_E15_10_4_0_V3_putC_ctrlA.rbf"
+    },
+    "V4_putD_ctrlA": {
+      "port_binding": "datad",
+      "control_port": "dataa",
+      "lut_mask": "0x00AA",
+      "abs_cells_vs_baseline": 138,
+      "rbf": "/home/test/EP4CE6/scripts/iob_slice_mining/work_multiport/iobmp_E16_E15_10_4_0_V4_putD_ctrlA.rbf"
+    }
+  },
+  "pairwise_diff": {
+    "V1_putA_ctrlB": {
+      "V1_putA_ctrlB": 0,
+      "V2_putB_ctrlA": 0,
+      "V3_putC_ctrlA": 8,
+      "V4_putD_ctrlA": 8
+    },
+    "V2_putB_ctrlA": {
+      "V1_putA_ctrlB": 0,
+      "V2_putB_ctrlA": 0,
+      "V3_putC_ctrlA": 8,
+      "V4_putD_ctrlA": 8
+    },
+    "V3_putC_ctrlA": {
+      "V1_putA_ctrlB": 8,
+      "V2_putB_ctrlA": 8,
+      "V3_putC_ctrlA": 0,
+      "V4_putD_ctrlA": 0
+    },
+    "V4_putD_ctrlA": {
+      "V1_putA_ctrlB": 8,
+      "V2_putB_ctrlA": 8,
+      "V3_putC_ctrlA": 0,
+      "V4_putD_ctrlA": 0
+    }
+  },
+  "min_pairwise": 0,
+  "max_pairwise": 8,
+  "verdict": "AMBIGUOUS"
+}
