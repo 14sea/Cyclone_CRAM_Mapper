@@ -66,6 +66,91 @@ def _pin_has_iob_entry(pin_loc: str, direction: str) -> bool:
 _IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
 
 
+# ---------------------------------------------------------------------------
+# M9K BRAM emission — STUB (TODO).
+#
+# Current status: the chipdb (`fuzz/chipdb_gen.py`) provides
+# EP4CE6_M9K bels at (X∈{15,27}, Y∈[2..21], N=0) with an `anchor`
+# attribute that feeds the `M9K.INIT_{w}x{d}` FASM directive.  The
+# Yosys side (`synth/m9k.lib` + draft `\$__M9K_SP_` techmap rule in
+# `synth/ep4ce6_map.v`) is also stubbed but gated behind a
+# `M9K_TECHMAP` ifdef.  This emitter is the final piece: convert a
+# placed EP4CE6_M9K cell in the routed JSON into an
+# `X{x}Y{y}N{n}.INIT_{w}x{d} = 0x{hex}` line.
+#
+# Inputs expected when wired up:
+#   - cell.type == "EP4CE6_M9K"
+#   - cell.attributes.NEXTPNR_BEL == "M9K_X{x}_Y{y}_N0"
+#   - cell.parameters.INIT (Yosys binary string, LSB-first)
+#   - cell.parameters.WIDTH_A / DEPTH (or MODE for SDP/TDP demux)
+#
+# Blocker: the techmap rule and the nextpnr M9K BEL wire pips are
+# not yet routable end-to-end. Until a tiny_ram design synthesizes
+# through `synth_ep4ce6.sh` and places on an M9K bel, this code path
+# is dead.  See `fuzz/test_np2fasm_m9k.py` for the xfail contract.
+# ---------------------------------------------------------------------------
+
+
+def _parse_yosys_init(init_str: str, width: int, depth: int) -> list[int]:
+    """Convert a Yosys `INIT` parameter (binary string, MSB-first as
+    Yosys serializes parameters — word 0 is the LAST `width` chars)
+    into the (word-LSB-first) list expected by the `INIT_{w}x{d}`
+    FASM directive."""
+    # Yosys param binary strings are MSB-first relative to bit index:
+    # INIT[0] is the rightmost char.  Reverse to get LSB-first.
+    total = width * depth
+    cleaned = init_str.replace("_", "").strip()
+    # Pad / truncate to exact length
+    if len(cleaned) < total:
+        cleaned = "0" * (total - len(cleaned)) + cleaned
+    elif len(cleaned) > total:
+        cleaned = cleaned[-total:]
+    # Reverse so index 0 = LSB
+    bits = cleaned[::-1]
+    mask = (1 << width) - 1
+    words = []
+    for i in range(depth):
+        start = i * width
+        chunk = bits[start:start + width]
+        # chunk is LSB-first bit order now; reverse to parse as int
+        val = int(chunk[::-1], 2) if chunk else 0
+        words.append(val & mask)
+    return words
+
+
+def _emit_m9k_init(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
+    """Return (fasm_line, warning) for a placed EP4CE6_M9K cell.
+
+    STUB — awaiting end-to-end M9K placement.  When active, emits:
+        X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x{hex_blob}
+    using the cell's INIT parameter.  Returns (None, warning) when
+    the cell isn't placed on a known M9K bel or when INIT is missing.
+    """
+    bel_str = cell.get("attributes", {}).get("NEXTPNR_BEL", "")
+    m = re.match(r"M9K_X(\d+)_Y(\d+)_N(\d+)", bel_str)
+    if not m:
+        return (None, f"M9K cell {cell_name}: bel {bel_str!r} not an M9K site")
+    x, y, n = int(m.group(1)), int(m.group(2)), int(m.group(3))
+
+    params = cell.get("parameters", {})
+    width = int(params.get("WIDTH_A", 9))
+    depth = int(params.get("DEPTH", 512))
+    init_str = params.get("INIT", "")
+    if not init_str:
+        # All-zero INIT — emit a zero blob (XOR no-op on zeroed baseline)
+        words = [0] * depth
+    else:
+        words = _parse_yosys_init(init_str, width, depth)
+
+    mask = (1 << width) - 1
+    blob_int = 0
+    for i, w in enumerate(words):
+        blob_int |= (w & mask) << (i * width)
+    hex_chars = (width * depth + 3) // 4
+    hex_blob = f"{blob_int:0{hex_chars}x}"
+    return (f"X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x{hex_blob}", None)
+
+
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
     """Parse 'SLICE_X3_Y19_N24' -> ('SLICE', 3, 19, 24)."""
     m = re.match(r"(SLICE|IOB|M9K)_X(\d+)_Y(\d+)_N(\d+)", bel_name)
