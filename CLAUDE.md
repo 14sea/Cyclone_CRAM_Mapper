@@ -73,7 +73,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 | `IOB_BASELINE_NV` | `IOB_BASELINE_NV` | OK — 132-cell / 74-byte hdr-band bridge (`nv_zero_global` ^ `iob_in_E15`). Emit once to let `IOB_IN`/`IOB_OUT` pair-deltas apply on `nv_zero_global`. Boolean (idempotent under double-emit). Data: `results/iob_baseline_hdr_cells.json`. |
 | `IOB_CLK_INPUT` | `IOB_CLK_INPUT PIN_E1` | OK for E1, R8, N1 — hdr delta activating a dedicated clock-bank pin as GCLK driver. Mined pair-delta `simple_led_E16_to_G15_clk{PIN}.rbf` ^ `iob_in_E16.rbf` (E1=40 cells, R8=64 cells, N1=70 cells). Extensible via `scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}` → `results/iob_clk_pin_hdr_cells.json`. |
 | `DFF.ARST/ENA` | — | **DISABLED** — header-band noise unresolved |
-| `M9K.INIT` | — | **NOT YET** — anchor table incomplete |
+| `M9K.INIT_{w}x{d}` | `X15Y10N0.INIT_9x512 = 0x...` | OK for codec + fasm2rbf at 33 calibrated 9x512 anchors (X∈{15,27}, Y∈[4..23]) — parser extracts `(x, y, n, width, depth, words)`, bitgen applies via `fuzz/m9k_init_basis.write_init` (XOR-delta, CRC-safe). FASM round-trip + parse + unknown-site + hex-length tests in `fuzz/test_m9k_init_directive.py` (5/5). **np2fasm emission is a STUB** (`_emit_m9k_init` in `synth/np2fasm.py`, xfail test in `fuzz/test_np2fasm_m9k.py`); Yosys `$__M9K_SP_` → `EP4CE6_M9K` techmap rule drafted in `synth/ep4ce6_map.v` behind `M9K_TECHMAP` ifdef. End-to-end Yosys→nextpnr→np2fasm path for a tiny RAM not yet closed (chipdb has M9K bels but no routable wire pips; techmap disabled until pipeline works). |
 
 **FASM footgun**: SRC overhead + ROUTE sig cells MUST union before XOR-flip (double-flip cancels shared cells).
 
