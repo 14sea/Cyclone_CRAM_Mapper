@@ -24,6 +24,13 @@ Buckets:
   lab_col[X]              — cells inside LAB column X's 7350-byte span
                             (bucketed by X, not further resolved to Y/N
                             — that is a per-LAB sub-decomposition step).
+  m9k_block_default_pack  — cells inside the X=15 and X=27 M9K block
+                            columns (~293 frames each, bracketed by
+                            the flanking LAB columns).  Single bucket
+                            covering both since the NV baseline has
+                            the same idle-M9K footprint on each.
+  mult_block_default_pack — cells inside the X=20 DSPMULT column
+                            (~25 frames between X=19 and X=21).
   high_frame_band         — cells in frames past the last LAB column
                             (block-band / M9K / DSPMULT / trailer infra).
   residue                 — anything unplaced (for inspection).
@@ -95,6 +102,41 @@ def column_of(off: int) -> int | None:
     return None
 
 
+# Non-LAB block columns. CE6 has two M9K columns at X=15, X=27 and
+# one DSPMULT column at X=20; each sits in the gap between flanking
+# LAB columns (see CLAUDE.md).  Frame bounds are derived from the
+# LAB neighbours' 7350-byte spans.
+M9K_BLOCK_X = (15, 27)
+MULT_BLOCK_X = (20,)
+
+
+def _block_byte_range(x: int) -> tuple[int, int]:
+    """Return [lo_byte, hi_byte) occupied by non-LAB block column X,
+    bracketed by the LAB columns immediately left/right of X."""
+    lefts = [lx for lx in COLUMN_BASE if lx < x]
+    rights = [rx for rx in COLUMN_BASE if rx > x]
+    if not lefts or not rights:
+        raise ValueError(f"cannot bracket block column X={x}")
+    left = max(lefts)
+    right = min(rights)
+    lo = COLUMN_BASE[left] - COLUMN_ACTIVE_LOW + COLUMN_SPAN_BYTES
+    hi = COLUMN_BASE[right] - COLUMN_ACTIVE_LOW
+    return (lo, hi)
+
+
+def block_column_of(off: int) -> str | None:
+    """Return 'm9k' / 'mult' if off lands in a known block column, else None."""
+    for x in M9K_BLOCK_X:
+        lo, hi = _block_byte_range(x)
+        if lo <= off < hi:
+            return "m9k"
+    for x in MULT_BLOCK_X:
+        lo, hi = _block_byte_range(x)
+        if lo <= off < hi:
+            return "mult"
+    return None
+
+
 def extract_cells(delta: bytes) -> list[tuple[int, int]]:
     """Return all (offset, bp) positions where delta bit is set, skipping CRC bytes."""
     cells = []
@@ -142,6 +184,8 @@ def main():
     spine_a = []
     low_frame = []
     lab_col: dict[int, list] = {x: [] for x in COLUMN_BASE}
+    m9k_block = []
+    mult_block = []
     high_frame = []
     residue = []
 
@@ -159,6 +203,13 @@ def main():
         x = column_of(off)
         if x is not None:
             lab_col[x].append([off, bp])
+            continue
+        block = block_column_of(off)
+        if block == "m9k":
+            m9k_block.append([off, bp])
+            continue
+        if block == "mult":
+            mult_block.append([off, bp])
             continue
         if off < col_min_base:
             low_frame.append([off, bp])
@@ -184,6 +235,8 @@ def main():
     for x in sorted(lab_col):
         if lab_col[x]:
             print(f"      X={x:2d}: {len(lab_col[x]):5d} cells")
+    print(f"  m9k_block_default_pack  (X=15,27): {len(m9k_block):6d}  {pct(len(m9k_block))}")
+    print(f"  mult_block_default_pack (X=20):    {len(mult_block):6d}  {pct(len(mult_block))}")
     print(f"  high-frame infra:                {len(high_frame):6d}  {pct(len(high_frame))}")
     print(f"  residue (unplaced):              {len(residue):6d}  {pct(len(residue))}")
 
@@ -206,6 +259,8 @@ def main():
                 "local_clk_path_a": len(spine_a),
                 "low_frame_infra": len(low_frame),
                 "lab_columns": {str(x): len(v) for x, v in lab_col.items() if v},
+                "m9k_block_default_pack": len(m9k_block),
+                "mult_block_default_pack": len(mult_block),
                 "high_frame_infra": len(high_frame),
                 "residue": len(residue),
             },
@@ -216,6 +271,8 @@ def main():
         "local_clk_path_a": spine_a,
         "low_frame_infra": low_frame,
         "lab_columns": {str(x): v for x, v in lab_col.items() if v},
+        "m9k_block_default_pack": m9k_block,
+        "mult_block_default_pack": mult_block,
         "high_frame_infra": high_frame,
         "residue": residue,
     }

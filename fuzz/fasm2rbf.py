@@ -231,15 +231,20 @@ _IOB_CLK_INPUT_CACHE = None
 #                              cells.  X must match a key in
 #                              data["lab_columns"].
 #   NV_BLOCK_COL_INFRA         low_frame_infra ∪ high_frame_infra ∪
-#                              residue (~1 981 cells) — non-LAB-column
-#                              infrastructure (M9K X={15,27}, mult X=20,
-#                              chip-global trailer).
+#                              residue (~1 104 cells after Phase B split)
+#                              — non-LAB-column chip-global infra.
+#   M9K_BLOCK_DEFAULT_PACK     X=15 ∪ X=27 M9K block columns
+#                              (~848 cells).  Idle-M9K default footprint
+#                              in the NV baseline.
+#   MULT_BLOCK_DEFAULT_PACK    X=20 DSPMULT block column (~17 cells).
 _NV_BASELINE_PACK_RE = re.compile(r"^NV_BASELINE_PACK$")
 _IOB_BANK_DEFAULT_PACK_RE = re.compile(r"^IOB_BANK_DEFAULT_PACK$")
 _LOCAL_CLK_E1_BASELINE_RE = re.compile(r"^LOCAL_CLK_E1_BASELINE$")
 _LOCAL_CLK_PATH_A_RE = re.compile(r"^LOCAL_CLK_PATH_A$")
 _LAB_LOCAL_CLK_RE = re.compile(r"^LAB_LOCAL_CLK\s+X(?P<x>\d+)$")
 _NV_BLOCK_COL_INFRA_RE = re.compile(r"^NV_BLOCK_COL_INFRA$")
+_M9K_BLOCK_DEFAULT_PACK_RE = re.compile(r"^M9K_BLOCK_DEFAULT_PACK$")
+_MULT_BLOCK_DEFAULT_PACK_RE = re.compile(r"^MULT_BLOCK_DEFAULT_PACK$")
 _NV_BASELINE_CACHE = None
 
 # Reference pins: the iob_in_E15.rbf / iob_out_G15.rbf baselines were
@@ -313,17 +318,23 @@ def _nv_bucket_cells(bucket):
       'iob_bank_default_pack'
       'local_clk_e1_baseline'
       'local_clk_path_a'
-      'lab_col_X<n>'        (<n> = integer column index)
-      'nv_block_col_infra'  (low + high + residue)
-      'nv_all'              (every bucket above ∪ all lab_columns)
+      'lab_col_X<n>'             (<n> = integer column index)
+      'm9k_block_default_pack'   (X=15 ∪ X=27)
+      'mult_block_default_pack'  (X=20)
+      'nv_block_col_infra'       (low + high + residue — chip-global only)
+      'nv_all'                   (every bucket above ∪ all lab_columns)
     """
     data = _load_nv_baseline_pack()
     if bucket == "nv_all":
         out = []
         for k in ("iob_bank_default_pack", "local_clk_e1_baseline",
                   "local_clk_path_a", "low_frame_infra",
-                  "high_frame_infra", "residue"):
-            out.extend(data[k])
+                  "high_frame_infra", "residue",
+                  "m9k_block_default_pack", "mult_block_default_pack"):
+            # Older JSONs without the Phase B block buckets still load —
+            # the reconstruction gate in that case reports a diff and
+            # asks the user to rerun the miner.
+            out.extend(data.get(k, []))
         for v in data["lab_columns"].values():
             out.extend(v)
         return [tuple(c) for c in out]
@@ -788,6 +799,14 @@ def parse_fasm(text):
         m = _NV_BLOCK_COL_INFRA_RE.match(line)
         if m:
             nv_buckets.append("nv_block_col_infra")
+            continue
+        m = _M9K_BLOCK_DEFAULT_PACK_RE.match(line)
+        if m:
+            nv_buckets.append("m9k_block_default_pack")
+            continue
+        m = _MULT_BLOCK_DEFAULT_PACK_RE.match(line)
+        if m:
+            nv_buckets.append("mult_block_default_pack")
             continue
         m = _IOB_ROUTE_RE.match(line)
         if m:
