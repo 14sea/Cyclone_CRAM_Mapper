@@ -226,7 +226,7 @@ def test_m9k_mode_parse_and_xor_idempotence():
 
     # Parser arity check (m9k_modes is the 18th entry in parse_fasm)
     parsed = f.parse_fasm(fasm_one)
-    assert len(parsed) == 18, f"parse_fasm arity {len(parsed)} != 18"
+    assert len(parsed) == 19, f"parse_fasm arity {len(parsed)} != 19"
     m9k_modes = parsed[17]
     assert m9k_modes == [(site_x, site_y, site_n, width, depth)], m9k_modes
 

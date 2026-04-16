@@ -139,6 +139,16 @@ _M9K_MODE_RE = re.compile(
     r"(?P<width>\d+)x(?P<depth>\d+)$"
 )
 _M9K_MODE_CACHE = None
+# DSPMULT global-enable: a single boolean directive that XOR-applies the
+# 23-cell intersection across all 42 X=20 mult sites (re-mined 2026-04-16
+# under specimen factory; fuzz/dspmult_persite_remine.py + analyzer).
+# Per-Y MODE bits are also clean (~9 cells/Y, perfect N-invariance) but
+# not yet exposed as a directive — there is no Yosys $mul → DSPMULT
+# techmap consumer yet, so per-Y emission is deferred. The 23-cell
+# global-on cells live in results/dspmult_persite_analyze.json under
+# `universal_cells`. See dspmult_global_on_clean_remine.md memory.
+_DSPMULT_GLOBAL_ON_RE = re.compile(r"^DSPMULT_GLOBAL_ON$")
+_DSPMULT_GLOBAL_ON_CACHE = None
 _GCLK_RE = re.compile(r"^GCLK$")
 # Per-pin GCLK source-activate: GCLK_PIN PIN_E1
 # XOR-delta semantic (diff from AUTO-mode baseline → forced-GCLK).  Cell
@@ -322,6 +332,29 @@ def _load_m9k_mode_cells(site, width, depth):
             f"fuzz/m9k_mode_mine.py"
         )
     return [tuple(c) for c in _M9K_MODE_CACHE[key]["cells"]]
+
+
+def _load_dspmult_global_on_cells():
+    """Return the 23-cell universal DSPMULT enable set.
+
+    Reads results/dspmult_persite_analyze.json and returns the
+    `universal_cells` list — the intersection of block-band diffs across
+    all 42 X=20 mult sites. XOR-applied as a delta from a no-mult base.
+    """
+    global _DSPMULT_GLOBAL_ON_CACHE
+    if _DSPMULT_GLOBAL_ON_CACHE is None:
+        import json
+        path = ROOT / "results" / "dspmult_persite_analyze.json"
+        if not path.exists():
+            raise FasmError(
+                "DSPMULT_GLOBAL_ON used but "
+                "results/dspmult_persite_analyze.json missing; run "
+                "fuzz/dspmult_persite_remine.py --full + "
+                "fuzz/dspmult_persite_analyze.py"
+            )
+        data = json.loads(path.read_text())
+        _DSPMULT_GLOBAL_ON_CACHE = [tuple(c) for c in data["universal_cells"]]
+    return _DSPMULT_GLOBAL_ON_CACHE
 
 
 def _load_nv_baseline_pack():
@@ -718,6 +751,7 @@ def parse_fasm(text):
     dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     m9k_modes = []  # list[(x, y, n, width, depth)] — per-site enable
+    dspmult_global_on = False  # DSPMULT_GLOBAL_ON directive seen
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
     iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
@@ -868,6 +902,10 @@ def parse_fasm(text):
                 int(m["width"]), int(m["depth"]),
             ))
             continue
+        m = _DSPMULT_GLOBAL_ON_RE.match(line)
+        if m:
+            dspmult_global_on = not dspmult_global_on  # XOR parity
+            continue
         m = _M9K_INIT_RE.match(line)
         if m:
             x = int(m["x"]); y = int(m["y"]); n = int(m["n"])
@@ -889,7 +927,8 @@ def parse_fasm(text):
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
-            iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes)
+            iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
+            dspmult_global_on)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -979,7 +1018,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
-     iob_clk_inputs, nv_buckets, m9k_modes) = parse_fasm(fasm_text)
+     iob_clk_inputs, nv_buckets, m9k_modes,
+     dspmult_global_on) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1261,6 +1301,17 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         for (off, bp), p in parity.items():
             if p:
                 buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if dspmult_global_on:
+        # 23-cell universal DSPMULT enable from
+        # results/dspmult_persite_analyze.json (re-mined 2026-04-16 under
+        # specimen factory; old contaminated 29-cell set is wrong, see
+        # dspmult_global_on_clean_remine.md). Boolean directive: emitting
+        # twice cancels (parity already collapsed in parse_fasm).
+        buf = bytearray(work)
+        for off, bp in _load_dspmult_global_on_cells():
+            buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     if m9k_inits:
