@@ -127,6 +127,18 @@ _M9K_INIT_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.INIT_"
     r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
 )
+# M9K mode/enable cells: X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}
+# XOR-applies the per-(site, width, depth) block-band cells from
+# results/m9k_mode_bits.json — these are the "site is configured as a
+# {width}x{depth} M9K" bits.  Without them an INIT-only build carries
+# valid data but the silicon block is not enabled, so HW would not
+# read back the user pattern.  Mined zero-compile from existing
+# baseline RBFs by fuzz/m9k_mode_mine.py.
+_M9K_MODE_RE = re.compile(
+    r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
+    r"(?P<width>\d+)x(?P<depth>\d+)$"
+)
+_M9K_MODE_CACHE = None
 _GCLK_RE = re.compile(r"^GCLK$")
 # Per-pin GCLK source-activate: GCLK_PIN PIN_E1
 # XOR-delta semantic (diff from AUTO-mode baseline → forced-GCLK).  Cell
@@ -281,6 +293,35 @@ def _load_iob_clk_input_cells(pin):
             f"scripts/iob_slice_mining/compute_clk_pin_hdr.py"
         )
     return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
+
+
+def _load_m9k_mode_cells(site, width, depth):
+    """Return the per-(site, width, depth) M9K mode/enable cells.
+
+    Reads results/m9k_mode_bits.json (produced by fuzz/m9k_mode_mine.py).
+    Each entry is the diff vs m9k_baseline_empty.rbf restricted to the
+    block band (frames 1692-1738).  XOR-applying these cells to a
+    baseline that has the M9K idle marks the site as configured for
+    {width}x{depth}.
+    """
+    global _M9K_MODE_CACHE
+    if _M9K_MODE_CACHE is None:
+        import json
+        path = ROOT / "results" / "m9k_mode_bits.json"
+        if not path.exists():
+            raise FasmError(
+                "M9K_MODE used but results/m9k_mode_bits.json missing; "
+                "run fuzz/m9k_mode_mine.py"
+            )
+        _M9K_MODE_CACHE = json.loads(path.read_text())
+    key = f"{site}_{width}x{depth}"
+    if key not in _M9K_MODE_CACHE:
+        raise FasmError(
+            f"M9K_MODE {site} {width}x{depth}: no mined entry in "
+            f"m9k_mode_bits.json; mine the baseline RBF and re-run "
+            f"fuzz/m9k_mode_mine.py"
+        )
+    return [tuple(c) for c in _M9K_MODE_CACHE[key]["cells"]]
 
 
 def _load_nv_baseline_pack():
@@ -676,6 +717,7 @@ def parse_fasm(text):
     dffs = []  # list[(x, y, mode)] mode in {"ARST","ENA"}
     dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
+    m9k_modes = []  # list[(x, y, n, width, depth)] — per-site enable
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
     iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
@@ -819,6 +861,13 @@ def parse_fasm(text):
         if m:
             iobs.append((m["role"], m["pin"]))
             continue
+        m = _M9K_MODE_RE.match(line)
+        if m:
+            m9k_modes.append((
+                int(m["x"]), int(m["y"]), int(m["n"]),
+                int(m["width"]), int(m["depth"]),
+            ))
+            continue
         m = _M9K_INIT_RE.match(line)
         if m:
             x = int(m["x"]); y = int(m["y"]); n = int(m["n"])
@@ -840,7 +889,7 @@ def parse_fasm(text):
         raise FasmError(f"line {lineno}: unrecognized FASM: {raw!r}")
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
-            iob_baseline_nv, iob_clk_inputs, nv_buckets)
+            iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -930,7 +979,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
-     iob_clk_inputs, nv_buckets) = parse_fasm(fasm_text)
+     iob_clk_inputs, nv_buckets, m9k_modes) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1194,6 +1243,24 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             buf[off] |= (1 << bp)            # OR-in activation bits
         for off, bp in clear_cells:
             buf[off] &= ~(1 << bp) & 0xFF    # AND-clear deactivation bits
+        work = bytes(buf)
+
+    if m9k_modes:
+        # Per-(site, width, depth) M9K enable cells from
+        # results/m9k_mode_bits.json.  XOR-parity composition: each cell
+        # toggled an odd number of times across all M9K_MODE directives
+        # is flipped exactly once.  Applied BEFORE INIT so the M9K
+        # primary CRAM is in the {width}x{depth} configured state when
+        # write_init lays down user words.
+        parity = {}
+        for x, y, n, width, depth in m9k_modes:
+            site = f"X{x}_Y{y}_N{n}"
+            for off, bp in _load_m9k_mode_cells(site, width, depth):
+                parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), p in parity.items():
+            if p:
+                buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     if m9k_inits:

@@ -213,6 +213,86 @@ def test_m9k_init_unknown_site_raises():
 # ---------------------------------------------------------------------------
 
 
+def test_m9k_mode_parse_and_xor_idempotence():
+    """The `M9K_MODE_{w}x{d}` directive flips the per-(site, W, D)
+    enable cells (frames 1692-1738).  Verify parser arity, that bitgen
+    flips exactly the cells in `results/m9k_mode_bits.json`, and that
+    double-emit cancels (XOR-parity)."""
+    import json
+    base = _require_baseline()
+    width, depth = 9, 512
+    site_x, site_y, site_n = 15, 10, 0
+    fasm_one = f"X{site_x}Y{site_y}N{site_n}.M9K_MODE_{width}x{depth}\n"
+
+    # Parser arity check (m9k_modes is the 18th entry in parse_fasm)
+    parsed = f.parse_fasm(fasm_one)
+    assert len(parsed) == 18, f"parse_fasm arity {len(parsed)} != 18"
+    m9k_modes = parsed[17]
+    assert m9k_modes == [(site_x, site_y, site_n, width, depth)], m9k_modes
+
+    # Bitgen single-apply flips the recorded cells.
+    cells_path = ROOT / "results" / "m9k_mode_bits.json"
+    cells_data = json.loads(cells_path.read_text())
+    key = f"X{site_x}_Y{site_y}_N{site_n}_{width}x{depth}"
+    assert key in cells_data, f"missing mode-bits entry: {key}"
+    expected_cells = {tuple(c) for c in cells_data[key]["cells"]}
+
+    # Reset cache so test is hermetic across reruns.
+    f._M9K_MODE_CACHE = None
+    out = f.bitgen(fasm_one, base)
+    diffs = {(i, bp) for i in range(len(base)) for bp in range(8)
+             if (base[i] ^ out[i]) & (1 << bp)}
+    # CRC bytes (offset 208/209 in each 210-byte frame) are recomputed
+    # by patch_rbf_crc, so filter them out before comparing.
+    HDR = 32
+    cram_diffs = set()
+    for off, bp in diffs:
+        if off < HDR:
+            continue
+        in_frame = (off - HDR) % 210
+        if in_frame >= 208:
+            continue
+        cram_diffs.add((off, bp))
+    assert cram_diffs == expected_cells, (
+        f"bitgen diffs {len(cram_diffs)} ≠ expected {len(expected_cells)}; "
+        f"missing={len(expected_cells - cram_diffs)} "
+        f"extra={len(cram_diffs - expected_cells)}"
+    )
+
+    # Double-apply cancels (XOR parity).  CRC bytes will differ via
+    # patch_rbf_crc, so compare via diff set instead of bytes-eq.
+    f._M9K_MODE_CACHE = None
+    out2 = f.bitgen(fasm_one * 2, base)
+    diffs2 = {(i, bp) for i in range(len(base)) for bp in range(8)
+              if (base[i] ^ out2[i]) & (1 << bp)}
+    cram_diffs2 = set()
+    for off, bp in diffs2:
+        if off < HDR:
+            continue
+        in_frame = (off - HDR) % 210
+        if in_frame >= 208:
+            continue
+        cram_diffs2.add((off, bp))
+    assert cram_diffs2 == set(), (
+        f"double-apply did not cancel: {len(cram_diffs2)} cells remain"
+    )
+    print(f"  test_m9k_mode_parse_and_xor_idempotence: OK "
+          f"({len(expected_cells)} cells flipped, double cancels)")
+
+
+def test_m9k_mode_unknown_site_raises():
+    fasm = "X99Y99N0.M9K_MODE_9x512\n"
+    base = _require_baseline()
+    f._M9K_MODE_CACHE = None
+    try:
+        f.bitgen(fasm, base)
+    except f.FasmError as e:
+        assert "no mined entry" in str(e), str(e)
+        print("  test_m9k_mode_unknown_site_raises: OK")
+        return
+    raise AssertionError("expected FasmError for unmined M9K_MODE site")
+
+
 def test_m9k_init_wrong_hex_length_raises():
     width, depth = 9, 512
     # Correct length = ceil(9*512/4) = 1152 hex chars.
@@ -248,6 +328,8 @@ def main():
         test_m9k_init_bitgen_round_trip,
         test_m9k_init_xor_idempotence,
         test_m9k_init_unknown_site_raises,
+        test_m9k_mode_parse_and_xor_idempotence,
+        test_m9k_mode_unknown_site_raises,
         test_m9k_init_wrong_hex_length_raises,
     ]
     for t in tests:

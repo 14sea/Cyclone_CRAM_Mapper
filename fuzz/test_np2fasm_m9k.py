@@ -133,6 +133,160 @@ def test_emit_m9k_init_convert_integration():
     print("  test_emit_m9k_init_convert_integration: OK")
 
 
+def test_emit_m9k_init_yosys_binary_params():
+    """WIDTH_A and DEPTH from Yosys come as little-endian binary strings
+    (e.g. '00000000000000000000000000010010' for 18). _emit_m9k_init
+    must parse them — regressed once when convert() saw post-techmap
+    JSON and silently dropped INITs because int('...10010') = 10010.
+    """
+    width, depth = 18, 512
+    words = [(i & 1) for i in range(depth)]  # alternating 0/1
+    bits = "".join(f"{w:0{width}b}" for w in reversed(words))
+    width_bin = f"{width:032b}"
+    depth_bin = f"{depth:032b}"
+    mock_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": bits,
+            "WIDTH_A": width_bin,
+            "DEPTH": depth_bin,
+        },
+    }
+    fasm_line, warning = nf._emit_m9k_init("u_ram", mock_cell)
+    assert warning is None, f"unexpected warning: {warning!r}"
+    assert fasm_line is not None, "no FASM line emitted"
+    assert fasm_line.startswith(f"X15Y10N0.INIT_{width}x{depth} = 0x"), (
+        f"binary params should parse as ints; got {fasm_line[:60]!r}"
+    )
+    print("  test_emit_m9k_init_yosys_binary_params: OK")
+
+
+def test_parse_yosys_init_handles_x_dontcares():
+    """libmap-split cells leave unused bit slots as 'x' in the INIT
+    string. _parse_yosys_init must treat them as 0 (functionally safe)
+    rather than raising ValueError on int(s, 2)."""
+    width, depth = 18, 4
+    # Yosys INIT is MSB-first within each word: char 0 = bit (width-1),
+    # char (width-1) = bit 0. Set bit 9 = '1' (char index width-1-9 = 8)
+    # and bit 0 = '0' (char index width-1 = 17). All other slots = 'x'.
+    one_word = "x" * 8 + "1" + "x" * 8 + "0"
+    assert len(one_word) == width
+    # Words are concatenated MSB-first across `depth`, with word 0 last.
+    bits = one_word * depth
+    parsed = nf._parse_yosys_init(bits, width, depth)
+    assert len(parsed) == depth
+    for i, w in enumerate(parsed):
+        assert (w & 1) == 0, f"word {i}: bit 0 = {w & 1}"
+        assert (w >> 9) & 1 == 1, f"word {i}: bit 9 = {(w >> 9) & 1}"
+        assert w == (1 << 9), f"word {i}: stray bits in {w:#020b}"
+    print("  test_parse_yosys_init_handles_x_dontcares: OK")
+
+
+def test_convert_skips_ep4ce6_m9k_blackbox_module():
+    """When the post-techmap JSON contains both the design top and the
+    EP4CE6_M9K blackbox module declaration, convert() must skip the
+    blackbox and pick the top — otherwise it iterates an empty cell
+    dict and silently emits zero INIT lines (regressed once when the
+    BLACKBOX_MODULES set lacked EP4CE6_M9K)."""
+    width, depth = 9, 512
+    words = [(i + 1) & ((1 << width) - 1) for i in range(depth)]
+    bits = "".join(f"{w:0{width}b}" for w in reversed(words))
+    fake_json = {
+        "modules": {
+            # Blackbox first — it must NOT be selected as design top.
+            "EP4CE6_M9K": {"cells": {}, "netnames": {}},
+            "top": {
+                "cells": {
+                    "u_ram": {
+                        "type": "EP4CE6_M9K",
+                        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+                        "parameters": {
+                            "INIT": bits,
+                            "WIDTH_A": width, "DEPTH": depth,
+                        },
+                        "connections": {},
+                    },
+                },
+                "netnames": {},
+            },
+        }
+    }
+    fasm, warnings = nf.convert(fake_json)
+    init_lines = [l for l in fasm if ".INIT_" in l]
+    assert len(init_lines) == 1, (
+        f"EP4CE6_M9K module should be skipped; got {len(init_lines)} "
+        f"INIT lines (warnings: {warnings})"
+    )
+    print("  test_convert_skips_ep4ce6_m9k_blackbox_module: OK")
+
+
+def test_emit_m9k_mode_synthetic_cell():
+    """`_emit_m9k_mode` produces the per-site enable directive that
+    accompanies INIT.  Without this line the silicon block stays in
+    its idle configuration and never reads back the user pattern."""
+    width, depth = 9, 512
+    mock_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {"INIT": "0", "WIDTH_A": width, "DEPTH": depth},
+    }
+    line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+    assert warn is None, f"unexpected warning: {warn!r}"
+    assert line == f"X15Y10N0.M9K_MODE_{width}x{depth}", line
+    print("  test_emit_m9k_mode_synthetic_cell: OK")
+
+
+def test_emit_m9k_mode_rejects_non_m9k_bel():
+    mock_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "SLICE_X3_Y4_N0"},
+        "parameters": {"WIDTH_A": 9, "DEPTH": 512},
+    }
+    line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+    assert line is None, f"expected no FASM, got {line!r}"
+    print("  test_emit_m9k_mode_rejects_non_m9k_bel: OK")
+
+
+def test_convert_does_not_emit_m9k_mode_yet():
+    """convert() should NOT emit M9K_MODE today — the per-site mined
+    cells in `results/m9k_mode_bits.json` are contaminated by routing /
+    IOB / clock infra from the calibration builds, and emitting them
+    on top of nv_zero_global flips wrong block-band cells (66 false
+    flips, 35 missed vs the smoke gold).  The MODE emitter is kept as
+    a wired helper for re-enable once cleaner per-site mining lands."""
+    width, depth = 9, 512
+    words = [(i + 1) & ((1 << width) - 1) for i in range(depth)]
+    bits = "".join(f"{w:0{width}b}" for w in reversed(words))
+    fake_json = {
+        "modules": {
+            "top": {
+                "cells": {
+                    "u_ram": {
+                        "type": "EP4CE6_M9K",
+                        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+                        "parameters": {
+                            "INIT": bits,
+                            "WIDTH_A": width, "DEPTH": depth,
+                        },
+                        "connections": {},
+                    },
+                },
+                "netnames": {},
+            }
+        }
+    }
+    fasm, warnings = nf.convert(fake_json)
+    mode_lines = [l for l in fasm if ".M9K_MODE_" in l]
+    init_lines = [l for l in fasm if ".INIT_" in l]
+    assert mode_lines == [], (
+        f"M9K_MODE emission disabled until per-site mining is clean; "
+        f"got: {mode_lines}"
+    )
+    assert len(init_lines) == 1, f"expected 1 INIT line, got {init_lines}"
+    print("  test_convert_does_not_emit_m9k_mode_yet: OK")
+
+
 def test_emit_m9k_init_convert_skips_unplaced():
     """An EP4CE6_M9K cell without a valid M9K_* bel should warn, not emit."""
     fake_json = {
@@ -171,7 +325,13 @@ def main():
         test_emit_m9k_init_synthetic_cell,
         test_emit_m9k_init_rejects_non_m9k_bel,
         test_emit_m9k_init_convert_integration,
+        test_emit_m9k_init_yosys_binary_params,
+        test_parse_yosys_init_handles_x_dontcares,
+        test_convert_skips_ep4ce6_m9k_blackbox_module,
         test_emit_m9k_init_convert_skips_unplaced,
+        test_emit_m9k_mode_synthetic_cell,
+        test_emit_m9k_mode_rejects_non_m9k_bel,
+        test_convert_does_not_emit_m9k_mode_yet,
     ]
     for t in tests:
         t()

@@ -142,6 +142,27 @@ _IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
 # ---------------------------------------------------------------------------
 
 
+def _parse_yosys_int(val, default: int) -> int:
+    """Yosys serializes scalar parameters as little-endian binary
+    strings (e.g. '00000000000000000000000000010010' for 18). Tests
+    sometimes pass plain ints. Accept both."""
+    if isinstance(val, int):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if not s:
+            return default
+        # Yosys-style binary string (only 0/1, ≥2 chars). int(s, 2) is
+        # also valid for "0"/"1", but disambiguate from plain decimals.
+        if all(c in "01" for c in s) and len(s) > 1:
+            return int(s, 2)
+        try:
+            return int(s, 0)
+        except ValueError:
+            return default
+    return default
+
+
 def _parse_yosys_init(init_str: str, width: int, depth: int) -> list[int]:
     """Convert a Yosys `INIT` parameter (binary string, MSB-first as
     Yosys serializes parameters — word 0 is the LAST `width` chars)
@@ -151,6 +172,14 @@ def _parse_yosys_init(init_str: str, width: int, depth: int) -> list[int]:
     # INIT[0] is the rightmost char.  Reverse to get LSB-first.
     total = width * depth
     cleaned = init_str.replace("_", "").strip()
+    # Yosys uses 'x' / 'z' for don't-care bits — common when libmap
+    # widens a user memory and the high bits of each cell-word are
+    # unused. Treat them as 0 for INIT load (the bit is unused, so 0
+    # is functionally safe and produces a deterministic FASM blob).
+    if "x" in cleaned or "z" in cleaned or "X" in cleaned or "Z" in cleaned:
+        cleaned = (cleaned
+                   .replace("x", "0").replace("X", "0")
+                   .replace("z", "0").replace("Z", "0"))
     # Pad / truncate to exact length
     if len(cleaned) < total:
         cleaned = "0" * (total - len(cleaned)) + cleaned
@@ -184,8 +213,8 @@ def _emit_m9k_init(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     x, y, n = int(m.group(1)), int(m.group(2)), int(m.group(3))
 
     params = cell.get("parameters", {})
-    width = int(params.get("WIDTH_A", 9))
-    depth = int(params.get("DEPTH", 512))
+    width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
+    depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
     init_str = params.get("INIT", "")
     if not init_str:
         # All-zero INIT — emit a zero blob (XOR no-op on zeroed baseline)
@@ -200,6 +229,27 @@ def _emit_m9k_init(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     hex_chars = (width * depth + 3) // 4
     hex_blob = f"{blob_int:0{hex_chars}x}"
     return (f"X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x{hex_blob}", None)
+
+
+def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
+    """Return (fasm_line, warning) for the per-(site, W, D) enable.
+
+    Pairs with `_emit_m9k_init`: same bel parse, same WIDTH_A/DEPTH
+    extraction, but emits the `M9K_MODE_{w}x{d}` directive that flips
+    the block-band cells `m9k_mode_bits.json` records for this site.
+    Without this line the open-toolchain RBF carries valid INIT data
+    but the silicon block remains in its "M9K idle" configuration, so
+    HW would never read back the user pattern.
+    """
+    bel_str = cell.get("attributes", {}).get("NEXTPNR_BEL", "")
+    m = re.match(r"M9K_X(\d+)_Y(\d+)_N(\d+)", bel_str)
+    if not m:
+        return (None, None)  # _emit_m9k_init already warns on this
+    x, y, n = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    params = cell.get("parameters", {})
+    width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
+    depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
+    return (f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}", None)
 
 
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
@@ -251,6 +301,7 @@ def convert(
     # module so empty-input error handling downstream still works.
     BLACKBOX_MODULES = {
         "CE6_CARRY", "DFF", "LUT", "GENERIC_SLICE", "GENERIC_IOB",
+        "EP4CE6_M9K",
     }
     mod_name = next(
         (m for m in modules if m not in BLACKBOX_MODULES),
@@ -433,10 +484,20 @@ def convert(
                     f"connections; no FASM emitted"
                 )
         elif kind == "M9K":
-            # Placed EP4CE6_M9K — emit INIT directive via the helper
-            # the xfail contract pins down.  When the Yosys / nextpnr
-            # M9K pipeline is dead this branch is simply unreachable
-            # (no cell is ever placed on an M9K bel).
+            # Placed EP4CE6_M9K — emit INIT directive via helper.
+            #
+            # M9K_MODE per-site enable is *scaffolded* (see _emit_m9k_mode
+            # below + `M9K_MODE_{w}x{d}` directive in fasm2rbf) but the
+            # cell data in `results/m9k_mode_bits.json` is contaminated:
+            # the per-site `m9k_calib18b_*` mining RBFs carry routing /
+            # IOB / local-clock infra that doesn't match what Quartus
+            # places in a real multi-M9K design, so emitting MODE on the
+            # smoke build worsens the m9k-band diff vs gold (74 false
+            # flips, 35 missed) instead of closing it.  Re-mining needs
+            # single-M9K Quartus builds with matched IOB/clock context.
+            # Until then convert() skips the MODE line; HW functionality
+            # for the smoke design depends on the existing nv_zero_global
+            # baseline already encoding "M9K idle" as the default.
             line, warn = _emit_m9k_init(cell_name, cell)
             if line is not None:
                 fasm.append(line)

@@ -57,6 +57,10 @@ results/dff_n_sweep.json
 results/arith_cells_mined.json
 results/arith_cells_mined_v2.json
 
+# Empty/zombie outputs from incomplete batch runs.  If a real batch
+# produces no output, debug it; don't commit an empty `{}`.
+results/*_batch.json
+
 # Scratch/experimental scripts (one-off investigations, not part of pipeline)
 fuzz/a0_virgin_*.py
 fuzz/analytic_i6_i8_x33.py
