@@ -103,7 +103,11 @@ def test_lab_clk_sel_loader():
     c1016 = f._load_lab_clk_sel_cells(10, 16)
     c2210 = f._load_lab_clk_sel_cells(22, 10)
     assert len(c104) == 26, len(c104)
-    assert len(c1016) == 53, len(c1016)
+    # LAB(10,16) tightened from 53 → 49 after N=6/N=8 were added to
+    # the probe (2026-04-16 batch). Four cells migrated into the
+    # per-LE layer (n6_specific / n8_specific); XOR composition is
+    # unchanged because per_le.json was regenerated in lockstep.
+    assert len(c1016) == 49, len(c1016)
     # LAB(22,10) tightened from 45 → 36 after N=2 was added to the
     # probe (2026-04-15 batch). Nine cells migrated to the per-LE
     # layer; XOR composition (LAB_CLK_SEL ⊕ LAB_CLK_SEL_LE) is
@@ -113,7 +117,8 @@ def test_lab_clk_sel_loader():
     shared = set(c104) & set(c2210)
     assert len(shared) > 0, "expected row-tree overlap between (10,4) and (22,10)"
     print(f"  test_lab_clk_sel_loader: OK "
-          f"((10,4)=26, (10,16)=53, (22,10)=36, (10,4)∩(22,10)={len(shared)})")
+          f"((10,4)={len(c104)}, (10,16)={len(c1016)}, "
+          f"(22,10)={len(c2210)}, (10,4)∩(22,10)={len(shared)})")
 
 
 def test_bitgen_gclk_pin_xor_single():

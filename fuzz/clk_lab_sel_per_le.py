@@ -33,8 +33,7 @@ REPO = Path(__file__).resolve().parent.parent
 def main():
     files = sorted((REPO / "results").glob("clk_lab_sel_probe_X*Y*.json"))
     out: dict[str, dict] = {}
-    all_n0_specific: list[set] = []
-    all_n4_specific: list[set] = []
+    per_n_sets: dict[str, list[set]] = {}   # n_key -> list of per-LAB cell sets
     labs_loaded = []
 
     print(f"Loading {len(files)} probe JSONs...")
@@ -45,13 +44,10 @@ def main():
         x, y = int(m.group(1)), int(m.group(2))
         data = json.loads(p.read_text())
         per_n = data.get("per_n_forced_vs_auto", {})
-        # Require at least N=0 and N=4; N=2 is optional (older probes
-        # mined only N ∈ {0, 4}).  N-specific for a slot S is
-        # diff_S minus the intersection of all mined N's, so adding
-        # more N's tightens the "N-invariant" set.
-        present = {k: set(tuple(c) for c in per_n[k])
-                   for k in ("0", "2", "4") if k in per_n}
-        if "0" not in present or "4" not in present:
+        # N-specific bucket for any slot S = diff_S − intersection(all N).
+        # Require at least 2 N slots so the intersection is meaningful.
+        present = {k: set(tuple(c) for c in v) for k, v in per_n.items()}
+        if len(present) < 2:
             continue
         inter = set.intersection(*present.values())
         entry: dict = {"n_invariant_count": len(inter)}
@@ -59,45 +55,40 @@ def main():
             only = s - inter
             entry[f"n{k}_specific"] = sorted([list(c) for c in only])
             entry[f"n{k}_count"] = len(only)
+            per_n_sets.setdefault(k, []).append(only)
         out[f"X{x}Y{y}"] = entry
-        n0_only = present["0"] - inter
-        n4_only = present["4"] - inter
-        all_n0_specific.append(n0_only)
-        all_n4_specific.append(n4_only)
         labs_loaded.append((x, y))
-        extra = ""
-        if "2" in present:
-            n2_only = present["2"] - inter
-            extra = f"  N2-only={len(n2_only):3d}"
-        print(f"  LAB({x:2d},{y:2d}): N0-only={len(n0_only):3d}  "
-              f"N4-only={len(n4_only):3d}  invariant={len(inter):3d}"
-              f"{extra}")
+        bucket_str = "  ".join(
+            f"N{k}-only={len(present[k] - inter):3d}"
+            for k in sorted(present, key=int)
+        )
+        print(f"  LAB({x:2d},{y:2d}): {bucket_str}  "
+              f"invariant={len(inter):3d}")
 
-    # Cross-LAB histogram for N0-specific
-    for label, sets in (("N0-specific", all_n0_specific),
-                       ("N4-specific", all_n4_specific)):
-        print(f"\n=== {label} cross-LAB occurrence histogram ===")
+    # Cross-LAB histogram for each per-N-specific bucket.
+    for k in sorted(per_n_sets, key=int):
+        sets = per_n_sets[k]
+        print(f"\n=== N{k}-specific cross-LAB occurrence histogram ===")
         c: Counter = Counter()
         for s in sets:
             for cell in s:
                 c[cell] += 1
         h = Counter(c.values())
-        for k in sorted(h):
-            print(f"  cells appearing in {k:2d}/{len(sets):2d} LABs: {h[k]:4d}")
+        for hk in sorted(h):
+            print(f"  cells appearing in {hk:2d}/{len(sets):2d} LABs: "
+                  f"{h[hk]:4d}")
 
-    # Look for offset-from-LAB-column pattern.
-    # CRAM column step = 7350 bytes (per CLAUDE.md). If N0-specific cells
-    # always sit at fixed offset-within-column for every LAB, they're
-    # encodable as LAB_CLK_SEL_LE.
-    #
-    # Approximate LAB-column base: offset rounds down to multiple of 7350.
-    print(f"\n=== N0-specific offset-within-column analysis ===")
-    COL_STEP = 7350
-    for (x, y), s in zip(labs_loaded, all_n0_specific):
-        # quick sketch: dump (offset mod 7350, bp) per cell, see if pattern
-        mods = sorted(set((off % COL_STEP, bp) for off, bp in s))
-        print(f"  LAB({x:2d},{y:2d}): {len(s):3d} cells, "
-              f"{len(mods):3d} unique (off%7350, bp) tuples")
+    # Offset-within-column sketch for the lowest mined N (always present).
+    # CRAM column step = 7350 bytes (per CLAUDE.md).  Stable
+    # offset%7350 across LABs would suggest a per-N-slot formula.
+    if per_n_sets:
+        anchor_k = min(per_n_sets, key=int)
+        print(f"\n=== N{anchor_k}-specific offset-within-column analysis ===")
+        COL_STEP = 7350
+        for (x, y), s in zip(labs_loaded, per_n_sets[anchor_k]):
+            mods = sorted(set((off % COL_STEP, bp) for off, bp in s))
+            print(f"  LAB({x:2d},{y:2d}): {len(s):3d} cells, "
+                  f"{len(mods):3d} unique (off%7350, bp) tuples")
 
     out_path = REPO / "results" / "clk_lab_sel_per_le.json"
     out_path.write_text(json.dumps(out, indent=2))

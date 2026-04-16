@@ -1,19 +1,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Parallel N=2 extension for clk_lab_sel_probe across all mined LABs.
+"""Parallel N-slot extension for clk_lab_sel_probe across all mined LABs.
 
-Context: 12 of 14 mined LABs currently have only N ∈ {0, 4}. CLAUDE.md
-calls out the remaining gap — extend probe to cover N ∉ {0, 4}.
+Originally written as the N=2 backfill driver after CLAUDE.md flagged
+12 of 14 mined LABs as N ∈ {0, 4} only.  Now generalised: pass the
+target N values via --n (default reads N_SLOTS from clk_lab_sel_probe)
+and the driver re-runs the probe on any LAB whose JSON is missing
+any of those N entries.  The probe caches RBFs under results/rbf/
+keyed by tag, so re-running a LAB only triggers the missing slots.
 
-The probe caches RBFs under results/rbf/ keyed by tag, so re-running a
-LAB that already has N=0/N=4 only triggers the missing N=2 Quartus
-build. Each LAB gets a unique work_dir so parallel Quartus runs don't
+Each LAB gets a unique work_dir so parallel Quartus runs don't
 collide; cap at 4 workers per iob_sweep.py precedent.
 
 Usage:
+    # extend to N=6, N=8 across every mined LAB
+    python3 fuzz/clk_lab_sel_n2_batch.py --n 6,8
+
+    # default: whatever N_SLOTS clk_lab_sel_probe.py declares
     python3 fuzz/clk_lab_sel_n2_batch.py
 """
 from __future__ import annotations
 
+import argparse
 import json
 import multiprocessing as mp
 import subprocess
@@ -26,13 +33,20 @@ PROBE = REPO / "fuzz" / "clk_lab_sel_probe.py"
 WORK_ROOT = REPO / "tmp" / "clk_lab_sel_n2"
 
 
-def labs_needing_n2() -> list[tuple[int, int]]:
-    """Return LABs whose probe JSON is missing N=2."""
+def _default_target_ns() -> tuple[int, ...]:
+    """Read N_SLOTS from the probe module so the driver tracks it."""
+    sys.path.insert(0, str(REPO / "fuzz"))
+    import clk_lab_sel_probe as p
+    return tuple(p.N_SLOTS)
+
+
+def labs_needing_ns(target_ns: tuple[int, ...]) -> list[tuple[int, int]]:
+    """Return LABs whose probe JSON is missing any N in target_ns."""
     out = []
     for p in sorted(RESULTS.glob("clk_lab_sel_probe_X*Y*.json")):
         d = json.loads(p.read_text())
         pn = d.get("per_n_forced_vs_auto", {})
-        if "2" in pn:
+        if all(str(n) in pn for n in target_ns):
             continue
         name = p.stem
         # clk_lab_sel_probe_X{x}Y{y}
@@ -60,13 +74,24 @@ def run_one(job):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", default=None,
+                    help='comma-separated target N slots (default: '
+                         'clk_lab_sel_probe.N_SLOTS)')
+    args = ap.parse_args()
+    if args.n:
+        target_ns = tuple(int(x) for x in args.n.split(","))
+    else:
+        target_ns = _default_target_ns()
+    print(f"target N slots: {target_ns}")
+
     WORK_ROOT.mkdir(parents=True, exist_ok=True)
-    pending = labs_needing_n2()
-    print(f"LABs needing N=2 extension: {len(pending)}")
+    pending = labs_needing_ns(target_ns)
+    print(f"LABs needing extension: {len(pending)}")
     for x, y in pending:
         print(f"  LAB({x:2d},{y:2d})")
     if not pending:
-        print("nothing to do — all mined LABs already have N=2")
+        print("nothing to do — all mined LABs already cover target N slots")
         return
 
     workers = min(4, len(pending))
@@ -81,7 +106,7 @@ def main():
             if rc != 0 and err:
                 print(f"    stderr: {err}", flush=True)
 
-    # Regenerate per_le.json now that more N=2 data is available.
+    # Regenerate per_le.json now that more N data is available.
     print("\nRegenerating clk_lab_sel_per_le.json...")
     subprocess.run([sys.executable,
                     str(REPO / "fuzz" / "clk_lab_sel_per_le.py")],
