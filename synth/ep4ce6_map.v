@@ -40,50 +40,50 @@ endmodule
 // LE-internal feedback path — no LI MUX routing needed, no CRAM
 // cells to flip. np2fasm skips ROUTE emission for same-LE arcs.
 // ---------------------------------------------------------------------------
-// M9K BRAM techmap — DRAFT, DISABLED.
+// M9K BRAM techmap.
 //
-// This rule maps Yosys's libmap-emitted `$__M9K_SP_` cell (declared in
+// Maps Yosys's libmap-emitted `$__M9K_SP_` cell (declared in
 // `synth/m9k.lib`) to the EP4CE6_M9K blackbox declared in
-// `synth/prims.v`.  The downstream pipeline (np2fasm + nextpnr-generic
-// chipdb M9K bels) does not yet have working M9K placement and INIT
-// extraction, so the rule is gated behind `M9K_TECHMAP`.  When you're
-// ready to test end-to-end, enable by adding `-D M9K_TECHMAP` to the
-// `techmap -map synth/ep4ce6_map.v` invocation in `synth_ep4ce6.ys`,
-// or unconditionally, once np2fasm grows the matching `EP4CE6_M9K →
-// M9K.INIT` extraction (see `synth/np2fasm.py:_emit_m9k_init` stub).
-//
-// Pin mapping below follows the m9k.lib `$__M9K_SP_` port spec
-// (port "A": clock posedge, srsw, clken).  SDP / TDP rules will be
-// added as separate stanzas.  All disabled until the np2fasm side is
-// drafted in lockstep.
-`ifdef M9K_TECHMAP
-module \$__M9K_SP_ (CLK_A, A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN);
+// `synth/prims.v`.  np2fasm's `_emit_m9k_init` is wired to extract
+// the matching `M9K.INIT_{w}x{d}` directives.  Pin mapping follows
+// the m9k.lib `$__M9K_SP_` port spec (port "A": clock posedge, srsw,
+// clken).  SDP / TDP rules will be added as separate stanzas.
+// Port names (PORT_A_*) follow Yosys's `memory_libmap` calling
+// convention — same scheme used by gowin/brams_map.v upstream. The
+// older `memory_bram`-format names (A1ADDR/A1DATA/A1EN) do NOT match
+// what libmap emits and would leave `$__M9K_SP_` unmapped.
+module \$__M9K_SP_ (...);
 	parameter INIT = 0;
 	parameter PORT_A_WIDTH = 9;
 	parameter PORT_A_WR_BE_WIDTH = 1;
 	parameter PORT_A_OPTION_WRITE_MODE = 0;
-	input  CLK_A;
-	input  [12:0] A1ADDR;
-	input  [PORT_A_WIDTH-1:0] A1DATA;
-	input  [PORT_A_WR_BE_WIDTH-1:0] A1EN;
-	input  [12:0] B1ADDR;
-	output [PORT_A_WIDTH-1:0] B1DATA;
-	input  B1EN;
+	input  PORT_A_CLK;
+	input  PORT_A_CLK_EN;
+	input  PORT_A_WR_EN;
+	input  [12:0] PORT_A_ADDR;
+	input  [PORT_A_WR_BE_WIDTH-1:0] PORT_A_WR_BE;
+	input  [PORT_A_WIDTH-1:0] PORT_A_WR_DATA;
+	output [PORT_A_WIDTH-1:0] PORT_A_RD_DATA;
+	wire [35:PORT_A_WIDTH] _m9k_sp_dout_hi;
+	// M9K capacity is 8 192 data bits (widths 1/2/4) or 9 216 bits incl.
+	// parity (widths 9/18/36); pick the matching depth.
+	localparam M9K_DEPTH = (PORT_A_WIDTH <= 8)
+		? (8192 / PORT_A_WIDTH)
+		: (9216 / PORT_A_WIDTH);
 	EP4CE6_M9K #(
 		.INIT(INIT),
 		.WIDTH_A(PORT_A_WIDTH),
-		.DEPTH(8192 / PORT_A_WIDTH),
+		.DEPTH(M9K_DEPTH),
 		.MODE("SP")
 	) _TECHMAP_REPLACE_ (
-		.CLK_A (CLK_A),
-		.WE_A  (|A1EN),
-		.RE_A  (B1EN),
-		.ADDR_A(A1ADDR),
-		.DIN_A ({{(36 - PORT_A_WIDTH){1'b0}}, A1DATA}),
-		.DOUT_A(/* connected externally */)
+		.CLK_A (PORT_A_CLK),
+		.WE_A  (PORT_A_WR_EN & PORT_A_CLK_EN),
+		.RE_A  (PORT_A_CLK_EN),
+		.ADDR_A(PORT_A_ADDR),
+		.DIN_A ({{(36 - PORT_A_WIDTH){1'b0}}, PORT_A_WR_DATA}),
+		.DOUT_A({_m9k_sp_dout_hi, PORT_A_RD_DATA})
 	);
 endmodule
-`endif
 // ---------------------------------------------------------------------------
 
 module \$alu (A, B, CI, BI, X, Y, CO);

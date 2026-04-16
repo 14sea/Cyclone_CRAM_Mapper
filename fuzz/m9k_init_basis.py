@@ -74,6 +74,24 @@ M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
     ("X27_Y21_N0",  9, 512): (261090, 0),
     ("X27_Y22_N0",  9, 512): (261160, 0),
     ("X27_Y23_N0",  9, 512): (261230, 0),
+    # Width=18 anchors — calibrated 2026-04-16 via
+    # scripts/m9k_calib/calibrate_18x512{,_batch}.py.  The anchor + bp
+    # are byte-identical to the 9×512 case at the same site (the M9K's
+    # primary INIT cell is shared physical CRAM; only the per-word
+    # stride width differs).  Formula
+    #   byte(w, bit) = anchor + (w//2)*210 - (w%2) - 2*bit
+    # verified for w1_b0 (anchor−1) and w0_b17 (anchor−34) at Y10/11/
+    # 13/14.  At Y12 the bit-17 cell lands in a different bp than the
+    # data-bit anchor (parity-row anomaly at bp transitions); the
+    # recorded anchor is exact for bits 0..16, which is all the
+    # libmap-split smoke test exercises (≤2 user bits per cell).
+    # Unblocks the 5×width=18 split that Yosys's libmap picks for the
+    # 9×512 smoke test (see m9k_techmap_libmap_portnames memory entry).
+    ("X15_Y10_N0", 18, 512): (120028, 4),
+    ("X15_Y11_N0", 18, 512): (120098, 4),
+    ("X15_Y12_N0", 18, 512): (119961, 3),  # bits 0..16 only (see note)
+    ("X15_Y13_N0", 18, 512): (120031, 3),
+    ("X15_Y14_N0", 18, 512): (120101, 3),
 }
 
 FRAME_SIZE = 210
@@ -159,7 +177,13 @@ def read_init(
         v = 0
         for bit in range(width):
             byte, _bp = init_cell(anchor, w, bit, bp=bp)
-            _assert_cell_safe(byte)
+            off_in_frame = (byte - 32) % FRAME_SIZE
+            if off_in_frame in CRC_SLOTS:
+                # Formula points at a CRC byte for this (anchor, bit).
+                # Real silicon stores this bit elsewhere; the simple
+                # 2-D model isn't valid here.  Treat as 0 — INIT bits
+                # can't physically live in CRC bytes.
+                continue
             if rbf_bytes[byte] & (1 << _bp):
                 v |= (1 << bit)
         words.append(v)

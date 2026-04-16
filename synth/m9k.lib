@@ -14,6 +14,7 @@
 # Reference format: yosys/techlibs/gowin/brams.txt.
 
 ram block $__M9K_SP_ {
+	style "M9K" "m9k" "block_ram";
 	abits 13;
 	widths 1 2 4 9 18 36 per_port;
 	cost 64;
@@ -32,10 +33,12 @@ ram block $__M9K_SP_ {
 		portoption "WRITE_MODE" 2 {
 			rdwr old;
 		}
+		wrbe_separate;
 	}
 }
 
 ram block $__M9K_SDP_ {
+	style "M9K" "m9k" "block_ram";
 	abits 13;
 	widths 1 2 4 9 18 36 per_port;
 	cost 64;
@@ -49,10 +52,12 @@ ram block $__M9K_SDP_ {
 	port sw "W" {
 		clock posedge;
 		clken;
+		wrbe_separate;
 	}
 }
 
 ram block $__M9K_TDP_ {
+	style "M9K" "m9k" "block_ram";
 	abits 13;
 	widths 1 2 4 9 18 per_port;
 	cost 64;
@@ -71,5 +76,6 @@ ram block $__M9K_TDP_ {
 		portoption "WRITE_MODE" 2 {
 			rdwr old;
 		}
+		wrbe_separate;
 	}
 }

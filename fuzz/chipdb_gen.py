@@ -113,6 +113,21 @@ def _wire_m9k_port(x: int, y: int, port: str) -> str:
     return f"m9k_X{x}_Y{y}_N0_{port}"
 
 
+def _wire_m9k_bit(x: int, y: int, port: str, i: int) -> str:
+    return f"m9k_X{x}_Y{y}_N0_{port}_{i}"
+
+
+# (port_name, width, is_output). Both ports emitted unconditionally so
+# the bel's pin surface is fixed regardless of design mode (SP/SDP/TDP).
+# See tmp/m9k_chipdb_expansion_plan.md §2 for rationale.
+M9K_PORT_SPEC = [
+    ("CLK_A", 1, False), ("WE_A", 1, False), ("RE_A", 1, False),
+    ("ADDR_A", 13, False), ("DIN_A", 36, False), ("DOUT_A", 36, True),
+    ("CLK_B", 1, False), ("WE_B", 1, False), ("RE_B", 1, False),
+    ("ADDR_B", 13, False), ("DIN_B", 36, False), ("DOUT_B", 36, True),
+]
+
+
 def _wire_iob(name: str, kind: str) -> str:
     return f"iob_{name}_{kind}"
 
@@ -196,14 +211,24 @@ def build_chipdb() -> dict:
                 "x": x, "y": y, "z": 0,
                 "anchor": anchor,  # [byte, bp] or None
             })
-            for port in ("CLK", "ADDR", "DIN", "DOUT", "WE"):
-                wn = _wire_m9k_port(x, y, port)
-                wires.append({"name": wn, "type": "M9K_" + port,
-                              "x": x, "y": y})
-                belpins.append({
-                    "bel": name, "pin": port, "wire": wn,
-                    "output": (port == "DOUT"),
-                })
+            for port, width, is_out in M9K_PORT_SPEC:
+                if width == 1:
+                    wn = _wire_m9k_port(x, y, port)
+                    wires.append({"name": wn, "type": "M9K_" + port,
+                                  "x": x, "y": y})
+                    belpins.append({
+                        "bel": name, "pin": port, "wire": wn,
+                        "output": is_out,
+                    })
+                else:
+                    for i in range(width):
+                        wn = _wire_m9k_bit(x, y, port, i)
+                        wires.append({"name": wn, "type": "M9K_" + port,
+                                      "x": x, "y": y})
+                        belpins.append({
+                            "bel": name, "pin": f"{port}[{i}]", "wire": wn,
+                            "output": is_out,
+                        })
 
     # ---------- IOBs (AX301 pin map) ----------
     # Put IOBs on the border row Y=grid_h-1 and spread along X so
@@ -426,6 +451,53 @@ def build_chipdb() -> dict:
                 })
                 n_local_pips += 1
 
+    # ---------- M9K <-> LOCAL bridge + GCLK -> CLK ----------
+    # Mirrors the IOB gateway-LAB pattern above. For each M9K site,
+    # pick the nearest valid LAB column on the same row (or closest Y
+    # if the row has no LAB) as the gateway: every M9K input bit reads
+    # from the gateway's LOCAL tracks; every M9K output bit drives
+    # them; CLK_A/CLK_B come from the global GCLK wire. See
+    # tmp/m9k_chipdb_expansion_plan.md §3 for topology + budget.
+    n_pips_m9k = 0
+    for x in M9K_X:
+        for y in M9K_Y:
+            gx, gy = min(
+                valid_labs,
+                key=lambda lab: (abs(lab[0] - x), abs(lab[1] - y)),
+            )
+            for port, width, is_out in M9K_PORT_SPEC:
+                if port.startswith("CLK"):
+                    # Feed CLK directly from GCLK, not LOCAL.
+                    cw = _wire_m9k_port(x, y, port)
+                    pips.append({
+                        "name": f"pip_GCLK__{cw}",
+                        "type": "GCLK_TO_M9K_CLK",
+                        "src": "GCLK", "dst": cw,
+                        "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                    })
+                    n_pips_m9k += 1
+                    continue
+                bits = [_wire_m9k_port(x, y, port)] if width == 1 else \
+                       [_wire_m9k_bit(x, y, port, i) for i in range(width)]
+                for w in bits:
+                    for t in range(NUM_LOCAL_TRACKS):
+                        gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
+                        if is_out:
+                            pips.append({
+                                "name": f"pip_{w}__{gw}",
+                                "type": "M9K_OUT",
+                                "src": w, "dst": gw,
+                                "delay": LOCAL_DELAY, "x": gx, "y": gy,
+                            })
+                        else:
+                            pips.append({
+                                "name": f"pip_{gw}__{w}",
+                                "type": "M9K_IN",
+                                "src": gw, "dst": w,
+                                "delay": LOCAL_DELAY, "x": gx, "y": gy,
+                            })
+                        n_pips_m9k += 1
+
     # ---------- Pips from Plan D' sig-cache (overlay) ----------
     cache_path = RESULTS / "route_cells_full.json"
     cache = json.loads(cache_path.read_text())
@@ -474,6 +546,7 @@ def build_chipdb() -> dict:
             "n_pips_sig": pip_count,
             "n_pips_local": n_local_pips,
             "n_pips_carry": n_pips_carry,
+            "n_pips_m9k": n_pips_m9k,
             "pips_skipped_unknown_src": skipped_unknown_src,
             "pips_skipped_unknown_dst": skipped_unknown_dst,
         },

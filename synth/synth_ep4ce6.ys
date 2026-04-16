@@ -18,6 +18,8 @@ ghdl --std=08 --work=neorv32 -fsynopsys -frelaxed -gCLOCK_FREQUENCY=50000000 -gB
 hierarchy -check -top neorv32_top
 proc
 async2sync
+memory -nomap
+opt_clean
 memory_libmap -lib synth/m9k.lib
 memory_map
 opt -full
