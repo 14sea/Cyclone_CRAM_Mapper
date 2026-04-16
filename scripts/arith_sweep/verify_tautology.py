@@ -64,17 +64,43 @@ for w in range(9, 16):
     d = diff_non_crc(got, target)
     print(f"{w:>3} {str(d):>20}")
 
-# w=16 and w=24
-ident = load(f"{M5}/identity16/output_files/top.rbf")
-target = load(f"{M5}/counter16/output_files/top.rbf")
-blob = T["widths"]["16"]
-got = apply_blob(ident, blob)
-d = diff_non_crc(got, target)
-print(f" 16 {str(d):>20}")
+# w=16 from sweep (preferred — same harness as widths 17..32) or M5 fallback.
+import os as _os
+sweep16_c = f"{SWEEP}/c16_lo/output_files/top.rbf"  # may not exist
+sweep16_i = f"{SWEEP}/i16_lo/output_files/top.rbf"
+m5_c16 = f"{M5}/counter16/output_files/top.rbf"
+m5_i16 = f"{M5}/identity16/output_files/top.rbf"
+if _os.path.exists(m5_c16) and _os.path.exists(m5_i16):
+    ident = load(m5_i16)
+    target = load(m5_c16)
+    blob = T["widths"]["16"]
+    got = apply_blob(ident, blob)
+    d = diff_non_crc(got, target)
+    print(f" 16 {str(d):>20}")
+else:
+    print(" 16 SKIP (no M5 reference build)")
 
-ident = load(f"{M5}/identity24/output_files/top.rbf")
-target = load(f"{M5}/counter24/output_files/top.rbf")
-blob = T["multi_lab"]["16+8"]
-got = apply_blob(ident, blob)
-d = diff_non_crc(got, target)
-print(f"24* {str(d):>20}")
+# Multi-LAB widths 17..32 from this sweep.
+for w in range(17, 33):
+    ip = f"{SWEEP}/i{w}_ml/output_files/top.rbf"
+    cp = f"{SWEEP}/c{w}_ml/output_files/top.rbf"
+    if not (_os.path.exists(ip) and _os.path.exists(cp)):
+        print(f"{w:>3} SKIP (missing rbf)")
+        continue
+    ident = load(ip)
+    target = load(cp)
+    blob = T["widths"].get(str(w))
+    if blob is None:
+        print(f"{w:>3} SKIP (no width entry)")
+        continue
+    got = apply_blob(ident, blob)
+    d = diff_non_crc(got, target)
+    print(f"{w:>3} {str(d):>20}")
+
+if _os.path.exists(f"{M5}/identity24/output_files/top.rbf"):
+    ident = load(f"{M5}/identity24/output_files/top.rbf")
+    target = load(f"{M5}/counter24/output_files/top.rbf")
+    blob = T["multi_lab"]["16+8"]
+    got = apply_blob(ident, blob)
+    d = diff_non_crc(got, target)
+    print(f"24* {str(d):>20}")

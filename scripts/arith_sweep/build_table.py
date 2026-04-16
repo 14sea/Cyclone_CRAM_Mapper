@@ -8,7 +8,8 @@ scattered infrastructure at frames 34/35/910/1686-7/1743).
 
 Header cells (frames <25) are stripped as seed-noise.
 """
-import json, os
+import json
+import os
 from collections import Counter
 
 D = json.load(open("tmp/arith_sweep/cells_by_width.json"))
@@ -72,8 +73,16 @@ if "c16" in D:
         "n_set": len(s),
         "n_clear": len(c),
     }
+else:
+    # No fresh c16 build (legacy M5 reference). Carry forward the entry from
+    # the existing committed table so widths 17..32 land on a complete chain.
+    legacy_path = "results/arith_blockband_by_width.json"
+    if os.path.exists(legacy_path):
+        legacy = json.load(open(legacy_path))
+        if "16" in legacy.get("widths", {}):
+            table["widths"]["16"] = legacy["widths"]["16"]
 
-# Multi-LAB
+# Multi-LAB legacy 16+8 (kept for back-compat with M5 reference build).
 if "c24" in D:
     s, c = arith_cells("c24")
     table["multi_lab"]["16+8"] = {
@@ -84,6 +93,31 @@ if "c24" in D:
         "n_set": len(s),
         "n_clear": len(c),
     }
+
+# Widths 17..32 — primary LAB(4,18) full + spillover into LAB(4,17).
+# These live under both `widths` (for direct lookup) and `multi_lab`
+# (for explicit topology naming), with the multi_lab key encoding the
+# upper/lower bit split (e.g. "16+1" .. "16+16").
+for w in range(17, 33):
+    k = f"c{w}_ml"
+    if k not in D:
+        continue
+    s, c = arith_cells(k)
+    extra_lo = w - 16
+    split_key = f"16+{extra_lo}"
+    common_entry = {
+        "topology": "full_lab_plus_partial_lab_down",
+        "description": (
+            f"LAB(4,18) full-LAB carry (16 LEs) + LAB(4,17) {extra_lo}-bit "
+            "carry, N=30→N=0 inter-LAB link"
+        ),
+        "set": s,
+        "clear": c,
+        "n_set": len(s),
+        "n_clear": len(c),
+    }
+    table["widths"][str(w)] = common_entry
+    table["multi_lab"][split_key] = dict(common_entry)
 
 with open("tmp/arith_sweep/arith_blockband_by_width.json", "w") as f:
     json.dump(table, f)

@@ -95,6 +95,13 @@ def sweep_items():
         yield (c, os.path.join(SWEEP_ROOT, c, "output_files/top.rbf"),
                   os.path.join(SWEEP_ROOT, i, "output_files/top.rbf"),
                   w, "xh")
+    # Multi-LAB widths 17..32 (LAB(4,18) + LAB(4,17) spillover via N30->N0)
+    for w in range(17, 33):
+        c = f"c{w}_ml"
+        i = f"i{w}_ml"
+        yield (c, os.path.join(SWEEP_ROOT, c, "output_files/top.rbf"),
+                  os.path.join(SWEEP_ROOT, i, "output_files/top.rbf"),
+                  w, "ml")
     for k, (c, i, w, half) in LEGACY.items():
         yield (k, c, i, w, half)
 
@@ -112,6 +119,12 @@ def n_slots_for(width, half):
     if half == "crossLAB":
         # LAB(4,18) all + LAB(4,17) N=1..15
         return tuple(list(range(1, 32, 2)) + [("y17", n) for n in range(1, 17, 2)])
+    if half == "ml":
+        # multi-LAB widths 17..32: LAB(4,18) full N=1..31 odd
+        # + LAB(4,17) N=1..2*(width-16)-1 odd
+        upper = list(range(1, 32, 2))                       # 16 slots in y=18
+        lower = list(range(1, 2 * (width - 16), 2))         # spillover in y=17
+        return tuple(upper + [("y17", n) for n in lower])
     return tuple()
 
 def main():
