@@ -127,18 +127,42 @@ _M9K_INIT_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.INIT_"
     r"(?P<width>\d+)x(?P<depth>\d+)\s*=\s*0x(?P<hex>[0-9a-fA-F]+)$"
 )
-# M9K mode/enable cells: X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}
-# XOR-applies the per-(site, width, depth) block-band cells from
+# M9K mode/enable cells: X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}[_{template}]
+# XOR-applies the per-(site, width, depth, template) block-band cells from
 # results/m9k_mode_bits.json — these are the "site is configured as a
 # {width}x{depth} M9K" bits.  Without them an INIT-only build carries
 # valid data but the silicon block is not enabled, so HW would not
-# read back the user pattern.  Mined zero-compile from existing
-# baseline RBFs by fuzz/m9k_mode_mine.py.
+# read back the user pattern.
+#
+# `template` (optional, defaults to "altsyncram") selects which Quartus
+# code path the mining specimen used.  Stage C.1 probe (2026-04-16,
+# fuzz/m9k_mode_template_probe.py) found that the 29-cell residual
+# between altsyncram-direct mining and Quartus inferred-RAM smoke gold
+# does NOT close by switching the mining template — even verbatim
+# smoke-gold Verilog under the specimen factory diverges from the gold
+# by 77 cells (worse than altsyncram's 29).  The sub-flag is therefore
+# scaffolded as the per-template bucket carrier rather than the
+# closure mechanism: `M9K_MODE_{w}x{d}_altsyncram` reads
+# `cells_by_template["altsyncram"]`, `_inferred` reads
+# `cells_by_template["inferred"]`, and the bare `M9K_MODE_{w}x{d}`
+# (legacy form) reads the top-level `cells` field — which equals
+# `cells_by_template["altsyncram"]` for newly mined entries and
+# legacy-mined contaminated cells for older entries.
+#
+# np2fasm emission stays gated until either bucket lands within ≤5
+# cells of a real Quartus build.  See memory
+# m9k_mode_template_residual.md for the full diagnosis.
 _M9K_MODE_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
-    r"(?P<width>\d+)x(?P<depth>\d+)$"
+    r"(?P<width>\d+)x(?P<depth>\d+)"
+    r"(?:_(?P<template>altsyncram|inferred))?$"
 )
 _M9K_MODE_CACHE = None
+# Default template when the bare `M9K_MODE_{w}x{d}` form is emitted.
+# Backward-compatible: legacy callers and existing test fixtures get
+# the altsyncram bucket (the closer match to gold per probe data).
+_M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
+_M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred")
 # DSPMULT global-enable: a single boolean directive that XOR-applies the
 # 23-cell intersection across all 42 X=20 mult sites (re-mined 2026-04-16
 # under specimen factory; fuzz/dspmult_persite_remine.py + analyzer).
@@ -201,6 +225,18 @@ _IOB_ROUTE_RE = re.compile(
     r"^IOB_ROUTE\s+PIN_(?P<pin>[A-Z]\d+)\s*->\s*"
     r"X(?P<dx>\d+)Y(?P<dy>\d+)N(?P<dn>\d+)\.(?P<port>\w+)$"
 )
+# IOB output-enable (tristate) directive — Stage B-narrow scope.
+# Activates the OE/tristate driver bits for one of the 16 sdram_dq pins
+# NEORV32 uses on AX301 (S_DB[0]..S_DB[15]).  Cells from
+# results/iob_oe_cell_map.json (per-pin diff between an OE-on tristate
+# specimen and an OE-off passthrough specimen, harness frozen — see
+# fuzz/iob_oe_specimen.py).  XOR-delta semantics: emitting twice cancels
+# (boolean per-pin, parity-applied).  Only the 16 mined pins are valid
+# arguments — the loader raises FasmError on any other pin.  Composes
+# additively with IOB_IN/IOB_OUT for the same pin (DQ is bidir, so both
+# IOB_OUT (drive path) and IOB_OE (tristate enable) need to land).
+_IOB_OE_RE = re.compile(r"^IOB_OE\s+PIN_(?P<pin>[A-Z]\d+)$")
+_IOB_OE_CACHE = None
 # Baseline-bridge directive.  Resolves the frame-split between IOB_IN/
 # IOB_OUT (iob_in_E15 frame, fabric + E15/G15 pin config) and IOB_ROUTE
 # (nv_zero_global frame, zero fabric + virtual pins).  When the user
@@ -305,14 +341,38 @@ def _load_iob_clk_input_cells(pin):
     return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
 
 
-def _load_m9k_mode_cells(site, width, depth):
-    """Return the per-(site, width, depth) M9K mode/enable cells.
+def _load_m9k_mode_cells(site, width, depth, template=None):
+    """Return the per-(site, width, depth, template) M9K mode/enable cells.
 
-    Reads results/m9k_mode_bits.json (produced by fuzz/m9k_mode_mine.py).
-    Each entry is the diff vs m9k_baseline_empty.rbf restricted to the
-    block band (frames 1692-1738).  XOR-applying these cells to a
-    baseline that has the M9K idle marks the site as configured for
-    {width}x{depth}.
+    Reads results/m9k_mode_bits.json.  Each entry is the diff vs
+    m9k_baseline_empty.rbf restricted to the block band (frames
+    1692-1738).  XOR-applying these cells to a baseline that has the
+    M9K idle marks the site as configured for {width}x{depth}.
+
+    Template buckets (Stage C.1 sub-flag scaffolding, 2026-04-16):
+
+      template == "altsyncram" or None:
+        Returns `cells_by_template["altsyncram"]` if present, else falls
+        back to the legacy top-level `cells` field.  This is the
+        backward-compatible default — legacy callers and existing tests
+        get the altsyncram bucket without modification.
+
+      template == "inferred":
+        Returns `cells_by_template["inferred"]`.  Raises FasmError if
+        the entry doesn't carry an inferred bucket (i.e. it was mined
+        before the sub-flag landed and only has the altsyncram cells).
+
+    Schema reference (`results/m9k_mode_bits.json` per entry):
+      {
+        "site": "X15_Y10_N0",
+        "width": 9, "depth": 512,
+        "cells": [...],                       # legacy = altsyncram bucket
+        "cells_by_template": {                # NEW (Stage C.1)
+          "altsyncram": [...],
+          "inferred":   [...],
+        },
+        "source": "..."
+      }
     """
     global _M9K_MODE_CACHE
     if _M9K_MODE_CACHE is None:
@@ -331,7 +391,33 @@ def _load_m9k_mode_cells(site, width, depth):
             f"m9k_mode_bits.json; mine the baseline RBF and re-run "
             f"fuzz/m9k_mode_mine.py"
         )
-    return [tuple(c) for c in _M9K_MODE_CACHE[key]["cells"]]
+    entry = _M9K_MODE_CACHE[key]
+    chosen = template if template is not None else _M9K_MODE_DEFAULT_TEMPLATE
+    if chosen not in _M9K_MODE_VALID_TEMPLATES:
+        raise FasmError(
+            f"M9K_MODE template {chosen!r} not in {_M9K_MODE_VALID_TEMPLATES}"
+        )
+    by_template = entry.get("cells_by_template")
+    if by_template is None:
+        # Pre-sub-flag entry — only the legacy `cells` field exists.
+        # Legacy schema is treated as the altsyncram bucket (the closer
+        # match to gold).  Asking for `inferred` against a legacy entry
+        # is a hard error: there's no data.
+        if chosen == "inferred":
+            raise FasmError(
+                f"M9K_MODE {site} {width}x{depth}: requested template "
+                f"'inferred' but entry only carries the legacy "
+                f"`cells` field (= altsyncram).  Re-mine the site via "
+                f"fuzz/m9k_mode_template_probe.py to populate "
+                f"cells_by_template['inferred']."
+            )
+        return [tuple(c) for c in entry["cells"]]
+    if chosen not in by_template:
+        raise FasmError(
+            f"M9K_MODE {site} {width}x{depth}: template {chosen!r} not "
+            f"in cells_by_template (have: {sorted(by_template)})"
+        )
+    return [tuple(c) for c in by_template[chosen]]
 
 
 def _load_dspmult_global_on_cells():
@@ -541,6 +627,51 @@ def _load_iob_route_cells(pin, dx, dy, dn, port):
             f"then rerun compute_absolute_cells.py."
         )
     return [tuple(c) for c in _IOB_ROUTE_CACHE[key]]
+
+
+def _load_iob_oe_cells(pin):
+    """Return XOR-delta cells (off, bp) for `IOB_OE PIN_X`.
+
+    Reads results/iob_oe_cell_map.json (Stage B-narrow output of
+    fuzz/iob_oe_specimen.py).  The JSON only carries the 16 sdram_dq
+    pins NEORV32 uses on AX301 (S_DB[0]..S_DB[15]); arbitrary IOB
+    pairs are explicitly out of scope.  The mining harness fixed
+    CLK=E1 / K_IN=E16 / OE_IN=M16 / LED=G15 — applying these cells
+    on top of an IOB_IN/IOB_OUT-built design at the same pin
+    activates the tristate driver path.
+    """
+    global _IOB_OE_CACHE
+    if _IOB_OE_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_oe_cell_map.json"
+        if not path.exists():
+            raise FasmError(
+                "IOB_OE used but results/iob_oe_cell_map.json missing; "
+                "run fuzz/iob_oe_specimen.py first"
+            )
+        data = json.loads(path.read_text())
+        # Pin keys in the per_pin_oe table are full names like
+        # "S_DB[0]"; the FASM directive references the package pin
+        # (e.g. PIN_R5).  Build a PIN_XX -> cells lookup keyed by the
+        # second-half of the harness assignment.
+        meta = data.get("meta", {})
+        pin_map = {}  # PIN_XX -> cells
+        # Each entry has the canonical loc tuple (pin, loc) under
+        # data["entries"] for pure pin lookups.
+        for e in data.get("entries", []):
+            loc = e.get("loc", "")
+            cells = data["per_pin_oe"].get(e["pin"], [])
+            if loc.startswith("PIN_"):
+                pin_map[loc[len("PIN_"):]] = cells
+        _IOB_OE_CACHE = pin_map
+    if pin not in _IOB_OE_CACHE:
+        raise FasmError(
+            f"IOB_OE PIN_{pin}: no entry in iob_oe_cell_map.json "
+            f"(known: {sorted(_IOB_OE_CACHE)}). Stage B-narrow scope "
+            f"is the 16 sdram_dq pins NEORV32 uses on AX301; rerun "
+            f"fuzz/iob_oe_specimen.py if the pin set has changed."
+        )
+    return [tuple(c) for c in _IOB_OE_CACHE[pin]]
 
 
 _GCLK_PIN_CACHE = None
@@ -754,6 +885,7 @@ def parse_fasm(text):
     dspmult_global_on = False  # DSPMULT_GLOBAL_ON directive seen
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
+    iob_oes = []  # list[pin] — IOB_OE PIN_X (Stage B-narrow tristate)
     iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
     iob_clk_inputs = []  # list[pin] — IOB_CLK_INPUT PIN_X
     # NV_BASELINE_PACK family — each entry is a bucket name consumed by
@@ -891,15 +1023,21 @@ def parse_fasm(text):
                  int(m["dn"]), m["port"])
             )
             continue
+        m = _IOB_OE_RE.match(line)
+        if m:
+            iob_oes.append(m["pin"])
+            continue
         m = _IOB_RE.match(line)
         if m:
             iobs.append((m["role"], m["pin"]))
             continue
         m = _M9K_MODE_RE.match(line)
         if m:
+            template = m["template"] or _M9K_MODE_DEFAULT_TEMPLATE
             m9k_modes.append((
                 int(m["x"]), int(m["y"]), int(m["n"]),
                 int(m["width"]), int(m["depth"]),
+                template,
             ))
             continue
         m = _DSPMULT_GLOBAL_ON_RE.match(line)
@@ -928,7 +1066,7 @@ def parse_fasm(text):
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
             iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
-            dspmult_global_on)
+            dspmult_global_on, iob_oes)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -1019,7 +1157,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
      iob_clk_inputs, nv_buckets, m9k_modes,
-     dspmult_global_on) = parse_fasm(fasm_text)
+     dspmult_global_on, iob_oes) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1180,6 +1318,24 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 buf[off] ^= (1 << bp)
         work = bytes(buf)
 
+    if iob_oes:
+        # IOB_OE PIN_X — Stage B-narrow tristate enable for the 16
+        # sdram_dq pins.  XOR-parity composition (boolean per pin —
+        # double-emit cancels).  Cells come from
+        # results/iob_oe_cell_map.json (mined by fuzz/iob_oe_specimen.py
+        # under a frozen CLK/K/OE/LED harness; only invariance-probed
+        # pins are trusted).
+        parity = {}
+        for pin in iob_oes:
+            for off, bp in _load_iob_oe_cells(pin):
+                key = (off, bp)
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
+            if v:
+                buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
     if dffs:
         # DFF directive parsing retained, but apply is DISABLED as of
         # 2026-04-08: FFCodec._FF_ARST_CELLS / _FF_ENA_CELLS were mined
@@ -1286,16 +1442,23 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         work = bytes(buf)
 
     if m9k_modes:
-        # Per-(site, width, depth) M9K enable cells from
+        # Per-(site, width, depth, template) M9K enable cells from
         # results/m9k_mode_bits.json.  XOR-parity composition: each cell
         # toggled an odd number of times across all M9K_MODE directives
         # is flipped exactly once.  Applied BEFORE INIT so the M9K
         # primary CRAM is in the {width}x{depth} configured state when
         # write_init lays down user words.
+        #
+        # `template` defaults to "altsyncram" when the bare
+        # `M9K_MODE_{w}x{d}` form is used (legacy + most current
+        # callers); the explicit `_altsyncram` / `_inferred` suffix
+        # selects the corresponding `cells_by_template` bucket.
         parity = {}
-        for x, y, n, width, depth in m9k_modes:
+        for x, y, n, width, depth, template in m9k_modes:
             site = f"X{x}_Y{y}_N{n}"
-            for off, bp in _load_m9k_mode_cells(site, width, depth):
+            for off, bp in _load_m9k_mode_cells(
+                site, width, depth, template
+            ):
                 parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
         buf = bytearray(work)
         for (off, bp), p in parity.items():

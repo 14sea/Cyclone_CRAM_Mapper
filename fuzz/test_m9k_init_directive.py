@@ -224,18 +224,32 @@ def test_m9k_mode_parse_and_xor_idempotence():
     site_x, site_y, site_n = 15, 10, 0
     fasm_one = f"X{site_x}Y{site_y}N{site_n}.M9K_MODE_{width}x{depth}\n"
 
-    # Parser arity check (m9k_modes is the 18th entry in parse_fasm)
+    # Parser arity check (m9k_modes is the 18th entry in parse_fasm).
+    # Each element is a 6-tuple after Stage C.1 sub-flag scaffolding:
+    # (x, y, n, width, depth, template).  Bare `M9K_MODE_{w}x{d}`
+    # defaults template to "altsyncram".
     parsed = f.parse_fasm(fasm_one)
-    assert len(parsed) == 19, f"parse_fasm arity {len(parsed)} != 19"
+    assert len(parsed) == 20, f"parse_fasm arity {len(parsed)} != 20"
     m9k_modes = parsed[17]
-    assert m9k_modes == [(site_x, site_y, site_n, width, depth)], m9k_modes
+    assert m9k_modes == [
+        (site_x, site_y, site_n, width, depth, "altsyncram"),
+    ], m9k_modes
 
-    # Bitgen single-apply flips the recorded cells.
+    # Bitgen single-apply flips the recorded cells.  When the entry
+    # has the Stage C.1 `cells_by_template` schema, the bare directive
+    # form `M9K_MODE_{w}x{d}` resolves to the altsyncram bucket; older
+    # entries (no `cells_by_template`) fall back to the legacy `cells`
+    # field — handle both.
     cells_path = ROOT / "results" / "m9k_mode_bits.json"
     cells_data = json.loads(cells_path.read_text())
     key = f"X{site_x}_Y{site_y}_N{site_n}_{width}x{depth}"
     assert key in cells_data, f"missing mode-bits entry: {key}"
-    expected_cells = {tuple(c) for c in cells_data[key]["cells"]}
+    entry = cells_data[key]
+    by_template = entry.get("cells_by_template")
+    if by_template is not None and "altsyncram" in by_template:
+        expected_cells = {tuple(c) for c in by_template["altsyncram"]}
+    else:
+        expected_cells = {tuple(c) for c in entry["cells"]}
 
     # Reset cache so test is hermetic across reruns.
     f._M9K_MODE_CACHE = None
@@ -293,6 +307,121 @@ def test_m9k_mode_unknown_site_raises():
     raise AssertionError("expected FasmError for unmined M9K_MODE site")
 
 
+def test_m9k_mode_template_subflag_parses():
+    """Stage C.1: parser accepts both bare and `_{template}` suffix forms.
+
+    `M9K_MODE_9x512` defaults to template="altsyncram" (legacy /
+    backward-compatible).  `M9K_MODE_9x512_inferred` and
+    `M9K_MODE_9x512_altsyncram` are the explicit per-template forms.
+    """
+    fasm = (
+        "X15Y10N0.M9K_MODE_9x512\n"             # bare → altsyncram
+        "X15Y10N0.M9K_MODE_9x512_altsyncram\n"   # explicit altsyncram
+        "X15Y10N0.M9K_MODE_9x512_inferred\n"     # explicit inferred
+    )
+    parsed = f.parse_fasm(fasm)
+    m9k_modes = parsed[17]
+    assert m9k_modes == [
+        (15, 10, 0, 9, 512, "altsyncram"),
+        (15, 10, 0, 9, 512, "altsyncram"),
+        (15, 10, 0, 9, 512, "inferred"),
+    ], m9k_modes
+    print("  test_m9k_mode_template_subflag_parses: OK")
+
+
+def test_m9k_mode_template_buckets_differ():
+    """Stage C.1: bare/_altsyncram and _inferred resolve to DIFFERENT
+    cell sets when an entry has `cells_by_template`.
+
+    The X15_Y10_N0_9x512 entry was extended by
+    fuzz/m9k_mode_template_probe.py with both buckets:
+      altsyncram → 73 cells (alt^baseline, probe v3)
+      inferred   → 77 cells (inf^baseline, probe v3)
+    Bare form must equal `_altsyncram`; `_inferred` must differ.
+    """
+    base = _require_baseline()
+    fasm_bare = "X15Y10N0.M9K_MODE_9x512\n"
+    fasm_alt = "X15Y10N0.M9K_MODE_9x512_altsyncram\n"
+    fasm_inf = "X15Y10N0.M9K_MODE_9x512_inferred\n"
+    HDR = 32
+
+    def _diffs(fasm_text):
+        f._M9K_MODE_CACHE = None
+        out = f.bitgen(fasm_text, base)
+        diffs = set()
+        for off in range(len(base)):
+            x = base[off] ^ out[off]
+            if not x:
+                continue
+            in_frame = (off - HDR) % 210
+            if off < HDR or in_frame >= 208:
+                continue
+            for bp in range(8):
+                if x & (1 << bp):
+                    diffs.add((off, bp))
+        return diffs
+
+    bare = _diffs(fasm_bare)
+    alt = _diffs(fasm_alt)
+    inf = _diffs(fasm_inf)
+    assert bare == alt, (
+        f"bare ({len(bare)}) != _altsyncram ({len(alt)}) — "
+        f"sym diff = {len(bare ^ alt)}"
+    )
+    assert bare != inf, (
+        f"bare ({len(bare)}) and _inferred ({len(inf)}) should differ; "
+        f"sym diff = {len(bare ^ inf)}"
+    )
+    # Probe-recorded cell counts (sanity check on the schema migration).
+    assert len(alt) == 73, f"_altsyncram expected 73 cells, got {len(alt)}"
+    assert len(inf) == 77, f"_inferred expected 77 cells, got {len(inf)}"
+    print(
+        f"  test_m9k_mode_template_buckets_differ: OK "
+        f"(altsyncram={len(alt)}, inferred={len(inf)}, "
+        f"sym diff={len(alt ^ inf)})"
+    )
+
+
+def test_m9k_mode_template_unknown_raises():
+    """Stage C.1: parser rejects unknown template names.
+
+    Only `altsyncram` and `inferred` are valid suffixes.  Anything else
+    must NOT match `_M9K_MODE_RE`, so the line falls through and
+    `parse_fasm` raises `unknown line` if no other regex picks it up.
+    """
+    fasm = "X15Y10N0.M9K_MODE_9x512_garbage\n"
+    try:
+        f.parse_fasm(fasm)
+    except f.FasmError as e:
+        assert "unknown line" in str(e) or "garbage" in str(e), str(e)
+        print("  test_m9k_mode_template_unknown_raises: OK")
+        return
+    raise AssertionError("expected FasmError for unknown template suffix")
+
+
+def test_m9k_mode_template_inferred_missing_bucket_raises():
+    """Stage C.1: requesting `_inferred` against an entry that has no
+    `cells_by_template` (legacy schema) must raise `FasmError`.
+
+    Pick a site that only has the legacy `cells` field.  X15_Y5_N0_9x512
+    is one such — only X15_Y10_N0_9x512 was promoted to the new schema
+    by fuzz/m9k_mode_template_probe.py.
+    """
+    base = _require_baseline()
+    f._M9K_MODE_CACHE = None
+    fasm = "X15Y5N0.M9K_MODE_9x512_inferred\n"
+    try:
+        f.bitgen(fasm, base)
+    except f.FasmError as e:
+        msg = str(e)
+        assert "inferred" in msg and "cells_by_template" in msg, msg
+        print("  test_m9k_mode_template_inferred_missing_bucket_raises: OK")
+        return
+    raise AssertionError(
+        "expected FasmError for legacy entry queried as `_inferred`"
+    )
+
+
 def test_m9k_init_wrong_hex_length_raises():
     width, depth = 9, 512
     # Correct length = ceil(9*512/4) = 1152 hex chars.
@@ -330,6 +459,10 @@ def main():
         test_m9k_init_unknown_site_raises,
         test_m9k_mode_parse_and_xor_idempotence,
         test_m9k_mode_unknown_site_raises,
+        test_m9k_mode_template_subflag_parses,
+        test_m9k_mode_template_buckets_differ,
+        test_m9k_mode_template_unknown_raises,
+        test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_init_wrong_hex_length_raises,
     ]
     for t in tests:

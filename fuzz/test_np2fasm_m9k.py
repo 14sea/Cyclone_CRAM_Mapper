@@ -224,7 +224,13 @@ def test_convert_skips_ep4ce6_m9k_blackbox_module():
 def test_emit_m9k_mode_synthetic_cell():
     """`_emit_m9k_mode` produces the per-site enable directive that
     accompanies INIT.  Without this line the silicon block stays in
-    its idle configuration and never reads back the user pattern."""
+    its idle configuration and never reads back the user pattern.
+
+    Stage C.1 sub-flag: the helper now emits the explicit
+    `_inferred` suffix because `$__M9K_SP_` techmap → `EP4CE6_M9K`
+    corresponds to Quartus's inferred-RAM code path.  convert()
+    still gates the emission off (see test_convert_does_not_emit_*).
+    """
     width, depth = 9, 512
     mock_cell = {
         "type": "EP4CE6_M9K",
@@ -233,7 +239,7 @@ def test_emit_m9k_mode_synthetic_cell():
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
     assert warn is None, f"unexpected warning: {warn!r}"
-    assert line == f"X15Y10N0.M9K_MODE_{width}x{depth}", line
+    assert line == f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred", line
     print("  test_emit_m9k_mode_synthetic_cell: OK")
 
 

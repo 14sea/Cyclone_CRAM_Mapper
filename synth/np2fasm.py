@@ -232,11 +232,25 @@ def _emit_m9k_init(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
 
 
 def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
-    """Return (fasm_line, warning) for the per-(site, W, D) enable.
+    """Return (fasm_line, warning) for the per-(site, W, D, template) enable.
 
     Pairs with `_emit_m9k_init`: same bel parse, same WIDTH_A/DEPTH
-    extraction, but emits the `M9K_MODE_{w}x{d}` directive that flips
-    the block-band cells `m9k_mode_bits.json` records for this site.
+    extraction, but emits the `M9K_MODE_{w}x{d}_{template}` directive
+    that flips the block-band cells `m9k_mode_bits.json` records for
+    this site under the chosen template bucket.
+
+    Template selection (Stage C.1, 2026-04-16):
+
+      Yosys's `$__M9K_SP_` techmap rule corresponds to inferred-RAM
+      semantics on the Quartus side, so the natural target here is
+      `_inferred`.  However the Stage C.1 probe
+      (`fuzz/m9k_mode_template_probe.py`) found that even verbatim
+      smoke-gold Verilog under the specimen factory diverges from the
+      gold by 77 cells (alt = 29).  Until either bucket lands within
+      the ≤5-cell acceptance, this helper emits with the explicit
+      `_inferred` suffix so the directive declares its intended Quartus
+      code path even when convert() leaves emission gated.
+
     Without this line the open-toolchain RBF carries valid INIT data
     but the silicon block remains in its "M9K idle" configuration, so
     HW would never read back the user pattern.
@@ -249,7 +263,7 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    return (f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}", None)
+    return (f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred", None)
 
 
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
@@ -487,17 +501,22 @@ def convert(
             # Placed EP4CE6_M9K — emit INIT directive via helper.
             #
             # M9K_MODE per-site enable is *scaffolded* (see _emit_m9k_mode
-            # below + `M9K_MODE_{w}x{d}` directive in fasm2rbf) but the
-            # cell data in `results/m9k_mode_bits.json` is contaminated:
-            # the per-site `m9k_calib18b_*` mining RBFs carry routing /
-            # IOB / local-clock infra that doesn't match what Quartus
-            # places in a real multi-M9K design, so emitting MODE on the
-            # smoke build worsens the m9k-band diff vs gold (74 false
-            # flips, 35 missed) instead of closing it.  Re-mining needs
-            # single-M9K Quartus builds with matched IOB/clock context.
-            # Until then convert() skips the MODE line; HW functionality
-            # for the smoke design depends on the existing nv_zero_global
-            # baseline already encoding "M9K idle" as the default.
+            # below + `M9K_MODE_{w}x{d}_{template}` directive in
+            # fasm2rbf, including `cells_by_template` schema in
+            # results/m9k_mode_bits.json).  Stage C.1 probe (2026-04-16,
+            # fuzz/m9k_mode_template_probe.py) attempted closure via a
+            # Yosys-emit-matching mining specimen (verbatim smoke-gold
+            # Verilog under the specimen factory) and FALSIFIED that
+            # path: inferred-vs-gold gap stayed at 77 cells (vs 29 for
+            # altsyncram-direct), so swapping the mining template does
+            # not close the residual.  The sub-flag is now scaffolded
+            # to carry per-template buckets (`_altsyncram` / `_inferred`)
+            # but neither bucket meets the ≤5-cell acceptance for HW-
+            # correct emission.  convert() therefore continues to skip
+            # the MODE line; HW functionality for the smoke design
+            # depends on the existing nv_zero_global baseline already
+            # encoding "M9K idle" as the default.  See memory
+            # m9k_mode_template_residual.md for the diagnosis.
             line, warn = _emit_m9k_init(cell_name, cell)
             if line is not None:
                 fasm.append(line)
