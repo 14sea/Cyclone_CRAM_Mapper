@@ -4,11 +4,9 @@
 
 这个项目的目标是**完全逆向工程** Altera（现 Intel）Cyclone IV 系列 FPGA 芯片 **EP4CE6F17C8** 的比特流（bitstream）格式。
 
-### 什么是 FPGA？
-
-FPGA（Field-Programmable Gate Array，现场可编程门阵列）是一种可以通过编程来实现任意数字电路的芯片。和 CPU 不同，FPGA 不是执行"指令"——而是直接在硬件层面"搭建"电路。你可以把它想象成一块巨大的面包板，上面有成千上万个可编程的逻辑门和连线，你通过一个配置文件来决定这些门和连线怎么连接。
-
-这个"配置文件"就叫做 **bitstream**（比特流），对于 Altera 芯片来说，具体格式是 `.rbf`（Raw Binary File）。
+给首次接触 FPGA 的读者：比特流就是配置可编程逻辑的那个文件——对于
+Altera 的芯片而言是 `.rbf`（Raw Binary File）。背景资料：[Cyclone IV
+device handbook](https://www.intel.com/content/www/us/en/docs/programmable/683853/current/cyclone-iv-device-handbook.html)。
 
 ### 为什么要逆向比特流？
 
@@ -25,12 +23,12 @@ FPGA（Field-Programmable Gate Array，现场可编程门阵列）是一种可�
 
 ### 先驱项目
 
-| 项目 | 目标芯片 | 方法 | 与本项目关系 |
-|------|----------|------|-------------|
-| [Project IceStorm](http://www.clifford.at/icestorm/) | Lattice iCE40 | 黑箱 fuzzing | 方法论完全相同 |
-| [Project X-Ray](https://github.com/SymbiFlow/prjxray) | Xilinx 7-series | Vivado + specimen fuzzing | FASM 格式可参考 |
-| [Project Mistral](https://github.com/Ravenslofty/mistral) | Altera Cyclone V | quartus_cdb + Tcl | 同家族芯片，参考价值最高 |
-| [Project Trellis](https://github.com/YosysHQ/prjtrellis) | Lattice ECP5 | Diamond + fuzzing | 布线策略可参考 |
+| 项目 | 目标芯片 | 核心贡献 | 与本项目的关系 |
+|------|----------|----------|----------------|
+| [Project IceStorm](http://www.clifford.at/icestorm/) | Lattice iCE40 | 完整的开源 bitstream 工具链（`icebox` / `icepack`）以及奠基性的黑盒 fuzzing 方法论 | 方法论范本；我们的 fuzz 流程与验收标准直接继承自 IceStorm |
+| [Project X-Ray](https://github.com/SymbiFlow/prjxray) | Xilinx 7-series | 定义了 FASM（FPGA Assembly）格式，以及 specimen fuzzer + 差分提取的挖掘范式 | 我们的 `fasm2rbf` / `rbf2fasm` 直接沿用 FASM 格式与目录结构 |
+| [Project Mistral](https://github.com/Ravenslofty/mistral) | Altera Cyclone V | 从 `quartus_cdb` + Tcl 导出 RBM 模型；首个开源的 Cyclone 系列逆向工程 | 同家族芯片 —— CRAM 分层与路由开关术语与 Mistral 相当近亲 |
+| [Project Trellis](https://github.com/YosysHQ/prjtrellis) | Lattice ECP5 | Diamond fuzzing + 按 cell 分解路由 bit + 与 nextpnr-ecp5 深度整合 | 我们的 chipdb 生成与 nextpnr-generic 整合参考了 Trellis 的模式 |
 
 ---
 
@@ -1139,7 +1137,7 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 4. **`sof2rbf.py` 产生无效比特流**——必须用 `quartus_cpf -c -o bitstream_compression=off`
 5. **某些 LAB 位置无效**：X∈{3,4,6,7,8}, Y∈{12,13,14,16} 的组合会被 Quartus 拒绝（这些位置可能被 M9K 或其他硬核占用）
 6. **磁盘空间**：Phase 3 的 `work/` 目录会急剧膨胀，每次编译后应清理（`compile.py` 提供了 `clean_work_dir()` 函数）
-7. **追 codec bug 之前先和 Quartus 对一下** —— 如果一个设计在开源工具链里不工作，先让 Quartus 编一份同样 Verilog 的参考 RBF 烧进去。如果 Quartus 版能跑而你的不能，**然后**再去对比 cell diff 判断差异是否集中在你意想之中的区域。M5 计数器事件里，我们花了两天追五个"真实但无关"的低层 bug，就因为少做了这个 30 秒的实验 —— 问题根本不在 codec，而在 nextpnr-generic 没有 carry chain primitive
+7. **追 codec bug 之前先和 Quartus 对一下** —— 如果一个设计在开源工具链里不工作，先让 Quartus 编一份同样 Verilog 的参考 RBF 烧进去。如果 Quartus 版能跑而你的不能，**然后**再去对比 cell diff 判断差异是否集中在你意想之中的区域。M5 计数器事件里，我们花了好一段时间追五个"真实但无关"的低层 bug，就因为少做了这个 30 秒的实验 —— 问题根本不在 codec，而在 nextpnr-generic 没有 carry chain primitive
 8. **自环 sig-cache 条目在当前挖矿模板下不可修复** —— 对于 src LE == dst LE 的路由（LE 反馈到自己的某个 dataX 输入），双 LUT 配对模板从结构上就无法表达；diff-vs-baseline 策略也会失败，因为 Quartus 在两次编译间会重新 fit（包括重新分配管脚）。任何依赖自反馈的设计（典型例子：不走 carry chain 的 ripple 加法器）在 Phase 5.4 完成之前都无法通过开源工具链生成有效比特流 —— 暂时用 Quartus 的参考 RBF 代替
 
 ---
@@ -1775,7 +1773,7 @@ endmodule
 LED 恒亮。再试，恒灭。我们换了 10 种重建方式（顺序、剥离策略各种
 fix），LED 一直只在「全亮」和「全灭」两个状态里来回跳，从来不闪。
 
-**两天的红鲱鱼。** 每次烧完看到 LED 不动，我们都假设 codec *快*对了，
+**那一段红鲱鱼。** 每次烧完看到 LED 不动，我们都假设 codec *快*对了，
 再来一个小修就能跑。我们真的修出 —— 而且确实是真 bug —— `fasm2rbf.py`
 和 sig-cache 的五个错误：
 
@@ -1876,7 +1874,7 @@ bit 23 上电后的状态 —— 一种 build 下是 1，另一种 build 下是 
 > 一次 byte diff，立刻就能告诉你：你是在追一个 codec bug（cell 列
 > 对的、值不对），还是在追一个 missing primitive bug（cell 完全
 > 在另一列，因为前端发出来的是一种完全不同的拓扑）。这两种情形
-> 需要的修复完全不同，混为一谈会浪费整整两天。
+> 需要的修复完全不同，混为一谈会白白浪费掉一大段时间。
 
 **给学生读者的话** —— 底下还有一个更细的教训。一颗现代 FPGA
 不是「一片 LUT 海加一张布线网」。它是一组**故意做成异质的**原语
@@ -2068,90 +2066,77 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
 
 - [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
 
-### 长期方向：我们究竟可能在哪里赢过 Quartus
+### 长期方向：这个 codec 让我们能做什么，不能做什么
 
-一个常被问到的问题是：「现在 codec 已经能跑了，能不能用现代 ML（RL 路由、
-GNN 拥塞预测、LLM 逻辑综合）超越 Intel Quartus？」基于这个项目目前的真实
-状态以及学术界文献，我们的诚实答案是：**对大多数人首先想到的方向是不行
-的，但对一组更窄、更有意思的目标是可以的。**
+一个常被问到的问题：codec 已经能跑了，现代 ML（RL 路由、GNN 拥塞预测）
+能不能超越 Quartus？诚实的回答分三层。
 
-**我们赢不了的地方。** Quartus 拥有硬件校准过的时序模型（每根 wire 的 RC
-都在真实矽片上跨 process corner 测过）、30 年累积下来的完整 legality
-checker，以及 PathFinder + negotiated congestion 路由算法 —— **截至 2024
-年，学术界的 RL 路由器在标准 benchmark 上还没有稳定超越过 VPR**，更别说
-Quartus。试图用强化学习在 Quartus 主场把它的路由打趴是一个众所周知的学术
-陷阱。
+**PPA 层面赢不了。** Quartus 有 30 年的硬件校准时序模型、完整的 legality
+checker，以及 PathFinder + negotiated congestion 路由算法 —— 学术界的 RL
+路由器能否追上还是一个开放的研究问题。试图在 Quartus 的主场把它的路由打
+趴，是一个已知的死胡同。
 
-**我们能赢的地方。** 我们手上有一个 Quartus 没有也永远不会有的不对称
-优势：**一个可程式、bit-level、双向的编解码器，能在微秒级修改比特流，并
-在数秒内于真实矽片上验证结果。** Quartus 是一个单向的 `verilog → bitstream`
-黑盒；我们不是。这条鸿沟带来了 Quartus 在结构上做不到的几件事：
+**这个 codec 真正独有的能力**，是对已发布比特流做 bit-level 双向修改
+—— 微秒级完成一次变换，秒级在矽片上验证。Quartus 是单向的
+`verilog → bitstream` 管线；我们不是。这条鸿沟带来以下 Quartus 架构上做
+不到的事：
 
-1. **比特流级别的 superoptimizer（CRAM peephole 优化）。** 拿一个 Quartus
-   build 出来，逐 cell 做等价变换（等价 LUT mask 替换、冗余布线 bit 移除、
-   并行 LE 合并），在硬件上验证等价性，接受能降低 cell count / 动态功耗的
-   变换。Quartus 一旦 fit 完就不会再回头微调；我们可以离线跑数千次硅片
-   验证过的小变换。这个胜利来自「真实矽片上无限次免费试错」，**不是来自
-   更聪明的模型**。
-2. **Quartus 根本不会做的事。** 我们的 codec 让以下事情成为可能：
-   - 在不官方支持 partial reconfiguration 的晶片上做 PR（不重启地改写
-     特定 frame）
-   - Bitstream watermarking / fingerprinting（藏 ID 在无关紧要的 LUT bit）
-   - 可重现构建（Quartus 依赖随机种子；我们的 codec 是纯函数 —— 同样的
-     输入永远输出 bit-identical 的结果）
-   - 单晶片过拟合（针对某一颗具体晶片的 process corner / 老化校准 —— 对
-     硬件安全和 PUF 有用）
+1. **比特流级 mutation 与等价性框架。** 拿一份 Quartus build，逐 cell
+   做等价变换（等价 LUT mask 替换、冗余布线 bit 移除），在硬件上验证
+   等价，保留能降低 cell count / 功耗的 mutation。cell-level peephole
+   本身的 PPA 收益不大（Quartus 输出已经接近局部最优），真正的价值是：
+   把 codec 当成 post-fit 优化与 differential equivalence testing 的
+   研究基座 —— 这是 Quartus 本身无法暴露的。
+2. **Quartus 不会走的工作流。** 离线的比特流 mutation 与 replay：修改
+   一份已知良品 RBF 的特定 frame，下次上电直接烧回去。这**不是** partial
+   reconfiguration（Cyclone IV 没有 ICAP），但它让 Quartus 单次 fit 流程
+   里做不到的事成为可能 —— 例如不重跑 fit 直接打 ECO 补丁、以可重现的
+   bit-identical 方式构建（Quartus 依赖随机种子；codec 是纯函数）、在无关
+   紧要的 LUT bit 里做 watermarking。
 3. **开源工具链（真正的奖品）。** 一条能跑通的 Yosys + nextpnr-EP4CE6 流程
-   比「在 PPA 上打败 Quartus」**重要 100 倍**。它让 Linux/macOS 用户第一次
-   能在不装 Intel 工具的情况下用这颗晶片，让 CI 系统第一次能可重现地构建
-   EP4CE6 比特流，让这颗晶片第一次进入开源 FPGA 生态。**这才是这个项目
-   真正的长期目标。**
+   比任何 PPA 上的对比重要得多。它让 Linux/macOS 用户第一次能在不装 Intel
+   工具的情况下用这颗晶片，让 CI 第一次能可重现地构建 EP4CE6 比特流，让
+   **Cyclone IV E 系列**第一次进入开源 FPGA 生态（Cyclone V 已经被
+   Project Mistral 先推进了一大步）。
 
-**ML 该扮演什么角色（助手，而不是核心）。** 现代 ML 在这个项目里有真实
-但有限的位置：
+**ML 在这里的位置**是一个适度的辅助角色：等语料够大时，用决策树分类器
+替换手写的 LI envelope 规则；在 paired-vs-alternating 选择规则上用小决策
+树（不是 GNN）做模式挖掘，这样结果可以直接编进 codec；对烧不上去的 codec
+RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮我们写一些我们
+不想手写的规则」。
 
-- **决策树模式分类器** 替代手写的 LI envelope 规则
-  （`_classify_li_lab()`）。语料够大之后，学出来的分类器比硬编码模式更
-  robust，而且仍然完全可解释。
-- **模式挖掘器** 用在 `li_mode_corpus_mine.py` 的输出上 —— 找
-  paired-vs-alternating 的选择规则用的应该是小决策树而不是 GNN。决策树
-  可以审计、可以直接编进 codec。
-- **异常检测器** 用在烧不上去的 codec RBF 上 —— 预测最可能违反了哪个
-  envelope，加速 debug。
-
-这些都不是「ML 打败 Quartus」。它们是「ML 帮我们学一些我们不想手动推的
-规则」。
-
-**建议优先级。** 把 Phase 5.3 做完（开源工具链已在进行中 —— chipdb + Yosys
-techmap + np2fasm 都已跑通，counter 已能布线）。
-一旦端到端的 `.v → bitstream` 开源流程能跑起来，问题就从「能不能在 PPA 上
-打败 Quartus」变成「我们能做哪些 Quartus 根本做不了的事」—— 而解锁这些
-答案的是 codec，不是模型。
-
-> **一句话总结 —— 我们不是在造一个更聪明的 Quartus。我们是在造一种不同
-> 的工具，让用户能做一些 Quartus 根本不让他们做的事情。胜利在于定义一个
-> 新的赛场，而不是在 Quartus 的主场上击败它。**
+**优先级。** 把 Phase 5.3 做完。`.v → bitstream` 开源流程已经走完大部分
+（chipdb + techmap + np2fasm 跑通，8 位 counter 硬件验证通过）。一旦它端
+到端跑起来，问题就从「能不能在 PPA 上打败 Quartus」变成「有什么 Quartus
+根本不会做的事是我们能做的」—— 回答这个问题的是 codec。
 
 ### 整体进度估算
 
-| 领域 | 进度 | 说明 |
+不同领域的百分比之间没有可比性（分母各不相同 —— bit 数、cell 类型、路由
+条数、设计规模）。下表以 **覆盖** 作为可核对的计数、以 **状态** 作为工程
+结论（硬件验证 / 往返闭合 / 部分 / 未开始），不再汇出单一的「综合进度」。
+
+| 领域 | 覆盖 | 状态 |
 |------|------|------|
-| 逻辑配置（LUT/FF/算术） | **~95%** | 全部 LE 位置的 LUT TT 已解码，FF 和算术模式已映射 |
-| CRAM 地址映射 | **100%** | 22 列 × 18 行 × 16 LE = 376/376 位置全部验证（CE6 白名单；越狱后 X=32/33 + Y=15 矽片验证通过） |
-| C4 布线开关 | **~55%** | I=0 100% 公式；I≠0 44 条逐 (X,I) 固定字节查表 |
-| R4 布线开关 | **~68%** | 25/37 个 I-index 已映射，剩余 12 条卡在语料不足而非挖掘方法 |
-| LOCAL_INTERCONNECT | **~85%** | base 粒度读写；两种编码模式破解；V2 硬件安全防线 |
-| R24 长距离线 | **~30%** | I=0 固定字节模型，覆盖 73% R24 线网 |
-| C16 长距离线 | **0%** | 尚未开始 |
-| 比特流编解码器 | **~85%** | LUT TT + 布线读写完成；往返自洽；硬件安全防线 V2；**CRC patcher 已整合，硅片端到端通过** |
-| 路由综合（绿区岛） | **24/520 源** | CE6 标准 15 岛 —— **686/686 路由对 Quartus bit-perfect**。越狱 / 边缘前沿 9 岛 —— **8/45 路由**（Y=15 × {10,11,12,13,14,17,18}、Y=5 × {18,19}）：物理 fingerprint 已采集，sig-cache pair-diff 挖掘尚未跑，`route_synth.parse_need` formula 回退路径尚未支持 Y=15。当前 harness 总分：**694/731**。 |
-| FASM sig-cache（Phase 4.5） | **13,487 条目** | `results/route_cells_full.json` —— 7-tuple（支持 sn>0）；Plan D' 工厂覆盖 NEORV32 95.9% edge；英雄 X=5 矽片验证 |
-| M9K init 编解码器（Phase 5.2） | **闭合** | 2D 线性公式，33 条 anchor，31 个 NEORV32 点位校准；READ 512/512，WRITE 与 Quartus 0 CRAM diff |
-| RBF CRC 逆向 | **100%** | CRC-16/IBM 0x8005，init 0xFE54，frames 25..1751；1727/1727 帧验证 |
-| FASM 工具链（Phase 4） | **闭合** | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器 + port-MUX 合并版 loader（34% 压缩）；1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect 回归；AX301 矽片接受（AND(K1,K2)） |
-| 开源工具链（Phase 5.3） | **部分开通** | 端到端管线已跑通（Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe）。组合、FF-only **和算术** 设计都能烧。AX301 上 8 位 counter 硬件验证通过（2026-04-13）。IOB FASM（`IOB_IN`/`IOB_OUT`）44/44 单轴通过（2026-04-14）；GCLK 管线（`GCLK_PIN` + `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`）落地 + 硬件验证通过（2026-04-14）。IOB→SLICE paired 挖掘模板硬件验证通过；sig-cache 注入与跨轴 IOB 组合仍 pending |
-| 开源流程的 LE 进位链（Phase 5.4） | **硬件验证通过** | chipdb `cout→cin` pip（8,126 条）、CE6_CARRY techmap primitive（LE 内 FF→ALU 反馈，无 Route-A buffer）、np2fasm `LUT_ARITH` 发射、FASM `LUT_ARITH` 指令。算术 blob 住 block band（frames 1692-1738），**不**住 LE 列；位置无关（v4 通用 blob）；widths 2..16 单 LAB + 16+8 跨 LAB 每一档都 round-trip 与 Quartus 0-diff |
-| 硬件回环（codec → 烧录 → 矽片） | **闭合** | LutCodec 与 FASM 路径都在 AX301 上跑通 |
+| CRAM 地址映射 | 22 列 × 18 行 × 16 LE = 376/376（CE6 白名单）+ 越狱后 X=32/33、Y=15 | 硬件验证 |
+| RBF CRC | CRC-16/IBM、0x8005、init 0xFE54、frames 25..1751；1727/1727 帧通过 | 硬件验证 |
+| 逻辑配置（LUT / FF / 算术） | 全部 LE 位置的 LUT TT 已解码；FF 为矽片默认（无 CRAM）；算术模式 = block-band blob | 硬件验证 |
+| 开源流程的 LE 进位链 | chipdb `cout→cin` pip（8,126 条）、CE6_CARRY techmap、`LUT_ARITH` FASM 指令、widths 2..16 + 16+8 per-width 表、v4 位置无关 blob | 硬件验证（8-bit counter，2026-04-13） |
+| FASM 工具链（Phase 4） | `fasm2rbf` + `rbf2fasm` + 集合覆盖分解器；1725/1725 + 41/42 + 3/3 + CE6 686/686 round-trip | 硬件验证（AND(K1,K2) on AX301） |
+| 硬件回环（codec → 烧录 → 矽片） | LutCodec + FASM 路径都在 AX301 上跑通 | 硬件验证 |
+| C4 布线开关 | I=0 闭式公式；I≠0 44 条逐 (X,I) 查表 + sig-cache 覆盖 | 闭式部分 + sig-cache 生产可用 |
+| LOCAL_INTERCONNECT | base 粒度读写；两种编码模式破解；V2 安全防线 | 往返闭合 |
+| R4 布线开关 | 25/37 个 I-index 已映射；剩余 12 条卡在语料 | 部分 |
+| R24 长距离线 | I=0 固定字节模型，约 73% wire | 部分 |
+| C16 长距离线 | — | 未开始 |
+| 比特流编解码器 | LUT TT + 布线读写完成；往返自洽；V2 安全防线；CRC patcher 已整合 | 硬件验证 |
+| 路由综合（绿区岛） | CE6 标准 15 岛 686/686 bit-perfect；越狱 / 边缘 9 岛 45/45 靠 snapshot fallback；总 harness 731/731 | 闭合（2026-04-14） |
+| FASM sig-cache（Phase 4.5） | 13,487 条目；7-tuple（支持 sn>0）；Plan D' 工厂覆盖 NEORV32 95.9% edge | 生产 |
+| M9K init 编解码器（Phase 5.2） | 2D 线性公式；33 anchor；31 NEORV32 点位校准；READ 512/512、WRITE 与 Quartus 0 CRAM diff | 往返闭合；硬件尚未验证 |
+| GCLK 管线（Phase 5.4） | `GCLK_PIN`（F17 上 12 个 pin）+ `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`；基于 AUTO baseline 做 XOR 合成 | 硬件验证（LAB(10,4).N=0，2026-04-14） |
+| IOB FASM（Phase 5.4） | `IOB_IN` / `IOB_OUT` 44/44 单轴 bit-perfect；`IOB_ROUTE` 15/15 全-RBF 0 diff | 单轴硬件验证；跨轴 2D 扫描进行中 |
+| `nv_zero_global` 退役 | `NV_BASELINE_PACK` 指令 + 子指令从 PURE_ZERO 直接复现 Quartus baseline 的每一字节 | codec 路径落地；硬件烧录等价性尚未验证 |
+| 开源工具链（Phase 5.3） | Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe；组合 / FF-only / 算术设计都能烧 | 部分开通；M9K 前端（Yosys `memory_libmap`）被卡 |
 
 ---
 
@@ -2164,49 +2149,100 @@ techmap + np2fasm 都已跑通，counter 已能布线）。
 
 ---
 
+## 值得记住的死胡同
+
+逆向工程多半是在搞清楚哪些看起来好看的假设是错的。下面这些是真正花掉
+时间的那几条，记录在这里好让后来的人不必再踩：
+
+- **M5 counter 的进位链弯路。** 通过开源工具链做了一个 24-bit
+  counter，怎么也对不上 Quartus 的 RBF。花了一段时间先后修了
+  `LutCodec`、
+  重挖 sig-cache 条目、追查 `fasm2rbf` 的 phase-ordering bug。真正的
+  root cause 完全不在那里 —— Quartus 用的是 nextpnr-generic 没有建模
+  的 LE 内进位链连线，Yosys 把 `+1` 仿真成了 4-LE 波纹加法、带 24 条
+  自反馈路由。沿途修的 codec bug 是真的 bug，但真正挡路的是缺失的
+  primitive。教训：开源工具链出来的 D 设计行为异常时，**先**烧一份
+  Quartus 的 D RBF 并做两份 bitstream 的 diff，再去动 codec。
+- **IOB 跨轴线性叠加。** 听起来很合理的假设：驱动 (KEY_X, LED_Y) 的
+  设计应该能分解为 (KEY_X only) ⊕ (LED_Y only) ⊕ baseline。被证伪
+  —— bank-pair 查表同样失败。残差是大约 50-60 字节的 joint-placement
+  状态，两个模型都抓不到。要收口只能跑一次完整的 2D K×LED 扫描（约
+  480 次 pair build），目前在进行中。衍生模型不会回来了，不要重试。
+- **R4 dark passive mining。** 尝试通过 NV32 整片 RBF 的 bit 密度
+  恢复 R4 的 `BASE` 常量。RBF 太致密，信噪比低于挖掘阈值。死胡同。
+- **T9 LI paired-vs-alternating 作为路由 key 的函数。** 挖过、结构
+  审计过，结果被证伪 —— 这个选择**不是** `(src_type, src_I, dst_N,
+  dst_port)` 的函数。停止在这条轴上继续挖，缺的变量在别处。
+- **DFF 的每-LE enable CRAM bit。** 追了好一段时间才意识到 Cyclone IV 的
+  FF 是矽片内生的、每个 LE 都有、没有 per-LE enable cell。原来的
+  `dff_cells_mined.json` 是路由基础设施噪声，与任何真实设计都 0 重
+  叠。FASM 的 `DFF` 指令如今是一个被解析的 no-op。
+- **用两 LUT 配对模板挖 self-loop sig-cache。** 模板无法表示
+  `src == dst`，而且 Quartus 在 baseline 与 feedback 两次编译之间会
+  refit，diff 会包含与 LI MUX 无关的 pin 重排。`route_cells_full.json`
+  里 61 条 self-loop 条目都是被虚胖的噪声（cell 数 90-754，语料中位
+  数 135），重跑 factory 救不了。需要 single-LE differential 策略。
+
+每一条都有独立的 post-mortem 记在
+`~/.claude/projects/-home-test-EP4CE6/memory/` 底下 —— 搜索
+`m5_counter_root_cause_carry_chain`、`iob_cross_axis_not_decomposable`、
+`r4_dark_passive_mining_dead`、`t9_li_mode_negative_result`、
+`dff_perle_formula`、`sigcache_mining_template_pitfall`。
+
+## 局限与不是什么
+
+让 README 在进度之外，同样诚实地交代范围：
+
+- **C16 长距离线 —— 未触及。** 零覆盖。当前所有路由工作都在 C4 / R4 /
+  R24 / LI 上。会经 C16 走线的设计不被支持。
+- **非 E 系列的 Cyclone IV 芯片 —— 未验证。** 本仓库每一次矽片验证都
+  在 EP4CE6F17C8（AX301 板）上完成。codec 公式在
+  EP4CE15/22/30/40/55/75/115 与 Cyclone IV GX 上都没有测过。E 系列
+  内部 die 拓扑理应相似，但「应该相似」不是已经核对过的结论。
+- **大型设计 —— 未端到端测试。** 开源流程硬件验证过的设计都很小（8
+  位 counter、AND 门、identity-LED）。NEORV32 已经综合并 map 过，但
+  没有任何一份由开源流程构建的 NEORV32 比特流被烧录、被证实能在矽片
+  上 boot。更大的设计可能暴露小测试看不到的 codec / chipdb 缝隙。
+- **温度与电压 corner —— 未表征。** 所有矽片验证都在室温、标称 Vccint
+  下完成。工业温度范围与电压跌落下的行为没有测过。
+- **开源流程里的 M9K BRAM —— 硬件尚未验证。** codec + `np2fasm` 发射
+  已绿（各 5/5 测试），chipdb 有 M9K bel 与 bridge pip，但 Yosys 的
+  `memory_libmap` 前端目前会拒掉（"can't share write port 0:
+  incompatible enable" —— 一个 lib / memory-shape 不匹配的问题），
+  挡住了 `tmp/m9k_smoke/ram_9x512.v` 的 smoke build。没有任何用到
+  RAM 的设计从开源流程烧录过。
+- **PLL —— 在 fabric 之外，不在范围内。** Cyclone IV 的 PLL 住在本项目
+  没有映射的 CRAM 区域之外。需要配置 PLL 的设计（区别于 `GCLK_PIN`
+  指令覆盖的专用时钟 pin）不被支持。
+- **不是 Quartus 的替代品。** 这个 codec 不是 timing-driven 布局布线
+  工具。它独有的能力是对已发布比特流做 bit-level 双向修改与离线
+  mutation / replay —— 见前面的《长期方向》。如果需要 PPA-competitive
+  综合，请使用 Quartus。
+
+---
+
 ## 许可证
 
-**双许可证（2026-04-07 起，替换原先的 MIT）：**
+2026-04-07 起的双许可证（替换原先的 MIT）：
 
-**为什么换。** 项目大部分时间用的是 MIT —— 研究性小代码的默认选项。
-真正让我们改主意的，是上面那一节《完整越狱：CE6 的版图是一场集体
-造假》里记录的 CE6→CE10 越狱结果。在那之前，这些发现看起来只是
-针对一颗入门级 FPGA 的窄范围逆向；但当我们在矽片上亲手证明 —— Altera
-以 EP4CE6 之名卖出的这颗芯片物理上就是一颗 EP4CE10、fitter 白名单
-删掉了整整 ~40% 的 die、藏起来的 2,480 颗 LE 一次通电就全部正常 ——
-游戏的赌注就变了。这份代码和这些发现不再只是「便宜板子上的小把戏」，
-而是一份能让全世界的 EP4CE6 板子多掏出 ~65% 逻辑资源的开源工具链
-雏形，也是一份可复现的、能逮住厂商未来对其他型号玩同样手段的方法论。
-挂 MIT 的话，Altera 可以把这套方法默默吸收进 fitter 补丁，一句话
-都不用说。GPLv3 + CC BY-SA 强迫所有下游 —— 商业的、学术的、甚至厂商
-自己 —— 继续坐在同一张开放的桌子上，附完整源码和完整出处。这才算
-是对矽片刚刚告诉我们的事情的诚实回应。
-
-
-
-- **代码** —— `GPL-3.0-or-later`。Python pipeline、Verilog 生成器、
-  codec 实作、越狱扫描器，以及 `fuzz/` 底下的所有东西都是 copyleft。
-  如果你把这份代码 vendor 进另一个工具链 —— 开源或闭源、爱好或商业，
-  甚至是 Altera/Intel 的官方工具 —— 你的项目也必须以 GPLv3 发布，
-  附完整源代码。完整文本：
+- **代码**（`fuzz/`、`synth/`、`scripts/`，所有可执行的部分）——
+  `GPL-3.0-or-later`。完整文本：
   [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt)。
-- **文档、发现与方法论** —— `CC BY-SA 4.0`。CRAM 模型、C4/R4/LI 位址
-  公式、RBF CRC 规格、CE6→CE10 越狱结果、XOR 链坏点扫描法，以及
-  `README*.md` / `CLAUDE.md` / `FINDINGS.md` 里的全部论述，都采用
-  share-alike。如果你在论文、教程或演讲里引用这些发现，你的衍生作品
-  也必须挂 CC BY-SA。完整文本：
+- **文档与论述**（`README*.md`、`CLAUDE.md`、`FINDINGS.md`、`docs/`）
+  —— `CC BY-SA 4.0`。完整文本：
   [`LICENSES/CC-BY-SA-4.0.txt`](LICENSES/CC-BY-SA-4.0.txt)。
 
-范围说明见 [`LICENSE`](LICENSE)。
+**copyleft 盖住什么，盖不住什么。** GPL 以软件身份绑定在代码上，
+CC BY-SA 以书面作品身份绑定在论述上 —— 两者都要求下游对这些工件的
+fork 继续保持相同条款。但**方法论本身**不在任何一个许可证的覆盖范围
+内：逆向工程的技巧、CRAM 公式、bit 偏移、CE10 越狱结果都是**事实**，
+不是表达，版权法本来就圈不住它们。我们仍然选了 copyleft，是因为这样
+可以让参考实现和书面档案继续开放 —— 这是下游真正会依赖的部分。如果
+想让方法论挂到更可追溯的权利声明上，引用仓库与对应的 `FINDINGS.md`
+条目就够了 —— 这才是 defensive publication 的样子。
 
-选这两个许可证是刻意的：这项工作存在的目的是把 FPGA 工具链的研究
-**留在骇客手里**。MIT 会让 Altera 悄悄打上 fitter 白名单的补丁、
-把这些发现吸收进闭源产品，而无需任何回馈。GPLv3 + CC BY-SA 强迫
-所有下游 —— 商业或学术 —— 继续留在同一张开放的桌子上。
+Bitstream 原始档（`*.rbf`、`*.sof`）、SQLite 语料，以及 `work/` 和
+`results/rbf/` 里的 Quartus 产物属于硬件遥测、不是创作品，本项目不对
+它们主张版权；其再分发仍受 Altera/Intel 原始工具授权条款约束。
 
-Bitstream 原始档（`*.rbf`、`*.sof`）、原始 SQLite 资料库，以及
-`work/` 和 `results/rbf/` 里的 Quartus 编译产物属于硬件遥测数据，
-不是创作品，本项目不对它们主张版权；其再分发仍受原厂家授权条款
-约束。
-
-本项目仅用于教育和研究目的。逆向工程的结果用于构建开源 FPGA 工具链。
+本项目仅用于教育与研究目的。

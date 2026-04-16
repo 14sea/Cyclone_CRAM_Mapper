@@ -6,9 +6,9 @@ The goal of this project is to **fully reverse-engineer** the bitstream format o
 
 ### What Is an FPGA?
 
-An FPGA (Field-Programmable Gate Array) is a chip that can be programmed to implement any digital circuit. Unlike a CPU, an FPGA does not execute "instructions" — instead, it physically "builds" a circuit at the hardware level. Think of it as a giant breadboard with thousands of programmable logic gates and interconnects; a configuration file decides how all those gates and wires connect.
-
-That "configuration file" is called a **bitstream**. For Altera chips, the specific format is `.rbf` (Raw Binary File).
+For readers new to FPGAs: a bitstream is the file that configures the
+chip's programmable logic — for Altera parts, a `.rbf` (Raw Binary File).
+Background: [Cyclone IV device handbook](https://www.intel.com/content/www/us/en/docs/programmable/683853/current/cyclone-iv-device-handbook.html).
 
 ### Why Reverse-Engineer the Bitstream?
 
@@ -25,12 +25,12 @@ Once we reverse-engineer the bitstream format we can:
 
 ### Pioneer Projects
 
-| Project | Target chip | Method | Relation to this project |
-|---------|------------|--------|--------------------------|
-| [Project IceStorm](http://www.clifford.at/icestorm/) | Lattice iCE40 | Black-box fuzzing | Identical methodology |
-| [Project X-Ray](https://github.com/SymbiFlow/prjxray) | Xilinx 7-series | Vivado + specimen fuzzing | FASM format reference |
-| [Project Mistral](https://github.com/Ravenslofty/mistral) | Altera Cyclone V | quartus_cdb + Tcl | Same chip family — highest relevance |
-| [Project Trellis](https://github.com/YosysHQ/prjtrellis) | Lattice ECP5 | Diamond + fuzzing | Routing strategy reference |
+| Project | Target chip | Core contribution | Relation to this project |
+|---------|------------|------|--------------------------|
+| [Project IceStorm](http://www.clifford.at/icestorm/) | Lattice iCE40 | End-to-end open toolchain: fuzzer → `icebox` chip database → `icepack`/`icetime` bitstream tools | Original methodology template (black-box pair-diff fuzzing) |
+| [Project X-Ray](https://github.com/SymbiFlow/prjxray) | Xilinx 7-series | Defined the **FASM** intermediate format and the specimen-fuzzer harness pattern | FASM format adopted here |
+| [Project Mistral](https://github.com/Ravenslofty/mistral) | Altera Cyclone V | Derived the Routing Bit Mask (RBM) model from `quartus_cdb` + custom Tcl passes | Same chip family; our LI MUX model descends from Mistral's RBM work |
+| [Project Trellis](https://github.com/YosysHQ/prjtrellis) | Lattice ECP5 | Diamond-driven fuzzing with routing-bit decomposition; integrates with nextpnr-ecp5 | Routing decomposition strategy reference |
 
 ---
 
@@ -1175,7 +1175,7 @@ python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 4. **`sof2rbf.py` produces invalid bitstreams** — always use `quartus_cpf -c -o bitstream_compression=off`
 5. **Some LAB locations are invalid**: combinations with X∈{3,4,6,7,8} and Y∈{12,13,14,16} are rejected by Quartus (those positions may be occupied by M9K or other hard blocks)
 6. **Disk space**: Phase 3's `work/` directory grows very rapidly; clean it after each compilation (`compile.py` provides `clean_work_dir()`)
-7. **Cross-check against Quartus before chasing codec bugs** — if a design doesn't work through the open-source toolchain, first build the exact same Verilog through Quartus and flash that reference RBF. If Quartus's version blinks and yours doesn't, *then* do the cell diff to see whether the difference is where you expected. In the M5 counter episode we spent two days chasing five "real but irrelevant" low-level bugs because we skipped this 30-second experiment — the real problem wasn't in the codec at all, it was that nextpnr-generic has no carry-chain primitive
+7. **Cross-check against Quartus before chasing codec bugs** — if a design doesn't work through the open-source toolchain, first build the exact same Verilog through Quartus and flash that reference RBF. If Quartus's version blinks and yours doesn't, *then* do the cell diff to see whether the difference is where you expected. In the M5 counter episode we spent a substantial stretch chasing five "real but irrelevant" low-level bugs because we skipped this 30-second experiment — the real problem wasn't in the codec at all, it was that nextpnr-generic has no carry-chain primitive
 8. **Self-loop sig-cache entries are unmineable with current templates** — for routes where src LE == dst LE (an LE feeding back into one of its own dataX inputs), the two-LUT pair mining template cannot structurally represent `src==dst`, and the diff-vs-baseline strategy fails because Quartus re-fits between compiles (including pin reassignment). Any design that relies on self-feedback (canonical example: a ripple adder that doesn't use the carry chain) cannot produce a valid bitstream through the open-source toolchain until Phase 5.4 lands — use the Quartus reference RBF in the meantime
 
 ---
@@ -1928,7 +1928,7 @@ The LED was constantly on. We tried again. Constantly off. We
 tried 10 different rebuilds with various phase-ordering and stripping
 fixes; the LED stayed in one state or the other but never blinked.
 
-**The two days of red herrings.** Each time we flashed and saw a
+**The stretch of red herrings.** Each time we flashed and saw a
 constant LED, we assumed the codec was *almost* right and one more
 small fix would make it run. We chased — and actually fixed — five
 real bugs in `fasm2rbf.py` and the sig-cache:
@@ -2265,96 +2265,88 @@ LEs in the LAB are part of it.
 
 - [x] Phase 5.4: **LE carry chain in the open flow (HARDWARE-VERIFIED 2026-04-13)** — arith mode activation lives in the block band (frames 1692-1738, bp=2), not in LAB CRAM columns, and is a per-LAB mode switch, not a per-LE cell. Four pieces landed: (1) `chipdb_gen.py` declares 8,126 `cout→cin` direct pips between adjacent LE bels; (2) `synth/ep4ce6_map.v` + `synth/prims.v` add the CE6_CARRY primitive so Yosys lands `$alu` on chained LEs with the FF's `Q` wired directly into `CE6_CARRY.B` (no external "Route-A" buffer); (3) `synth/np2fasm.py` walks the carry chain and emits `LUT_ARITH` directives; (4) `fuzz/fasm2rbf.py` applies the arith blob from `results/arith_blockband_v4.json` (universal, position-independent at any LAB) for 8-LE half-LAB chains, or from `results/arith_blockband_by_width.json` (widths 2..16 single-LAB + 16+8 cross-LAB) for other chain lengths. AX301 silicon-accepted: identity + 8× `LUT_ARITH=0x0000` blinks bit-identically to Quartus's counter RBF; identity `Q<=Q` negative control stays dark.
 
-### Long-term direction: where we can actually beat Quartus
+### Long-term direction: what this enables, and what it won't
 
-A common question is "with the codec working, can we use modern ML (RL routing,
-GNN congestion prediction, LLM logic synthesis) to outperform Intel Quartus?"
-Our honest answer, based on the current state of the project and the academic
-literature, is **mostly no for the things people first think of, but yes for a
-narrower and more interesting set of targets**.
+A common question: with the codec working, can modern ML (RL routing, GNN
+congestion prediction) outperform Quartus? The honest answer has three
+layers.
 
-**Where we will not win.** Quartus has a hardware-calibrated timing model
-(per-wire RC measured on real silicon across process corners), a complete
-legality checker accumulated over 30 years, and routing algorithms
-(PathFinder + negotiated congestion) that academic RL routers have **not yet
-beaten on standard benchmarks** as of 2024. Trying to out-route Quartus on its
-home turf with reinforcement learning is a well-known academic trap.
+**PPA is out of reach.** Quartus has a 30-year-old hardware-calibrated
+timing model, a complete legality checker, and routing algorithms
+(PathFinder + negotiated congestion) that have proven hard to beat on
+industry benchmarks — whether academic RL routers can close the gap remains
+an open research problem. Trying to out-route Quartus on its home turf is a
+known dead end.
 
-**Where we can win.** We have one asymmetric advantage Quartus does not have
-and never will: **a programmable, bit-level, bidirectional codec that can
-modify a bitstream in microseconds and validate the result on real silicon in
-seconds**. Quartus is a one-way `verilog → bitstream` black box. We are not.
-That gap enables several things Quartus structurally cannot do:
+**What the codec does uniquely enable** is bit-level bidirectional
+modification of a shipped bitstream — microseconds to mutate, seconds to
+validate on silicon. Quartus is a one-way `verilog → bitstream` pipeline;
+we are not. That gap enables:
 
-1. **Bitstream-level superoptimizer (peephole over CRAM).** Take a Quartus
-   build, mutate it cell by cell (equivalent LUT-mask transforms, redundant
-   routing-bit removal, parallel-LE merging), validate equivalence on hardware,
-   accept mutations that lower cell count or dynamic power. Quartus never
-   re-touches its output once fit completes; we can run thousands of
-   silicon-validated mutations offline. The win comes from "infinite free
-   re-tries on real silicon," not from a smarter model.
-2. **Things Quartus refuses to do at all.** Our codec enables:
-   - Partial reconfiguration on a die that does not officially support it
-     (rewrite specific frames without a full reload)
-   - Bitstream watermarking / fingerprinting in irrelevant LUT bits
-   - Reproducible builds (Quartus is seed-dependent; our codec is a pure
-     function — bit-identical output for identical input, every time)
-   - Per-die overfitting (calibrate for one specific chip's process corner /
-     aging — useful for hardware security and PUFs)
-3. **Open toolchain (the real prize).** A working Yosys + nextpnr-EP4CE6 flow
-   matters 100× more than "beating Quartus on PPA." It is the first time
-   Linux/macOS users can target this chip without installing Intel's tools,
-   the first time CI systems can build EP4CE6 bitstreams reproducibly, and the
-   first time the chip enters the open-source FPGA ecosystem at all. **This is
-   the actual long-term goal of the project.**
+1. **Bitstream-level mutation and equivalence framework.** Take a Quartus
+   build, apply cell-level equivalent transforms (LUT-mask rewrites,
+   redundant routing-bit removal), verify equivalence on hardware, keep
+   mutations that reduce cell count or power. Expected PPA wins from
+   cell-level peepholing are small (Quartus output is already near-locally
+   optimal); the real value is as a research substrate for post-fit
+   optimization and differential equivalence testing that Quartus cannot
+   expose.
+2. **Workflows Quartus does not expose.** Offline bitstream mutation and
+   replay: modify specific frames in a known-good RBF and re-flash on next
+   power cycle. This is *not* partial reconfiguration (Cyclone IV lacks
+   ICAP), but it enables things Quartus's single-shot flow rules out —
+   applying ECO patches without re-running fit, reproducible bit-identical
+   builds (Quartus is seed-dependent; the codec is a pure function), and
+   bitstream watermarking in don't-care LUT bits.
+3. **Open toolchain (the actual prize).** A working Yosys + nextpnr-EP4CE6
+   flow matters an order of magnitude more than any PPA play. It is the
+   first time Linux/macOS users can target this chip without Intel's tools,
+   the first time CI can build EP4CE6 bitstreams reproducibly, and the
+   first time the **Cyclone IV E family** enters the open-source FPGA
+   ecosystem (Project Mistral brought Cyclone V partway there before us).
 
-**Where ML belongs (assistant role, not core).** Modern ML has a real but
-modest place in this project:
+**Where ML fits.** A modest supporting role: a decision-tree classifier to
+replace hand-coded LI envelope rules once the corpus is big enough; a
+small-tree pattern miner (not GNNs) for the paired-vs-alternating selection
+rule so the result compiles directly into the codec; an anomaly detector
+for codec-built RBFs that fail to flash. None of this is "ML beats
+Quartus" — it is "ML helps write rules we do not want to hand-derive."
 
-- **Decision-tree mode classifier** to replace hand-coded LI envelope rules
-  (`_classify_li_lab()`). Once the corpus is large enough, a learned classifier
-  is more robust than hard-coded patterns and remains fully interpretable.
-- **Pattern miner** for the `li_mode_corpus_mine.py` output — small decision
-  trees, not GNNs, are the right tool for finding the paired-vs-alternating
-  selection rule. Decision trees can be audited and compiled directly into the
-  codec.
-- **Anomaly detector** for codec-built RBFs that fail to flash — predict which
-  envelope was most likely violated, to speed up debugging.
-
-None of these are "ML beats Quartus." They are "ML helps us write rules we do
-not want to hand-derive."
-
-**Recommended priority.** Finish Phase 5.3 (the open-source toolchain is already
-in progress — chipdb + Yosys techmap + np2fasm are working, the counter routes).
-Once a `.v → bitstream` open-source flow runs end-to-end,
-the question shifts from "can we beat Quartus on PPA" to "what can we do that
-Quartus cannot do at all" — and the codec, not a model, is what unlocks those
-answers.
-
-> **TL;DR — We are not building a smarter Quartus. We are building a different
-> kind of tool that lets users do things Quartus does not let them do at all.
-> The win is in defining a new arena, not in beating Quartus on its home turf.**
+**Priority.** Finish Phase 5.3. The `.v → bitstream` open flow is already
+most of the way there (chipdb + techmap + np2fasm working, counter
+routing, 8-bit counter HW-verified). Once it runs end-to-end, the question
+shifts from "can we beat Quartus on PPA" to "what can we do that Quartus
+won't do at all" — and the codec is what answers that.
 
 ### Overall Progress Estimate
 
-| Domain | Progress | Notes |
-|--------|----------|-------|
-| Logic configuration (LUT/FF/Arithmetic) | **~95%** | All LE positions' LUT TT decoded; FF and arithmetic mode mapped |
-| CRAM address mapping | **100%** | 22 cols × 18 rows × 16 LEs = 376/376 positions fully verified (CE6 whitelist; post-jailbreak X=32/33 + Y=15 silicon-validated) |
-| C4 routing switches | **~65%** | I=0 100% formula; I≠0 44-entry per-(X,I) lookup table (Phase 3.23 sweep) |
-| R4 routing switches | **~68%** | 25/37 I-indices mapped; remaining 12 blocked on corpus, not method |
-| LOCAL_INTERCONNECT | **~85%** | Base-granular read/write; two encoding modes resolved; V2 safety guard |
-| R24 long-distance wires | **~30%** | I=0 fixed-byte model, 73% wires |
-| C16 long-distance wires | **0%** | Not yet started |
-| Bitstream codec | **~85%** | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; **CRC patcher integrated; HW-verified on silicon** |
-| Route synthesis (green islands) | **24/520 sources** | CE6 standard 15 islands — **686/686 routes bit-perfect** against Quartus. Jailbreak/edge frontier 9 islands — **8/45 routes** (Y=15 × {10,11,12,13,14,17,18}, Y=5 × {18,19}): physical fingerprints captured, sig-cache pair-diff mining pending, `route_synth.parse_need` formula path doesn't yet model Y=15. Total harness: **694/731**. |
-| FASM sig-cache (Phase 4.5) | **13,487 entries** | `results/route_cells_full.json` — 7-tuple (sn>0 supported); Plan D' factory covers 95.9% of NEORV32 edges; hero X=5 silicon-validated |
-| M9K init codec (Phase 5.2) | **closed** | 2D linear formula, 33 anchor entries, 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs |
-| RBF CRC reverse engineering | **100%** | CRC-16/IBM 0x8005, init 0xFE54, frames 25..1751; 1727/1727 verified |
-| FASM toolchain (Phase 4) | **closed** | `fasm2rbf` + `rbf2fasm` + set-cover decomposer + port-MUX consolidated loader (34% savings); 1725/1725 + 41/42 + 3/3 + CE6 686/686 bit-perfect regressions; AX301 silicon-accepted (AND(K1,K2)) |
-| Open-source toolchain (Phase 5.3) | **mostly open** | end-to-end pipeline runs (Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe). Combinational, FF-only **and arithmetic** designs flashable. 8-bit counter hardware-verified on AX301 (2026-04-13). IOB FASM (`IOB_IN`/`IOB_OUT`) landed 44/44 single-axis (2026-04-14); GCLK pipeline (`GCLK_PIN` + `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`) landed + HW-verified (2026-04-14). IOB→SLICE paired mining template HW-verified; sig-cache injection + cross-axis IOB pin combos still pending. |
-| LE carry chain in open flow (Phase 5.4) | **hardware-verified** | chipdb `cout→cin` pips (8,126 added), CE6_CARRY techmap primitive with LE-internal FF→ALU feedback (no Route-A buffer), np2fasm `LUT_ARITH` emission, FASM `LUT_ARITH` directive. Arith blob lives in block band (frames 1692-1738), **not** in LE columns as Phase 2.4 had claimed; position-independent across LABs (v4 universal blob); per-width table mined for widths 2..16 plus 16+8 cross-LAB, all round-trip zero-diff vs Quartus. |
-| Hardware loopback (codec → flash → silicon) | **closed** | LutCodec + FASM path both running on AX301 |
+Percentages across different domains are not comparable (denominators
+differ wildly — bits, cell types, route count, design size). This
+table reports **coverage** (what's concretely counted) and **status**
+(HW-verified / round-trip-clean / partial / not started) rather than a
+single headline number.
+
+| Domain | Coverage | Status |
+|--------|----------|--------|
+| CRAM address mapping | 22 cols × 18 rows × 16 LEs = 376/376 (CE6 whitelist) + X=32/33 and Y=15 post-jailbreak | HW-verified |
+| RBF CRC | Spec fully derived (CRC-16/IBM, 0x8005, init 0xFE54, frames 25..1751); 1727/1727 verified | HW-verified |
+| Logic configuration (LUT/FF/arithmetic) | LUT TT decoded at all LE positions; FF is silicon-default (no CRAM); arith mode = block-band blob | HW-verified |
+| LE carry chain in open flow | chipdb `cout→cin` pips (8,126), CE6_CARRY techmap, `LUT_ARITH` FASM directive, per-width table (2..16 + 16+8 cross-LAB), v4 position-independent blob | HW-verified (8-bit counter, 2026-04-13) |
+| FASM toolchain (Phase 4) | `fasm2rbf` + `rbf2fasm` + set-cover decomposer; 1725/1725 + 41/42 + 3/3 + CE6 686/686 round-trip | HW-verified (AND(K1,K2) on AX301) |
+| Hardware loopback (codec → flash → silicon) | LutCodec + FASM path both running on AX301 | HW-verified |
+| C4 routing switches | I=0 closed-form formula; I≠0 covered by 44-entry per-(X,I) lookup + sig-cache | Closed-form partial, sig-cache production |
+| LOCAL_INTERCONNECT | Base-granular read/write; two encoding modes resolved; V2 safety guard | Round-trip clean |
+| R4 routing switches | 25/37 I-indices mapped; remaining 12 blocked on corpus, not method | Partial |
+| R24 long-distance wires | I=0 fixed-byte model, ~73% of wires | Partial |
+| C16 long-distance wires | — | Not started |
+| Bitstream codec | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; CRC patcher integrated | HW-verified |
+| Route synthesis (green islands) | CE6 standard 15 islands 686/686 bit-perfect; jailbreak/edge 9 islands 45/45 via snapshot fallback. Total harness 731/731 | Closed (2026-04-14) |
+| FASM sig-cache (Phase 4.5) | 13,487 entries; 7-tuple (sn>0 supported); Plan D' factory covers 95.9% of NEORV32 edges | Production |
+| M9K init codec (Phase 5.2) | 2D linear formula; 33 anchor entries; 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs | Round-trip clean; HW not yet validated |
+| GCLK pipeline (Phase 5.4) | `GCLK_PIN` (12 pins on F17) + `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`; XOR-composed on AUTO baseline | HW-verified at LAB(10,4).N=0, 2026-04-14 |
+| IOB FASM (Phase 5.4) | `IOB_IN`/`IOB_OUT` 44/44 single-axis bit-perfect; `IOB_ROUTE` 15/15 entries 0 full-RBF diffs | Single-axis HW-verified; cross-axis 2D sweep in progress |
+| `nv_zero_global` retirement | `NV_BASELINE_PACK` directive + sub-directives reproduce the Quartus baseline byte-exact from PURE_ZERO | Codec path landed; HW flash equivalence not yet confirmed |
+| Open-source toolchain (Phase 5.3) | Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe. Combinational, FF-only, and arithmetic designs flashable | Mostly open; M9K front-end (Yosys `memory_libmap`) blocked |
 
 ---
 
@@ -2367,57 +2359,123 @@ answers.
 
 ---
 
+## Dead Ends Worth Remembering
+
+Reverse engineering is mostly finding out which attractive hypothesis is
+wrong. The ones that cost real time, recorded so the next person does
+not repeat them:
+
+- **M5 counter carry-chain detour.** Built a 24-bit counter through the
+  open toolchain, could not get it to match Quartus's RBF. Spent a
+  stretch of the project patching `LutCodec`, re-mining sig-cache
+  entries, and chasing phase-ordering bugs in `fasm2rbf`. Root cause was none of
+  those — Quartus places the design using LE-internal carry-chain
+  wires that nextpnr-generic does not model, so Yosys emulates `+1`
+  as a 4-LE ripple with 24 self-feedback routes. The codec fixes we
+  landed along the way were real improvements, but the real blocker
+  was an unmodelled primitive, not a codec bug. Lesson: when your open
+  build of design D misbehaves, flash Quartus's RBF for the same D
+  *first* and diff the two bitstreams before patching anything.
+- **IOB cross-axis linear superposition.** Plausible hypothesis: a
+  design driving (KEY_X, LED_Y) should factor as (KEY_X-only) ⊕
+  (LED_Y-only) ⊕ baseline. Falsified — bank-pair lookup also failed.
+  The residue is ~50-60 bytes of joint-placement state that neither
+  model captures. Closing it requires a full 2D K×LED sweep (~480
+  pair builds), currently in progress. Derived models are not coming
+  back; do not retry them.
+- **R4 dark passive mining.** Tried to recover R4 `BASE` constants by
+  counting bit density in a full NV32 RBF. RBF is too dense —
+  signal-to-noise is below the mining floor. Dead end.
+- **T9 LI paired-vs-alternating as a function of the routing key.**
+  Mined, structurally audited, falsified — the choice is not a
+  function of `(src_type, src_I, dst_N, dst_port)`. Stop mining this
+  axis; the missing variable is elsewhere.
+- **DFF per-LE enable CRAM bit.** Chased for a long stretch before
+  realising the flip-flop is intrinsic to every Cyclone IV LE and has no
+  per-LE enable cell. The original `dff_cells_mined.json` was
+  routing-infrastructure noise with zero overlap against any real
+  design. The FASM `DFF` directive is now a parsed no-op.
+- **Self-loop sig-cache entries via the two-LUT pair template.** The
+  template cannot represent `src == dst`, and Quartus refits between
+  baseline and feedback compiles, so the diff includes pin
+  reassignments unrelated to the LI MUX. The 61 self-loop entries in
+  `route_cells_full.json` are bloated noise (90-754 cells vs corpus
+  median 135) and cannot be repaired by re-running the factory.
+  Needs a single-LE differential strategy.
+
+Individual post-mortems with cell-level detail live in memory files under
+`~/.claude/projects/-home-test-EP4CE6/memory/` — search for
+`m5_counter_root_cause_carry_chain`, `iob_cross_axis_not_decomposable`,
+`r4_dark_passive_mining_dead`, `t9_li_mode_negative_result`,
+`dff_perle_formula`, and `sigcache_mining_template_pitfall`.
+
+## Limitations and What This Is Not
+
+So the README is honest about scope, not just progress:
+
+- **C16 long-distance wires — untouched.** Zero coverage. All current
+  routing work is C4 / R4 / R24 / LI. Designs that would route
+  through C16 are not supported.
+- **Non-E-series Cyclone IV parts — unvalidated.** Every silicon
+  result in this repo is on an EP4CE6F17C8 (AX301 board). The codec
+  formulas have not been tested on EP4CE15/22/30/40/55/75/115, nor on
+  Cyclone IV GX. Die topology should be similar within the E family,
+  but "similar" is not a checked claim.
+- **Large designs — untested end-to-end.** The hardware-verified
+  open-flow designs are small (8-bit counter, AND gate,
+  identity-LED). NEORV32 has been synthesised and mapped, but no
+  NEORV32 bitstream built by the open flow has been flashed and
+  proven to boot on silicon. Larger designs may expose codec or
+  chipdb gaps that small tests do not.
+- **Temperature and voltage corners — not characterised.** All silicon
+  validation is at room temperature, nominal Vccint. Behaviour under
+  industrial temperature range or voltage droop is not measured.
+- **M9K BRAM in the open flow — not hardware-validated yet.** Codec
+  and `np2fasm` emission are green (5/5 tests each), chipdb has M9K
+  bels and bridge pips, but the Yosys `memory_libmap` front-end
+  currently rejects the mapping with "can't share write port 0:
+  incompatible enable" — a lib/memory-shape mismatch that blocks the
+  smoke build on `tmp/m9k_smoke/ram_9x512.v`. No RAM-using design has
+  been flashed through the open flow.
+- **PLLs — off-fabric, out of scope.** Cyclone IV PLLs live outside
+  the CRAM region this project maps. Designs that require configured
+  PLLs (as opposed to the dedicated clock pins the `GCLK_PIN`
+  directive covers) are not supported.
+- **Not a Quartus replacement.** The codec is not a timing-driven
+  place-and-route tool. Its unique capabilities are bit-level
+  bidirectional modification of a shipped bitstream and offline
+  mutation/replay — see *"Long-term direction"* above. If you need
+  PPA-competitive synthesis, use Quartus.
+
+---
+
 ## License
 
-**Dual license (as of 2026-04-07, replacing the previous MIT license):**
+Dual license, effective 2026-04-07 (replacing the previous MIT license):
 
-**Why we switched.** For most of this project the license was MIT — the
-default choice for small research code. The trigger for the change was
-the CE6→CE10 jailbreak documented in *"The full jailbreak: CE6's fabric
-map is a lie"* above. Until that point the findings looked like a
-narrow reverse-engineering of one budget FPGA. Once we could prove on
-silicon that the chip Altera sold as an EP4CE6 is physically an
-EP4CE10, that its fitter whitelist deletes ~40% of a working die, and
-that every one of those hidden 2,480 LEs lights up on the first try —
-the stakes shifted. The code and the findings are no longer "a neat
-hack on a cheap board"; they are the seed of an open toolchain that
-could unlock ~65% more logic on every EP4CE6 board in the wild, and a
-reproducible method for catching vendors doing the same trick on future
-parts. MIT would have let Altera absorb the method into a silent
-fitter patch and move on without a word. GPLv3 + CC BY-SA forces every
-downstream — commercial, academic, or vendor itself — to stay on the
-same open table, with full source and full attribution. That felt like
-the honest response to what the silicon just told us.
-
-
-
-- **Code** — `GPL-3.0-or-later`. The Python pipeline, Verilog generators,
-  codec implementations, jailbreak scanners, and anything under `fuzz/`
-  are copyleft. If you vendor this code into another toolchain — open or
-  closed, hobby or commercial, including any official Altera/Intel tool
-  — your project must be released under GPLv3 with full source. Full
-  text: [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt).
-- **Documentation, findings & methodology** —
-  `CC BY-SA 4.0`. The CRAM model, C4/R4/LI address formulas, RBF CRC
-  spec, CE6→CE10 jailbreak results, XOR-chain dead-cell scanning
-  method, and all prose in `README*.md` / `CLAUDE.md` / `FINDINGS.md`
-  are share-alike. Cite them in a paper, tutorial, or talk and your
-  derivative must also be CC BY-SA. Full text:
+- **Code** (`fuzz/`, `synth/`, `scripts/`, everything that executes) —
+  `GPL-3.0-or-later`. Full text:
+  [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt).
+- **Documentation and prose** (`README*.md`, `CLAUDE.md`, `FINDINGS.md`,
+  `docs/`) — `CC BY-SA 4.0`. Full text:
   [`LICENSES/CC-BY-SA-4.0.txt`](LICENSES/CC-BY-SA-4.0.txt).
 
-See [`LICENSE`](LICENSE) for the scope notes and rationale.
+**What copyleft covers, and what it doesn't.** GPL attaches to the code
+as software, and CC BY-SA attaches to the prose as a written work. Both
+require downstream forks of these artifacts to stay under the same
+terms. Neither license covers the *methodology* itself — reverse-engineering
+techniques, CRAM formulas, bit offsets, and the CE10 jailbreak result
+are facts, not expression, and copyright does not fence them off. We
+chose copyleft anyway because it keeps the reference implementation and
+the written record open, which is the part downstream users actually
+rely on. If you want the methodology attached to a more durable claim,
+cite the repo and the relevant `FINDINGS.md` entry — that is what a
+defensive publication looks like.
 
-The choice is deliberate: this work exists to keep FPGA toolchain
-research in hacker hands. MIT would have let Altera quietly patch their
-fitter whitelist and absorb the findings without reciprocity. GPLv3 +
-CC BY-SA forces every downstream — commercial or academic — to stay on
-the same open table.
+Bitstream blobs (`*.rbf`, `*.sof`), SQLite corpora, and Quartus build
+artifacts under `work/` and `results/rbf/` are hardware telemetry, not
+creative works; no license is asserted over them, and redistribution
+remains subject to Altera/Intel's original terms on their tools and
+outputs.
 
-Bitstream blobs (`*.rbf`, `*.sof`), raw SQLite databases, and Quartus
-build artifacts in `work/` and `results/rbf/` are hardware telemetry,
-not creative works; no license is asserted over them, and
-redistribution remains subject to the upstream vendor's original terms.
-
-This project is for educational and research purposes. The
-reverse-engineering results are intended for building an open-source
-FPGA toolchain.
+This project is for educational and research purposes.
