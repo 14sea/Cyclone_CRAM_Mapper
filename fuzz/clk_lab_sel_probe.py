@@ -36,7 +36,8 @@ from config import ROUTE_FUZZ_PINS
 
 REPO = Path(__file__).resolve().parent.parent
 RBF = REPO / "results" / "rbf"
-WORK = REPO / "tmp" / "force_gclk"
+DEFAULT_WORK = REPO / "tmp" / "force_gclk"
+WORK = DEFAULT_WORK
 SPINE_JSON = REPO / "results" / "clk_cross_pin_spine_check.json"
 
 HDR = 32 + 25 * 210
@@ -123,7 +124,12 @@ def main():
                     help='target LAB "X,Y" (default 10,4)')
     ap.add_argument("--out", default=None,
                     help="output JSON path (default results/clk_lab_sel_probe_X{x}Y{y}.json)")
+    ap.add_argument("--work", default=None,
+                    help="override WORK dir for parallel runs (default tmp/force_gclk)")
     args = ap.parse_args()
+    if args.work:
+        global WORK
+        WORK = Path(args.work)
     target_lab = tuple(int(x) for x in args.lab.split(","))
     assert len(target_lab) == 2
     out_path = Path(args.out) if args.out else (
