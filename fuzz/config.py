@@ -131,6 +131,65 @@ ROUTE_FUZZ_PINS = {
     "CLK": "PIN_E1",  # 50 MHz clock
 }
 
+# AX301 board pin map (from see_neorv32_run_linux/quartus/neorv32_demo.qsf).
+# Used by chipdb_gen.py to emit one GENERIC_IOB bel per actual board pin so
+# nextpnr-generic can place ax301_top (the SoC wrapper exposing only the 51
+# board-facing signals). Keys are the design-side signal names; values are
+# the EP4CE6F17C8 package pins.
+BOARD_PINS_AX301 = {
+    "CLOCK":     "PIN_E1",
+    "KEY2":      "PIN_E16",
+    "RXD":       "PIN_M2",
+    "TXD":       "PIN_G1",
+    "LED[0]":    "PIN_G15",
+    "LED[1]":    "PIN_F16",
+    "LED[2]":    "PIN_F15",
+    "LED[3]":    "PIN_D16",
+    "S_CLK":     "PIN_R4",
+    "S_CKE":     "PIN_R14",
+    "S_NCS":     "PIN_T6",
+    "S_NRAS":    "PIN_R6",
+    "S_NCAS":    "PIN_T5",
+    "S_NWE":     "PIN_N1",
+    "S_BA[0]":   "PIN_R7",
+    "S_BA[1]":   "PIN_T7",
+    "S_A[0]":    "PIN_T8",
+    "S_A[1]":    "PIN_P9",
+    "S_A[2]":    "PIN_T9",
+    "S_A[3]":    "PIN_R9",
+    "S_A[4]":    "PIN_L16",
+    "S_A[5]":    "PIN_L15",
+    "S_A[6]":    "PIN_N16",
+    "S_A[7]":    "PIN_N15",
+    "S_A[8]":    "PIN_P16",
+    "S_A[9]":    "PIN_P15",
+    "S_A[10]":   "PIN_R8",
+    "S_A[11]":   "PIN_R16",
+    "S_A[12]":   "PIN_T15",
+    "S_DQM[0]":  "PIN_N2",
+    "S_DQM[1]":  "PIN_T14",
+    "S_DB[0]":   "PIN_R5",
+    "S_DB[1]":   "PIN_T4",
+    "S_DB[2]":   "PIN_T3",
+    "S_DB[3]":   "PIN_R3",
+    "S_DB[4]":   "PIN_T2",
+    "S_DB[5]":   "PIN_R1",
+    "S_DB[6]":   "PIN_P2",
+    "S_DB[7]":   "PIN_P1",
+    "S_DB[8]":   "PIN_R13",
+    "S_DB[9]":   "PIN_T13",
+    "S_DB[10]":  "PIN_R12",
+    "S_DB[11]":  "PIN_T12",
+    "S_DB[12]":  "PIN_T10",
+    "S_DB[13]":  "PIN_R10",
+    "S_DB[14]":  "PIN_T11",
+    "S_DB[15]":  "PIN_R11",
+    "SD_CLK":    "PIN_J15",
+    "SD_DI":     "PIN_K16",
+    "SD_DO":     "PIN_J16",
+    "SD_NCS":    "PIN_K15",
+}
+
 # --- LUT4 Truth Table ---
 # 16 minterm expressions for isolating individual truth table bits
 MINTERM_EXPRESSIONS = {

@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Yosys synthesis script for the AX301 board wrapper (NEORV32 SoC +
+# wb_sdram_ctrl + sdram_ctrl) on EP4CE6 (ghdl-yosys-plugin).
+#
+# Top entity: ax301_top — exposes only the 51 board pins listed in
+# config.BOARD_PINS_AX301 (CLOCK / KEY2 / RXD / TXD / LED[3:0] /
+# SDRAM bus / SD card SPI), so nextpnr-generic can place the design
+# without overflowing the chipdb's IOB ring.
+#
+# DO NOT run this file directly with `yosys -s`: like synth_ep4ce6.ys,
+# the $HOME-prefixed paths are taken literally by Yosys. Use the
+# wrapper:
+#
+#     ./synth/synth_ax301.sh                    # uses $HOME/neorv32_rot
+#                                               # + $HOME/see_neorv32_run_linux/rtl
+#     NEORV32_ROOT=/path/to/neorv32 \
+#     AX301_RTL=/path/to/ax301/rtl \
+#         ./synth/synth_ax301.sh
+#
+# Recipe mirrors synth_ep4ce6.ys: read_verilog -lib prims.v + SDP/TDP
+# techmap + $and lowering + delete $scopeinfo + final ep4ce6_map.v
+# pass. The only meaningful diff is the ax301_top + SDRAM RTL added
+# below the NEORV32 core file list, and `-e ax301_top`.
+plugin -i ghdl
+read_verilog -lib synth/prims.v
+# AX301 SDRAM controllers (Verilog, work library)
+read_verilog -defer $HOME/see_neorv32_run_linux/rtl/wb_sdram_ctrl.v
+read_verilog -defer $HOME/see_neorv32_run_linux/rtl/sdram_ctrl.v
+ghdl --std=08 --work=neorv32 -fsynopsys -frelaxed $HOME/neorv32_rot/neorv32/rtl/core/neorv32_package.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sys.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_decompressor.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_frontend.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_control.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_prim.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_counters.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_regfile.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_shifter.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_muldiv.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_bitmanip.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_fpu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_cfu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_cond.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_crypto.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_lsu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_pmp.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_trace.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cache.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bus.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dma.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dmem.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_xbus.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cfs.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sdi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_gpio.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_wdt.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_clint.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_uart.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_spi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_twi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_twd.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_pwm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_trng.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_neoled.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_gptmr.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_onewire.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_slink.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_tracer.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sysinfo.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_dtm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_auth.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_dm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_top.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cache_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_image.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_rom.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dmem_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom_image.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom_rom.vhd synth/wb_sdram_ctrl_stub.vhd $HOME/see_neorv32_run_linux/rtl/ax301_top.vhd -e ax301_top
+hierarchy -check -top ax301_top
+proc
+async2sync
+memory -nomap
+opt_clean
+memory_libmap -lib synth/m9k.lib
+memory_map
+opt -full
+flatten
+opt -full
+techmap
+opt -fast
+dffunmap -ce-only
+dffunmap -srst-only
+simplemap
+abc -lut 4
+clean
+techmap -map synth/ep4ce6_map.v
+opt_clean
+# The M9K techmap rules emit `$and` cells (e.g. `WE & CLK_EN`); lower them
+# to LUT primitives so nextpnr-generic can place them onto GENERIC_SLICE.
+simplemap t:$and t:$or t:$xor t:$xnor t:$not
+techmap -map +/gate2lut.v -D LUT_WIDTH=4
+clean
+techmap -map synth/ep4ce6_map.v
+opt_clean
+delete t:$scopeinfo
+clean
+stat
+write_json tmp/ax301_synth/ax301.json

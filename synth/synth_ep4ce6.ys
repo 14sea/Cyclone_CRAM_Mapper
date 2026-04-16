@@ -14,6 +14,7 @@
 # The m9k.lib / ep4ce6_map.v paths below are relative to the repo root;
 # the wrapper cd's to the repo root before invoking yosys.
 plugin -i ghdl
+read_verilog -lib synth/prims.v
 ghdl --std=08 --work=neorv32 -fsynopsys -frelaxed -gCLOCK_FREQUENCY=50000000 -gBOOT_MODE_SELECT=2 -gRISCV_ISA_C=true -gRISCV_ISA_M=true -gRISCV_ISA_U=true -gRISCV_ISA_Zaamo=true -gRISCV_ISA_Zalrsc=true -gRISCV_ISA_Zicntr=true -gIMEM_EN=true -gIMEM_SIZE=16384 -gDMEM_EN=true -gDMEM_SIZE=8192 -gXBUS_EN=true -gXBUS_TIMEOUT=4096 -gIO_GPIO_NUM=4 -gIO_CLINT_EN=true -gIO_UART0_EN=true -gIO_UART0_RX_FIFO=4 -gIO_UART0_TX_FIFO=4 -gIO_SPI_EN=true -gICACHE_EN=true -gCACHE_BLOCK_SIZE=64 -gDCACHE_EN=true $HOME/neorv32_rot/neorv32/rtl/core/neorv32_package.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sys.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_decompressor.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_frontend.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_control.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_hwtrig.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_prim.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_counters.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_regfile.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_shifter.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_muldiv.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_bitmanip.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_fpu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_cfu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_cond.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu_crypto.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_alu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_lsu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_pmp.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu_trace.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cpu.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cache.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bus.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dma.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dmem.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_xbus.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cfs.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sdi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_gpio.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_wdt.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_clint.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_uart.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_spi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_twi.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_twd.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_pwm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_trng.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_neoled.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_gptmr.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_onewire.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_slink.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_tracer.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_sysinfo.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_dtm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_auth.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_debug_dm.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_top.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_cache_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_image.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_rom.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_imem_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_dmem_ram.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom_image.vhd $HOME/neorv32_rot/neorv32/rtl/core/neorv32_bootrom_rom.vhd -e neorv32_top
 hierarchy -check -top neorv32_top
 proc
@@ -29,9 +30,21 @@ techmap
 opt -fast
 dffunmap -ce-only
 dffunmap -srst-only
+simplemap
 abc -lut 4
 clean
 techmap -map synth/ep4ce6_map.v
+opt_clean
+# The M9K techmap rules emit `$and` cells (e.g. `WE & CLK_EN`); lower them
+# to LUT primitives so nextpnr-generic can place them onto GENERIC_SLICE.
+# Restrict to `t:$and t:$or t:$xor t:$not` so we don't touch the freshly
+# emitted EP4CE6_M9K / CE6_CARRY / DFF / LUT cells.
+simplemap t:$and t:$or t:$xor t:$xnor t:$not
+techmap -map +/gate2lut.v -D LUT_WIDTH=4
+clean
+techmap -map synth/ep4ce6_map.v
+opt_clean
+delete t:$scopeinfo
 clean
 stat
 write_json tmp/nv32_synth/neorv32.json

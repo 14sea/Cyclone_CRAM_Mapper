@@ -138,9 +138,24 @@ def build_chipdb() -> dict:
     belpins: list[dict] = []
     pips: list[dict] = []
 
+    # Compute the IOB list first (merge ROUTE_FUZZ_PINS ∪ BOARD_PINS_AX301,
+    # dedupe by pin_loc) so grid_w can accommodate every pin on the
+    # Y=grid_h-1 border row. Without this, placing ax301_top (55 unique
+    # board pins) overflows the default grid_w=35 that only fits LAB
+    # columns + M9K.
+    seen_locs: dict[str, str] = {}
+    iob_entries: list[tuple[str, str]] = []
+    for pin_name, pin_loc in {**config.ROUTE_FUZZ_PINS,
+                              **config.BOARD_PINS_AX301}.items():
+        if pin_loc in seen_locs:
+            continue
+        seen_locs[pin_loc] = pin_name
+        iob_entries.append((pin_name, pin_loc))
+
     # Grid extents for nextpnr. Use inclusive max and add a 1-tile
     # margin for the IO ring so IOB bels can sit at (0, y) / (x, 0).
-    grid_w = max(LAB_X_FULL + M9K_X) + 2
+    # grid_w must also be wide enough for every IOB along the border.
+    grid_w = max(max(LAB_X_FULL + M9K_X) + 2, len(iob_entries) + 1)
     grid_h = max(LAB_Y_FULL + M9K_Y) + 2
 
     # ---------- LAB slices ----------
@@ -230,19 +245,27 @@ def build_chipdb() -> dict:
                             "output": is_out,
                         })
 
-    # ---------- IOBs (AX301 pin map) ----------
+    # ---------- IOBs (AX301 pin map + routing-fuzz pins) ----------
     # Put IOBs on the border row Y=grid_h-1 and spread along X so
     # nextpnr has distinct (x,y,z) locations. They don't carry routing
     # at M2 — np2fasm will emit BIT lines for them later.
-    for i, (pin_name, pin_loc) in enumerate(config.ROUTE_FUZZ_PINS.items()):
-        name = f"IOB_{pin_name}_{pin_loc}"
+    #
+    # iob_entries is the merged ROUTE_FUZZ_PINS ∪ BOARD_PINS_AX301 list
+    # (deduped by pin_loc) computed at the top of build_chipdb so grid_w
+    # can size to fit. PIN_E1 appears once even though it's labelled
+    # "CLK" by the fuzz pins and "CLOCK" by the AX301 wrapper.
+    for i, (pin_name, pin_loc) in enumerate(iob_entries):
+        # Bel/wire/pip identifiers must be filename-safe — '[' / ']' in
+        # bus signal names like "S_DB[0]" trip nextpnr's name-validator.
+        safe = pin_name.replace("[", "_").replace("]", "")
+        name = f"IOB_{safe}_{pin_loc}"
         bels.append({
             "name": name, "type": "GENERIC_IOB",
             "x": i, "y": grid_h - 1, "z": 0,
             "pin": pin_loc,
         })
-        wi = _wire_iob(pin_name, "I")
-        wo = _wire_iob(pin_name, "O")
+        wi = _wire_iob(safe, "I")
+        wo = _wire_iob(safe, "O")
         wires.extend([
             {"name": wi, "type": "IOB_I", "x": i, "y": grid_h - 1},
             {"name": wo, "type": "IOB_O", "x": i, "y": grid_h - 1},
@@ -390,10 +413,11 @@ def build_chipdb() -> dict:
     # every slice CLK pin. Bypasses LOCAL so the clock never competes
     # with data arcs for track allocation. Any IOB_O can drive it.
     wires.append({"name": "GCLK", "type": "GCLK", "x": 0, "y": 0})
-    for (pin_name, _pl) in config.ROUTE_FUZZ_PINS.items():
-        wo = _wire_iob(pin_name, "O")
+    for (pin_name, _pl) in iob_entries:
+        safe = pin_name.replace("[", "_").replace("]", "")
+        wo = _wire_iob(safe, "O")
         pips.append({
-            "name": f"pip_iob_{pin_name}_O__GCLK",
+            "name": f"pip_iob_{safe}_O__GCLK",
             "type": "IOB_TO_GCLK",
             "src": wo, "dst": "GCLK",
             "delay": PLACEHOLDER_DELAY, "x": 0, "y": 0,
@@ -428,13 +452,14 @@ def build_chipdb() -> dict:
     # fanout is safe (no track contention) and pathfinder cost is
     # a single hop instead of exploring LOCAL.
     gx, gy = valid_labs[len(valid_labs) // 2]
-    for (pin_name, _pin_loc) in config.ROUTE_FUZZ_PINS.items():
-        wi = _wire_iob(pin_name, "I")  # fabric -> pad
-        wo = _wire_iob(pin_name, "O")  # pad -> fabric
+    for (pin_name, _pin_loc) in iob_entries:
+        safe = pin_name.replace("[", "_").replace("]", "")
+        wi = _wire_iob(safe, "I")  # fabric -> pad
+        wo = _wire_iob(safe, "O")  # pad -> fabric
         for t in range(NUM_LOCAL_TRACKS):
             gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
             pips.append({
-                "name": f"pip_iob_{pin_name}_O__{gw}",
+                "name": f"pip_iob_{safe}_O__{gw}",
                 "type": "IOB_TO_LOCAL",
                 "src": wo, "dst": gw,
                 "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
@@ -444,7 +469,7 @@ def build_chipdb() -> dict:
             for n in LE_N:
                 src = _wire_slice_out(x, y, n)
                 pips.append({
-                    "name": f"pip_{src}__iob_{pin_name}_I",
+                    "name": f"pip_{src}__iob_{safe}_I",
                     "type": "SLICE_TO_IOB",
                     "src": src, "dst": wi,
                     "delay": PLACEHOLDER_DELAY, "x": x, "y": y,

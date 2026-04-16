@@ -75,6 +75,53 @@ module GENERIC_IOB #(
 );
 endmodule
 
+// $__M9K_SDP_ / $__M9K_TDP_ — Yosys libmap-emitted memory cells.
+// Declared as blackboxes only so nextpnr-generic can parse the JSON
+// without "Failed to get direction" errors. Lowering to EP4CE6_M9K
+// belongs in synth/ep4ce6_map.v (Stage C.3 SDP/TDP techmap rules).
+(* blackbox *)
+module \$__M9K_SDP_ (...);
+	parameter INIT = 0;
+	parameter PORT_R_WIDTH = 9;
+	parameter PORT_W_WIDTH = 9;
+	parameter PORT_W_WR_BE_WIDTH = 1;
+	input  PORT_R_CLK;
+	input  PORT_R_CLK_EN;
+	input  [12:0] PORT_R_ADDR;
+	output [PORT_R_WIDTH-1:0] PORT_R_RD_DATA;
+	input  PORT_W_CLK;
+	input  PORT_W_CLK_EN;
+	input  PORT_W_WR_EN;
+	input  [12:0] PORT_W_ADDR;
+	input  [PORT_W_WR_BE_WIDTH-1:0] PORT_W_WR_BE;
+	input  [PORT_W_WIDTH-1:0] PORT_W_WR_DATA;
+endmodule
+
+(* blackbox *)
+module \$__M9K_TDP_ (...);
+	parameter INIT = 0;
+	parameter PORT_A_WIDTH = 9;
+	parameter PORT_B_WIDTH = 9;
+	parameter PORT_A_WR_BE_WIDTH = 1;
+	parameter PORT_B_WR_BE_WIDTH = 1;
+	parameter PORT_A_OPTION_WRITE_MODE = 0;
+	parameter PORT_B_OPTION_WRITE_MODE = 0;
+	input  PORT_A_CLK;
+	input  PORT_A_CLK_EN;
+	input  PORT_A_WR_EN;
+	input  [12:0] PORT_A_ADDR;
+	input  [PORT_A_WR_BE_WIDTH-1:0] PORT_A_WR_BE;
+	input  [PORT_A_WIDTH-1:0] PORT_A_WR_DATA;
+	output [PORT_A_WIDTH-1:0] PORT_A_RD_DATA;
+	input  PORT_B_CLK;
+	input  PORT_B_CLK_EN;
+	input  PORT_B_WR_EN;
+	input  [12:0] PORT_B_ADDR;
+	input  [PORT_B_WR_BE_WIDTH-1:0] PORT_B_WR_BE;
+	input  [PORT_B_WIDTH-1:0] PORT_B_WR_DATA;
+	output [PORT_B_WIDTH-1:0] PORT_B_RD_DATA;
+endmodule
+
 // EP4CE6_M9K — single-port M9K BRAM blackbox stub for nextpnr-generic.
 //
 // STATUS: STUB ONLY.  Wired into the chipdb (`fuzz/chipdb_gen.py`
