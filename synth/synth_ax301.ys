@@ -37,9 +37,12 @@ memory_map
 opt -full
 flatten
 opt -full
-alumacc
-opt -fast
-techmap -map synth/ep4ce6_map.v
+# alumacc disabled: nextpnr-generic can't enforce carry chain adjacency,
+# so scattered CE6_CARRY cells produce incorrect silicon. Regular LUT4
+# arithmetic is ~160 fewer LEs and always correct.
+# alumacc
+# opt -fast
+# techmap -map synth/ep4ce6_map.v  # early pass was for $alu → CE6_CARRY only
 techmap
 opt -fast
 dffunmap -ce-only

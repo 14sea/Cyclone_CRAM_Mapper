@@ -70,7 +70,7 @@ LAB_X_FULL = sorted(set(config.LAB_X) | set(config.JAILBREAK_LAB_X))
 LAB_Y_FULL = sorted(set(config.LAB_Y) | set(config.JAILBREAK_LAB_Y))
 LE_N = config.LE_N
 M9K_X = [15, 27]
-M9K_Y = list(range(2, 22))
+M9K_Y = list(range(2, 24))
 
 CARRY_DELAY = 1          # cout→cin direct pip — cheapest (dedicated wire,
                          # no LI MUX, no LOCAL bus contention). Equal to

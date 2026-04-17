@@ -338,7 +338,9 @@ def convert(
         "EP4CE6_M9K",
     }
     mod_name = next(
-        (m for m in modules if m not in BLACKBOX_MODULES),
+        (m for m in modules
+         if m not in BLACKBOX_MODULES and not m.startswith("$__")
+         and modules[m].get("cells")),
         next(iter(modules)),
     )
     mod = modules[mod_name]

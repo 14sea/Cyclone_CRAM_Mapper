@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, "/home/test/EP4CE6/fuzz")
 
 from config import BOARD_PINS_AX301
+from m9k_init_basis import M9K_INIT_ANCHORS
 from nextpnrpy_generic import PlaceStrength
 
 # cell-name (post-pack: <port>$iob) -> bel-name.
@@ -67,9 +68,75 @@ for _kv in ctx.cells:
     ctx.bindBel(_bel_name, _cell, PlaceStrength.STRENGTH_LOCKED)
     bound += 1
 
-print(f"[preplace_ax301] bound={bound} already={already} "
+print(f"[preplace_ax301] IOB: bound={bound} already={already} "
       f"unmapped={len(unmapped)} unavailable={len(unavailable)}")
 if unmapped:
     print(f"[preplace_ax301] unmapped cells: {unmapped}")
 if unavailable:
     print(f"[preplace_ax301] unavailable bels: {unavailable}")
+
+# --- M9K pre-placement: bind EP4CE6_M9K cells to calibrated sites ---
+def _yosys_int(val):
+    if isinstance(val, int):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if not s:
+            return None
+        try:
+            return int(s, 2)
+        except ValueError:
+            try:
+                return int(s, 0)
+            except ValueError:
+                return None
+    return None
+
+_m9k_sites_by_geom = {}
+for (site, w, d) in M9K_INIT_ANCHORS:
+    _m9k_sites_by_geom.setdefault((w, d), []).append(site)
+for k in _m9k_sites_by_geom:
+    _m9k_sites_by_geom[k] = sorted(set(_m9k_sites_by_geom[k]))
+
+_m9k_cells_by_geom = {}
+for _kv in ctx.cells:
+    _cell = _kv.second
+    _name = _kv.first
+    if _cell.type != "EP4CE6_M9K":
+        continue
+    try:
+        _w = _yosys_int(str(_cell.params["WIDTH_A"]))
+    except (KeyError, IndexError):
+        _w = None
+    try:
+        _d = _yosys_int(str(_cell.params["DEPTH"]))
+    except (KeyError, IndexError):
+        _d = None
+    if _w is None or _d is None:
+        continue
+    _m9k_cells_by_geom.setdefault((_w, _d), []).append((_name, _cell))
+
+_m9k_used = set()
+_m9k_bound = 0
+_m9k_err = []
+for (_w, _d), _group in _m9k_cells_by_geom.items():
+    _avail = [s for s in _m9k_sites_by_geom.get((_w, _d), [])
+              if s not in _m9k_used]
+    if len(_avail) < len(_group):
+        _m9k_err.append(f"{len(_group)} EP4CE6_M9K at {_w}x{_d} but "
+                        f"only {len(_avail)} sites")
+        continue
+    for (_cname, _ccell), _site in zip(sorted(_group), _avail):
+        _bel_name = f"M9K_{_site}"
+        if _ccell.bel is not None:
+            continue
+        if not ctx.checkBelAvail(_bel_name):
+            _m9k_err.append(f"{_cname}: bel {_bel_name} unavailable")
+            continue
+        ctx.bindBel(_bel_name, _ccell, PlaceStrength.STRENGTH_LOCKED)
+        _m9k_used.add(_site)
+        _m9k_bound += 1
+
+print(f"[preplace_ax301] M9K: bound={_m9k_bound} errors={len(_m9k_err)}")
+for _e in _m9k_err:
+    print(f"[preplace_ax301] M9K ERROR: {_e}")

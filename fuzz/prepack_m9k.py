@@ -94,7 +94,9 @@ def prepack(design: dict, sites_override: list[str] | None
     BLACKBOX = {"CE6_CARRY", "DFF", "LUT", "GENERIC_SLICE",
                 "GENERIC_IOB", "EP4CE6_M9K"}
     mod_name = next(
-        (m for m in modules if m not in BLACKBOX),
+        (m for m in modules
+         if m not in BLACKBOX and not m.startswith("$__")
+         and modules[m].get("cells")),
         next(iter(modules), None),
     )
     if mod_name is None:
