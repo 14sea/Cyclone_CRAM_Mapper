@@ -1,0 +1,215 @@
+{
+  "gold": "/home/test/see_neorv32_run_linux/output/neorv32_demo.rbf",
+  "zero": "/home/test/EP4CE6/results/rbf/nv_zero_global.rbf",
+  "total_cells": 113573,
+  "active_frames": 1429,
+  "band_counts": {
+    "header_adj_25_100": 628,
+    "body_lab_100_1691": 112144,
+    "clock_net_1005_1015": 612,
+    "block_band_1692_1738": 749,
+    "tail_1739_1751": 52
+  },
+  "column_hist": {
+    "unmapped": 19985,
+    "LAB_3": 2577,
+    "LAB_4": 2729,
+    "LAB_5": 3969,
+    "LAB_6": 3921,
+    "LAB_7": 3290,
+    "LAB_8": 3343,
+    "LAB_9": 3956,
+    "LAB_10": 4728,
+    "LAB_11": 5122,
+    "LAB_12": 4944,
+    "LAB_13": 4427,
+    "LAB_14": 3551,
+    "M9K_15": 310,
+    "LAB_16": 4714,
+    "LAB_17": 3445,
+    "LAB_18": 4728,
+    "LAB_19": 2449,
+    "MULT_20": 1562,
+    "LAB_21": 3194,
+    "LAB_22": 3555,
+    "LAB_23": 3038,
+    "LAB_24": 2750,
+    "LAB_25": 2449,
+    "LAB_26": 1790,
+    "M9K_27": 1432,
+    "LAB_28": 2793,
+    "LAB_29": 2504,
+    "LAB_30": 2451,
+    "LAB_31": 2136,
+    "LAB_32": 1271,
+    "LAB_33": 460
+  },
+  "column_frames_count": {
+    "unmapped": 404,
+    "LAB_3": 36,
+    "LAB_4": 36,
+    "LAB_5": 36,
+    "LAB_6": 36,
+    "LAB_7": 36,
+    "LAB_8": 36,
+    "LAB_9": 36,
+    "LAB_10": 36,
+    "LAB_11": 36,
+    "LAB_12": 36,
+    "LAB_13": 36,
+    "LAB_14": 36,
+    "M9K_15": 7,
+    "LAB_16": 36,
+    "LAB_17": 35,
+    "LAB_18": 36,
+    "LAB_19": 23,
+    "MULT_20": 24,
+    "LAB_21": 36,
+    "LAB_22": 36,
+    "LAB_23": 36,
+    "LAB_24": 36,
+    "LAB_25": 36,
+    "LAB_26": 35,
+    "M9K_27": 36,
+    "LAB_28": 36,
+    "LAB_29": 36,
+    "LAB_30": 36,
+    "LAB_31": 36,
+    "LAB_32": 36,
+    "LAB_33": 33
+  },
+  "top_20_frames": [
+    {
+      "frame": 857,
+      "byte": 180002,
+      "cells": 373
+    },
+    {
+      "frame": 966,
+      "byte": 202892,
+      "cells": 355
+    },
+    {
+      "frame": 931,
+      "byte": 195542,
+      "cells": 326
+    },
+    {
+      "frame": 460,
+      "byte": 96632,
+      "cells": 317
+    },
+    {
+      "frame": 459,
+      "byte": 96422,
+      "cells": 304
+    },
+    {
+      "frame": 858,
+      "byte": 180212,
+      "cells": 299
+    },
+    {
+      "frame": 930,
+      "byte": 195332,
+      "cells": 295
+    },
+    {
+      "frame": 928,
+      "byte": 194912,
+      "cells": 293
+    },
+    {
+      "frame": 856,
+      "byte": 179792,
+      "cells": 292
+    },
+    {
+      "frame": 249,
+      "byte": 52322,
+      "cells": 284
+    },
+    {
+      "frame": 461,
+      "byte": 96842,
+      "cells": 282
+    },
+    {
+      "frame": 859,
+      "byte": 180422,
+      "cells": 282
+    },
+    {
+      "frame": 456,
+      "byte": 95792,
+      "cells": 281
+    },
+    {
+      "frame": 424,
+      "byte": 89072,
+      "cells": 279
+    },
+    {
+      "frame": 854,
+      "byte": 179372,
+      "cells": 279
+    },
+    {
+      "frame": 527,
+      "byte": 110702,
+      "cells": 277
+    },
+    {
+      "frame": 529,
+      "byte": 111122,
+      "cells": 276
+    },
+    {
+      "frame": 425,
+      "byte": 89282,
+      "cells": 271
+    },
+    {
+      "frame": 389,
+      "byte": 81722,
+      "cells": 269
+    },
+    {
+      "frame": 965,
+      "byte": 202682,
+      "cells": 269
+    }
+  ],
+  "ce6_lab_active": [
+    3,
+    4,
+    6,
+    7,
+    8,
+    10,
+    11,
+    12,
+    13,
+    16,
+    17,
+    18,
+    19,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    28,
+    29,
+    31
+  ],
+  "jailbreak_lab_active": [
+    5,
+    9,
+    14,
+    30,
+    32,
+    33
+  ]
+}
