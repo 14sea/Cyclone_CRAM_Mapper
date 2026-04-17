@@ -40,6 +40,10 @@ INPUT_PINS = [
     "R1", "R5", "R9", "R13", "R16",
     # Top-adjacent
     "P1", "P9", "P15",
+    # sdram_dq coverage (remaining 10 of 16 S_DB[*] pins — Stage B-narrow
+    # bidir directive needs per_pin_input/output for ALL 16 sdram_dq pins
+    # NEORV32 uses on AX301).
+    "T4", "T3", "R3", "P2", "R12", "T12", "T10", "R10", "T11", "R11",
 ]
 
 # For output sweep, pick pins that are:
@@ -54,6 +58,9 @@ OUTPUT_PINS = [
     "T2", "T8", "T13",
     "R1", "R5", "R9", "R13", "R16",
     "P1", "P9", "P15",
+    # sdram_dq coverage (remaining 10 of 16 S_DB[*] pins — needed for the
+    # IOB_OUT_BIDIR directive to cover every bidir sdram_dq pin).
+    "T4", "T3", "R3", "P2", "R12", "T12", "T10", "R10", "T11", "R11",
 ]
 
 VERILOG = """module iob_probe(input wire K, output wire LED);

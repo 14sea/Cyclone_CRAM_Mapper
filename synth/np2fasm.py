@@ -499,14 +499,21 @@ def convert(
                 fasm.append(f"IOB_OUT {pin_loc}")
                 iob_emitted = True
             elif has_O and has_I:
-                # Bidirectional — emit both directions; fasm2rbf treats
-                # them independently.  Document the rare case.
+                # Bidirectional — emit BIDIR-variant directives so fasm2rbf
+                # dispatches to per_pin_input/per_pin_output (cells unique
+                # to this pin) instead of input_delta/output_delta (XOR
+                # diff vs E15/G15 anchor, which double-flips anchor cells
+                # when multiple IOBs compose).  See
+                # iob_in_out_r5_composition_falsified.md — the legacy
+                # IOB_IN/IOB_OUT path trips the safety gate at Stage
+                # B-narrow (sdram_dq).  The BIDIR variants are gated
+                # by per-pin falsified masks in fasm2rbf._iob_delta_cells.
                 warnings.append(
                     f"cell {cell_name}: IOB on {pin_loc} is bidirectional; "
-                    f"emitting both IOB_IN and IOB_OUT"
+                    f"emitting IOB_IN_BIDIR + IOB_OUT_BIDIR"
                 )
-                fasm.append(f"IOB_IN {pin_loc}")
-                fasm.append(f"IOB_OUT {pin_loc}")
+                fasm.append(f"IOB_IN_BIDIR {pin_loc}")
+                fasm.append(f"IOB_OUT_BIDIR {pin_loc}")
                 iob_emitted = True
             else:
                 # No connections — likely an unused IOB BEL placeholder.

@@ -233,7 +233,25 @@ _LAB_CLK_SEL_LE_RE = re.compile(
 # (multiple valid encodings exist), but byte-for-byte parity with a
 # fresh Quartus build of the same (K, LED) pair is not guaranteed.
 # Closing the cross-axis gap would need a 2D K×LED sweep.
-_IOB_RE = re.compile(r"^IOB_(?P<role>IN|OUT)\s+PIN_(?P<pin>[A-Z]\d+)$")
+_IOB_RE = re.compile(
+    r"^IOB_(?P<role>IN|OUT)(?P<bidir>_BIDIR)?\s+PIN_(?P<pin>[A-Z]\d+)$"
+)
+# Bidir-safe cells known to leak when composed atop a design that already
+# has another IOB active (falsified by the bidir probe 2026-04-17).  The
+# per_pin_input/output tables in iob_cell_map.json are cells unique to
+# each pin across the whole IOB sweep — most pins compose cleanly, but a
+# few cells in per_pin_output happen to overlap a user design's fabric.
+# Entries here are removed from the bidir-emit set for that pin.
+# Format: (role, pin) -> frozenset((off, bp), ...) to exclude.
+_IOB_BIDIR_FALSIFIED: dict[tuple[str, str], frozenset[tuple[int, int]]] = {
+    # R5 per_pin_output: 2 fabric-band cells (frames 401/403) that coincide
+    # with simple_led_pure's active cells when used on top of the
+    # simple_led_pure prefix.  Safety-gated out by build_simple_led_iob_
+    # bidir_r5_probe.py.  If your design's fabric differs, these exclusions
+    # may be unnecessary — but keeping them is conservative (they're
+    # mining-template LED-route artifacts, not IOB pad-config cells).
+    ("OUT", "R5"): frozenset({(84275, 3), (84868, 4)}),
+}
 # IOB→SLICE route directive (XOR-delta, nv_zero_global frame).  Applies
 # absolute cells from results/iob_to_slice_sigcache.json — the
 # bridge-translated R(IOB→target LE) footprint for pins mined under
@@ -589,13 +607,28 @@ def _load_iob_map():
 def _iob_delta_cells(role, pin, iob_map):
     """Return XOR-delta cells (off, bp) from baseline to pin for one role.
 
-    role in {'IN','OUT'}.  Reads pre-computed pair-delta sets written by
-    iob_analyze.py — these are full XOR diffs vs the iob_in_E15 (K=E15)
-    or iob_out_G15 (LED=G15) anchor RBFs and capture every cell that
-    flips going from anchor to target, including semi-shared cells that
-    the legacy per_pin_unique decomposition misses.
+    role in {'IN','OUT','IN_BIDIR','OUT_BIDIR'}.
+
+    Non-BIDIR roles read pair-delta sets (input_delta/output_delta) vs
+    the iob_in_E15 / iob_out_G15 anchors — correct for SINGLE-axis IOB
+    designs (one IOB_IN + one IOB_OUT).  Multi-IOB_IN composition on
+    those deltas double-flips the E15 anchor cells → false activation
+    of E15-specific pad cells that overlap simple_led_pure's E16 bridge.
+
+    BIDIR roles read per_pin_input / per_pin_output — cells active in
+    EXACTLY this pin's RBF across the sweep.  These are safe to XOR-
+    compose atop a design that already has unrelated IOBs active (the
+    sdram_dq $tribuf use case), at the cost of possibly omitting
+    semi-shared cells Quartus may need for functional activation.
+    A short known-leak exclusion table (_IOB_BIDIR_FALSIFIED) removes
+    per-pin cells that empirically collide with user-design fabric.
     """
-    table_key = "input_delta" if role == "IN" else "output_delta"
+    bidir = role.endswith("_BIDIR")
+    base_role = role.removesuffix("_BIDIR")
+    if bidir:
+        table_key = "per_pin_input" if base_role == "IN" else "per_pin_output"
+    else:
+        table_key = "input_delta" if base_role == "IN" else "output_delta"
     if table_key not in iob_map:
         raise FasmError(
             f"IOB directive needs iob_map['{table_key}']; re-run "
@@ -607,7 +640,12 @@ def _iob_delta_cells(role, pin, iob_map):
             f"IOB_{role} PIN_{pin}: no entry in iob_cell_map.json "
             f"(known: {sorted(table)})"
         )
-    return [tuple(c) for c in table[pin]]
+    cells = [tuple(c) for c in table[pin]]
+    if bidir:
+        mask = _IOB_BIDIR_FALSIFIED.get((base_role, pin))
+        if mask:
+            cells = [c for c in cells if c not in mask]
+    return cells
 
 _IOB_ROUTE_CACHE = None
 
@@ -1148,7 +1186,8 @@ def parse_fasm(text):
             continue
         m = _IOB_RE.match(line)
         if m:
-            iobs.append((m["role"], m["pin"]))
+            role = m["role"] + ("_BIDIR" if m["bidir"] else "")
+            iobs.append((role, m["pin"]))
             continue
         m = _M9K_MODE_RE.match(line)
         if m:

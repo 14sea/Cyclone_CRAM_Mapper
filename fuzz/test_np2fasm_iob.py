@@ -82,10 +82,17 @@ def test_iob_both_dirs_same_design():
 
 
 def test_iob_bidir_emits_both_with_warning():
+    # Bidir IOB pads must emit the _BIDIR suffix variants so fasm2rbf
+    # dispatches to per_pin_input/per_pin_output (cells UNIQUE to the
+    # pin across the sweep) instead of input_delta/output_delta (XOR
+    # diff vs E15/G15 anchor).  See iob_in_out_r5_composition_falsified.
     cells = {"bidir": _mk_iob_cell("IOB_X_PIN_R13", O_net=1, I_net=2)}
     fasm, warns = convert(_wrap(cells))
-    assert "IOB_IN PIN_R13" in fasm, fasm
-    assert "IOB_OUT PIN_R13" in fasm, fasm
+    assert "IOB_IN_BIDIR PIN_R13" in fasm, fasm
+    assert "IOB_OUT_BIDIR PIN_R13" in fasm, fasm
+    # Non-BIDIR variants must NOT be emitted (would double-flip anchor).
+    assert "IOB_IN PIN_R13" not in fasm, fasm
+    assert "IOB_OUT PIN_R13" not in fasm, fasm
     assert any("bidirectional" in w for w in warns), warns
 
 
