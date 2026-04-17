@@ -403,13 +403,14 @@ def test_m9k_mode_template_inferred_missing_bucket_raises():
     """Stage C.1: requesting `_inferred` against an entry that has no
     `cells_by_template` (legacy schema) must raise `FasmError`.
 
-    Pick a site that only has the legacy `cells` field.  X15_Y5_N0_9x512
-    is one such — only X15_Y10_N0_9x512 was promoted to the new schema
-    by fuzz/m9k_mode_template_probe.py.
+    After the Stage C.1 full re-mine (fuzz/m9k_mode_inferred_full_remine.py,
+    2026-04-17), all 31 w=9 anchors gained `cells_by_template["inferred"]`.
+    The 5 w=18 anchors (X15_Y10..14_N0_18x512) remain legacy-only — use one
+    as the missing-bucket test target.
     """
     base = _require_baseline()
     f._M9K_MODE_CACHE = None
-    fasm = "X15Y5N0.M9K_MODE_9x512_inferred\n"
+    fasm = "X15Y14N0.M9K_MODE_18x512_inferred\n"
     try:
         f.bitgen(fasm, base)
     except f.FasmError as e:
