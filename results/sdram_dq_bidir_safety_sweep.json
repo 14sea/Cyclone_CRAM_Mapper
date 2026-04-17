@@ -1,0 +1,270 @@
+[
+  {
+    "pin": "R5",
+    "total_overlap": 62,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 0,
+    "crc": 62,
+    "di_bits": 282,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": []
+  },
+  {
+    "pin": "T4",
+    "total_overlap": 54,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 53,
+    "di_bits": 306,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "T3",
+    "total_overlap": 58,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 57,
+    "di_bits": 334,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "R3",
+    "total_overlap": 62,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 61,
+    "di_bits": 354,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "T2",
+    "total_overlap": 51,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 50,
+    "di_bits": 320,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "R1",
+    "total_overlap": 42,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 0,
+    "crc": 42,
+    "di_bits": 286,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": []
+  },
+  {
+    "pin": "P2",
+    "total_overlap": 52,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 51,
+    "di_bits": 302,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "P1",
+    "total_overlap": 52,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 51,
+    "di_bits": 310,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "R13",
+    "total_overlap": 50,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 49,
+    "di_bits": 296,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "T13",
+    "total_overlap": 61,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 0,
+    "crc": 61,
+    "di_bits": 298,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": []
+  },
+  {
+    "pin": "R12",
+    "total_overlap": 71,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 70,
+    "di_bits": 374,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "T12",
+    "total_overlap": 47,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 0,
+    "crc": 47,
+    "di_bits": 248,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": []
+  },
+  {
+    "pin": "T10",
+    "total_overlap": 68,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 67,
+    "di_bits": 272,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "R10",
+    "total_overlap": 63,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 62,
+    "di_bits": 274,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "T11",
+    "total_overlap": 73,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 72,
+    "di_bits": 372,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  },
+  {
+    "pin": "R11",
+    "total_overlap": 60,
+    "hdr": 0,
+    "fabric": 0,
+    "block": 1,
+    "crc": 59,
+    "di_bits": 292,
+    "sl_bits": 24898,
+    "hdr_cells": [],
+    "fabric_cells": [],
+    "block_cells": [
+      [
+        365142,
+        2
+      ]
+    ]
+  }
+]
