@@ -437,54 +437,88 @@ def build_chipdb() -> dict:
             })
             n_local_pips += 1
 
-    # ---------- IOB <-> LOCAL bridge ----------
-    # Every IOB output (driver into fabric, e.g. clock input pad) gets
-    # a pip into every LOCAL bus so clock/reset/input signals can
-    # reach any LAB. Every IOB input (pad-driver from fabric) is
-    # reachable from every LOCAL so outputs can land anywhere. Cost:
-    # ~9 IOBs × 392 LABs × 2 = ~7k pips, linear and tiny.
-    # Single-entry IOB bridge: each IOB pads into ONE "gateway" LAB
-    # LOCAL (and reads from the same one). Propagation to the rest of
-    # the fabric uses LOCAL-hop chains. Avoids the combinatorial
-    # explosion of an all-LABs-per-IOB fanout that hung the router.
-    # One entry per IOB, but onto every track at the gateway LAB so
-    # different IOB nets can pick different tracks and not collide.
-    # Inputs (pad->fabric, non-clock): single gateway LAB LOCAL entry.
-    # Outputs (fabric->pad): direct slice-Q->IOB_I fanout, symmetric
-    # to GCLK. Each IOB_I is one wire carrying one net, so direct
-    # fanout is safe (no track contention) and pathfinder cost is
-    # a single hop instead of exploring LOCAL.
-    gx, gy = valid_labs[len(valid_labs) // 2]
-    for (pin_name, _pin_loc) in iob_entries:
+    # ---------- IOB <-> LOCAL bridge (per-bank gateways, rev 7) ----------
+    # Each IOB connects to the fabric through a LOCAL gateway LAB near
+    # its IO bank.  Signals propagate through LOCAL-hop chains between
+    # the gateway and the rest of the chip.
+    #
+    # Rev 4 used ONE gateway for all 55 IOBs → 4 LOCAL tracks × 55 IOBs
+    # = massive congestion, router thrash.  Rev 5/6 tried adding direct
+    # slice→IOB pips (Q+F) → doubled pip count caused negotiated
+    # congestion divergence (~2040 overused wires).
+    #
+    # Rev 7: per-bank gateways (7 gateways for 7 IO banks).  Both
+    # directions (pad→fabric, fabric→pad) go through LOCAL at the
+    # bank's gateway.  No direct SLICE→IOB pips — signals reach IOBs
+    # only via LOCAL_HOP → gateway → IOB.  This works because both Q
+    # and F outputs already drive LOCAL_IN (line ~367).
+    #
+    # Pin-letter → IO bank mapping (EP4CE6F17C8 F17 package):
+    #   A-D → bank 1 (top), E-G → bank 2 (upper-left),
+    #   J-K → bank 3 (mid-left), L-N → bank 4 (lower-left),
+    #   P → bank 5 (bottom-mid), R → bank 6 (bottom-right),
+    #   T → bank 7 (right)
+
+    def _pin_bank(pin_loc: str) -> int:
+        letter = pin_loc.replace("PIN_", "")[0]
+        return {"A":1,"B":1,"C":1,"D":1,
+                "E":2,"F":2,"G":2,
+                "J":3,"K":3,
+                "L":4,"M":4,"N":4,
+                "P":5,
+                "R":6,
+                "T":7}.get(letter, 2)
+
+    bank_gateway_targets = {
+        1: (4, 19),   2: (6, 12),  3: (10, 8),
+        4: (17, 4),   5: (22, 4),  6: (28, 8),
+        7: (31, 12),
+    }
+
+    def _nearest_valid(tx, ty):
+        best = None
+        best_d = 1e9
+        for (lx, ly) in valid_labs:
+            d = abs(lx - tx) + abs(ly - ty)
+            if d < best_d:
+                best_d = d
+                best = (lx, ly)
+        return best
+
+    bank_gateways = {b: _nearest_valid(tx, ty)
+                     for b, (tx, ty) in bank_gateway_targets.items()}
+
+    for (pin_name, pin_loc) in iob_entries:
         safe = pin_name.replace("[", "_").replace("]", "")
-        wi = _wire_iob(safe, "I")  # fabric -> pad
-        wo = _wire_iob(safe, "O")  # pad -> fabric
+        wi = _wire_iob(safe, "I")   # fabric -> pad
+        wo = _wire_iob(safe, "O")   # pad -> fabric
+        we = _wire_iob(safe, "EN")  # OE from fabric
+        bank = _pin_bank(pin_loc)
+        gx, gy = bank_gateways[bank]
         for t in range(NUM_LOCAL_TRACKS):
             gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
+            # pad → fabric: IOB_O → LOCAL at gateway
             pips.append({
                 "name": f"pip_iob_{safe}_O__{gw}",
                 "type": "IOB_TO_LOCAL",
                 "src": wo, "dst": gw,
                 "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
             })
-            n_local_pips += 1
-        we = _wire_iob(safe, "EN")  # OE from fabric
-        for (x, y) in valid_labs:
-            for n in LE_N:
-                src = _wire_slice_out(x, y, n)
-                pips.append({
-                    "name": f"pip_{src}__iob_{safe}_I",
-                    "type": "SLICE_TO_IOB",
-                    "src": src, "dst": wi,
-                    "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
-                })
-                pips.append({
-                    "name": f"pip_{src}__iob_{safe}_EN",
-                    "type": "SLICE_TO_IOB",
-                    "src": src, "dst": we,
-                    "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
-                })
-                n_local_pips += 2
+            # fabric → pad: LOCAL at gateway → IOB_I
+            pips.append({
+                "name": f"pip_{gw}__iob_{safe}_I",
+                "type": "LOCAL_TO_IOB",
+                "src": gw, "dst": wi,
+                "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
+            })
+            # fabric → pad OE: LOCAL at gateway → IOB_EN
+            pips.append({
+                "name": f"pip_{gw}__iob_{safe}_EN",
+                "type": "LOCAL_TO_IOB",
+                "src": gw, "dst": we,
+                "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
+            })
+            n_local_pips += 3
 
     # ---------- M9K <-> LOCAL bridge + GCLK -> CLK ----------
     # Mirrors the IOB gateway-LAB pattern above. For each M9K site,
