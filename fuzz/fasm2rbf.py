@@ -439,11 +439,21 @@ def _load_m9k_mode_cells(site, width, depth, template=None):
 
 
 def _load_dspmult_global_on_cells():
-    """Return the 23-cell universal DSPMULT enable set.
+    """Return the 22-cell silicon-clean DSPMULT enable set.
 
     Reads results/dspmult_persite_analyze.json and returns the
     `universal_cells` list — the intersection of block-band diffs across
-    all 42 X=20 mult sites. XOR-applied as a delta from a no-mult base.
+    all 42 X=20 mult sites — with the silicon-falsified cell excluded.
+
+    2026-04-17 bisection on AX301 (scripts/stage0_flash_bundle/
+    build_dspmult_bisect.py) localized a single leaky cell in the
+    mined 23-cell set: off=363236 bp=2 frame=1729. Flipping this
+    cell on simple_led stuck LED0 constant-on; the other 22 cells
+    applied together are silicon-safe (LED follows KEY2 as baseline).
+
+    The leaky cell stays in the JSON (it's the empirical mining
+    intersection), but this loader masks it out so np2fasm and any
+    consumer emits only the silicon-verified subset.
     """
     global _DSPMULT_GLOBAL_ON_CACHE
     if _DSPMULT_GLOBAL_ON_CACHE is None:
@@ -457,7 +467,11 @@ def _load_dspmult_global_on_cells():
                 "fuzz/dspmult_persite_analyze.py"
             )
         data = json.loads(path.read_text())
-        _DSPMULT_GLOBAL_ON_CACHE = [tuple(c) for c in data["universal_cells"]]
+        SILICON_FALSIFIED = {(363236, 2)}  # HW 2026-04-17
+        _DSPMULT_GLOBAL_ON_CACHE = [
+            tuple(c) for c in data["universal_cells"]
+            if tuple(c) not in SILICON_FALSIFIED
+        ]
     return _DSPMULT_GLOBAL_ON_CACHE
 
 

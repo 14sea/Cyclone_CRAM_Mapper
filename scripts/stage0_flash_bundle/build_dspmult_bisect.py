@@ -158,7 +158,51 @@ def main() -> int:
 
     rc_a = _build_half("A", half_a, pure, base_rbf)
     rc_b = _build_half("B", half_b, pure, base_rbf)
-    return rc_a | rc_b
+
+    # Layer-2: split half_B (the FAILing half on 2026-04-17) into B0/B1.
+    # half_A PASSed on silicon, so its cells stay unsplit.
+    b0 = half_b[: len(half_b) // 2]     # 6 cells (indices 11..16)
+    b1 = half_b[len(half_b) // 2 :]     # 6 cells (indices 17..22)
+    print(f"\nLayer-2 bisection (splits half_B, the 2026-04-17 FAIL):")
+    print(f"  half_B0: {len(b0)} cells, frames "
+          f"{(b0[0][0]-PRE)//FRAME}..{(b0[-1][0]-PRE)//FRAME}")
+    print(f"  half_B1: {len(b1)} cells, frames "
+          f"{(b1[0][0]-PRE)//FRAME}..{(b1[-1][0]-PRE)//FRAME}")
+    rc_b0 = _build_half("B0", b0, pure, base_rbf)
+    rc_b1 = _build_half("B1", b1, pure, base_rbf)
+
+    # Layer-3: split half_B1 (the 2026-04-17 layer-2 FAIL) into B10/B11.
+    # b1 = cells[17..22] = 6 cells; split 3+3.
+    b10 = b1[: len(b1) // 2]    # 3 cells (indices 17..19, frame 1719 bp=3)
+    b11 = b1[len(b1) // 2 :]    # 3 cells (indices 20..22, frames 1719/1726/1729)
+    print(f"\nLayer-3 bisection (splits half_B1):")
+    print(f"  half_B10: {len(b10)} cells, "
+          f"{[(off, bp, (off-PRE)//FRAME) for off,bp in b10]}")
+    print(f"  half_B11: {len(b11)} cells, "
+          f"{[(off, bp, (off-PRE)//FRAME) for off,bp in b11]}")
+    rc_b10 = _build_half("B10", b10, pure, base_rbf)
+    rc_b11 = _build_half("B11", b11, pure, base_rbf)
+
+    # Layer-4: single-cell probes for the remaining 3 cells in B11
+    # (B11 FAILed on 2026-04-17 layer-3). Each probe flips one cell.
+    singles = b11  # [(361222, 4), (362532, 3), (363236, 2)]
+    rc_s = 0
+    print(f"\nLayer-4 singletons (isolate the leaky cell in B11):")
+    for idx, (off, bp) in enumerate(singles):
+        label = f"S{idx}_off{off}_bp{bp}"
+        print(f"  {label}: frame {(off-PRE)//FRAME}")
+        rc_s |= _build_half(label, [(off, bp)], pure, base_rbf)
+
+    # Verification: cleaned 22-cell set (all cells EXCEPT the isolated
+    # leaky S2 = off=363236 bp=2 frame=1729, confirmed on silicon
+    # 2026-04-17).  Flash must PASS (LED follows KEY2) to prove the
+    # cleaned set is silicon-safe on simple_led.
+    LEAKY = (363236, 2)
+    cleaned = [c for c in cells if c != LEAKY]
+    print(f"\nVerification: cleaned set = {len(cleaned)} cells "
+          f"(excluded {LEAKY} = leaky cell S2)")
+    rc_clean = _build_half("CLEAN22", cleaned, pure, base_rbf)
+    return rc_a | rc_b | rc_b0 | rc_b1 | rc_b10 | rc_b11 | rc_s | rc_clean
 
 
 if __name__ == "__main__":
