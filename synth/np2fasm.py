@@ -688,12 +688,11 @@ def convert(
                 continue
             bel_str = drv_cell.get("attributes", {}).get(
                 "NEXTPNR_BEL", "")
-            m = re.match(
-                r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
-            if not m:
+            pin_idx2 = bel_str.rfind("_PIN_")
+            if not bel_str.startswith("IOB_") or pin_idx2 < 0:
                 unresolved_clk = True
                 continue
-            pin_loc = m.group(1)
+            pin_loc = bel_str[pin_idx2 + 1:]
             if pin_loc not in seen_pins:
                 seen_pins.add(pin_loc)
                 gclk_pins.append(pin_loc)
@@ -774,10 +773,10 @@ def convert(
                 continue
             bel_str = drv_cell_obj.get("attributes", {}).get(
                 "NEXTPNR_BEL", "")
-            m = re.match(r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
-            if not m:
+            pin_idx = bel_str.rfind("_PIN_")
+            if not bel_str.startswith("IOB_") or pin_idx < 0:
                 continue
-            pin_loc = m.group(1)
+            pin_loc = bel_str[pin_idx + 1:]
             for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
                 sink_bel = cell_bel.get(sink_cell)
                 if sink_bel is None or sink_bel[0] != "SLICE":
