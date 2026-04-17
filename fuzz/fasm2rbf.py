@@ -173,14 +173,14 @@ _M9K_INIT_RE = re.compile(
 _M9K_MODE_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
     r"(?P<width>\d+)x(?P<depth>\d+)"
-    r"(?:_(?P<template>altsyncram|inferred))?$"
+    r"(?:_(?P<template>inferred_goldintersect|altsyncram|inferred))?$"
 )
 _M9K_MODE_CACHE = None
 # Default template when the bare `M9K_MODE_{w}x{d}` form is emitted.
 # Backward-compatible: legacy callers and existing test fixtures get
 # the altsyncram bucket (the closer match to gold per probe data).
 _M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
-_M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred")
+_M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred", "inferred_goldintersect")
 # DSPMULT global-enable: a single boolean directive that XOR-applies the
 # 23-cell intersection across all 42 X=20 mult sites (re-mined 2026-04-16
 # under specimen factory; fuzz/dspmult_persite_remine.py + analyzer).

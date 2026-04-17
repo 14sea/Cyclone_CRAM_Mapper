@@ -382,6 +382,51 @@ def test_m9k_mode_template_buckets_differ():
     )
 
 
+def test_m9k_mode_template_goldintersect_subset_of_inferred():
+    """Stage C.1 follow-up (2026-04-17): the `inferred_goldintersect`
+    bucket is derived as `inferred ∩ smoke_gold_block_band`, so it must
+    always be a subset of `inferred` (38 ⊂ 77 for all 31 w=9 anchors).
+
+    This is the "cheapest future ungate path" from m9k_mode_template_
+    residual.md — HW flash of this 38-cell bucket would tell us if the
+    39-cell harness-drift in `inferred` is cosmetic or semantically
+    load-bearing.  Pre-flash it's just data; the test keeps the bucket
+    honest.
+    """
+    base = _require_baseline()
+    fasm_inf = "X15Y10N0.M9K_MODE_9x512_inferred\n"
+    fasm_gi = "X15Y10N0.M9K_MODE_9x512_inferred_goldintersect\n"
+    HDR = 32
+
+    def _diffs(fasm_text):
+        f._M9K_MODE_CACHE = None
+        out = f.bitgen(fasm_text, base)
+        diffs = set()
+        for off in range(len(base)):
+            x = base[off] ^ out[off]
+            if not x:
+                continue
+            in_frame = (off - HDR) % 210
+            if off < HDR or in_frame >= 208:
+                continue
+            for bp in range(8):
+                if x & (1 << bp):
+                    diffs.add((off, bp))
+        return diffs
+
+    inf = _diffs(fasm_inf)
+    gi = _diffs(fasm_gi)
+    assert gi <= inf, (
+        f"goldintersect ({len(gi)}) must be ⊆ inferred ({len(inf)}); "
+        f"leak = {len(gi - inf)} cells"
+    )
+    assert len(gi) == 38, f"inferred_goldintersect expected 38 cells, got {len(gi)}"
+    print(
+        f"  test_m9k_mode_template_goldintersect_subset_of_inferred: OK "
+        f"(goldintersect={len(gi)} ⊆ inferred={len(inf)})"
+    )
+
+
 def test_m9k_mode_template_unknown_raises():
     """Stage C.1: parser rejects unknown template names.
 
@@ -462,6 +507,7 @@ def main():
         test_m9k_mode_unknown_site_raises,
         test_m9k_mode_template_subflag_parses,
         test_m9k_mode_template_buckets_differ,
+        test_m9k_mode_template_goldintersect_subset_of_inferred,
         test_m9k_mode_template_unknown_raises,
         test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_init_wrong_hex_length_raises,
