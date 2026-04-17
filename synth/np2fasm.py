@@ -674,12 +674,12 @@ def convert(
         seen_les: set[tuple[int, int, int]] = set()
         for cell_name, cell in cells.items():
             ctype = cell.get("type", "")
-            # Which port carries the clock on this cell type?
+            params = cell.get("parameters", {})
             clk_port = None
             if ctype in ("DFF", "$_DFF_P_"):
                 clk_port = "CLK"
-            # CE6_CARRY is combinational — no CLK port — but its
-            # sibling DFF (if any) in the same LE provides the clock.
+            elif ctype == "GENERIC_SLICE" and int(params.get("FF_USED", "0"), 2):
+                clk_port = "CLK"
             if clk_port is None:
                 continue
             conns = cell.get("connections", {}).get(clk_port, [])
