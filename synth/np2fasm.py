@@ -483,6 +483,7 @@ def convert(
             dirs = cell.get("port_directions", {})
             has_O = bool(conns.get("O"))
             has_I = bool(conns.get("I"))
+            has_EN = bool(conns.get("EN"))
             # Dedicated clock pads (e.g. PIN_E1) aren't in
             # iob_cell_map.json because the IOB sweep excluded them —
             # GCLK_PIN handles their CRAM directly. For clock-only IOBs
@@ -514,6 +515,8 @@ def convert(
                 )
                 fasm.append(f"IOB_IN_BIDIR {pin_loc}")
                 fasm.append(f"IOB_OUT_BIDIR {pin_loc}")
+                if has_EN:
+                    fasm.append(f"IOB_OE {pin_loc}")
                 iob_emitted = True
             else:
                 # No connections — likely an unused IOB BEL placeholder.

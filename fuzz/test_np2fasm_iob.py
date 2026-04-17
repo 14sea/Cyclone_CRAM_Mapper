@@ -25,7 +25,8 @@ from np2fasm import convert  # type: ignore
 
 
 def _mk_iob_cell(bel_name: str, *, O_net: int | None = None,
-                 I_net: int | None = None) -> dict:
+                 I_net: int | None = None,
+                 EN_net: int | None = None) -> dict:
     conns: dict[str, list] = {}
     dirs: dict[str, str] = {}
     if O_net is not None:
@@ -34,6 +35,9 @@ def _mk_iob_cell(bel_name: str, *, O_net: int | None = None,
     if I_net is not None:
         conns["I"] = [I_net]
         dirs["I"] = "input"
+    if EN_net is not None:
+        conns["EN"] = [EN_net]
+        dirs["EN"] = "input"
     return {
         "type": "GENERIC_IOB",
         "attributes": {"NEXTPNR_BEL": bel_name},
@@ -96,6 +100,25 @@ def test_iob_bidir_emits_both_with_warning():
     assert any("bidirectional" in w for w in warns), warns
 
 
+def test_iob_bidir_with_en_emits_iob_oe():
+    # Tristate bidir pad: O+I+EN all connected → IOB_IN_BIDIR + IOB_OUT_BIDIR + IOB_OE.
+    cells = {"tristate": _mk_iob_cell("IOB_X_PIN_R5", O_net=1, I_net=2, EN_net=3)}
+    fasm, warns = convert(_wrap(cells))
+    assert "IOB_IN_BIDIR PIN_R5" in fasm, fasm
+    assert "IOB_OUT_BIDIR PIN_R5" in fasm, fasm
+    assert "IOB_OE PIN_R5" in fasm, fasm
+    assert any("bidirectional" in w for w in warns), warns
+
+
+def test_iob_bidir_without_en_no_iob_oe():
+    # Bidir pad without EN → IOB_IN_BIDIR + IOB_OUT_BIDIR but NO IOB_OE.
+    cells = {"bidir_no_en": _mk_iob_cell("IOB_X_PIN_T4", O_net=1, I_net=2)}
+    fasm, warns = convert(_wrap(cells))
+    assert "IOB_IN_BIDIR PIN_T4" in fasm, fasm
+    assert "IOB_OUT_BIDIR PIN_T4" in fasm, fasm
+    assert "IOB_OE PIN_T4" not in fasm, fasm
+
+
 def test_iob_unused_warns_no_emit():
     cells = {"unused": _mk_iob_cell("IOB_U_PIN_A14")}
     fasm, warns = convert(_wrap(cells))
@@ -119,6 +142,8 @@ def main():
         test_iob_out_emission,
         test_iob_both_dirs_same_design,
         test_iob_bidir_emits_both_with_warning,
+        test_iob_bidir_with_en_emits_iob_oe,
+        test_iob_bidir_without_en_no_iob_oe,
         test_iob_unused_warns_no_emit,
         test_iob_malformed_bel_warns,
     ]

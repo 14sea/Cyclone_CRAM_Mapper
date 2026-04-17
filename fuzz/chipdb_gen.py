@@ -266,13 +266,16 @@ def build_chipdb() -> dict:
         })
         wi = _wire_iob(safe, "I")
         wo = _wire_iob(safe, "O")
+        we = _wire_iob(safe, "EN")
         wires.extend([
             {"name": wi, "type": "IOB_I", "x": i, "y": grid_h - 1},
             {"name": wo, "type": "IOB_O", "x": i, "y": grid_h - 1},
+            {"name": we, "type": "IOB_EN", "x": i, "y": grid_h - 1},
         ])
         belpins.extend([
             {"bel": name, "pin": "I", "wire": wi, "output": False},
             {"bel": name, "pin": "O", "wire": wo, "output": True},
+            {"bel": name, "pin": "EN", "wire": we, "output": False},
         ])
     # Defer IOB<->LOCAL bridge pips until LOCAL wires exist (below).
 
@@ -465,6 +468,7 @@ def build_chipdb() -> dict:
                 "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
             })
             n_local_pips += 1
+        we = _wire_iob(safe, "EN")  # OE from fabric
         for (x, y) in valid_labs:
             for n in LE_N:
                 src = _wire_slice_out(x, y, n)
@@ -474,7 +478,13 @@ def build_chipdb() -> dict:
                     "src": src, "dst": wi,
                     "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
                 })
-                n_local_pips += 1
+                pips.append({
+                    "name": f"pip_{src}__iob_{safe}_EN",
+                    "type": "SLICE_TO_IOB",
+                    "src": src, "dst": we,
+                    "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                })
+                n_local_pips += 2
 
     # ---------- M9K <-> LOCAL bridge + GCLK -> CLK ----------
     # Mirrors the IOB gateway-LAB pattern above. For each M9K site,
