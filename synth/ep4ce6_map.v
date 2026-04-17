@@ -223,12 +223,22 @@ module \$alu (A, B, CI, BI, X, Y, CO);
 	output [Y_WIDTH-1:0] X, Y, CO;
 
 	wire [Y_WIDTH-1:0] A_ext, B_ext;
-	\$pos #(
-		.A_SIGNED(A_SIGNED), .A_WIDTH(A_WIDTH), .Y_WIDTH(Y_WIDTH)
-	) Aext (.A(A), .Y(A_ext));
-	\$pos #(
-		.A_SIGNED(B_SIGNED), .A_WIDTH(B_WIDTH), .Y_WIDTH(Y_WIDTH)
-	) Bext (.A(B), .Y(B_ext));
+	generate
+		if (A_WIDTH > 0) begin : ext_a
+			\$pos #(
+				.A_SIGNED(A_SIGNED), .A_WIDTH(A_WIDTH), .Y_WIDTH(Y_WIDTH)
+			) Aext (.A(A), .Y(A_ext));
+		end else begin : ext_a_zero
+			assign A_ext = {Y_WIDTH{1'b0}};
+		end
+		if (B_WIDTH > 0) begin : ext_b
+			\$pos #(
+				.A_SIGNED(B_SIGNED), .A_WIDTH(B_WIDTH), .Y_WIDTH(Y_WIDTH)
+			) Bext (.A(B), .Y(B_ext));
+		end else begin : ext_b_zero
+			assign B_ext = {Y_WIDTH{1'b0}};
+		end
+	endgenerate
 
 	wire [Y_WIDTH-1:0] B_used = B_ext ^ {Y_WIDTH{BI}};
 

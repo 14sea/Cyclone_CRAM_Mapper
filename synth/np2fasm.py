@@ -285,12 +285,15 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
 
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
     """Parse 'SLICE_X3_Y19_N24' -> ('SLICE', 3, 19, 24)."""
-    m = re.match(r"(SLICE|IOB|M9K)_X(\d+)_Y(\d+)_N(\d+)", bel_name)
+    m = re.match(r"(SLICE|CARRY|IOB|M9K)_X(\d+)_Y(\d+)_N(\d+)", bel_name)
     if not m:
         if bel_name.startswith("IOB_"):
             return ("IOB", 0, 0, 0)
         return None
-    return (m.group(1), int(m.group(2)), int(m.group(3)), int(m.group(4)))
+    kind = m.group(1)
+    if kind == "CARRY":
+        kind = "SLICE"
+    return (kind, int(m.group(2)), int(m.group(3)), int(m.group(4)))
 
 
 
@@ -471,14 +474,14 @@ def convert(
             #   - cell drives "O" port → IOB is configured as INPUT (pad→fabric)
             #   - cell receives on "I" port → IOB is OUTPUT (fabric→pad)
             bel_str = cell.get("attributes", {}).get("NEXTPNR_BEL", "")
-            m = re.match(r"IOB_[A-Za-z0-9]+_(PIN_[A-Z]\d+)", bel_str)
-            if not m:
+            pin_idx = bel_str.rfind("_PIN_")
+            if not bel_str.startswith("IOB_") or pin_idx < 0:
                 warnings.append(
                     f"cell {cell_name}: IOB BEL name {bel_str!r} "
                     f"doesn't match IOB_<name>_PIN_<loc>; skipped"
                 )
                 continue
-            pin_loc = m.group(1)  # already includes "PIN_" prefix
+            pin_loc = bel_str[pin_idx + 1:]  # "PIN_R3" etc.
             conns = cell.get("connections", {})
             dirs = cell.get("port_directions", {})
             has_O = bool(conns.get("O"))

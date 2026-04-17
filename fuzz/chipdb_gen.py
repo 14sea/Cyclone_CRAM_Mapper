@@ -212,6 +212,52 @@ def build_chipdb() -> dict:
                 belpins.append({"bel": name, "pin": "CIN",
                                 "wire": ciw, "output": False})
 
+                # CE6_CARRY bel — co-located with GENERIC_SLICE at each
+                # LE position. Shares the CIN/COUT carry wires and reuses
+                # I[0]/I[1] for the A/B data inputs.  S (sum output) gets
+                # its own wire so CE6_CARRY.S and GENERIC_SLICE.Q don't
+                # collide — they're logically the same LE output but
+                # nextpnr needs distinct driver belpins to avoid
+                # multi-driver errors when only one cell type is placed.
+                carry_name = f"CARRY_X{x}_Y{y}_N{n}"
+                carry_z = n + 100
+                bels.append({
+                    "name": carry_name,
+                    "type": "CE6_CARRY",
+                    "x": x, "y": y, "z": carry_z,
+                })
+                # S output — drives a dedicated wire that feeds into the
+                # same LOCAL bus the SLICE Q wire feeds into, so
+                # downstream sinks can reach it via the same LOCAL pips.
+                sw = f"carry_X{x}_Y{y}_N{n}_S"
+                wires.append({"name": sw, "type": "CARRY_S",
+                              "x": x, "y": y})
+                belpins.append({
+                    "bel": carry_name, "pin": "S", "wire": sw,
+                    "output": True,
+                })
+                # CO — reuse existing COUT wire
+                belpins.append({
+                    "bel": carry_name, "pin": "CO", "wire": cow,
+                    "output": True,
+                })
+                # CI — reuse existing CIN wire
+                belpins.append({
+                    "bel": carry_name, "pin": "CI", "wire": ciw,
+                    "output": False,
+                })
+                # A, B — reuse I[0] / I[1] wires
+                belpins.append({
+                    "bel": carry_name, "pin": "A",
+                    "wire": _wire_slice_in(x, y, n, "dataa"),
+                    "output": False,
+                })
+                belpins.append({
+                    "bel": carry_name, "pin": "B",
+                    "wire": _wire_slice_in(x, y, n, "datab"),
+                    "output": False,
+                })
+
     # ---------- M9K bels ----------
     for x in M9K_X:
         for y in M9K_Y:
@@ -360,13 +406,29 @@ def build_chipdb() -> dict:
                         })
                         n_local_pips += 1
 
+        # ----- CE6_CARRY S → intra-LAB + LOCAL -----
+        for n_src in LE_N:
+            carry_s = f"carry_X{x}_Y{y}_N{n_src}_S"
+            for n_dst in LE_N:
+                for port in SLICE_INPUTS:
+                    dst = _wire_slice_in(x, y, n_dst, port)
+                    pips.append({
+                        "name": f"pip_{carry_s}__{dst}",
+                        "type": "INTRA_LAB",
+                        "src": carry_s, "dst": dst,
+                        "delay": INTRA_DELAY,
+                        "x": x, "y": y,
+                    })
+                    n_local_pips += 1
+
         # ----- LOCAL tracks for inter-LAB routing -----
         for t in range(NUM_LOCAL_TRACKS):
             lw = f"LOCAL_X{x}_Y{y}_T{t}"
             # slice outputs -> LOCAL track
             for n in LE_N:
                 for src in (_wire_slice_out(x, y, n),
-                            f"slice_X{x}_Y{y}_N{n}_F"):
+                            f"slice_X{x}_Y{y}_N{n}_F",
+                            f"carry_X{x}_Y{y}_N{n}_S"):
                     pips.append({
                         "name": f"pip_{src}__{lw}",
                         "type": "LOCAL_IN",

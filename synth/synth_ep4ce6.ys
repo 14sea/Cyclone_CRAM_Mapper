@@ -26,6 +26,9 @@ memory_map
 opt -full
 flatten
 opt -full
+alumacc
+opt -fast
+techmap -map synth/ep4ce6_map.v
 techmap
 opt -fast
 dffunmap -ce-only
