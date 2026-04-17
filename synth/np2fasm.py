@@ -239,17 +239,22 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     that flips the block-band cells `m9k_mode_bits.json` records for
     this site under the chosen template bucket.
 
-    Template selection (Stage C.1, 2026-04-16):
+    Template selection (HW flash 2026-04-17):
 
       Yosys's `$__M9K_SP_` techmap rule corresponds to inferred-RAM
-      semantics on the Quartus side, so the natural target here is
-      `_inferred`.  However the Stage C.1 probe
-      (`fuzz/m9k_mode_template_probe.py`) found that even verbatim
-      smoke-gold Verilog under the specimen factory diverges from the
-      gold by 77 cells (alt = 29).  Until either bucket lands within
-      the ≤5-cell acceptance, this helper emits with the explicit
-      `_inferred` suffix so the directive declares its intended Quartus
-      code path even when convert() leaves emission gated.
+      semantics on the Quartus side.  Stage C.1 empirical re-mine
+      (`fuzz/m9k_mode_inferred_full_remine.py`) populated a
+      `inferred_goldintersect` bucket = `inferred` ∩ Quartus smoke gold
+      (38 cells, site-invariant across all 31 w=9 anchors).  Flashing
+      that bucket at a w=9 site PASSed silicon (LED follows KEY2; see
+      stage0_round2_flash_results.md 2026-04-17), so this helper emits
+      with the explicit `_inferred_goldintersect` suffix — the one
+      HW-validated bucket.
+
+      w=18 sites currently lack any mined cells (5 anchors skipped
+      due to pin F16 collision in the mining harness).  The helper
+      returns a warning and no line in that case so the RAM still
+      carries correct INIT data, matching the prior gated behaviour.
 
     Without this line the open-toolchain RBF carries valid INIT data
     but the silicon block remains in its "M9K idle" configuration, so
@@ -263,7 +268,19 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    return (f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred", None)
+    if width != 9:
+        return (
+            None,
+            f"cell {cell_name}: M9K_MODE emission skipped for "
+            f"{width}x{depth} at X{x}Y{y}N{n} — only w=9 has a "
+            f"silicon-validated `inferred_goldintersect` bucket "
+            f"(HW 2026-04-17); rerun m9k_mode_inferred_full_remine.py "
+            f"for other widths once the mining harness covers them.",
+        )
+    return (
+        f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
+        None,
+    )
 
 
 def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
@@ -498,30 +515,22 @@ def convert(
                     f"connections; no FASM emitted"
                 )
         elif kind == "M9K":
-            # Placed EP4CE6_M9K — emit INIT directive via helper.
-            #
-            # M9K_MODE per-site enable is *scaffolded* (see _emit_m9k_mode
-            # below + `M9K_MODE_{w}x{d}_{template}` directive in
-            # fasm2rbf, including `cells_by_template` schema in
-            # results/m9k_mode_bits.json).  Stage C.1 probe (2026-04-16,
-            # fuzz/m9k_mode_template_probe.py) attempted closure via a
-            # Yosys-emit-matching mining specimen (verbatim smoke-gold
-            # Verilog under the specimen factory) and FALSIFIED that
-            # path: inferred-vs-gold gap stayed at 77 cells (vs 29 for
-            # altsyncram-direct), so swapping the mining template does
-            # not close the residual.  The sub-flag is now scaffolded
-            # to carry per-template buckets (`_altsyncram` / `_inferred`)
-            # but neither bucket meets the ≤5-cell acceptance for HW-
-            # correct emission.  convert() therefore continues to skip
-            # the MODE line; HW functionality for the smoke design
-            # depends on the existing nv_zero_global baseline already
-            # encoding "M9K idle" as the default.  See memory
-            # m9k_mode_template_residual.md for the diagnosis.
+            # Placed EP4CE6_M9K — emit INIT directive + M9K_MODE per-site
+            # enable.  The MODE suffix is always `_inferred_goldintersect`
+            # (HW-validated 2026-04-17 at a w=9 site); w=18 sites warn
+            # and skip until the `inferred_goldintersect` bucket covers
+            # them.  See stage0_round2_flash_results.md and
+            # m9k_mode_template_residual.md for the closure history.
             line, warn = _emit_m9k_init(cell_name, cell)
             if line is not None:
                 fasm.append(line)
             if warn is not None:
                 warnings.append(warn)
+            mode_line, mode_warn = _emit_m9k_mode(cell_name, cell)
+            if mode_line is not None:
+                fasm.append(mode_line)
+            if mode_warn is not None:
+                warnings.append(mode_warn)
 
     # --- Carry chain analysis ---
     # Walk every CE6_CARRY whose CI is a Verilog constant — that's a

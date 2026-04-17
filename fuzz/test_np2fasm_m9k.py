@@ -226,10 +226,11 @@ def test_emit_m9k_mode_synthetic_cell():
     accompanies INIT.  Without this line the silicon block stays in
     its idle configuration and never reads back the user pattern.
 
-    Stage C.1 sub-flag: the helper now emits the explicit
-    `_inferred` suffix because `$__M9K_SP_` techmap → `EP4CE6_M9K`
-    corresponds to Quartus's inferred-RAM code path.  convert()
-    still gates the emission off (see test_convert_does_not_emit_*).
+    HW flash 2026-04-17: the helper emits the explicit
+    `_inferred_goldintersect` suffix — the Stage C.1 intersection of
+    the inferred-RAM mining template with the Quartus smoke gold
+    (38 cells at w=9, site-invariant) PASSed silicon.  convert()
+    now emits the line whenever a w=9 M9K cell is placed.
     """
     width, depth = 9, 512
     mock_cell = {
@@ -239,8 +240,24 @@ def test_emit_m9k_mode_synthetic_cell():
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
     assert warn is None, f"unexpected warning: {warn!r}"
-    assert line == f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred", line
+    assert line == (
+        f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred_goldintersect"
+    ), line
     print("  test_emit_m9k_mode_synthetic_cell: OK")
+
+
+def test_emit_m9k_mode_w18_warns_and_skips():
+    """w=18 sites don't yet carry a silicon-validated
+    `inferred_goldintersect` bucket — helper must warn and skip."""
+    mock_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {"INIT": "0", "WIDTH_A": 18, "DEPTH": 512},
+    }
+    line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+    assert line is None, f"expected no FASM for w=18, got {line!r}"
+    assert warn and "w=9" in warn, f"expected w=9 hint in warning: {warn!r}"
+    print("  test_emit_m9k_mode_w18_warns_and_skips: OK")
 
 
 def test_emit_m9k_mode_rejects_non_m9k_bel():
@@ -254,13 +271,11 @@ def test_emit_m9k_mode_rejects_non_m9k_bel():
     print("  test_emit_m9k_mode_rejects_non_m9k_bel: OK")
 
 
-def test_convert_does_not_emit_m9k_mode_yet():
-    """convert() should NOT emit M9K_MODE today — the per-site mined
-    cells in `results/m9k_mode_bits.json` are contaminated by routing /
-    IOB / clock infra from the calibration builds, and emitting them
-    on top of nv_zero_global flips wrong block-band cells (66 false
-    flips, 35 missed vs the smoke gold).  The MODE emitter is kept as
-    a wired helper for re-enable once cleaner per-site mining lands."""
+def test_convert_emits_m9k_mode_goldintersect():
+    """convert() now emits one M9K_MODE_{w}x{d}_inferred_goldintersect
+    line per placed w=9 EP4CE6_M9K cell (HW-validated 2026-04-17).
+    w=18 sites warn instead — they lack a goldintersect bucket until
+    the mining harness covers them."""
     width, depth = 9, 512
     words = [(i + 1) & ((1 << width) - 1) for i in range(depth)]
     bits = "".join(f"{w:0{width}b}" for w in reversed(words))
@@ -285,12 +300,11 @@ def test_convert_does_not_emit_m9k_mode_yet():
     fasm, warnings = nf.convert(fake_json)
     mode_lines = [l for l in fasm if ".M9K_MODE_" in l]
     init_lines = [l for l in fasm if ".INIT_" in l]
-    assert mode_lines == [], (
-        f"M9K_MODE emission disabled until per-site mining is clean; "
-        f"got: {mode_lines}"
-    )
+    assert mode_lines == [
+        f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred_goldintersect"
+    ], f"expected one goldintersect MODE line; got: {mode_lines}"
     assert len(init_lines) == 1, f"expected 1 INIT line, got {init_lines}"
-    print("  test_convert_does_not_emit_m9k_mode_yet: OK")
+    print("  test_convert_emits_m9k_mode_goldintersect: OK")
 
 
 def test_emit_m9k_init_convert_skips_unplaced():
@@ -336,8 +350,9 @@ def main():
         test_convert_skips_ep4ce6_m9k_blackbox_module,
         test_emit_m9k_init_convert_skips_unplaced,
         test_emit_m9k_mode_synthetic_cell,
+        test_emit_m9k_mode_w18_warns_and_skips,
         test_emit_m9k_mode_rejects_non_m9k_bel,
-        test_convert_does_not_emit_m9k_mode_yet,
+        test_convert_emits_m9k_mode_goldintersect,
     ]
     for t in tests:
         t()
