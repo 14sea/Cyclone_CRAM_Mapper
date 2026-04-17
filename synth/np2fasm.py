@@ -268,14 +268,14 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    if width != 9:
+    _M9K_MODE_MINED = {(9, 512), (9, 1024), (4, 2048), (36, 256)}
+    if (width, depth) not in _M9K_MODE_MINED:
         return (
             None,
             f"cell {cell_name}: M9K_MODE emission skipped for "
-            f"{width}x{depth} at X{x}Y{y}N{n} — only w=9 has a "
-            f"silicon-validated `inferred_goldintersect` bucket "
-            f"(HW 2026-04-17); rerun m9k_mode_inferred_full_remine.py "
-            f"for other widths once the mining harness covers them.",
+            f"{width}x{depth} at X{x}Y{y}N{n} — only {_M9K_MODE_MINED} "
+            f"have mined `inferred_goldintersect` buckets; mine new "
+            f"widths via scripts/m9k_mode_width_mine.py.",
         )
     return (
         f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
@@ -560,10 +560,15 @@ def convert(
     if carry_cells:
         # bit_id -> cell_name whose CO drives it
         co_driver: dict[int, str] = {}
+        # bit_id -> cell_name whose CI consumes it
+        ci_consumer: dict[int, str] = {}
         for name, cell in carry_cells.items():
             co = cell.get("connections", {}).get("CO", [])
             if len(co) == 1 and not isinstance(co[0], str):
                 co_driver[co[0]] = name
+            ci = cell.get("connections", {}).get("CI", [])
+            if len(ci) == 1 and not isinstance(ci[0], str):
+                ci_consumer[ci[0]] = name
 
         def _ci_info(cell: dict) -> tuple[str, int | None]:
             ci = cell.get("connections", {}).get("CI", [])
@@ -574,11 +579,16 @@ def convert(
                 return ("const", int(v) if v in ("0", "1") else None)
             return ("net", v)
 
-        # Find chain starts (constant CI)
+        # Find chain starts: CI is a constant literal OR a net not
+        # produced by any carry cell's CO (i.e. first cell in chain).
         visited: set[str] = set()
         for start_name, start_cell in carry_cells.items():
             kind, val = _ci_info(start_cell)
-            if kind != "const" or val is None:
+            if kind == "const" and val is not None:
+                pass  # classic chain start
+            elif kind == "net" and val not in co_driver:
+                pass  # CI from non-carry source (e.g. $alu initial carry)
+            else:
                 continue
             # Walk the chain from this start
             chain: list[str] = []
@@ -591,44 +601,43 @@ def convert(
                 if len(co) != 1 or isinstance(co[0], str):
                     break
                 co_net = co[0]
-                # Next cell is the one whose CI == co_net
-                nxt = None
-                for n2, c2 in carry_cells.items():
-                    if n2 in visited:
-                        continue
-                    k2, v2 = _ci_info(c2)
-                    if k2 == "net" and v2 == co_net:
-                        nxt = n2
-                        break
+                # Next cell: use ci_consumer index (carry whose CI == co_net)
+                nxt = ci_consumer.get(co_net)
+                if nxt and nxt in visited:
+                    nxt = None
                 cur = nxt
-            # Report the chain
-            start_bel = cell_bel.get(chain[0])
-            end_bel = cell_bel.get(chain[-1])
-            warnings.append(
-                f"chain: {len(chain)} cells, CI={val}, "
-                f"start={start_bel}, end={end_bel}")
-            if start_bel:
-                _, sx, sy, sn = start_bel
-                fasm.append(
-                    f"# CHAIN_START X{sx}Y{sy}N{sn} CI={val}"
-                    f"  (chain length {len(chain)}; "
-                    f"chain-start CRAM bit not yet mined)")
-            # Verify N-contiguity on the chain's placed bels
+            # Emit LUT_ARITH for each carry cell + per-LAB arith blob
             placed = [cell_bel.get(c) for c in chain]
-            if all(b and b[0] == "SLICE" for b in placed):
-                for i in range(len(placed) - 1):
-                    _, ax, ay, an = placed[i]
-                    _, bx, by, bn = placed[i + 1]
-                    ok = False
-                    if (ax, ay) == (bx, by) and bn == an + 2:
-                        ok = True            # within-LAB chain step
-                    elif ax == bx and ay == by + 1 and an == 30 and bn == 0:
-                        ok = True            # between-LAB N30→N0
-                    if not ok:
-                        warnings.append(
-                            f"chain discontinuity: "
-                            f"{chain[i]}@{placed[i]} → "
-                            f"{chain[i + 1]}@{placed[i + 1]}")
+            chain_labs: set[tuple[int, int]] = set()
+            for i, (cname, bel) in enumerate(zip(chain, placed)):
+                if bel and bel[0] == "SLICE":
+                    _, cx, cy, cn = bel
+                    chain_labs.add((cx, cy))
+                    cell = carry_cells[cname]
+                    params = cell.get("parameters", {})
+                    lut_init = _parse_yosys_int(
+                        params.get("LUT", 0), default=0)
+                    fasm.append(
+                        f"X{cx}Y{cy}N{cn}.LUT_ARITH = 0x{lut_init:04x}")
+                    fasm.append(f"X{cx}Y{cy}N{cn}.DFF")
+            # Verify N-contiguity
+            for i in range(len(placed) - 1):
+                if not (placed[i] and placed[i + 1]):
+                    continue
+                if placed[i][0] != "SLICE" or placed[i + 1][0] != "SLICE":
+                    continue
+                _, ax, ay, an = placed[i]
+                _, bx, by, bn = placed[i + 1]
+                ok = False
+                if (ax, ay) == (bx, by) and bn == an + 2:
+                    ok = True
+                elif ax == bx and ay == by + 1 and an == 30 and bn == 0:
+                    ok = True
+                if not ok:
+                    warnings.append(
+                        f"chain discontinuity: "
+                        f"{chain[i]}@{placed[i]} → "
+                        f"{chain[i + 1]}@{placed[i + 1]}")
 
         # Any CE6_CARRY not touched by a forward walk: orphan / cascaded
         for name in carry_cells:

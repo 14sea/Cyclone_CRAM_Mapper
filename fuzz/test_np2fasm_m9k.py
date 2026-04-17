@@ -256,7 +256,7 @@ def test_emit_m9k_mode_w18_warns_and_skips():
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
     assert line is None, f"expected no FASM for w=18, got {line!r}"
-    assert warn and "w=9" in warn, f"expected w=9 hint in warning: {warn!r}"
+    assert warn and "skipped" in warn, f"expected 'skipped' in warning: {warn!r}"
     print("  test_emit_m9k_mode_w18_warns_and_skips: OK")
 
 
