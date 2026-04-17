@@ -671,6 +671,20 @@ def _load_iob_oe_cells(pin):
     CLK=E1 / K_IN=E16 / OE_IN=M16 / LED=G15 — applying these cells
     on top of an IOB_IN/IOB_OUT-built design at the same pin
     activates the tristate driver path.
+
+    Silicon-falsification mask (2026-04-17 HW bisection on PIN_R5):
+      * (363236, 2) frame=1729 — shared with DSPMULT_GLOBAL_ON
+        (isolated 2026-04-17 Stage 0).  Present in all 16 sdram_dq
+        pin sets.  Stuck-on leak without it.
+      * (363672, 2) frame=1731 — R5-unique second leaky cell
+        (isolated 2026-04-17 Stage 1 via A∪B bisection; A = R5 ∩
+        DSPMULT CLEAN22, B = R5-unique).  Present in 14/16 pin sets
+        (all except T10, T2).  Stuck-on leak without it.
+    Both cells were verified by a CLEAN38 flash: R5 minus both
+    leaky cells passes silicon (LED follows KEY2).  The mask is
+    applied pin-agnostic so the same bits are stripped from every
+    pin's emitted cell set; pins where the cell doesn't occur are
+    unaffected.
     """
     global _IOB_OE_CACHE
     if _IOB_OE_CACHE is None:
@@ -682,6 +696,7 @@ def _load_iob_oe_cells(pin):
                 "run fuzz/iob_oe_specimen.py first"
             )
         data = json.loads(path.read_text())
+        SILICON_FALSIFIED = {(363236, 2), (363672, 2)}  # HW 2026-04-17
         # Pin keys in the per_pin_oe table are full names like
         # "S_DB[0]"; the FASM directive references the package pin
         # (e.g. PIN_R5).  Build a PIN_XX -> cells lookup keyed by the
@@ -694,7 +709,9 @@ def _load_iob_oe_cells(pin):
             loc = e.get("loc", "")
             cells = data["per_pin_oe"].get(e["pin"], [])
             if loc.startswith("PIN_"):
-                pin_map[loc[len("PIN_"):]] = cells
+                cleaned = [c for c in cells
+                           if tuple(c) not in SILICON_FALSIFIED]
+                pin_map[loc[len("PIN_"):]] = cleaned
         _IOB_OE_CACHE = pin_map
     if pin not in _IOB_OE_CACHE:
         raise FasmError(

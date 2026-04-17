@@ -236,6 +236,47 @@ def test_iob_oe_single_emit_flips_exact_cells():
           f"(PIN_{pkg_pin}: {len(diffs)} cells flipped, exact match)")
 
 
+def test_iob_oe_silicon_falsified_mask():
+    """HW 2026-04-17: PIN_R5 bisection isolated two leaky cells —
+    (363236, 2) frame=1729 shared with DSPMULT_GLOBAL_ON and
+    (363672, 2) frame=1731 R5-unique.  Loader must strip both from
+    every pin's emitted set; no pin's cells may include either."""
+    if not CELL_MAP.exists():
+        print("  test_iob_oe_silicon_falsified_mask: SKIP "
+              "(no cell map yet)")
+        return
+    data = json.loads(CELL_MAP.read_text())
+    MASK = {(363236, 2), (363672, 2)}
+    _reset_caches()
+    # Verify at least one pin originally carries each leaky cell in
+    # the raw JSON (so the mask is load-bearing).
+    raw_hits = {c: 0 for c in MASK}
+    for pin, cells in data["per_pin_oe"].items():
+        pin_set = {tuple(x) for x in cells}
+        for c in MASK:
+            if c in pin_set:
+                raw_hits[c] += 1
+    assert all(raw_hits[c] > 0 for c in MASK), (
+        f"mask would be inert — raw JSON hit counts: {raw_hits}"
+    )
+    # Every pin in the loader must be clean of MASK.
+    checked = 0
+    for pin in data.get("routing_invariant_pins", []):
+        for entry in data["entries"]:
+            if entry["pin"] != pin or not entry["loc"].startswith("PIN_"):
+                continue
+            pkg = entry["loc"][len("PIN_"):]
+            cells = set(tuple(c) for c in f._load_iob_oe_cells(pkg))
+            hit = cells & MASK
+            assert not hit, (
+                f"PIN_{pkg} still carries silicon-falsified cell(s) "
+                f"{hit} — loader mask broken"
+            )
+            checked += 1
+    print(f"  test_iob_oe_silicon_falsified_mask: OK "
+          f"({checked} pins, raw hits {raw_hits}, loader clean)")
+
+
 def main():
     tests = [
         test_parse_iob_oe_arity_and_default_empty,
@@ -247,6 +288,7 @@ def main():
         test_iob_oe_single_emit_flips_exact_cells,
         test_iob_oe_all_16_sdram_dq_pins_loadable,
         test_iob_oe_universal_subset_of_each_pin,
+        test_iob_oe_silicon_falsified_mask,
     ]
     n_ok = 0
     for t in tests:
