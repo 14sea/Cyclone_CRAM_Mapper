@@ -41,7 +41,7 @@ def _zero_base() -> bytes:
 
 def test_parse_arity_and_default_false():
     out = f.parse_fasm("")
-    assert len(out) == 20, f"parse_fasm arity {len(out)} != 20"
+    assert len(out) == 21, f"parse_fasm arity {len(out)} != 21"
     assert out[18] is False, "dspmult_global_on default should be False"
     print("  test_parse_arity_and_default_false: OK")
 

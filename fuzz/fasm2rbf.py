@@ -19,6 +19,14 @@ Supported lines (whitespace + blank + '#' comments ignored):
     # the same LAB union-fill from a single blob lookup.
     X{x}Y{y}N{n}.LUT_ARITH = 0xHHHH
 
+    # Multi-LAB carry chain activation (widths 17..32).  Consumes
+    # results/arith_blockband_by_width.json's multi_lab["16+N"] entries
+    # (N = 1..16, total width = 16 + N).  XOR-parity semantics: double-
+    # emit of the same width cancels.  Emit alongside the per-LE
+    # LUT_ARITH lines that carry the truth-table masks for each LE in
+    # the chain.
+    LUT_ARITH_MULTI_LAB WIDTH=17
+
     # Inter-LAB route from source LAB to a destination LE input port
     ROUTE X{sx}Y{sy} -> X{dx}Y{dy}N{dn}.{port}
 
@@ -104,6 +112,16 @@ _LUT_RE = re.compile(
 # wide carry-chain activation cells from results/arith_cells_mined.json.
 _LUT_ARITH_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.LUT_ARITH\s*=\s*0x(?P<mask>[0-9a-fA-F]+)$"
+)
+# Multi-LAB arith carry chain activation (widths 17..32).  The single-
+# LAB LUT_ARITH blob (100 SETs + 4 CLEARs) only activates chains up to
+# 16 LEs (one LAB).  Wider chains need a width-specific blob that also
+# activates the N=30→N=0 inter-LAB link in the LAB below.  Data lives
+# in results/arith_blockband_by_width.json under multi_lab["16+N"] for
+# N = 1..16 (total width = 16 + N).  XOR-parity semantics: double-emit
+# of the same width cancels.
+_LUT_ARITH_MULTI_LAB_RE = re.compile(
+    r"^LUT_ARITH_MULTI_LAB\s+WIDTH\s*=\s*(?P<width>\d+)$"
 )
 _ROUTE_RE = re.compile(
     r"^ROUTE\s+X(?P<sx>\d+)Y(?P<sy>\d+)(?:N(?P<sn>\d+))?\s*->\s*"
@@ -846,6 +864,71 @@ def _arith_set_clear():
     return set_cells, []
 
 
+_ARITH_MULTI_LAB_CACHE = None
+
+
+def _load_arith_multi_lab_blob():
+    """Return the parsed arith_blockband_by_width.json, cached.
+
+    Schema (see scripts/arith_sweep/):
+      d["multi_lab"]["16+N"] = {
+         "topology": "full_lab_plus_partial_lab_down",
+         "set":   [[cram_off, bp], ...],     # width-dependent SET cells
+         "clear": [[cram_off, bp], ...],     # width-dependent CLEAR cells
+         "n_set": int, "n_clear": int,
+      }
+    for N ∈ {1..16} giving total chain widths 17..32 spanning
+    LAB(4,18) (full, 16 LEs) + LAB(4,17) (N extra bits) with the
+    N=30→N=0 inter-LAB carry link.
+    """
+    global _ARITH_MULTI_LAB_CACHE
+    if _ARITH_MULTI_LAB_CACHE is not None:
+        return _ARITH_MULTI_LAB_CACHE
+    import json
+    path = ROOT / "results" / "arith_blockband_by_width.json"
+    if path.exists():
+        _ARITH_MULTI_LAB_CACHE = json.loads(path.read_text())
+    return _ARITH_MULTI_LAB_CACHE
+
+
+def _arith_multi_lab_cells(width):
+    """Return cell list for a `width`-bit multi-LAB carry chain (17..32).
+
+    Returns a single list of (offset, bp) pairs combining the SET and
+    CLEAR cells from multi_lab["16+{width-16}"].  XOR-parity semantics:
+    the caller applies each cell as an XOR toggle, so SET and CLEAR are
+    indistinguishable at apply time.  That's fine because the mining
+    invariant guarantees SET and CLEAR cells are disjoint and the blob
+    is always applied against an nv_zero-style baseline (SET cells are
+    0→1, CLEAR cells are 1→0 — both XOR-toggle to the target state).
+    """
+    if width < 17 or width > 32:
+        raise FasmError(
+            f"LUT_ARITH_MULTI_LAB WIDTH={width}: only widths 17..32 "
+            f"have mined blobs; single-LAB widths 2..16 use LUT_ARITH"
+        )
+    blob = _load_arith_multi_lab_blob()
+    if blob is None:
+        raise FasmError(
+            "LUT_ARITH_MULTI_LAB: results/arith_blockband_by_width.json "
+            "missing; run scripts/arith_sweep/ for widths 17..32"
+        )
+    key = f"16+{width - 16}"
+    ml = blob.get("multi_lab", {})
+    if key not in ml:
+        raise FasmError(
+            f"LUT_ARITH_MULTI_LAB WIDTH={width}: no multi_lab[{key!r}] "
+            f"entry in arith_blockband_by_width.json"
+        )
+    entry = ml[key]
+    cells = []
+    for off, bp in entry.get("set", []):
+        cells.append((int(off), int(bp)))
+    for off, bp in entry.get("clear", []):
+        cells.append((int(off), int(bp)))
+    return cells
+
+
 def _dff_le_cells(x, y, n):
     """Return per-LE DFF enable CRAM cells — currently EMPTY.
 
@@ -875,6 +958,7 @@ def parse_fasm(text):
     """
     luts = []
     lut_arith = []  # list[(x, y, n, mask_int)] — arith-mode LEs
+    lut_arith_multi_labs = []  # list[int] — widths 17..32 requested
     routes = []
     bits = []
     srcs = []
@@ -901,6 +985,10 @@ def parse_fasm(text):
     for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.split("#", 1)[0].strip()
         if not line:
+            continue
+        m = _LUT_ARITH_MULTI_LAB_RE.match(line)
+        if m:
+            lut_arith_multi_labs.append(int(m["width"]))
             continue
         m = _LUT_ARITH_RE.match(line)
         if m:
@@ -1066,7 +1154,7 @@ def parse_fasm(text):
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
             iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
-            dspmult_global_on, iob_oes)
+            dspmult_global_on, iob_oes, lut_arith_multi_labs)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None):
@@ -1157,7 +1245,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
      iob_clk_inputs, nv_buckets, m9k_modes,
-     dspmult_global_on, iob_oes) = parse_fasm(fasm_text)
+     dspmult_global_on, iob_oes,
+     lut_arith_multi_labs) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1439,6 +1528,28 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             buf[off] |= (1 << bp)            # OR-in activation bits
         for off, bp in clear_cells:
             buf[off] &= ~(1 << bp) & 0xFF    # AND-clear deactivation bits
+        work = bytes(buf)
+
+    if lut_arith_multi_labs:
+        # Multi-LAB carry-chain activation for widths 17..32.  Each
+        # requested width pulls its own cell set from
+        # results/arith_blockband_by_width.json (multi_lab["16+N"]).
+        # XOR-parity semantics: emitting the same width twice cancels;
+        # emitting two different widths composes their cell unions with
+        # XOR on any overlap.
+        #
+        # Mined against LAB(4,18)+LAB(4,17) as the concrete placement —
+        # position-independence is NOT yet proven for multi-LAB blobs
+        # (the single-LAB v4 triangle test only covers 2..16).  Callers
+        # who place the chain elsewhere may see residual diffs.
+        parity = {}
+        for width in lut_arith_multi_labs:
+            for off, bp in _arith_multi_lab_cells(width):
+                parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), p in parity.items():
+            if p:
+                buf[off] ^= (1 << bp)
         work = bytes(buf)
 
     if m9k_modes:
