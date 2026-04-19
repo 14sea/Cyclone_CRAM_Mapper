@@ -294,17 +294,29 @@ def test_m9k_mode_parse_and_xor_idempotence():
           f"({len(expected_cells)} cells flipped, double cancels)")
 
 
-def test_m9k_mode_unknown_site_raises():
+def test_m9k_mode_unknown_site_falls_back():
+    """Site-invariant fallback: unmined site reuses any calibrated site's cells."""
     fasm = "X99Y99N0.M9K_MODE_9x512\n"
+    base = _require_baseline()
+    f._M9K_MODE_CACHE = None
+    rbf = f.bitgen(fasm, base)
+    assert len(rbf) == len(base)
+    assert rbf != base, "fallback should have applied cells"
+    print("  test_m9k_mode_unknown_site_falls_back: OK")
+
+
+def test_m9k_mode_unknown_geometry_raises():
+    """Completely unmined geometry still raises."""
+    fasm = "X15Y10N0.M9K_MODE_99x99\n"
     base = _require_baseline()
     f._M9K_MODE_CACHE = None
     try:
         f.bitgen(fasm, base)
     except f.FasmError as e:
         assert "no mined entry" in str(e), str(e)
-        print("  test_m9k_mode_unknown_site_raises: OK")
+        print("  test_m9k_mode_unknown_geometry_raises: OK")
         return
-    raise AssertionError("expected FasmError for unmined M9K_MODE site")
+    raise AssertionError("expected FasmError for unmined M9K_MODE geometry")
 
 
 def test_m9k_mode_template_subflag_parses():
@@ -504,7 +516,8 @@ def main():
         test_m9k_init_xor_idempotence,
         test_m9k_init_unknown_site_raises,
         test_m9k_mode_parse_and_xor_idempotence,
-        test_m9k_mode_unknown_site_raises,
+        test_m9k_mode_unknown_site_falls_back,
+        test_m9k_mode_unknown_geometry_raises,
         test_m9k_mode_template_subflag_parses,
         test_m9k_mode_template_buckets_differ,
         test_m9k_mode_template_goldintersect_subset_of_inferred,

@@ -26,7 +26,8 @@ Usage:
 
 from collections import defaultdict
 
-from config import COLUMN_BASE, LAB_X, LAB_Y, PAIR_SPACING
+from config import (COLUMN_BASE, LAB_X, LAB_Y, PAIR_SPACING, SLOT_BASE,
+                    cram_ctrl_addr, cram_ctrl_bit, cram_n_delta)
 
 
 # --- C4 address model constants ---
@@ -1212,6 +1213,41 @@ class LutCodec:
                 (bo, bp) for bo, bp in rows
                 if not (5282 <= bo < 367952 and (bo - 32) % 210 >= 208)
             )
+        return cls(x, y, n, patterns)
+
+    @classmethod
+    def from_cram_model(cls, x, y, n):
+        """Build LutCodec from the CRAM address formula (no database needed).
+
+        Each minterm b (0..15) maps to exactly one CRAM cell:
+          pair = 7 - (b % 8)
+          delta = 1 - ((b + b // 8) % 2)
+          offset = cram_ctrl_addr(x, y, pair, n) + delta
+          bp = cram_ctrl_bit(y)
+
+        Slot-1 Y rows (Y=3,6,9,12,15,18,21) have low SLOT_BASE (0), so
+        high-N LEs can push the in-frame offset below zero.  The real
+        CRAM layout wraps these into the upper data region of the same
+        frame (foff ~182-207) with a different bitpos.  The +207 address
+        adjustment and bp bump are empirically verified against DB
+        calibration at Y=18 for N=18..30.
+        """
+        slot = (y - 2) % 3
+        group = (y - 2) // 3
+        nd = cram_n_delta(n)
+        wrapped = slot == 1 and (24 + group * 3 + nd < 0)
+        if wrapped:
+            bp = 7 - group
+            addr_adj = 207
+        else:
+            bp = cram_ctrl_bit(y)
+            addr_adj = 0
+        patterns = {}
+        for b in range(16):
+            pair = 7 - (b % 8)
+            delta = 1 - ((b + b // 8) % 2)
+            offset = cram_ctrl_addr(x, y, pair, n) + delta + addr_adj
+            patterns[b] = {(offset, bp)}
         return cls(x, y, n, patterns)
 
     def predict_sram(self, mask):

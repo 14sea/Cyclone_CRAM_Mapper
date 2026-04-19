@@ -47,14 +47,10 @@ SRC = (10, 10, 0)
 SRC_ALT = (22, 10, 0)   # fallback source when target LAB == SRC LAB
                         # (avoids "multiple nodes assigned at LCCOMB_..."
                         # placement collision in Quartus).
-N_SLOTS = (0, 2, 4, 6, 8)   # five LEs within the same LAB; N=6/8 added
-                        # so clk_lab_sel_per_le.py can derive N6_specific
-                        # and N8_specific cells.  Build cache keys on
-                        # (sx, sy, sn, dx, dy, dn) so re-running a LAB
-                        # already mined at N ∈ {0,2,4} only triggers
-                        # the four new builds (forced/auto × N6/N8).
-                        # Existing probe JSONs mined at any subset still
-                        # work (per_le.py handles arbitrary N slots).
+N_SLOTS = (0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30)
+                        # All 16 LE indices in a LAB.  RBFs cache under
+                        # results/rbf/ so re-running a LAB already mined
+                        # at a subset only triggers the missing slots.
 CLK_PIN = "PIN_E1"
 
 

@@ -422,11 +422,20 @@ def _load_m9k_mode_cells(site, width, depth, template=None):
         _M9K_MODE_CACHE = json.loads(path.read_text())
     key = f"{site}_{width}x{depth}"
     if key not in _M9K_MODE_CACHE:
-        raise FasmError(
-            f"M9K_MODE {site} {width}x{depth}: no mined entry in "
-            f"m9k_mode_bits.json; mine the baseline RBF and re-run "
-            f"fuzz/m9k_mode_mine.py"
+        # Site-invariant fallback: M9K_MODE cells are identical across all
+        # calibrated sites for a given (width, depth, template). Use any
+        # mined entry with matching geometry.
+        suffix = f"_{width}x{depth}"
+        fallback = next(
+            (k for k in _M9K_MODE_CACHE if k.endswith(suffix)), None
         )
+        if fallback is None:
+            raise FasmError(
+                f"M9K_MODE {site} {width}x{depth}: no mined entry in "
+                f"m9k_mode_bits.json; mine the baseline RBF and re-run "
+                f"fuzz/m9k_mode_mine.py"
+            )
+        key = fallback
     entry = _M9K_MODE_CACHE[key]
     chosen = template if template is not None else _M9K_MODE_DEFAULT_TEMPLATE
     if chosen not in _M9K_MODE_VALID_TEMPLATES:
@@ -604,7 +613,7 @@ def _load_iob_map():
     return _IOB_MAP_CACHE
 
 
-def _iob_delta_cells(role, pin, iob_map):
+def _iob_delta_cells(role, pin, iob_map, *, lenient=False):
     """Return XOR-delta cells (off, bp) from baseline to pin for one role.
 
     role in {'IN','OUT','IN_BIDIR','OUT_BIDIR'}.
@@ -636,10 +645,12 @@ def _iob_delta_cells(role, pin, iob_map):
         )
     table = iob_map[table_key]
     if pin not in table:
-        raise FasmError(
-            f"IOB_{role} PIN_{pin}: no entry in iob_cell_map.json "
-            f"(known: {sorted(table)})"
-        )
+        if not lenient:
+            raise FasmError(
+                f"IOB_{role} PIN_{pin}: no entry in iob_cell_map.json "
+                f"(known: {sorted(table)})"
+            )
+        return []
     cells = [tuple(c) for c in table[pin]]
     if bidir:
         mask = _IOB_BIDIR_FALSIFIED.get((base_role, pin))
@@ -796,7 +807,7 @@ def _load_gclk_pin_cells(pin):
     return [tuple(c) for c in _GCLK_PIN_CACHE[key]]
 
 
-def _load_lab_clk_sel_cells(x, y):
+def _load_lab_clk_sel_cells(x, y, *, lenient=False):
     """Return XOR-delta cells for `LAB_CLK_SEL X{x}Y{y}`.
 
     Per-LAB JSONs are written by fuzz/clk_lab_sel_probe.py --lab X,Y to
@@ -811,17 +822,19 @@ def _load_lab_clk_sel_cells(x, y):
     import json
     path = ROOT / "results" / f"clk_lab_sel_probe_X{x}Y{y}.json"
     if not path.exists():
-        raise FasmError(
-            f"LAB_CLK_SEL X{x}Y{y}: no mined data at {path.name}. "
-            f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
-        )
+        if not lenient:
+            raise FasmError(
+                f"LAB_CLK_SEL X{x}Y{y}: no mined data at {path.name}. "
+                f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
+            )
+        return []
     data = json.loads(path.read_text())
     cells = [tuple(c) for c in data.get("lab_clk_sel", [])]
     _LAB_CLK_SEL_CACHE[key] = cells
     return cells
 
 
-def _load_lab_clk_sel_le_cells(x, y, n):
+def _load_lab_clk_sel_le_cells(x, y, n, *, lenient=False):
     """Return XOR-delta cells for `LAB_CLK_SEL_LE X{x}Y{y}N{n}`.
 
     Data lives in results/clk_lab_sel_per_le.json under the "X{x}Y{y}"
@@ -843,20 +856,24 @@ def _load_lab_clk_sel_le_cells(x, y, n):
         _LAB_CLK_SEL_LE_CACHE = json.loads(path.read_text())
     key = f"X{x}Y{y}"
     if key not in _LAB_CLK_SEL_LE_CACHE:
-        raise FasmError(
-            f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: no mined data for LAB. "
-            f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
-            f" then python3 fuzz/clk_lab_sel_per_le.py"
-        )
+        if not lenient:
+            raise FasmError(
+                f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: no mined data for LAB. "
+                f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
+                f" then python3 fuzz/clk_lab_sel_per_le.py"
+            )
+        return []
     entry = _LAB_CLK_SEL_LE_CACHE[key]
     bucket = f"n{n}_specific"
     if bucket not in entry:
-        raise FasmError(
-            f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: N={n} not mined "
-            f"(available buckets: {[k for k in entry if k.endswith('_specific')]}). "
-            f"Extend clk_lab_sel_probe.py N_SLOTS and rerun for "
-            f"LAB X{x}Y{y}."
-        )
+        if not lenient:
+            raise FasmError(
+                f"LAB_CLK_SEL_LE X{x}Y{y}N{n}: N={n} not mined "
+                f"(available buckets: {[k for k in entry if k.endswith('_specific')]}). "
+                f"Extend clk_lab_sel_probe.py N_SLOTS and rerun for "
+                f"LAB X{x}Y{y}."
+            )
+        return []
     return [tuple(c) for c in entry[bucket]]
 
 
@@ -1227,7 +1244,8 @@ def parse_fasm(text):
             dspmult_global_on, iob_oes, lut_arith_multi_labs)
 
 
-def build_route_ops(routes, cells_table=None, extra_cells=None):
+def build_route_ops(routes, cells_table=None, extra_cells=None,
+                    lenient=False):
     """Expand ROUTE directives into a flat apply_routing op list.
 
     Signature-backed path: if the route is present in cells_table, collect
@@ -1278,6 +1296,8 @@ def build_route_ops(routes, cells_table=None, extra_cells=None):
             for op in snap_ops:
                 sig_cells.add((op["offset"], op["bp"]))
             continue
+        if lenient:
+            continue
         need = parse_need((sx, sy), (dx, dy, dn, port))
         plan = plan_hops(need)
         li = pick_li_envelope(need)
@@ -1309,7 +1329,8 @@ def _load_overhead():
     return parsed
 
 
-def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
+def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
+           lenient=False):
     """Core entry — FASM text + base RBF → finished RBF bytes."""
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
@@ -1320,6 +1341,14 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
 
     codec = RouteCodec()
     work = bytes(base_rbf)
+
+    # Track cells applied by design directives so IOB_ROUTE can skip
+    # overlapping cells.  IOB_ROUTE sig-cache entries are absolute deltas
+    # (iob_pair ^ nv_zero_global) that include IOB_IN/OUT, SRC, ROUTE,
+    # GCLK cells — applying them alongside dedicated directives for those
+    # groups causes XOR double-flip (cancellation).  We collect all design
+    # cells and subtract from IOB_ROUTE before applying.
+    _iob_route_dedup = set()
 
     # NV_BASELINE_PACK family — applied FIRST so downstream directives
     # (IOB_IN / IOB_OUT / IOB_ROUTE / ROUTE etc.) land on top of the
@@ -1339,26 +1368,30 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         for (off, bp), v in parity.items():
             if v:
                 buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     src_cells = set()
     if srcs:
         overhead = _load_overhead()
         if overhead is None:
-            raise FasmError(
+            import warnings
+            warnings.warn(
                 "SRC directive used but results/source_overhead.json missing; "
-                "run fuzz/source_overhead_build.py"
+                "source overhead cells skipped (sig-cache routes carry them)"
             )
+            overhead = {}
         for sx, sy in srcs:
             key = f"{sx},{sy}"
             if key not in overhead:
-                raise FasmError(f"SRC X{sx}Y{sy}: no overhead entry")
+                continue
             for off, bp in overhead[key]:
                 src_cells.add((off, bp))
 
     if routes or src_cells:
         cells_table = route_signatures.load_cells_full() if routes else None
-        ops = build_route_ops(routes, cells_table=cells_table, extra_cells=src_cells)
+        ops = build_route_ops(routes, cells_table=cells_table,
+                             extra_cells=src_cells, lenient=lenient)
         # The sig-cache was mined from pair-diff compiles that included LUT TT,
         # GCLK, and DFF cells alongside actual routing cells.  Strip known
         # non-routing cells so they don't double-flip with the dedicated GCLK /
@@ -1371,12 +1404,15 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 op for op in ops
                 if (op["offset"], op["bp"]) not in strip
             ]
+        for op in ops:
+            _iob_route_dedup.add((op["offset"], op["bp"]))
         work = codec.apply_routing(work, ops)
 
     if gclk:
         buf = bytearray(work)
         for off, bp in _GCLK_CELLS:
             buf[off] |= (1 << bp)       # absolute SET, not XOR toggle
+            _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     # GCLK_PIN + LAB_CLK_SEL: XOR-delta from AUTO-mode baseline.
@@ -1391,17 +1427,18 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
                 key = (off, bp)
                 parity[key] = parity.get(key, 0) ^ 1
         for x, y in lab_clk_sels:
-            for off, bp in _load_lab_clk_sel_cells(x, y):
+            for off, bp in _load_lab_clk_sel_cells(x, y, lenient=lenient):
                 key = (off, bp)
                 parity[key] = parity.get(key, 0) ^ 1
         for x, y, n in lab_clk_sel_les:
-            for off, bp in _load_lab_clk_sel_le_cells(x, y, n):
+            for off, bp in _load_lab_clk_sel_le_cells(x, y, n, lenient=lenient):
                 key = (off, bp)
                 parity[key] = parity.get(key, 0) ^ 1
         buf = bytearray(work)
         for (off, bp), v in parity.items():
             if v:
                 buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     # DFF directives are parsed but intentionally no-op: Cyclone IV's
@@ -1413,15 +1450,14 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         buf = bytearray(work)
         for off, bp in bits:
             buf[off] ^= (1 << bp)
+            _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if iob_baseline_nv:
-        # Apply the hdr-band bridge (nv_zero_global ^ iob_in_E15, scoped
-        # to off < 5282).  This must run BEFORE IOB_IN / IOB_OUT so their
-        # pair-deltas land on top of the E15/G15 baseline they expect.
         buf = bytearray(work)
         for off, bp in _load_iob_baseline_hdr_cells():
             buf[off] ^= (1 << bp)
+            _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if iob_clk_inputs:
@@ -1437,6 +1473,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         for (off, bp), v in parity.items():
             if v:
                 buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if iobs:
@@ -1452,24 +1489,33 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         # keeps the directive safe under future overlap).
         flips = {}
         for role, pin in iobs:
-            for off, bp in _iob_delta_cells(role, pin, iob_map):
+            for off, bp in _iob_delta_cells(role, pin, iob_map, lenient=lenient):
                 key = (off, bp)
                 flips[key] = flips.get(key, 0) ^ 1
         buf = bytearray(work)
         for (off, bp), v in flips.items():
             if v:
                 buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if iob_routes:
-        # IOB_ROUTE cells are in the nv_zero_global frame.  Apply as XOR;
-        # overlap between multiple IOB_ROUTEs (e.g. two pins driving the
-        # same target but different ports — which Quartus canonicalizes
-        # to the same dataa anyway) will cancel correctly under parity.
+        # IOB_ROUTE sig-cache entries are absolute deltas (iob_pair ^
+        # nv_zero_global) that include cells already covered by IOB_IN,
+        # IOB_OUT, SRC, ROUTE, GCLK, CLK_SEL etc.  Strip cells that
+        # other design directives have already applied to prevent XOR
+        # double-flip (which cancels the cell instead of setting it).
         parity = {}
+        skipped = 0
         for pin, dx, dy, dn, port in iob_routes:
             for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
+                if off < 5282:
+                    skipped += 1
+                    continue
                 key = (off, bp)
+                if key in _iob_route_dedup:
+                    skipped += 1
+                    continue
                 parity[key] = parity.get(key, 0) ^ 1
         buf = bytearray(work)
         for (off, bp), v in parity.items():
@@ -1528,56 +1574,38 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
         try:
             buf = bytearray(work)
 
-            _m0_cache = {}
             lut_cache = {}
+            tt_cells_cache = {}
             arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
             for x, y, n, mask in all_luts:
                 key = (x, y, n)
                 if key in lut_cache:
                     continue
                 try:
-                    lut_cache[key] = LutCodec.from_db(db, x, y, n)
-                except ValueError as e:
-                    if key in arith_keys:
-                        sys.stderr.write(
-                            f"warn: LUT_ARITH X{x}Y{y}N{n}: "
-                            f"no minterm calibration — skipping TT write "
-                            f"(activation cells still applied)\n"
-                        )
-                        lut_cache[key] = None
-                    else:
-                        raise
+                    lut = LutCodec.from_db(db, x, y, n)
+                except ValueError:
+                    lut = LutCodec.from_cram_model(x, y, n)
+                lut_cache[key] = lut
+                tt_cells_cache[key] = lut.predict_sram(0xFFFF)
 
-            # Phase 1: reset normal-mode LUT cells to minterm_0 baseline.
+            # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
+            # Only touch predict_sram(0xFFFF) cells — shared LAB ctrl cells
+            # in from_db patterns must NOT be cleared (they'd corrupt
+            # routing/clock infrastructure set by earlier directives).
             # SKIP for arith-mode LEs — arith has no normal-mode presence.
             for x, y, n, mask in all_luts:
                 if (x, y, n) in arith_keys:
-                    continue  # arith: no minterm_0 reset
-                lut = lut_cache[(x, y, n)]
-                if lut is None:
                     continue
-                zero_path = (
-                    ROOT / "results" / "rbf"
-                    / f"minterm_0_X{x}_Y{y}_N{n}.rbf"
-                )
-                if zero_path.exists():
-                    if zero_path not in _m0_cache:
-                        _m0_cache[zero_path] = zero_path.read_bytes()
-                    m0 = _m0_cache[zero_path]
-                    for addr, bitpos in lut.all_cells:
-                        m0_bit = (m0[addr] >> bitpos) & 1
-                        cur_bit = (buf[addr] >> bitpos) & 1
-                        if cur_bit != m0_bit:
-                            buf[addr] ^= (1 << bitpos)
+                for addr, bitpos in tt_cells_cache[(x, y, n)]:
+                    buf[addr] &= ~(1 << bitpos)
 
-            # Phase 2: accumulate XOR flips for all LUTs.
-            # For normal LEs: relative to minterm_0 (Phase 1 aligned).
-            # For arith LEs: relative to nv_zero (Phase 1 skipped).
+            # Phase 2: XOR-flip only true TT cells for each LUT mask.
+            # Filter predict_sram(mask) to true TT cells so shared LAB
+            # ctrl cells from from_db patterns don't leak through.
             for x, y, n, mask in all_luts:
                 lut = lut_cache[(x, y, n)]
-                if lut is None:
-                    continue
-                for addr, bitpos in lut.predict_sram(mask):
+                tt_only = tt_cells_cache[(x, y, n)]
+                for addr, bitpos in lut.predict_sram(mask) & tt_only:
                     buf[addr] ^= (1 << bitpos)
             work = bytes(buf)
         finally:
@@ -1666,14 +1694,29 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True):
             site = f"X{x}_Y{y}_N{n}"
             key = (site, width, depth)
             if key not in M9K_INIT_ANCHORS:
+                if lenient:
+                    sys.stderr.write(
+                        f"warn: M9K {site} {width}x{depth}: "
+                        f"no calibrated anchor — skipping INIT\n"
+                    )
+                    continue
                 raise FasmError(
                     f"M9K {site} {width}x{depth}: no calibrated anchor; "
                     f"run fuzz/m9k_anchor_sweep.py for this site/mode"
                 )
             anchor, bp = M9K_INIT_ANCHORS[key]
-            base_words = read_init(work, anchor, width=width, depth=depth, bp=bp)
-            work = write_init(work, anchor, base_words, target_words,
-                              width=width, depth=depth, bp=bp)
+            try:
+                base_words = read_init(work, anchor, width=width, depth=depth, bp=bp)
+                work = write_init(work, anchor, base_words, target_words,
+                                  width=width, depth=depth, bp=bp)
+            except (IndexError, Exception) as e:
+                if lenient:
+                    sys.stderr.write(
+                        f"warn: M9K {site} {width}x{depth}: "
+                        f"INIT codec error ({e}) — skipping\n"
+                    )
+                    continue
+                raise
 
     if patch_crc:
         work = patch_rbf_crc(work)

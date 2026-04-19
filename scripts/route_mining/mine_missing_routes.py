@@ -150,14 +150,16 @@ def main():
     all_routes = parse_missing_routes(args.fasm)
     print(f"Total ROUTE lines in FASM: {len(all_routes)}")
 
-    # Filter to missing (not in sig-cache)
+    # Filter to missing (not in sig-cache), deduplicate
     cache = load_existing_cache()
+    seen_keys = set()
     missing = []
     for r in all_routes:
         key = route_key(*r)
-        if key not in cache:
+        if key not in cache and key not in seen_keys:
             missing.append(r)
-    print(f"Missing from sig-cache: {len(missing)}")
+            seen_keys.add(key)
+    print(f"Missing from sig-cache: {len(missing)} (deduplicated)")
 
     if args.limit > 0:
         missing = missing[:args.limit]
@@ -192,6 +194,7 @@ def main():
                 print(f"  [{i+1}/{len(missing)}] ok={n_ok} fail={n_fail} "
                       f"({time.time()-t0:.0f}s)")
     else:
+        save_interval = 500
         with ProcessPoolExecutor(max_workers=args.parallel) as pool:
             futures = {}
             for r in missing:
@@ -210,6 +213,15 @@ def main():
                 if (i + 1) % 50 == 0:
                     print(f"  [{i+1}/{len(missing)}] ok={n_ok} fail={n_fail} "
                           f"({time.time()-t0:.0f}s)")
+                if (i + 1) % save_interval == 0 and new_entries:
+                    cache.update(new_entries)
+                    _tmp = str(CELLS_FULL_PATH) + ".tmp"
+                    with open(_tmp, "w") as _f:
+                        json.dump(cache, _f, separators=(",", ":"))
+                    os.replace(_tmp, str(CELLS_FULL_PATH))
+                    print(f"  [checkpoint] saved {len(cache)} entries "
+                          f"(+{len(new_entries)} new)")
+                    new_entries = {}
 
     elapsed = time.time() - t0
     print(f"\nDone: {n_ok} mined, {n_fail} failed in {elapsed:.0f}s")

@@ -42,8 +42,16 @@ TOTAL_LABS = 392  # per handbook; 376 verified via fuzzing
 TOTAL_LES = 6272  # 392 * 16
 LES_PER_LAB = 16
 
-# Invalid LAB positions (Quartus rejects placement at these coordinates)
-INVALID_LABS = {(x, y) for x in [3, 4, 6, 7, 8] for y in [12, 13, 14, 16]}
+# Invalid LAB positions (Quartus rejects placement at these coordinates).
+# Left-edge columns X=3..8 (incl. jailbreak X=5) share Y={12,13,14,16}
+# exclusion.  Jailbreak X=9 has Y={12,13,16}.  Y=15 (jailbreak row) is
+# rejected by Quartus CE10 Lite for ALL X — route mining fails at every
+# LCCOMB_X*_Y15_N* position (discovered during demand mining 2026-04-17).
+INVALID_LABS = (
+    {(x, y) for x in [3, 4, 5, 6, 7, 8] for y in [12, 13, 14, 16]}
+    | {(9, y) for y in [12, 13, 14, 16]}
+    | {(x, 15) for x in LAB_X + [5, 9, 14, 30, 32, 33]}
+)
 
 # --- CRAM Address Model (verified 376/376 positions) ---
 COLUMN_BASE = {

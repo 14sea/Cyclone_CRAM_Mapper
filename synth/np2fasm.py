@@ -397,11 +397,7 @@ def convert(
                     bit_sinks.setdefault(_bit_id, []).append(
                         (_cn, _port, _idx))
 
-    # Identify IOB cells that drive ONLY DFF.CLK sinks. For these we
-    # MAY want to suppress IOB_IN — but only if the pin has no entry
-    # in iob_cell_map.json (dedicated clock pads like E1). Normal I/O
-    # pads used as clocks still need IOB_IN so the pad buffer stays
-    # enabled.
+    _CLK_PORT_NAMES = {"CLK", "CLK_A", "CLK_B"}
     clock_only_iobs: set[str] = set()
     for cell_name, cell in cells.items():
         if cell.get("type") != "GENERIC_IOB":
@@ -414,11 +410,7 @@ def convert(
         sinks = bit_sinks.get(net_bit, [])
         if not sinks:
             continue
-        if all(
-            cells.get(sc, {}).get("type") in ("DFF", "$_DFF_P_")
-            and sp == "CLK"
-            for sc, sp, _ in sinks
-        ):
+        if all(sp in _CLK_PORT_NAMES for _, sp, _ in sinks):
             clock_only_iobs.add(cell_name)
 
     # --- LUT / LUT_ARITH / DFF directives from cells ---

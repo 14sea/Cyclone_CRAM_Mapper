@@ -30,6 +30,9 @@ Thumbs.db
 # Mining run logs
 results/*.log
 
+# Large sig-cache (>200MB, regenerable via route mining)
+results/route_cells_full.json
+
 # Regenerable derived artifacts (rebuild with respective scripts)
 results/route_signatures.json
 results/chipdb_ep4ce6_data.json
@@ -74,6 +77,10 @@ fuzz/PATCH_PLAN_overhead_injection.md
 
 # Accidental files with embedded spaces (from earlier shell-arg quoting bugs)
 fuzz/fill_*\ *_corpus.py
+
+# Stray Quartus/mining artifacts at repo root (from shell-arg quoting bugs)
+/--base
+/mine_top.*
 
 # Local scratch dir for ephemeral experiments (never commit contents).
 # House rule: once a script is cited from docs/memory, move it out of tmp/

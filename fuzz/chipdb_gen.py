@@ -78,7 +78,8 @@ CARRY_DELAY = 1          # cout→cin direct pip — cheapest (dedicated wire,
 SIG_DELAY = 1            # SIG pips (FASM-backed) — cheapest
 INTRA_DELAY = 2          # intra-LAB direct pips — within-LAB
 LOCAL_DELAY = 5          # LOCAL_IN / LOCAL_OUT — entering/leaving bus
-HOP_DELAY = 20           # LOCAL_HOP — expensive, discourages long chains
+HOP_DELAY = 20           # LOCAL_HOP — base cost (scaled ×distance)
+MAX_HOP_DIST = 4         # Reach 4 valid neighbours per direction
 PLACEHOLDER_DELAY = 1    # default (used for GCLK, IOB bridge)
 
 # Number of parallel LOCAL tracks per LAB. Each wire in nextpnr is a
@@ -86,7 +87,7 @@ PLACEHOLDER_DELAY = 1    # default (used for GCLK, IOB bridge)
 # starves the clock arc as soon as any data arc claims the bus.
 # Keep small (8) to avoid pip-count blowup but big enough to carry
 # counter-class designs (~32 nets distributed across LABs).
-NUM_LOCAL_TRACKS = 4
+NUM_LOCAL_TRACKS = 8
 
 SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
 # Map sig-cache port labels to nextpnr-generic SLICE pin indices.
@@ -132,7 +133,9 @@ def _wire_iob(name: str, kind: str) -> str:
     return f"iob_{name}_{kind}"
 
 
-def build_chipdb() -> dict:
+def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
+                 max_hop_dist: int = MAX_HOP_DIST,
+                 sig_routing_only: bool = False) -> dict:
     bels: list[dict] = []
     wires: list[dict] = []
     belpins: list[dict] = []
@@ -375,7 +378,7 @@ def build_chipdb() -> dict:
             n_pips_carry += 1
 
     for (x, y) in valid_labs:
-        for t in range(NUM_LOCAL_TRACKS):
+        for t in range(num_local_tracks):
             wires.append({
                 "name": f"LOCAL_X{x}_Y{y}_T{t}",
                 "type": "LOCAL", "x": x, "y": y,
@@ -422,7 +425,7 @@ def build_chipdb() -> dict:
                     n_local_pips += 1
 
         # ----- LOCAL tracks for inter-LAB routing -----
-        for t in range(NUM_LOCAL_TRACKS):
+        for t in range(num_local_tracks):
             lw = f"LOCAL_X{x}_Y{y}_T{t}"
             # slice outputs -> LOCAL track
             for n in LE_N:
@@ -451,27 +454,31 @@ def build_chipdb() -> dict:
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
-            # Same-track 4-neighbour hops (N/S/E/W only, no diagonals
-            # — reduces fan-out from 8 to 4 per wire, halving
-            # pathfinder search space).
-            for dxi, dyi in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            if not sig_routing_only:
+                # Multi-distance hops (N/S/E/W, distance 1..max_hop_dist).
+                # Longer hops carry higher delay so the router prefers
+                # short hops when LOCAL capacity allows, but can skip
+                # intermediate LABs to reduce transit wire pressure.
+                for dxi, dyi in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                     nxi, nyi = xi + dxi, yi + dyi
-                    if not (0 <= nxi < len(LAB_X_FULL)):
-                        continue
-                    if not (0 <= nyi < len(LAB_Y_FULL)):
-                        continue
-                    nx, ny = LAB_X_FULL[nxi], LAB_Y_FULL[nyi]
-                    if (nx, ny) not in local_wires:
-                        continue
-                    dst = f"LOCAL_X{nx}_Y{ny}_T{t}"
-                    pips.append({
-                        "name": f"pip_{lw}__{dst}",
-                        "type": "LOCAL_HOP",
-                        "src": lw, "dst": dst,
-                        "delay": HOP_DELAY,
-                        "x": x, "y": y,
-                    })
-                    n_local_pips += 1
+                    hops_found = 0
+                    while (0 <= nxi < len(LAB_X_FULL)
+                           and 0 <= nyi < len(LAB_Y_FULL)
+                           and hops_found < max_hop_dist):
+                        nx, ny = LAB_X_FULL[nxi], LAB_Y_FULL[nyi]
+                        if (nx, ny) in local_wires:
+                            hops_found += 1
+                            dst = f"LOCAL_X{nx}_Y{ny}_T{t}"
+                            pips.append({
+                                "name": f"pip_{lw}__{dst}",
+                                "type": "LOCAL_HOP",
+                                "src": lw, "dst": dst,
+                                "delay": HOP_DELAY * hops_found,
+                                "x": x, "y": y,
+                            })
+                            n_local_pips += 1
+                        nxi += dxi
+                        nyi += dyi
 
     # ---------- Dedicated global clock network ----------
     # A single GCLK wire carries one clock net with direct fanout to
@@ -557,23 +564,20 @@ def build_chipdb() -> dict:
         we = _wire_iob(safe, "EN")  # OE from fabric
         bank = _pin_bank(pin_loc)
         gx, gy = bank_gateways[bank]
-        for t in range(NUM_LOCAL_TRACKS):
+        for t in range(num_local_tracks):
             gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
-            # pad → fabric: IOB_O → LOCAL at gateway
             pips.append({
                 "name": f"pip_iob_{safe}_O__{gw}",
                 "type": "IOB_TO_LOCAL",
                 "src": wo, "dst": gw,
                 "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
             })
-            # fabric → pad: LOCAL at gateway → IOB_I
             pips.append({
                 "name": f"pip_{gw}__iob_{safe}_I",
                 "type": "LOCAL_TO_IOB",
                 "src": gw, "dst": wi,
                 "delay": PLACEHOLDER_DELAY, "x": gx, "y": gy,
             })
-            # fabric → pad OE: LOCAL at gateway → IOB_EN
             pips.append({
                 "name": f"pip_{gw}__iob_{safe}_EN",
                 "type": "LOCAL_TO_IOB",
@@ -611,7 +615,7 @@ def build_chipdb() -> dict:
                 bits = [_wire_m9k_port(x, y, port)] if width == 1 else \
                        [_wire_m9k_bit(x, y, port, i) for i in range(width)]
                 for w in bits:
-                    for t in range(NUM_LOCAL_TRACKS):
+                    for t in range(num_local_tracks):
                         gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
                         if is_out:
                             pips.append({
@@ -742,6 +746,14 @@ def main() -> None:
                          "(e.g. --region 13,6,18,14)")
     ap.add_argument("--no-jailbreak", action="store_true",
                     help="Exclude jailbreak columns/rows (CE6 whitelist only)")
+    ap.add_argument("--local-tracks", type=int, default=NUM_LOCAL_TRACKS,
+                    metavar="N",
+                    help=f"LOCAL bus tracks per LAB (default {NUM_LOCAL_TRACKS})")
+    ap.add_argument("--max-hop-dist", type=int, default=MAX_HOP_DIST,
+                    metavar="N",
+                    help=f"Max hop distance per direction (default {MAX_HOP_DIST})")
+    ap.add_argument("--sig-routing-only", action="store_true",
+                    help="Inter-LAB routing via SIG pips only (no LOCAL_HOP)")
     args = ap.parse_args()
 
     global LAB_X_FULL, LAB_Y_FULL
@@ -758,7 +770,9 @@ def main() -> None:
         print(f"[region] placement restricted to X=[{x0},{x1}] Y=[{y0},{y1}]"
               f" → {len(LAB_X_FULL)} cols × {len(LAB_Y_FULL)} rows")
 
-    data = build_chipdb()
+    data = build_chipdb(num_local_tracks=args.local_tracks,
+                        max_hop_dist=args.max_hop_dist,
+                        sig_routing_only=args.sig_routing_only)
     DATA_PATH.write_text(json.dumps(data, indent=1))
     SCRIPT_PATH.write_text(_RUNNER_TEMPLATE)
 
