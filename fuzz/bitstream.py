@@ -24,6 +24,7 @@ Usage:
     switches = rc.read_switches(rbf_data, zero_data)
 """
 
+import os.path as _os_path
 from collections import defaultdict
 
 from config import (COLUMN_BASE, LAB_X, LAB_Y, PAIR_SPACING, SLOT_BASE,
@@ -1190,6 +1191,7 @@ _SIGMA_INV_BY_FB8 = {
         (190,1,2,0,3),(192,1,2,0,3),(198,1,2,0,3),(200,1,2,0,3),(206,1,2,0,3)],
 }
 # Parse into {(foff, fb8): (s0, s1, s2, s3)} dict at import time
+# Legacy 2-key cache (fb8-only groups from the original 233-position mining).
 _SIGMA_INV_CACHE = {}
 _SIGMA_INV_SORTED = {}  # fb8 -> sorted list of (foff, sigma_inv) for interpolation
 for _fb8, _entries in _SIGMA_INV_BY_FB8.items():
@@ -1201,12 +1203,57 @@ for _fb8, _entries in _SIGMA_INV_BY_FB8.items():
         _sorted.append((_foff, _si))
     _SIGMA_INV_SORTED[_fb8] = _sorted
 
+# Extended 3-key cache: (foff, fb8, group) → σ⁻¹.
+# σ⁻¹ depends on group (= (y-2)//3), not just (foff, fb8).
+# Loaded from results/sigma_inv_fb8_groups.json at import time.
+_SIGMA_INV_3KEY = {}  # (foff, fb8, group) -> (s0,s1,s2,s3)
+_SIGMA_INV_3KEY_SORTED = {}  # (fb8, group) -> sorted [(foff, si)]
+_sigma_inv_3key_path = _os_path.join(
+    _os_path.dirname(_os_path.dirname(_os_path.abspath(__file__))),
+    "results", "sigma_inv_fb8_groups.json")
+if _os_path.exists(_sigma_inv_3key_path):
+    import json as _json_loader
+    with open(_sigma_inv_3key_path) as _f3:
+        _data3 = _json_loader.load(_f3)
+    for _k3, _v3 in _data3.get("entries", {}).items():
+        _foff3 = _v3["foff"]
+        _fb83 = _v3["fb8"]
+        _grp3 = _v3["group"]
+        _si3 = tuple(_v3["sigma_inv"])
+        _SIGMA_INV_3KEY[(_foff3, _fb83, _grp3)] = _si3
+        _bg_key = (_fb83, _grp3)
+        if _bg_key not in _SIGMA_INV_3KEY_SORTED:
+            _SIGMA_INV_3KEY_SORTED[_bg_key] = []
+        _SIGMA_INV_3KEY_SORTED[_bg_key].append((_foff3, _si3))
+    for _bg_key in _SIGMA_INV_3KEY_SORTED:
+        _SIGMA_INV_3KEY_SORTED[_bg_key].sort()
+    del _json_loader, _f3, _data3
 
-def _sigma_inv_lookup(foff, fb8):
-    """Look up σ⁻¹ for a given (foff, fb%8).
 
-    Exact match from the mined cache, or nearest-foff fallback at same fb8.
+def _sigma_inv_lookup(foff, fb8, group=None):
+    """Look up σ⁻¹ for a given (foff, fb%8) and optionally group.
+
+    Lookup order:
+    1. Exact (foff, fb8, group) in 3-key cache
+    2. Nearest-foff in same (fb8, group) bucket
+    3. Exact (foff, fb8) in legacy 2-key cache
+    4. Nearest-foff in same fb8 bucket
+    5. Identity fallback (0, 1, 2, 3)
     """
+    if group is not None:
+        key3 = (foff, fb8, group)
+        if key3 in _SIGMA_INV_3KEY:
+            return _SIGMA_INV_3KEY[key3]
+        entries3 = _SIGMA_INV_3KEY_SORTED.get((fb8, group))
+        if entries3:
+            best_dist = 999
+            best_si = entries3[0][1]
+            for ef, si in entries3:
+                d = abs(ef - foff)
+                if d < best_dist:
+                    best_dist = d
+                    best_si = si
+            return best_si
     key = (foff, fb8)
     if key in _SIGMA_INV_CACHE:
         return _SIGMA_INV_CACHE[key]
@@ -1320,7 +1367,7 @@ class LutCodec:
         val = COLUMN_BASE[x] - 168 + offset + nd + addr_adj
         foff = val % 210
         fb8 = (val // 210) % 8
-        sigma_inv = _sigma_inv_lookup(foff, fb8)
+        sigma_inv = _sigma_inv_lookup(foff, fb8, group)
         sigma = [0] * 4
         for i, j in enumerate(sigma_inv):
             sigma[j] = i

@@ -103,7 +103,10 @@ def extract_cells(a: bytes, b: bytes) -> list[list[int]]:
     for off in range(32, min(len(a), len(b))):
         if off >= 367952:
             break
-        if (off - 32) % 210 >= 208:
+        frame = (off - 32) // 210
+        pos = (off - 32) % 210
+        # Header frames (0-24) have data at pos 208-209, not CRC
+        if frame >= 25 and pos >= 208:
             continue
         xor = a[off] ^ b[off]
         for bp in range(8):
