@@ -2063,6 +2063,17 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
   - **GCLK + IOB_CLK_INPUT 扩展到 F17 全部专用时钟引脚（2026-04-15）**：`GCLK_PIN` 和 `IOB_CLK_INPUT` 现在各覆盖 **12 个时钟引脚** —— 原有 E1、R8、N1 之外新增 9 个专用时钟引脚（M1、M2、T4、R4、M16、M15、E15、A14、B14）。F17 13 条专用时钟引脚里有两条无法 fit：PIN_E2（E1 的 LVDSCLK_00P 差分对侧 —— Quartus 拒绝单端摆放）以及 PIN_H1（被 `ALTERA_DCLK` JTAG 配置脚保留）。挖矿工具已通用化：`scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}`（IOB_CLK_INPUT，可并行，约 16 s/pin）和 `fuzz/clk_pin_autoforce_probe.py --pin {PIN}`（GCLK_PIN，每个 pin 6 次 build × 约 16 s）。测试：`fuzz/test_iob_baseline_nv_directive.py` 15/15（包含每条引脚的 loader + 每条引脚的 gold-RBF round-trip）+ `fuzz/test_gclk_pin_directive.py` 11/11（每条引脚 loader 健壮性）。注意点：同 bank 的专用时钟引脚（E15/M15/M16；A14/B14）会共享 spine cell（重叠 12-22 cells），不像 legacy 三元组那样彼此互斥 —— XOR 语义在双重发射时仍然正确合成，但同时发射多条 `GCLK_PIN` 的设计会出现部分对消而非干净并集
   - **IOB→SLICE 路由挖掘，模板硬件验证通过（2026-04-14）**：`scripts/iob_slice_mining/` —— 成对双 LE 挖掘模板（`template_pairs.py` + `mine_iob_routes.py`）产出 pair-vs-zero 差分（每条 ~200 cells），同时 paired RBF 本身就是一个能跑的矽片设计：`iob_pair_E16_10_4_0_dataa.rbf` 烧到 AX301 上，KEY2→LED0 行为正确。3 层分解（`decompose_deltas.py`）把每条原始 delta 拆成 universal_infra（98 cells）∪ pin_footprint(pin) ∪ pure_common(target) ∪ ≤2-cell 残差，15 条（E16/E15/M16 × 5 目标 LAB）全部闭合。Port MUX 被 Quartus 规范化（4 个 port 产生逐 byte 相同的 delta）。Sig-cache 注入仍未完成（`pure_common` 是相对 `iob_zero` 基底的，不是 `nv_zero_global`）
   - **IOB_ROUTE FASM 指令 + 帧分裂桥接 + single_le 扫频（2026-04-15）**：`IOB_ROUTE PIN_X -> XaYbNc.port` 已接入 `fasm2rbf`（8/8 测试），`absolute_cells` 路径 CRAM 带逐 byte 与硬件验证过的 pair RBF 对齐。`IOB_BASELINE_NV`（`nv_zero_global` → `iob_in_E15` 的 132-bit-cell / 74 byte header 桥接 delta）与 `IOB_CLK_INPUT PIN_{E1,R8,N1}`（专用时钟 bank pin 激活 delta，每条 40 / 64 / 70 cell，通过 `scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}` 按 pin 挖掘）一起把帧分裂补齐，让端到端 FASM 设计可以直接在 `nv_zero_global` 单一基底上构建。`results/iob_to_slice_sigcache.json` 新增 opt-in 的 `single_le_cells` 段，存在时 `fasm2rbf` 会优先使用它，剥离配对模板副 LE 装饰用于单 LE 设计；系数由 `IOB_ROUTE_primary = gold_delta ^ (其他所有指令)` 对 Quartus gold RBF 求解得来。`scripts/iob_slice_mining/sweep_single_le.py` 把这套推导并行扫到所有已支持的 (pin, target) 组合：**15/15 条全部落地**（3 pins E16/E15/M16 × 5 targets 10,4,0 / 10,4,2 / 10,4,4 / 10,10,0 / 16,4,0），每条经完整 8 指令栈跑出的 RBF 都与 Quartus gold 逐 byte 一致。最后 6 条靠两个探针基础设施修复解锁：`clk_lab_sel_probe.py` 在 `target_lab` 撞到默认 SRC LAB 时自动改用 `SRC_ALT=(22,10,0)`（原先会在 `LCCOMB_X10_Y10_N0` 撞 placement），并且 `N_SLOTS` 扩到含 N=2，`LAB_CLK_SEL_LE X{x}Y{y}N2` 也可用了。测试：`fuzz/test_iob_baseline_nv_directive.py` 13/13（覆盖 E1、R8、N1 三个 clock-input pin，每一条都按 pin 单独 round-trip 到 Quartus gold 逐 byte 一致）+ `fuzz/test_iob_route_directive.py` 8/8
+  - **Stage 0 硬件烧录（2026-04-16）**：24 个 RBF 烧入 AX301 —— **23 通过、1 失败**（DSPMULT_GLOBAL_ON 在矽片上被证伪）。关键结论：`NV_BASELINE_PACK` 矽片等价于 nv_zero_global（Phase 7 退役解锁）；14/14 IOB_ROUTE 配对条目矽片正确；7 条新 GCLK_PIN 时钟引脚编程验证（M15 全通过、M1/M2/T4/R4/A14/B14 编程正常）；M9K smoke 设计被芯片接受（codec pipeline 矽片干净）；DSPMULT 23 cell 集在矽片上漏电 → 开启二分法路线图。
+  - **Stage 0 第二轮烧录（2026-04-17）**：M9K_MODE `_inferred_goldintersect` **通过** —— np2fasm 对所有 w=9 站点解除门控。IOB_OE PIN_R5 **失败**（LED 常亮）—— 二分法定位到 2 个漏电 cell `(363236,2)+(363672,2)`，清洗后 38 cell 集通过，loader 自动屏蔽。LUT_ARITH_MULTI_LAB WIDTH=17 **失败**（LED 常灭）—— 多 LAB 进位链保持门控。DSPMULT_GLOBAL_ON 四层二分（23→12→6→3→1）：漏电 cell = `(363236, 2)` 在 frame 1729；清洗后 22 cell 集通过。
+  - **LAB_CLK_SEL_LE 扩展到 N=6/8 覆盖全部 14 个 LAB（2026-04-16）**：`N_SLOTS` 扩展至 `(0, 2, 4, 6, 8)`。56 次新 Quartus build。LAB(10,16) invariant 收紧 53→49（4 cell 迁移到 per-LE 桶）。`clk_lab_sel_per_le.py` 重构为 N 无关。49/49 测试通过。
+  - **IOB_IN_BIDIR / IOB_OUT_BIDIR 指令落地（2026-04-17）**：`per_pin_input`/`per_pin_output` cell 分发，用于双向 IOB pad（cell 在 33 pin 扫频中按 pin 唯一，无 anchor 双翻转）。覆盖 16 个 sdram_dq pin。`_IOB_BIDIR_FALSIFIED` 每 pin 屏蔽表（R5 OUT：2 个 fabric 带 cell 被剥离）。np2fasm 自动为双向 pad 发射 BIDIR 变体。测试：5/5 指令 + 6/6 np2fasm。
+  - **IOB_OE FASM 指令落地（2026-04-16）**：`IOB_OE PIN_X` 覆盖 16 个 NEORV32 sdram_dq pin。Specimen-factory 挖掘（oe_on vs oe_off 每 pin、3-seed routing-invariance 探针、全 16 pin 零漂移）。每 pin 37..55 cell、21 cell universal 交集。R5 硬件二分隔离 2 个漏电 cell；loader 自动屏蔽。9/9 测试。np2fasm 发射尚未接线（需 Yosys `$tribuf` techmap）。
+  - **公式化 LutCodec 落地（2026-04-17）**：`LutCodec.from_cram_model(x, y, n)` 消除了 per-LAB 的 SQLite 校准。使用 CRAM 地址模型生成合成 minterm 模式。`fasm2rbf.py` bitgen 在 `from_db()` 抛 ValueError 时自动回退。在 (10,10,0) 处全部 65536 个 mask 与数据库 codec 一致。**已知缺陷**：pair mapping 对 (10,10,0) 以外的位置全部错误 —— 192/233 个 LUT 产生错误的真值表。根因：bit-to-cell pair 排列随 (x,y) 变化，公式未能捕获。这是 pipeline 测试的首要阻塞。
+  - **Sig-cache 需求挖掘扩展至 38,683 条目（2026-04-18→19）**：从 NEORV32 STA edge 做路由挖掘，7-tuple sig-cache 从 13,487 扩展到 38,683 条目。NEORV32 v2 构建的路由 sig-cache miss = 0。剩余 8 条 IOB→SLICE miss（J16/M2/E16 → Y=21 目标）。
+  - **M9K pipeline 端到端闭合（2026-04-16）**：完整 Yosys → `memory_libmap` → prepack_m9k → np2fasm → fasm2rbf 路径产出 CRC 合规的 RBF。smoke 设计（9×512 RAM）用户数据模式正确往返。三个 np2fasm 修复（blackbox 模块选择、Yosys 二进制整数解析、x/z 字符处理）。M9K_MODE `_inferred_goldintersect` 发射对所有 w=9 站点解除门控（硬件已验证）。
+  - **NEORV32 开源工具链 RBF 烧录自动重置（2026-04-18）**：v2 和 v3 RBF 都导致 FPGA 自动重置到出厂配置。根因：chipdb LOCAL 总线仅 4 条 track（总计约 2080 wire），真实矽片有 O(100k) 路由资源。在 6500+ LE 下几乎每条 LOCAL wire 都过度使用 → 驱动冲突 → 保护性重置。所有结构安全检查通过；问题在路由模型容量，不在指令。修复需要 SIG-cache 感知放置或分层路由模型。
+  - **Pipeline 测试端到端设计（134 LE，2026-04-18→19）**：28-bit counter → LED 心跳 + UART TX "Hi!\r\n" + KEY3/KEY4 直通。Quartus gold 在矽片上通过。开源工具链构建：0 route miss，但**烧录后 FPGA 重置**。根因：`from_cram_model()` pair mapping bug —— 192/233 个 LUT 使用错误的 bit-to-cell 映射，破坏 LUT 函数。K2→LED3 和 K4→LED2 工作（部分 pipeline 成功），但 F16/G15 输出失败。F16 输出路由经差分挖掘（40 个 data cell：38 header + 2 block band）已隔离，但添加它们因累积的 LUT 层损坏而触发重置。
+  - **NEORV32 进位链禁用（2026-04-17）**：Yosys flow 移除 `alumacc` —— 684 条链断裂 → 改用 LUT4 算术。LE 减至 6533（少 292）。CE6_CARRY 基础设施保留供未来架构工作。
 
 - [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
 
@@ -2131,12 +2142,15 @@ RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮�
 | C16 长距离线 | — | 未开始 |
 | 比特流编解码器 | LUT TT + 布线读写完成；往返自洽；V2 安全防线；CRC patcher 已整合 | 硬件验证 |
 | 路由综合（绿区岛） | CE6 标准 15 岛 686/686 bit-perfect；越狱 / 边缘 9 岛 45/45 靠 snapshot fallback；总 harness 731/731 | 闭合（2026-04-14） |
-| FASM sig-cache（Phase 4.5） | 13,487 条目；7-tuple（支持 sn>0）；Plan D' 工厂覆盖 NEORV32 95.9% edge | 生产 |
-| M9K init 编解码器（Phase 5.2） | 2D 线性公式；33 anchor；31 NEORV32 点位校准；READ 512/512、WRITE 与 Quartus 0 CRAM diff | 往返闭合；硬件尚未验证 |
-| GCLK 管线（Phase 5.4） | `GCLK_PIN`（F17 上 12 个 pin）+ `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`；基于 AUTO baseline 做 XOR 合成 | 硬件验证（LAB(10,4).N=0，2026-04-14） |
-| IOB FASM（Phase 5.4） | `IOB_IN` / `IOB_OUT` 44/44 单轴 bit-perfect；`IOB_ROUTE` 15/15 全-RBF 0 diff | 单轴硬件验证；跨轴 2D 扫描进行中 |
-| `nv_zero_global` 退役 | `NV_BASELINE_PACK` 指令 + 子指令从 PURE_ZERO 直接复现 Quartus baseline 的每一字节 | codec 路径落地；硬件烧录等价性尚未验证 |
-| 开源工具链（Phase 5.3） | Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe；组合 / FF-only / 算术设计都能烧 | 部分开通；M9K 前端（Yosys `memory_libmap`）被卡 |
+| FASM sig-cache（Phase 4.5） | **38,683 条目**（2026-04-19 扩展）；7-tuple（支持 sn>0）；NEORV32 v2 路由 miss = 0 | 生产 |
+| M9K init 编解码器（Phase 5.2） | 2D 线性公式；33+5 anchor（含 18×512）；M9K pipeline 端到端闭合（Yosys→prepack→np2fasm→fasm2rbf） | 硬件已验证（芯片接受开源工具链 M9K RBF，2026-04-16） |
+| M9K_MODE（Phase 5.2） | `_inferred_goldintersect` 38-cell 站点不变集；np2fasm 发射对 w=9 解除门控 | 硬件已验证（2026-04-17） |
+| GCLK 管线（Phase 5.4） | `GCLK_PIN`（F17 上 12 个 pin）+ `LAB_CLK_SEL` + `LAB_CLK_SEL_LE` N∈{0,2,4,6,8}；基于 AUTO baseline 做 XOR 合成 | 硬件验证（14 LAB × 5 N-slot；Stage 0 烧录 2026-04-16） |
+| IOB FASM（Phase 5.4） | `IOB_IN`/`IOB_OUT` 44/44；`IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pin；`IOB_ROUTE` 15/15；`IOB_OE` 16 pin | IOB_ROUTE 硬件验证；BIDIR/OE codec 验证 + 矽片二分法 |
+| DSPMULT（Phase 5.0） | 22 cell 矽片干净集（23 挖掘 − 1 经 frame 1729 二分法证伪） | 硬件二分法完成；np2fasm 未接线（NEORV32 使用 0 个 DSPMULT） |
+| `nv_zero_global` 退役 | `NV_BASELINE_PACK` 指令 + 子指令从 PURE_ZERO 直接复现 Quartus baseline 的每一字节 | **矽片等价性已确认**（Stage 0 烧录 2026-04-16） |
+| 公式化 LutCodec | `from_cram_model(x, y, n)` 消除 per-LAB 校准；bitgen 自动回退 | 已落地；**pair mapping 对 (10,10,0) 外全部错误** |
+| 开源工具链（Phase 5.3） | Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe；小设计可烧；NEORV32 卡在 LOCAL 总线容量（6500 LE 下约 2040 wire 过载） | 部分开通；pipeline 测试（134 LE）因 LutCodec pair mapping bug 导致 FPGA 重置 |
 
 ---
 
@@ -2183,11 +2197,39 @@ RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮�
   里 61 条 self-loop 条目都是被虚胖的噪声（cell 数 90-754，语料中位
   数 135），重跑 factory 救不了。需要 single-LE differential 策略。
 
+- **DSPMULT_GLOBAL_ON 23-cell 集 —— 在矽片上被证伪（2026-04-16）。**
+  重挖后的 23 cell「通用块启用」看起来很干净：CRAM-only、CRC-strip、
+  21/21 N-invariant、零路由漂移。Stage 0 烧入 AX301 → LED 常亮。
+  四层二分法缩小到单个 cell `(363236, 2)` 在 frame 1729。清洗后的
+  22 cell 集通过矽片验证。教训：即便「干净」的挖掘活动有稳定的交
+  集，也可能藏着一个与无关 fabric 路径交互的 load-bearing cell。
+  必须在解除 np2fasm 门控前做矽片验证。
+- **IOB_OE PIN_R5 —— 矽片失败，已二分（2026-04-17）。**
+  sdram_dq S_DB[0] 的 40 cell per-pin OE 集通过了所有 codec 安全门
+  （与 simple_led_pure 零 fabric/hdr/block 重叠）。烧录 → LED 常亮。
+  二分至 2 个 cell `(363236,2)+(363672,2)`；清洗后 38 cell 集通过。
+  `(363236,2)` 与 DSPMULT 漏电共享 —— 看起来是 block-band 共性隐患。
+- **LUT_ARITH_MULTI_LAB WIDTH=17 —— 矽片失败（2026-04-17）。**
+  width 17..32 的多 LAB 进位链 blob 在 `diff` 下与 Quartus 输出逐字
+  节一致（10/10 codec 测试），但烧录 → LED 常灭。失败模式与 IOB_OE
+  不同（常亮 vs 常灭）。多 LAB blob 的位置无关性从未被证明（三角测
+  试只覆盖了单 LAB width ≤16）。保持门控。
+- **F16 输出路由 —— 已挖掘但无法集成（2026-04-19）。**
+  差分挖掘（f16_loc vs f15_loc 在同一 X7Y21N14）干净地隔离了 40 个
+  F16 特有 data cell（38 header + 2 block band）。LOC 约束的
+  f16_loc.rbf 在 AX301 上硬件验证通过（LED1 对 K3∧K4 正确响应）。
+  然而，仅向 pipeline 测试 RBF 添加 16 个新 cell 就触发 FPGA 重置
+  —— 来自 `from_cram_model()` pair mapping 的累积 LUT 层损坏
+  （192/233 LUT 错误）意味着基础设施已处于不良状态。F16 cell 本身
+  正确；需要等 LUT 层修复后才能应用。
+
 每一条都有独立的 post-mortem 记在
 `~/.claude/projects/-home-test-EP4CE6/memory/` 底下 —— 搜索
 `m5_counter_root_cause_carry_chain`、`iob_cross_axis_not_decomposable`、
 `r4_dark_passive_mining_dead`、`t9_li_mode_negative_result`、
-`dff_perle_formula`、`sigcache_mining_template_pitfall`。
+`dff_perle_formula`、`sigcache_mining_template_pitfall`、
+`dspmult_global_on_clean_remine`、`iob_oe_r5_bisection_silicon`、
+`f16_output_routing_mined`。
 
 ## 局限与不是什么
 
@@ -2214,6 +2256,17 @@ RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮�
 - **PLL —— 在 fabric 之外，不在范围内。** Cyclone IV 的 PLL 住在本项目
   没有映射的 CRAM 区域之外。需要配置 PLL 的设计（区别于 `GCLK_PIN`
   指令覆盖的专用时钟 pin）不被支持。
+- **LutCodec `from_cram_model()` pair mapping —— 有 bug。** 公式在
+  (10,10,0) 处产出正确的 minterm，但在其它位置 bit-to-cell pair 排列
+  错误。pipeline 测试中 192/233 个 LUT 产生错误的真值表。这是烧录任何
+  非 trivial 开源工具链设计的首要阻塞。pair 排列随 (x,y) 变化的方式
+  尚未被公式捕获；修复需要逆向 pair 排列。
+- **chipdb LOCAL 总线 —— 对密集设计容量不足。** 路由模型每个 LAB 只有
+  4 条 LOCAL track（总计约 2080 wire）。真实 Cyclone IV 矽片有 O(100k)
+  路由资源（C4/R4/R24/LI crossbar）。在 6500+ LE（NEORV32 规模）下
+  几乎每条 LOCAL wire 都过度使用，导致驱动冲突和 FPGA 保护性重置。这
+  是路由模型的根本局限，不是指令 bug。修复选项：SIG-cache 感知放置、
+  分层路由模型、或专用 nextpnr-cyclone4 架构移植。
 - **不是 Quartus 的替代品。** 这个 codec 不是 timing-driven 布局布线
   工具。它独有的能力是对已发布比特流做 bit-level 双向修改与离线
   mutation / replay —— 见前面的《长期方向》。如果需要 PPA-competitive

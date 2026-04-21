@@ -1146,6 +1146,83 @@ class RouteCodec:
         return result
 
 
+# Minterm-to-cell permutation lookup table.  Keyed by (foff, fb%8) where
+# foff = in-frame byte offset of the pair-0/delta-0 cell (24+SLOT_BASE+grp*3+nd)%210
+# and fb%8 = frame byte index mod 8.
+# Each entry is (foff, s0, s1, s2, s3) giving σ⁻¹.
+# Mined 2026-04-21 from Quartus 4-input FACE probes at 233 pipeline positions.
+# 9 distinct permutations.  Nearest-foff fallback for uncovered positions.
+_SIGMA_INV_BY_FB8 = {
+    0: [(1,0,2,1,3),(13,0,2,1,3),(16,0,2,1,3),(23,0,2,1,3),(24,0,2,1,3),(26,0,2,1,3),(31,0,2,1,3),
+        (32,0,2,1,3),(37,0,2,1,3),(39,0,2,1,3),(40,0,2,1,3),(45,0,1,2,3),(47,0,1,2,3),(53,0,1,2,3),
+        (55,0,1,2,3),(61,0,1,2,3),(63,0,1,2,3),(69,0,1,2,3),(71,0,1,2,3),(83,0,1,2,3),(85,0,1,2,3),
+        (91,0,1,2,3),(93,0,1,2,3),(99,0,1,2,3),(101,0,1,2,3),(109,0,1,2,3),(112,0,3,1,2),(114,0,3,1,2),
+        (120,0,3,1,2),(122,0,3,1,2),(128,0,3,1,2),(130,0,3,1,2),(136,0,3,1,2),(138,0,3,1,2),(150,0,3,1,2),
+        (152,0,3,1,2),(158,0,3,1,2),(160,0,3,1,2),(166,0,3,1,2),(174,0,3,1,2),(176,0,3,1,2),(184,0,2,1,3),
+        (185,0,2,1,3),(187,0,2,1,3),(192,0,2,1,3),(200,0,2,1,3),(206,0,2,1,3)],
+    1: [(1,0,2,1,3),(2,0,2,3,1),(4,0,2,3,1),(13,0,2,1,3),(15,0,2,1,3),(18,0,2,3,1),(21,0,2,1,3),
+        (23,0,2,1,3),(31,0,2,1,3),(32,0,2,3,1),(34,0,2,3,1),(37,0,2,1,3),(40,0,2,3,1),(45,1,3,0,2),
+        (47,1,3,0,2),(55,1,3,0,2),(61,1,3,0,2),(63,1,3,0,2),(71,1,3,0,2),(83,1,3,0,2),(91,1,3,0,2),
+        (93,1,3,0,2),(99,1,3,0,2),(101,1,3,0,2),(107,1,3,0,2),(109,1,3,0,2),(112,0,1,2,3),(114,0,1,2,3),
+        (120,0,1,2,3),(130,0,1,2,3),(136,0,1,2,3),(138,0,1,2,3),(150,0,1,2,3),(152,0,1,2,3),(158,0,1,2,3),
+        (160,0,1,2,3),(168,0,1,2,3),(174,0,1,2,3),(176,0,1,2,3),(184,0,2,1,3),(185,0,2,3,1),(190,0,2,1,3),
+        (192,0,2,1,3),(195,0,2,3,1),(198,0,2,1,3),(201,0,2,3,1),(203,0,2,3,1),(206,0,2,1,3)],
+    3: [(13,0,2,1,3),(18,0,1,2,3),(21,0,2,1,3),(24,0,1,2,3),(26,0,1,2,3),(31,0,2,1,3),(39,0,2,1,3),
+        (45,1,3,0,2),(47,1,3,0,2),(53,1,3,0,2),(55,1,3,0,2),(61,1,3,0,2),(63,1,3,0,2),(69,1,3,0,2),
+        (71,1,3,0,2),(83,1,3,0,2),(85,1,3,0,2),(91,1,3,0,2),(93,1,3,0,2),(99,1,3,0,2),(101,1,3,0,2),
+        (107,1,3,0,2),(109,1,3,0,2),(112,0,2,1,3),(114,0,2,1,3),(120,0,2,1,3),(122,0,2,1,3),(128,0,2,1,3),
+        (130,0,2,1,3),(138,0,2,1,3),(150,0,2,1,3),(158,0,2,1,3),(166,0,2,1,3),(168,0,2,1,3),(174,0,2,1,3),
+        (176,0,2,1,3),(184,0,2,1,3),(185,0,1,2,3),(190,0,2,1,3),(193,0,1,2,3),(195,0,1,2,3),(198,0,2,1,3),
+        (200,0,2,1,3),(201,0,1,2,3),(203,0,1,2,3)],
+    4: [(1,0,1,3,2),(13,0,1,3,2),(15,0,1,3,2),(16,0,1,3,2),(18,0,1,3,2),(21,0,1,3,2),(23,0,1,3,2),
+        (24,0,1,3,2),(29,0,1,3,2),(31,0,1,3,2),(34,0,1,3,2),(37,0,1,3,2),(39,0,1,3,2),(40,0,1,3,2),
+        (45,1,3,0,2),(47,1,3,0,2),(55,1,3,0,2),(61,1,3,0,2),(69,1,3,0,2),(71,1,3,0,2),(83,1,3,0,2),
+        (85,1,3,0,2),(91,1,3,0,2),(93,1,3,0,2),(99,1,3,0,2),(101,1,3,0,2),(107,1,3,0,2),(109,1,3,0,2),
+        (112,1,3,0,2),(114,1,3,0,2),(120,1,3,0,2),(130,1,3,0,2),(138,1,3,0,2),(150,1,3,0,2),(152,1,3,0,2),
+        (166,1,3,0,2),(182,0,1,3,2),(184,0,1,3,2),(185,0,1,3,2),(187,0,1,3,2),(192,0,1,3,2),(195,0,1,3,2),
+        (198,0,1,3,2),(200,0,1,3,2),(203,0,1,3,2),(206,0,1,3,2)],
+    7: [(1,1,2,0,3),(4,0,1,3,2),(13,1,2,0,3),(15,1,2,0,3),(16,0,1,3,2),(21,1,2,0,3),(29,1,2,0,3),
+        (31,1,2,0,3),(37,1,2,0,3),(39,1,2,0,3),(45,0,3,2,1),(47,0,3,2,1),(53,0,3,2,1),(55,0,3,2,1),
+        (61,0,3,2,1),(63,0,3,2,1),(69,0,3,2,1),(71,0,3,2,1),(83,0,3,2,1),(85,0,3,2,1),(91,0,3,2,1),
+        (93,0,3,2,1),(99,0,3,2,1),(101,0,3,2,1),(107,0,3,2,1),(109,0,3,2,1),(112,1,3,2,0),(114,1,3,2,0),
+        (120,1,3,2,0),(130,1,3,2,0),(136,1,3,2,0),(138,1,3,2,0),(150,1,3,2,0),(152,1,3,2,0),(158,1,3,2,0),
+        (160,1,3,2,0),(166,1,3,2,0),(168,1,3,2,0),(174,1,3,2,0),(176,1,3,2,0),(182,1,2,0,3),(187,0,1,3,2),
+        (190,1,2,0,3),(192,1,2,0,3),(198,1,2,0,3),(200,1,2,0,3),(206,1,2,0,3)],
+}
+# Parse into {(foff, fb8): (s0, s1, s2, s3)} dict at import time
+_SIGMA_INV_CACHE = {}
+_SIGMA_INV_SORTED = {}  # fb8 -> sorted list of (foff, sigma_inv) for interpolation
+for _fb8, _entries in _SIGMA_INV_BY_FB8.items():
+    _sorted = []
+    for _e in _entries:
+        _foff, _s0, _s1, _s2, _s3 = _e
+        _si = (_s0, _s1, _s2, _s3)
+        _SIGMA_INV_CACHE[(_foff, _fb8)] = _si
+        _sorted.append((_foff, _si))
+    _SIGMA_INV_SORTED[_fb8] = _sorted
+
+
+def _sigma_inv_lookup(foff, fb8):
+    """Look up σ⁻¹ for a given (foff, fb%8).
+
+    Exact match from the mined cache, or nearest-foff fallback at same fb8.
+    """
+    key = (foff, fb8)
+    if key in _SIGMA_INV_CACHE:
+        return _SIGMA_INV_CACHE[key]
+    entries = _SIGMA_INV_SORTED.get(fb8)
+    if not entries:
+        return (0, 1, 2, 3)
+    best_dist = 999
+    best_si = entries[0][1]
+    for ef, si in entries:
+        d = abs(ef - foff)
+        if d < best_dist:
+            best_dist = d
+            best_si = si
+    return best_si
+
+
 class LutCodec:
     """XOR-linear LUT truth table codec for one LE position."""
 
@@ -1219,18 +1296,15 @@ class LutCodec:
     def from_cram_model(cls, x, y, n):
         """Build LutCodec from the CRAM address formula (no database needed).
 
-        Each minterm b (0..15) maps to exactly one CRAM cell:
-          pair = 7 - (b % 8)
-          delta = 1 - ((b + b // 8) % 2)
-          offset = cram_ctrl_addr(x, y, pair, n) + delta
-          bp = cram_ctrl_bit(y)
+        Uses a permutation σ⁻¹ (looked up by in-frame offset and frame
+        index mod 8) to correctly assign minterms to physical cells.
+        The 16 cell ADDRESSES are computed from the CRAM model; σ⁻¹
+        determines which minterm maps to which (pair, delta) cell.
 
         Slot-1 Y rows (Y=3,6,9,12,15,18,21) have low SLOT_BASE (0), so
         high-N LEs can push the in-frame offset below zero.  The real
         CRAM layout wraps these into the upper data region of the same
-        frame (foff ~182-207) with a different bitpos.  The +207 address
-        adjustment and bp bump are empirically verified against DB
-        calibration at Y=18 for N=18..30.
+        frame (foff ~182-207) with a different bitpos.
         """
         slot = (y - 2) % 3
         group = (y - 2) // 3
@@ -1242,12 +1316,26 @@ class LutCodec:
         else:
             bp = cram_ctrl_bit(y)
             addr_adj = 0
+        offset = SLOT_BASE[slot] + group * 3 + (1 if slot == 0 and group > 0 else 0)
+        val = COLUMN_BASE[x] - 168 + offset + nd + addr_adj
+        foff = val % 210
+        fb8 = (val // 210) % 8
+        sigma_inv = _sigma_inv_lookup(foff, fb8)
+        sigma = [0] * 4
+        for i, j in enumerate(sigma_inv):
+            sigma[j] = i
+        k = n // 2
         patterns = {}
         for b in range(16):
-            pair = 7 - (b % 8)
-            delta = 1 - ((b + b // 8) % 2)
-            offset = cram_ctrl_addr(x, y, pair, n) + delta + addr_adj
-            patterns[b] = {(offset, bp)}
+            f0_tgt = (b >> sigma[0]) & 1
+            f1_tgt = (b >> sigma[1]) & 1
+            f2_tgt = (b >> sigma[2]) & 1
+            f3_tgt = (b >> sigma[3]) & 1
+            pair = ((1 - f0_tgt) << 2) | ((1 - f1_tgt) << 1) | (1 - f2_tgt)
+            da = f3_tgt ^ (1 - f2_tgt)
+            delta = da if k % 2 == 0 else 1 - da
+            addr = cram_ctrl_addr(x, y, pair, n) + delta + addr_adj
+            patterns[b] = {(addr, bp)}
         return cls(x, y, n, patterns)
 
     def predict_sram(self, mask):

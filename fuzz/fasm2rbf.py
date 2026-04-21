@@ -1570,46 +1570,36 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     all_luts = list(luts) + list(lut_arith)
 
     if all_luts:
-        db = sqlite3.connect(db_path)
-        try:
-            buf = bytearray(work)
+        buf = bytearray(work)
 
-            lut_cache = {}
-            tt_cells_cache = {}
-            arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
-            for x, y, n, mask in all_luts:
-                key = (x, y, n)
-                if key in lut_cache:
-                    continue
-                try:
-                    lut = LutCodec.from_db(db, x, y, n)
-                except ValueError:
-                    lut = LutCodec.from_cram_model(x, y, n)
-                lut_cache[key] = lut
-                tt_cells_cache[key] = lut.predict_sram(0xFFFF)
+        lut_cache = {}
+        tt_cells_cache = {}
+        arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
+        for x, y, n, mask in all_luts:
+            key = (x, y, n)
+            if key in lut_cache:
+                continue
+            lut = LutCodec.from_cram_model(x, y, n)
+            lut_cache[key] = lut
+            tt_cells_cache[key] = lut.predict_sram(0xFFFF)
 
-            # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
-            # Only touch predict_sram(0xFFFF) cells — shared LAB ctrl cells
-            # in from_db patterns must NOT be cleared (they'd corrupt
-            # routing/clock infrastructure set by earlier directives).
-            # SKIP for arith-mode LEs — arith has no normal-mode presence.
-            for x, y, n, mask in all_luts:
-                if (x, y, n) in arith_keys:
-                    continue
-                for addr, bitpos in tt_cells_cache[(x, y, n)]:
-                    buf[addr] &= ~(1 << bitpos)
+        # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
+        # predict_sram(0xFFFF) yields exactly the 16 true TT cells
+        # (from_cram_model has 1 cell per minterm, no shared LAB noise).
+        # SKIP for arith-mode LEs — arith has no normal-mode presence.
+        for x, y, n, mask in all_luts:
+            if (x, y, n) in arith_keys:
+                continue
+            for addr, bitpos in tt_cells_cache[(x, y, n)]:
+                buf[addr] &= ~(1 << bitpos)
 
-            # Phase 2: XOR-flip only true TT cells for each LUT mask.
-            # Filter predict_sram(mask) to true TT cells so shared LAB
-            # ctrl cells from from_db patterns don't leak through.
-            for x, y, n, mask in all_luts:
-                lut = lut_cache[(x, y, n)]
-                tt_only = tt_cells_cache[(x, y, n)]
-                for addr, bitpos in lut.predict_sram(mask) & tt_only:
-                    buf[addr] ^= (1 << bitpos)
-            work = bytes(buf)
-        finally:
-            db.close()
+        # Phase 2: XOR-flip true TT cells for each LUT mask.
+        for x, y, n, mask in all_luts:
+            lut = lut_cache[(x, y, n)]
+            tt_only = tt_cells_cache[(x, y, n)]
+            for addr, bitpos in lut.predict_sram(mask) & tt_only:
+                buf[addr] ^= (1 << bitpos)
+        work = bytes(buf)
 
     if lut_arith:
         # Chip-wide carry-chain activation cells (block band + infra).

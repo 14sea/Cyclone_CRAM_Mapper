@@ -44,7 +44,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 
 | Codec | Key methods | Notes |
 |-------|-------------|-------|
-| `LutCodec` | `write_tt(base_rbf, mask)` → RBF, `read_tt(rbf, zero)` | **XOR-delta, not absolute!** `mask = target ^ base_tt` |
+| `LutCodec` | `write_tt(base_rbf, mask)` → RBF, `read_tt(rbf, zero)`, `from_cram_model(x,y,n)` | **XOR-delta, not absolute!** `mask = target ^ base_tt`. `from_cram_model` uses σ⁻¹ permutation lookup keyed by `(foff, fb%8)` — 249 calibrated entries, nearest-neighbor fallback. Eliminates per-position SQLite calibration. |
 | `RouteCodec` | `read_c4/r4/r24/local_interconnect()`, `apply_routing(ops)` | Round-trip verified. LI writes take explicit `pairs`, NOT i_idx |
 | `FFCodec` | `write_arst/write_ena()` — 61 absolute offsets each | FASM `DFF.ARST`/`DFF.ENA` **disabled** (header-band noise) |
 | `patch_rbf_crc(rbf)` | Recomputes CRC-16 for frames 25..1751 | **Mandatory** before flashing any modified RBF |

@@ -2262,6 +2262,17 @@ LEs in the LAB are part of it.
   - **GCLK + IOB_CLK_INPUT extended to all F17 dedicated clock pins (2026-04-15)**: `GCLK_PIN` and `IOB_CLK_INPUT` now cover **12 clock pins each** — E1, R8, N1 plus 9 newly mined dedicated clock pins (M1, M2, T4, R4, M16, M15, E15, A14, B14). Two of the 13 dedicated F17 pins are unfittable: PIN_E2 (the LVDSCLK_00P side of the E1 diff pair — Quartus refuses placement) and PIN_H1 (reserved as `ALTERA_DCLK` JTAG config). Generalised mining tools: `scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}` (IOB_CLK_INPUT, parallelisable, ~16 s/pin) and `fuzz/clk_pin_autoforce_probe.py --pin {PIN}` (GCLK_PIN, 6 builds × ~16 s/pin). Tests: `fuzz/test_iob_baseline_nv_directive.py` 15/15 (per-pin loader + per-pin gold-RBF round-trip across all 12 mined pins) + `fuzz/test_gclk_pin_directive.py` 11/11 (per-pin loader sanity). Notable: same-bank dedicated clock pins (E15/M15/M16; A14/B14) share spine cells (12-22 cells overlap), unlike the disjoint legacy triad — XOR semantics still compose cleanly under double-emit, but a multi-GCLK_PIN design will see partial cancellation rather than a clean union.
   - **IOB→SLICE route mining, HW-verified template (2026-04-14)**: `scripts/iob_slice_mining/` — paired two-LE mining template (`template_pairs.py` + `mine_iob_routes.py`) produces diff-able pair-vs-zero deltas (~200 cells/entry) AND functional silicon (paired RBF `iob_pair_E16_10_4_0_dataa.rbf` flashed on AX301 drives KEY2→LED0 correctly). 3-layer decomposition (`decompose_deltas.py`) splits every raw delta into universal_infra (98 cells) ∪ pin_footprint(pin) ∪ pure_common(target) ∪ ≤2-cell residual, verified across 15 entries. Port MUX is Quartus-canonicalized (all 4 ports → byte-identical delta). Sig-cache injection pending (pure_common is relative to `iob_zero`, not `nv_zero_global`).
   - **IOB_ROUTE FASM directive + frame-split bridge + single_le sweep (2026-04-15)**: `IOB_ROUTE PIN_X -> XaYbNc.port` wired into `fasm2rbf` (8/8 tests); CRAM band bit-perfect vs the HW-verified pair RBF via `absolute_cells`. `IOB_BASELINE_NV` (132-bit-cell / 74-byte hdr bridge from `nv_zero_global` to `iob_in_E15`) and `IOB_CLK_INPUT PIN_{E1,R8,N1}` (40 / 64 / 70-cell clock-bank pin activate, mined per-pin via `scripts/iob_slice_mining/compute_clk_pin_hdr.py --build --pin {PIN}`) close the frame-split so end-to-end FASM designs can build on a single `nv_zero_global` base. An opt-in `single_le_cells` section in `results/iob_to_slice_sigcache.json` overrides `absolute_cells` when present and strips pair-template secondary-LE decoration for single-LE designs — derived by solving `IOB_ROUTE_primary = gold_delta ^ (all other directives)` against the Quartus gold RBF. `scripts/iob_slice_mining/sweep_single_le.py` parallelises this derivation across every supported (pin, target) combination: **15/15 entries now landed** (3 pins E16/E15/M16 × 5 targets 10,4,0 / 10,4,2 / 10,4,4 / 10,10,0 / 16,4,0), each byte-identical to Quartus gold through the full 8-directive stack. Unlocked the last six entries via two probe-infrastructure fixes: `clk_lab_sel_probe.py` now falls back to `SRC_ALT=(22,10,0)` when `target_lab` matches the default SRC LAB (was colliding at `LCCOMB_X10_Y10_N0`), and `N_SLOTS` now includes N=2 so `LAB_CLK_SEL_LE X{x}Y{y}N2` becomes available. Tests: `fuzz/test_iob_baseline_nv_directive.py` 13/13 (3 clock-input pins covered: E1, R8, N1, each round-tripping bit-perfect against its own Quartus gold) + `fuzz/test_iob_route_directive.py` 8/8.
+  - **Stage 0 HW flash session (2026-04-16)**: 24 RBFs flashed on AX301 — **23 PASS, 1 FAIL** (DSPMULT_GLOBAL_ON falsified on silicon). Key results: `NV_BASELINE_PACK` silicon-equivalent to nv_zero_global (Phase 7 retirement unblocked); 14/14 IOB_ROUTE pairs silicon-correct; 7 new GCLK_PIN clock pins programming-verified (M15 full-PASS with hold-KEY2 + pulse-KEY4 protocol; M1/M2/T4/R4/A14/B14 programming-clean); M9K smoke design accepted by chip (codec pipeline silicon-clean); DSPMULT 23-cell set leaks on silicon → bisection roadmap opened.
+  - **Stage 0 round-2 flash (2026-04-17)**: M9K_MODE `_inferred_goldintersect` **PASS** — np2fasm emission ungated for all w=9 sites. IOB_OE PIN_R5 **FAIL** (LED stuck-on) — bisected to 2 leaky cells `(363236,2)+(363672,2)`, cleaned 38-cell set PASS, loader masks both. LUT_ARITH_MULTI_LAB WIDTH=17 **FAIL** (LED stuck-off) — multi-LAB carry stays gated. DSPMULT_GLOBAL_ON bisected in 4 layers (23→12→6→3→1): leaky cell = `(363236, 2)` at frame 1729; cleaned 22-cell set PASS.
+  - **LAB_CLK_SEL_LE extended to N=6/8 for all 14 LABs (2026-04-16)**: `N_SLOTS` now `(0, 2, 4, 6, 8)`. 56 new Quartus builds. LAB(10,16) invariant tightened 53→49 (4 cells migrated to per-LE buckets). `clk_lab_sel_per_le.py` refactored N-agnostic. 49/49 tests green.
+  - **IOB_IN_BIDIR / IOB_OUT_BIDIR directives landed (2026-04-17)**: `per_pin_input`/`per_pin_output` cell dispatch for bidirectional IOB pads (cells UNIQUE to each pin across the 33-pin sweep, no anchor double-flip). 16 sdram_dq pin coverage. `_IOB_BIDIR_FALSIFIED` per-pin mask table (R5 OUT: 2 fabric-band cells stripped). np2fasm emits BIDIR variants for bidir pads automatically. Tests: 5/5 directive + 6/6 np2fasm.
+  - **IOB_OE FASM directive landed (2026-04-16)**: `IOB_OE PIN_X` for 16 NEORV32 sdram_dq pins. Specimen-factory mining (oe_on vs oe_off per pin, 3-seed routing-invariance probe, 0-drift across all 16). Cell counts 37..55 per pin, 21-cell universal intersection. HW bisection at R5 isolated 2 leaky cells; loader masks them. 9/9 tests. np2fasm emission not yet wired (needs Yosys `$tribuf` techmap).
+  - **Formula-based LutCodec landed (2026-04-17)**: `LutCodec.from_cram_model(x, y, n)` eliminates per-LAB SQLite calibration. Uses CRAM address model to generate synthetic minterm patterns. `fasm2rbf.py` bitgen falls back automatically when `from_db()` raises ValueError. All 65536 masks match DB-backed codec at (10,10,0). **Known limitation**: pair mapping is WRONG for positions other than (10,10,0) — 192/233 LUTs produce incorrect truth tables. Root cause: bit-to-cell pair ordering varies by (x,y) in ways the formula doesn't capture. This is the primary blocker for the pipeline test.
+  - **Sig-cache demand mining expanded to 38,683 entries (2026-04-18→19)**: Route mining from NEORV32 STA edges brought the 7-tuple sig-cache from 13,487 to 38,683 entries. 0 route sig-cache misses for NEORV32 v2 build. 8 IOB→SLICE misses remain (J16/M2/E16 → Y=21 targets).
+  - **M9K pipeline closed end-to-end (2026-04-16)**: Full Yosys → `memory_libmap` → prepack_m9k → np2fasm → fasm2rbf path produces CRC-valid RBFs. Smoke design (9×512 RAM) round-trips user data pattern correctly. Three np2fasm fixes landed (blackbox module selection, Yosys binary int parsing, x/z char handling). M9K_MODE `_inferred_goldintersect` emission ungated for all w=9 sites (HW-validated).
+  - **NEORV32 open-toolchain RBF auto-reset on flash (2026-04-18)**: Both v2 and v3 RBFs cause FPGA auto-reset to factory config. Root cause: chipdb LOCAL bus has only 4 tracks (~2080 wires total) vs real silicon's O(100k) routing resources. At 6500+ LEs, nearly every LOCAL wire is overused → driver conflicts → protective reset. All structural safety checks PASS; the problem is routing model capacity, not directives. Fix requires either SIG-cache-aware placement or hierarchical routing model.
+  - **Pipeline test E2E design (134-LE, 2026-04-18→19)**: 28-bit counter → LED heartbeat + UART TX "Hi!\r\n" + KEY3/KEY4 passthrough. Quartus gold PASS on silicon. Open-toolchain build: 0 route misses, but **FPGA RESET on flash**. Root cause: `from_cram_model()` pair mapping bug — 192/233 LUTs use wrong bit-to-cell mapping, corrupting LUT functions. K2→LED3 and K4→LED2 work (partial pipeline success), but F16/G15 outputs fail. F16 output routing mined differentially (40 data cells: 38 header + 2 block band), but adding them triggers reset due to cumulative LUT layer damage.
+  - **Carry chain disabled for NEORV32 (2026-04-17)**: `alumacc` removed from Yosys flow — 684 chain discontinuities → LUT4 arithmetic instead. Reduces to 6533 LEs (292 fewer). CE6_CARRY infrastructure retained for future arch work.
 
 - [x] Phase 5.4: **LE carry chain in the open flow (HARDWARE-VERIFIED 2026-04-13)** — arith mode activation lives in the block band (frames 1692-1738, bp=2), not in LAB CRAM columns, and is a per-LAB mode switch, not a per-LE cell. Four pieces landed: (1) `chipdb_gen.py` declares 8,126 `cout→cin` direct pips between adjacent LE bels; (2) `synth/ep4ce6_map.v` + `synth/prims.v` add the CE6_CARRY primitive so Yosys lands `$alu` on chained LEs with the FF's `Q` wired directly into `CE6_CARRY.B` (no external "Route-A" buffer); (3) `synth/np2fasm.py` walks the carry chain and emits `LUT_ARITH` directives; (4) `fuzz/fasm2rbf.py` applies the arith blob from `results/arith_blockband_v4.json` (universal, position-independent at any LAB) for 8-LE half-LAB chains, or from `results/arith_blockband_by_width.json` (widths 2..16 single-LAB + 16+8 cross-LAB) for other chain lengths. AX301 silicon-accepted: identity + 8× `LUT_ARITH=0x0000` blinks bit-identically to Quartus's counter RBF; identity `Q<=Q` negative control stays dark.
 
@@ -2341,12 +2352,15 @@ single headline number.
 | C16 long-distance wires | — | Not started |
 | Bitstream codec | LUT TT + routing read/write; round-trip self-consistent; HW safety V2; CRC patcher integrated | HW-verified |
 | Route synthesis (green islands) | CE6 standard 15 islands 686/686 bit-perfect; jailbreak/edge 9 islands 45/45 via snapshot fallback. Total harness 731/731 | Closed (2026-04-14) |
-| FASM sig-cache (Phase 4.5) | 13,487 entries; 7-tuple (sn>0 supported); Plan D' factory covers 95.9% of NEORV32 edges | Production |
-| M9K init codec (Phase 5.2) | 2D linear formula; 33 anchor entries; 31 NEORV32 sites calibrated; READ 512/512, WRITE 0 CRAM diffs | Round-trip clean; HW not yet validated |
-| GCLK pipeline (Phase 5.4) | `GCLK_PIN` (12 pins on F17) + `LAB_CLK_SEL` + `LAB_CLK_SEL_LE`; XOR-composed on AUTO baseline | HW-verified at LAB(10,4).N=0, 2026-04-14 |
-| IOB FASM (Phase 5.4) | `IOB_IN`/`IOB_OUT` 44/44 single-axis bit-perfect; `IOB_ROUTE` 15/15 entries 0 full-RBF diffs | Single-axis HW-verified; cross-axis 2D sweep in progress |
-| `nv_zero_global` retirement | `NV_BASELINE_PACK` directive + sub-directives reproduce the Quartus baseline byte-exact from PURE_ZERO | Codec path landed; HW flash equivalence not yet confirmed |
-| Open-source toolchain (Phase 5.3) | Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe. Combinational, FF-only, and arithmetic designs flashable | Mostly open; M9K front-end (Yosys `memory_libmap`) blocked |
+| FASM sig-cache (Phase 4.5) | **38,683 entries** (expanded 2026-04-19); 7-tuple (sn>0 supported); 0 route misses for NEORV32 v2 | Production |
+| M9K init codec (Phase 5.2) | 2D linear formula; 33+5 anchor entries (incl. 18×512); M9K pipeline closed end-to-end (Yosys→prepack→np2fasm→fasm2rbf) | HW-validated (chip accepts open-toolchain M9K RBF, 2026-04-16) |
+| M9K_MODE (Phase 5.2) | `_inferred_goldintersect` 38-cell site-invariant set; np2fasm emission ungated for w=9 | HW-validated (2026-04-17) |
+| GCLK pipeline (Phase 5.4) | `GCLK_PIN` (12 pins on F17) + `LAB_CLK_SEL` + `LAB_CLK_SEL_LE` N∈{0,2,4,6,8}; XOR-composed on AUTO baseline | HW-verified (14 LABs × 5 N-slots; Stage 0 flash 2026-04-16) |
+| IOB FASM (Phase 5.4) | `IOB_IN`/`IOB_OUT` 44/44; `IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pins; `IOB_ROUTE` 15/15; `IOB_OE` 16 pins | IOB_ROUTE HW-verified; BIDIR/OE codec-verified + bisected on silicon |
+| DSPMULT (Phase 5.0) | 22-cell silicon-clean set (23 mined − 1 falsified via bisection at frame 1729) | HW-bisected; np2fasm not wired (0 DSPMULTs in NEORV32) |
+| `nv_zero_global` retirement | `NV_BASELINE_PACK` directive + sub-directives reproduce the Quartus baseline byte-exact from PURE_ZERO | **HW silicon-equivalent confirmed** (Stage 0 flash 2026-04-16) |
+| Formula-based LutCodec | `from_cram_model(x, y, n)` eliminates per-LAB calibration; auto-fallback in bitgen | Landed; **pair mapping WRONG** for all positions except (10,10,0) |
+| Open-source toolchain (Phase 5.3) | Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe. Small designs flashable; NEORV32 blocked on LOCAL bus capacity (~2040 overused wires at 6500 LE) | Partially open; pipeline test (134-LE) FPGA-resets due to LutCodec pair mapping bug |
 
 ---
 
@@ -2403,11 +2417,46 @@ not repeat them:
   median 135) and cannot be repaired by re-running the factory.
   Needs a single-LE differential strategy.
 
+- **DSPMULT_GLOBAL_ON 23-cell set — falsified on silicon (2026-04-16).**
+  The re-mined 23-cell "universal block enable" looked clean: CRAM-only,
+  CRC-stripped, 21/21 N-invariant, zero routing drift. Stage 0 flash
+  on AX301 → LED stuck constant-on. Bisected in 4 layers down to a
+  single cell `(363236, 2)` at frame 1729. The 22-cell cleaned set
+  PASSes silicon. The leaky cell sits inside the DSPMULT block-band
+  region but its exact semantic is unknown. Lesson: even a "clean"
+  mining campaign with stable intersections can harbour a single
+  load-bearing cell that interacts with unrelated fabric paths. Always
+  silicon-validate before ungating np2fasm emission.
+- **IOB_OE PIN_R5 — failed on silicon, bisected (2026-04-17).**
+  The 40-cell per-pin OE set for sdram_dq S_DB[0] passed all codec
+  safety gates (0 fabric/hdr/block overlap with simple_led_pure). Flash
+  → LED stuck constant-on. Bisected to 2 cells `(363236,2)+(363672,2)`;
+  cleaned 38-cell set PASSes. Same `(363236,2)` cell as the DSPMULT
+  leak — it appears to be a shared block-band hazard.
+- **LUT_ARITH_MULTI_LAB WIDTH=17 — failed on silicon (2026-04-17).**
+  The multi-LAB carry chain blob for widths 17..32 is byte-identical to
+  Quartus output under `diff` (10/10 codec tests), but flashing → LED
+  stuck constant-off. Different failure mode from IOB_OE (stuck-on).
+  Position-independence for multi-LAB blobs was never proven (triangle
+  test only covered single-LAB widths ≤16). Stays gated.
+- **F16 output routing — mined but not integrable (2026-04-19).**
+  Differential mining (f16_loc vs f15_loc at same X7Y21N14) cleanly
+  isolated 40 F16-specific data cells (38 header + 2 block band).
+  The LOC-constrained f16_loc.rbf HW-verified on AX301 (LED1 responds
+  correctly to K3∧K4). However, adding even the 16 new cells to the
+  pipeline test RBF triggers FPGA reset — the cumulative LUT layer
+  damage from `from_cram_model()` pair mapping (192/233 LUTs wrong)
+  means infrastructure is already in a bad state. The F16 cells
+  themselves are correct; they cannot be applied until the LUT layer
+  is fixed.
+
 Individual post-mortems with cell-level detail live in memory files under
 `~/.claude/projects/-home-test-EP4CE6/memory/` — search for
 `m5_counter_root_cause_carry_chain`, `iob_cross_axis_not_decomposable`,
 `r4_dark_passive_mining_dead`, `t9_li_mode_negative_result`,
-`dff_perle_formula`, and `sigcache_mining_template_pitfall`.
+`dff_perle_formula`, `sigcache_mining_template_pitfall`,
+`dspmult_global_on_clean_remine`, `iob_oe_r5_bisection_silicon`, and
+`f16_output_routing_mined`.
 
 ## Limitations and What This Is Not
 
@@ -2441,6 +2490,21 @@ So the README is honest about scope, not just progress:
   the CRAM region this project maps. Designs that require configured
   PLLs (as opposed to the dedicated clock pins the `GCLK_PIN`
   directive covers) are not supported.
+- **LutCodec `from_cram_model()` pair mapping — broken.** The formula
+  produces correct minterms at (10,10,0) but wrong bit-to-cell pair
+  ordering at other positions. 192 out of 233 LUTs in the pipeline
+  test produce incorrect truth tables. This is the primary blocker
+  for flashing any non-trivial open-toolchain design. The pair
+  ordering varies by (x,y) in ways the current formula doesn't capture;
+  fixing it requires reverse-engineering the pair permutation.
+- **chipdb LOCAL bus — undersized for dense designs.** The routing
+  model provides 4 LOCAL tracks per LAB (~2080 wires total). Real
+  Cyclone IV silicon has O(100k) routing resources (C4/R4/R24/LI
+  crossbar). At 6500+ LEs (NEORV32 scale), nearly every LOCAL wire
+  is overused, causing driver conflicts and FPGA protective reset.
+  This is a fundamental routing model limitation, not a directive bug.
+  Fix options: SIG-cache-aware placement, hierarchical routing model,
+  or a dedicated nextpnr-cyclone4 architecture port.
 - **Not a Quartus replacement.** The codec is not a timing-driven
   place-and-route tool. Its unique capabilities are bit-level
   bidirectional modification of a shipped bitstream and offline
