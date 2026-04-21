@@ -107,11 +107,32 @@ def _iob_route_available(pin_loc: str, dx: int, dy: int, dn: int,
             data = json.loads(_IOB_ROUTE_PATH.read_text())
             keys = set(data.get("absolute_cells", {}).keys())
             keys |= set(data.get("single_le_cells", {}).keys())
+            keys |= set(data.get("padnv_cells", {}).keys())
             _IOB_ROUTE_KEYS = keys
         else:
             _IOB_ROUTE_KEYS = set()
     short = pin_loc[4:] if pin_loc.startswith("PIN_") else pin_loc
     return f"IOB_{short}->{dx},{dy},{dn},{port}" in _IOB_ROUTE_KEYS
+
+# Output routing sig-cache — SLICE→IOB output path cells.  When a SLICE
+# output drives an IOB pad (output direction), look up the source SLICE
+# position here to emit `OUTROUTE_G15 X{sx}Y{sy}N{sn}`.  Currently
+# only PIN_G15 (LED0) is mined; other output pins fall through silently.
+_OUTROUTE_G15_POSITIONS: set[str] | None = None
+_OUTROUTE_G15_PATH = HERE.parent / "results" / "output_route_sigcache.json"
+
+
+def _outroute_g15_available(sx: int, sy: int, sn: int) -> bool:
+    """True if SLICE(sx,sy,sn)→G15 is in the output route sig-cache."""
+    global _OUTROUTE_G15_POSITIONS
+    if _OUTROUTE_G15_POSITIONS is None:
+        if _OUTROUTE_G15_PATH.exists():
+            data = json.loads(_OUTROUTE_G15_PATH.read_text())
+            _OUTROUTE_G15_POSITIONS = set(data.get("routes", {}).keys())
+        else:
+            _OUTROUTE_G15_POSITIONS = set()
+    return f"X{sx}Y{sy}N{sn}" in _OUTROUTE_G15_POSITIONS
+
 
 # I[n] index → Cyclone IV port name
 _IDX_TO_PORT = {0: "dataa", 1: "datab", 2: "datac", 3: "datad"}
@@ -420,6 +441,10 @@ def convert(
     # also need IOB_BASELINE_NV to bridge the nv_zero_global base into
     # the iob_in_E15 frame that IOB pair-deltas assume.
     iob_emitted = False
+    # IOB directives are queued here and emitted after the routing pass,
+    # so 方案B (IOB_PAD_NV) can suppress them for covered pins.
+    iob_pending: list[str] = []  # FASM lines to emit
+    iob_output_pins: set[str] = set()  # pins with output direction
     # IOB_ROUTE lines queued during the cell pass — appended after the
     # main IOB block so per-pin IOB_IN and its IOB_ROUTE drives stay
     # adjacent in the FASM output.
@@ -491,10 +516,11 @@ def convert(
                 if clock_only and not _pin_has_iob_entry(pin_loc, "input"):
                     pass  # clock pad — GCLK_PIN covers it
                 else:
-                    fasm.append(f"IOB_IN {pin_loc}")
+                    iob_pending.append(f"IOB_IN {pin_loc}")
                     iob_emitted = True
             elif has_I and not has_O:
-                fasm.append(f"IOB_OUT {pin_loc}")
+                iob_pending.append(f"IOB_OUT {pin_loc}")
+                iob_output_pins.add(pin_loc)
                 iob_emitted = True
             elif has_O and has_I:
                 # Bidirectional — emit BIDIR-variant directives so fasm2rbf
@@ -510,10 +536,11 @@ def convert(
                     f"cell {cell_name}: IOB on {pin_loc} is bidirectional; "
                     f"emitting IOB_IN_BIDIR + IOB_OUT_BIDIR"
                 )
-                fasm.append(f"IOB_IN_BIDIR {pin_loc}")
-                fasm.append(f"IOB_OUT_BIDIR {pin_loc}")
+                iob_pending.append(f"IOB_IN_BIDIR {pin_loc}")
+                iob_pending.append(f"IOB_OUT_BIDIR {pin_loc}")
+                iob_output_pins.add(pin_loc)
                 if has_EN:
-                    fasm.append(f"IOB_OE {pin_loc}")
+                    iob_pending.append(f"IOB_OE {pin_loc}")
                 iob_emitted = True
             else:
                 # No connections — likely an unused IOB BEL placeholder.
@@ -749,8 +776,12 @@ def convert(
     n_skip = 0
     n_iob_route = 0
     n_iob_route_miss = 0
+    n_outroute = 0
+    n_outroute_miss = 0
     seen_routes: set[str] = set()
     seen_iob_routes: set[tuple[str, int, int, int, str]] = set()
+    outroute_g15s: list[tuple[int, int, int]] = []
+    seen_outroutes: set[tuple[int, int, int, str]] = set()
     route_srcs: set[tuple[int, int]] = set()
 
     def _sink_port_name(sink_cell, sink_port, sink_idx):
@@ -809,7 +840,34 @@ def convert(
 
         for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
             sink_bel = cell_bel.get(sink_cell)
-            if sink_bel is None or sink_bel[0] != "SLICE":
+            if sink_bel is None:
+                n_skip += 1
+                continue
+
+            if sink_bel[0] == "IOB":
+                sink_cell_obj = cells.get(sink_cell, {})
+                bel_str = sink_cell_obj.get("attributes", {}).get(
+                    "NEXTPNR_BEL", "")
+                pin_idx = bel_str.rfind("_PIN_")
+                if bel_str.startswith("IOB_") and pin_idx >= 0:
+                    out_pin = bel_str[pin_idx + 1:]
+                    out_key = (sx, sy, sn, out_pin)
+                    if out_key not in seen_outroutes:
+                        seen_outroutes.add(out_key)
+                        short = out_pin[4:] if out_pin.startswith(
+                            "PIN_") else out_pin
+                        if short == "G15" and _outroute_g15_available(
+                                sx, sy, sn):
+                            outroute_g15s.append((sx, sy, sn))
+                            n_outroute += 1
+                        else:
+                            n_outroute_miss += 1
+                            warnings.append(
+                                f"no output route: SLICE X{sx}Y{sy}"
+                                f"N{sn} -> {out_pin}")
+                continue
+
+            if sink_bel[0] != "SLICE":
                 n_skip += 1
                 continue
             _, dx, dy, dn = sink_bel
@@ -852,6 +910,10 @@ def convert(
             f"IOB_ROUTE {pin_loc} -> X{dx}Y{dy}N{dn}.{port_name}"
         )
 
+    # Emit OUTROUTE_G15 for each detected SLICE→G15 output path.
+    for (sx, sy, sn) in outroute_g15s:
+        fasm.append(f"OUTROUTE_G15 X{sx}Y{sy}N{sn}")
+
     # Emit SRC X{x}Y{y} once per unique LAB that sourced any SLICE→SLICE
     # ROUTE.  SRC lines add per-source overhead that fasm2rbf unions
     # with route cells before XOR-flipping (protects against the
@@ -859,20 +921,33 @@ def convert(
     for (sx, sy) in sorted(route_srcs):
         fasm.append(f"SRC X{sx}Y{sy}")
 
-    # IOB_BASELINE_NV: bridge hdr band from nv_zero_global → iob_in_E15
-    # so IOB_IN / IOB_OUT pair-deltas land correctly.  Boolean,
-    # idempotent, and required whenever any IOB direction directive is
-    # emitted; IOB_ROUTE cells are already in the nv frame so they
-    # don't need the bridge on their own.
-    if iob_emitted:
-        # Place right after NV_BASELINE_PACK if present, else at the top.
+    # IOB pad and output routing: 方案B (direct nv_zero delta) when
+    # output routing is available; legacy IOB_BASELINE_NV otherwise.
+    # IOB_PAD_NV covers E16+M16 input + G15 output pad infrastructure
+    # (241 cells, position-invariant).  When emitted, it replaces both
+    # IOB_BASELINE_NV and the IOB_IN/IOB_OUT directives for those pins.
+    _PAD_NV_PINS = {"PIN_E16", "PIN_M16", "PIN_G15"}
+    use_pad_nv = bool(outroute_g15s)
+    if use_pad_nv:
         insert_at = 1 if (fasm and fasm[0] == "NV_BASELINE_PACK") else 0
-        fasm.insert(insert_at, "IOB_BASELINE_NV")
+        fasm.insert(insert_at, "IOB_PAD_NV")
+        for line in iob_pending:
+            parts = line.split()
+            pin = parts[-1] if len(parts) >= 2 else ""
+            if pin in _PAD_NV_PINS:
+                continue
+            fasm.append(line)
+    else:
+        fasm.extend(iob_pending)
+        if iob_emitted:
+            insert_at = 1 if (fasm and fasm[0] == "NV_BASELINE_PACK") else 0
+            fasm.insert(insert_at, "IOB_BASELINE_NV")
 
     warnings.insert(0,
         f"# {n_sig} ROUTE (FASM-backed), {n_miss} missing, "
         f"{n_skip} skipped (non-slice/CLK); "
-        f"{n_iob_route} IOB_ROUTE, {n_iob_route_miss} IOB_ROUTE missing")
+        f"{n_iob_route} IOB_ROUTE, {n_iob_route_miss} IOB_ROUTE missing; "
+        f"{n_outroute} OUTROUTE_G15, {n_outroute_miss} output route missing")
 
     return fasm, warnings
 

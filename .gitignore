@@ -56,6 +56,11 @@ results/a0_virgin_*.json
 results/neorv32_lab_targets.txt
 results/dff_n_sweep.json
 
+# σ⁻¹ mining intermediates (superseded by sigma_inv_fb8_groups.json)
+results/sigma_inv_existing_groups.json
+results/sigma_inv_fb8_gaps.json
+scripts/sigma_inv_integrate.py
+
 # Contaminated arith mining (superseded by arith_blockband_v3.json)
 results/arith_cells_mined.json
 results/arith_cells_mined_v2.json

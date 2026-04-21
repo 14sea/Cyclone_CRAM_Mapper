@@ -47,7 +47,7 @@ def _zero_base() -> bytes:
 
 def test_parse_arity_and_default_empty():
     out = f.parse_fasm("")
-    assert len(out) == 21, f"parse_fasm arity {len(out)} != 21"
+    assert len(out) == 23, f"parse_fasm arity {len(out)} != 23"
     assert out[20] == [], (
         f"lut_arith_multi_labs default should be empty list, got {out[20]!r}"
     )

@@ -287,6 +287,20 @@ _IOB_OE_CACHE = None
 _IOB_BASELINE_NV_RE = re.compile(r"^IOB_BASELINE_NV$")
 _IOB_BASELINE_HDR_CACHE = None
 
+# IOB_PAD_NV — 方案B IOB pad infrastructure (241 cells).  Direct delta
+# from nv_zero_global for E16+M16 input + G15 output pin configuration.
+# Replaces IOB_BASELINE_NV + IOB_IN + IOB_OUT for designs using the
+# standard AX301 pin set.  XOR-idempotent (double-emit cancels).
+# Data: results/output_route_nv_mining.json → iob_pad_cells.
+_IOB_PAD_NV_RE = re.compile(r"^IOB_PAD_NV$")
+_IOB_PAD_NV_CACHE = None
+
+# OUTROUTE_G15 — position-specific output routing from SLICE to PIN_G15.
+# Looks up results/output_route_sigcache.json by source SLICE position.
+_OUTROUTE_G15_RE = re.compile(
+    r"^OUTROUTE_G15\s+X(?P<sx>\d+)Y(?P<sy>\d+)N(?P<sn>\d+)$")
+_OUTROUTE_SIGCACHE = None
+
 # Clock-bank pin directive.  Dedicated clock pins (E1 and siblings)
 # are not in iob_cell_map.json — fuzz/iob_sweep.py only covered 44
 # regular user IO pins.  IOB_CLK_INPUT PIN_X XOR-applies a hdr-band
@@ -599,6 +613,50 @@ def _load_iob_baseline_hdr_cells():
     return _IOB_BASELINE_HDR_CACHE
 
 
+def _load_iob_pad_nv_cells():
+    """Load the 241 IOB pad cells (nop_vs_nv delta) from
+    results/output_route_nv_mining.json."""
+    global _IOB_PAD_NV_CACHE
+    if _IOB_PAD_NV_CACHE is not None:
+        return _IOB_PAD_NV_CACHE
+    import json
+    path = ROOT / "results" / "output_route_nv_mining.json"
+    if not path.exists():
+        raise FasmError(
+            "IOB_PAD_NV used but results/output_route_nv_mining.json "
+            "missing; run scripts/minimal_1lut/mine_outroute_nv.py"
+        )
+    data = json.loads(path.read_text())
+    _IOB_PAD_NV_CACHE = [tuple(c) for c in data["iob_pad_cells"]]
+    return _IOB_PAD_NV_CACHE
+
+
+def _load_outroute_g15_cells(sx, sy, sn):
+    """Load position-specific output route cells from
+    results/output_route_sigcache.json for SLICE(sx,sy,sn) → G15."""
+    global _OUTROUTE_SIGCACHE
+    if _OUTROUTE_SIGCACHE is None:
+        import json
+        path = ROOT / "results" / "output_route_sigcache.json"
+        if not path.exists():
+            raise FasmError(
+                "OUTROUTE_G15 used but results/output_route_sigcache.json "
+                "missing; run scripts/minimal_1lut/sweep_outroute_nv.py"
+            )
+        _OUTROUTE_SIGCACHE = json.loads(path.read_text())
+    key = f"X{sx}Y{sy}N{sn}"
+    routes = _OUTROUTE_SIGCACHE.get("routes", {})
+    if key not in routes:
+        raise FasmError(
+            f"OUTROUTE_G15 X{sx}Y{sy}N{sn}: position not in "
+            f"output_route_sigcache.json ({len(routes)} positions mined)"
+        )
+    cells = [tuple(c) for c in routes[key]["position_specific"]]
+    for c in _OUTROUTE_SIGCACHE.get("g15_invariant_cells", []):
+        cells.append(tuple(c))
+    return cells
+
+
 def _load_iob_map():
     """Load results/iob_cell_map.json once (per-pin signature corpus)."""
     global _IOB_MAP_CACHE
@@ -661,22 +719,28 @@ def _iob_delta_cells(role, pin, iob_map, *, lenient=False):
 _IOB_ROUTE_CACHE = None
 
 
+_IOB_ROUTE_NODEDUP_KEYS: set | None = None
+
+
 def _load_iob_route_cells(pin, dx, dy, dn, port):
     """Return XOR-delta cells (off, bp) for IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}.
 
-    Cells come from results/iob_to_slice_sigcache.json, which was built
-    by scripts/iob_slice_mining/compute_absolute_cells.py as
-      abs_cells = delta(pin, tgt) ^ bridge(pin)
-    with bridge(pin) = iob_zero(pin) ^ nv_zero_global.  So the cells
-    reproduce, when XOR'd against nv_zero_global, the exact pair RBF
-    that Quartus would emit for the (pin, tgt) two-LE design — which is
-    HW-verified on AX301 for the (E16, 10,4,0, dataa) entry.
+    Cells come from results/iob_to_slice_sigcache.json.  Three buckets
+    are consulted in priority order:
 
-    Caller must be applying this delta on top of nv_zero_global (or a
-    design built on top of nv_zero_global).  Applying it on any other
-    baseline produces bit-garbage silently.
+      1. ``padnv_cells`` — derived for the IOB_PAD_NV directive path as
+         ``(gold_fab ⊕ base_fab) - LUT_cells`` where *base* includes
+         IOB_PAD_NV, OUTROUTE, CLK, and IOB_CLK_INPUT but NOT IOB_ROUTE.
+         These entries compose correctly via XOR parity **without** dedup
+         stripping, because they already exclude directive-overlap cells
+         from their own definition.
+
+      2. ``single_le_cells`` — derived for the IOB_BASELINE_NV path.
+         Legacy; requires dedup stripping.
+
+      3. ``absolute_cells`` — pair-template fallback.  Requires dedup.
     """
-    global _IOB_ROUTE_CACHE
+    global _IOB_ROUTE_CACHE, _IOB_ROUTE_NODEDUP_KEYS
     if _IOB_ROUTE_CACHE is None:
         import json
         path = ROOT / "results" / "iob_to_slice_sigcache.json"
@@ -687,16 +751,14 @@ def _load_iob_route_cells(pin, dx, dy, dn, port):
                 "scripts/iob_slice_mining/compute_absolute_cells.py"
             )
         data = json.loads(path.read_text())
-        # Prefer per-entry single-LE derived cells when present.  These
-        # compose cleanly with other directives (GCLK_PIN / IOB_IN /
-        # IOB_OUT / LAB_CLK_SEL_LE) without pair-template secondary-LE
-        # residue.  absolute_cells is the pair-derived fallback (still
-        # HW-verified vs the pair RBF itself).
+        padnv = data.get("padnv_cells", {})
         single_le = data.get("single_le_cells", {})
         absolute = data.get("absolute_cells", {})
         merged = dict(absolute)
         merged.update(single_le)
+        merged.update(padnv)
         _IOB_ROUTE_CACHE = merged
+        _IOB_ROUTE_NODEDUP_KEYS = set(padnv.keys())
     key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
     if key not in _IOB_ROUTE_CACHE:
         raise FasmError(
@@ -708,6 +770,15 @@ def _load_iob_route_cells(pin, dx, dy, dn, port):
             f"then rerun compute_absolute_cells.py."
         )
     return [tuple(c) for c in _IOB_ROUTE_CACHE[key]]
+
+
+def _iob_route_needs_dedup(pin, dx, dy, dn, port):
+    """Return True if this IOB_ROUTE entry needs dedup stripping."""
+    global _IOB_ROUTE_NODEDUP_KEYS
+    if _IOB_ROUTE_NODEDUP_KEYS is None:
+        _load_iob_route_cells(pin, dx, dy, dn, port)
+    key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
+    return key not in _IOB_ROUTE_NODEDUP_KEYS
 
 
 def _load_iob_oe_cells(pin):
@@ -1057,6 +1128,8 @@ def parse_fasm(text):
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
     iob_oes = []  # list[pin] — IOB_OE PIN_X (Stage B-narrow tristate)
     iob_baseline_nv = False  # IOB_BASELINE_NV directive seen
+    iob_pad_nv = False  # IOB_PAD_NV directive seen (方案B)
+    outroute_g15s = []  # list[(sx, sy, sn)] — OUTROUTE_G15 positions
     iob_clk_inputs = []  # list[pin] — IOB_CLK_INPUT PIN_X
     # NV_BASELINE_PACK family — each entry is a bucket name consumed by
     # _nv_bucket_cells().  All are XOR-applied with parity, so emitting
@@ -1154,6 +1227,15 @@ def parse_fasm(text):
         if m:
             iob_baseline_nv = True
             continue
+        m = _IOB_PAD_NV_RE.match(line)
+        if m:
+            iob_pad_nv = not iob_pad_nv  # XOR parity
+            continue
+        m = _OUTROUTE_G15_RE.match(line)
+        if m:
+            outroute_g15s.append(
+                (int(m["sx"]), int(m["sy"]), int(m["sn"])))
+            continue
         m = _IOB_CLK_INPUT_RE.match(line)
         if m:
             iob_clk_inputs.append(m["pin"])
@@ -1241,7 +1323,8 @@ def parse_fasm(text):
     return (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
             iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
-            dspmult_global_on, iob_oes, lut_arith_multi_labs)
+            dspmult_global_on, iob_oes, lut_arith_multi_labs,
+            iob_pad_nv, outroute_g15s)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None,
@@ -1337,7 +1420,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
      lab_clk_sel_les, iob_baseline_nv,
      iob_clk_inputs, nv_buckets, m9k_modes,
      dspmult_global_on, iob_oes,
-     lut_arith_multi_labs) = parse_fasm(fasm_text)
+     lut_arith_multi_labs,
+     iob_pad_nv, outroute_g15s) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1460,6 +1544,21 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
+    if iob_pad_nv:
+        buf = bytearray(work)
+        for off, bp in _load_iob_pad_nv_cells():
+            buf[off] ^= (1 << bp)
+            _iob_route_dedup.add((off, bp))
+        work = bytes(buf)
+
+    if outroute_g15s:
+        buf = bytearray(work)
+        for (sx, sy, sn) in outroute_g15s:
+            for off, bp in _load_outroute_g15_cells(sx, sy, sn):
+                buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
+        work = bytes(buf)
+
     if iob_clk_inputs:
         # Clock-bank pin activate (hdr band only).  Uses XOR parity so
         # duplicate lines cancel.  Runs alongside IOB_IN / IOB_OUT; both
@@ -1500,20 +1599,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         work = bytes(buf)
 
     if iob_routes:
-        # IOB_ROUTE sig-cache entries are absolute deltas (iob_pair ^
-        # nv_zero_global) that include cells already covered by IOB_IN,
-        # IOB_OUT, SRC, ROUTE, GCLK, CLK_SEL etc.  Strip cells that
-        # other design directives have already applied to prevent XOR
-        # double-flip (which cancels the cell instead of setting it).
+        # IOB_ROUTE sig-cache entries are XOR-delta cell sets.  Two
+        # derivation flavours exist:
+        #
+        #   padnv_cells — derived as (gold ⊕ base) minus LUT cells,
+        #       where base = nv + IOB_PAD_NV + OUTROUTE + CLK.  These
+        #       entries already account for directive overlap and compose
+        #       correctly via XOR parity WITHOUT dedup stripping.
+        #
+        #   single_le_cells / absolute_cells — legacy entries derived
+        #       against IOB_BASELINE_NV path.  They include cells shared
+        #       with other directives and NEED dedup stripping.
         parity = {}
         skipped = 0
         for pin, dx, dy, dn, port in iob_routes:
+            needs_dedup = _iob_route_needs_dedup(pin, dx, dy, dn, port)
             for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
                 if off < 5282:
                     skipped += 1
                     continue
                 key = (off, bp)
-                if key in _iob_route_dedup:
+                if needs_dedup and key in _iob_route_dedup:
                     skipped += 1
                     continue
                 parity[key] = parity.get(key, 0) ^ 1

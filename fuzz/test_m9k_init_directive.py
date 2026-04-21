@@ -229,7 +229,7 @@ def test_m9k_mode_parse_and_xor_idempotence():
     # (x, y, n, width, depth, template).  Bare `M9K_MODE_{w}x{d}`
     # defaults template to "altsyncram".
     parsed = f.parse_fasm(fasm_one)
-    assert len(parsed) == 21, f"parse_fasm arity {len(parsed)} != 21"
+    assert len(parsed) == 23, f"parse_fasm arity {len(parsed)} != 23"
     m9k_modes = parsed[17]
     assert m9k_modes == [
         (site_x, site_y, site_n, width, depth, "altsyncram"),
