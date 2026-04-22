@@ -86,6 +86,7 @@ fuzz/fill_*\ *_corpus.py
 # Stray Quartus/mining artifacts at repo root (from shell-arg quoting bugs)
 /--base
 /mine_top.*
+/two_lab.*
 
 # Local scratch dir for ephemeral experiments (never commit contents).
 # House rule: once a script is cited from docs/memory, move it out of tmp/

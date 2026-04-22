@@ -6,9 +6,9 @@ Emits two artifacts in ``results/``:
 
 * ``chipdb_ep4ce6_data.json`` — compact data blob describing every bel,
   wire, and pip that nextpnr needs.  Produced from ``fuzz/config.py``
-  geometry, ``results/route_cells_full.json`` (13,487 Plan D' sig-cache
-  entries covering 95.9% of the NEORV32 edge set), and the
-  ``M9K_INIT_ANCHORS`` table from ``fuzz/m9k_init_basis.py``.
+  geometry, ``results/route_cells_full.json`` (38,683 sig-cache entries
+  from demand mining), and the ``M9K_INIT_ANCHORS`` table from
+  ``fuzz/m9k_init_basis.py``.
 
 * ``chipdb_ep4ce6.py`` — tiny ``nextpnr-generic --run`` entry point that
   loads the JSON blob and populates ``ctx`` via the generic Python API.
@@ -46,6 +46,7 @@ follow-ups once M5/M6 prove the chain.
 """
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import sys
@@ -60,7 +61,7 @@ from m9k_init_basis import M9K_INIT_ANCHORS  # noqa: E402
 ROOT = HERE.parent
 RESULTS = ROOT / "results"
 
-DATA_PATH = RESULTS / "chipdb_ep4ce6_data.json"
+DATA_PATH = RESULTS / "chipdb_ep4ce6_data.json.gz"
 SCRIPT_PATH = RESULTS / "chipdb_ep4ce6.py"
 
 # Full LAB grid including the jailbreak columns/rows. The chipdb lives
@@ -78,16 +79,15 @@ CARRY_DELAY = 1          # cout→cin direct pip — cheapest (dedicated wire,
 SIG_DELAY = 1            # SIG pips (FASM-backed) — cheapest
 INTRA_DELAY = 2          # intra-LAB direct pips — within-LAB
 LOCAL_DELAY = 5          # LOCAL_IN / LOCAL_OUT — entering/leaving bus
-HOP_DELAY = 20           # LOCAL_HOP — base cost (scaled ×distance)
-MAX_HOP_DIST = 4         # Reach 4 valid neighbours per direction
+HOP_DELAY = 15           # LOCAL_HOP — base cost (scaled ×distance)
+MAX_HOP_DIST = 8         # Reach 8 valid neighbours per direction
 PLACEHOLDER_DELAY = 1    # default (used for GCLK, IOB bridge)
 
-# Number of parallel LOCAL tracks per LAB. Each wire in nextpnr is a
-# single-net resource, so one LOCAL per LAB = one net per LAB — that
-# starves the clock arc as soon as any data arc claims the bus.
-# Keep small (8) to avoid pip-count blowup but big enough to carry
-# counter-class designs (~32 nets distributed across LABs).
-NUM_LOCAL_TRACKS = 8
+# Number of parallel LOCAL tracks per LAB.  Real Cyclone IV has 26 LI
+# wires per LAB; match that so the router has realistic capacity for
+# NEORV32-class designs (~6600 LUTs).  SIG pips handle most long-range
+# routes; LOCAL carries the remainder.
+NUM_LOCAL_TRACKS = 26
 
 SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
 # Map sig-cache port labels to nextpnr-generic SLICE pin indices.
@@ -329,16 +329,12 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
     # Defer IOB<->LOCAL bridge pips until LOCAL wires exist (below).
 
     # ---------- Synthetic LOCAL-bus overlay (densification) ----------
-    # Plan D' sig-cache only covers NEORV32-observed edges; it's too
-    # sparse for arbitrary small-design routing (the counter smoke
-    # test exposed this). Mimic Cyclone IV LOCAL_INTERCONNECT + LAB-
-    # neighbor hops with a hierarchical bus: per LAB one LOCAL wire
-    # that every slice Q/F drives and every slice I reads, plus 8
-    # Moore-neighbour LOCAL->LOCAL pips.  Linear cost (~100 pips/LAB
-    # instead of O(N^2)) and gives the router full connectivity.
-    # These pips have NO FASM backing — np2fasm will either fall back
-    # to route_synth or flag unroutable FASM. Marked type="LOCAL" so
-    # M4 can distinguish them from the "SIG" sig-cache pips.
+    # 26 LOCAL tracks per LAB matches real Cyclone IV LI wire count.
+    # SIG pips (38k FASM-backed routes) handle most inter-LAB routing;
+    # LOCAL carries whatever SIG doesn't cover.  np2fasm independently
+    # queries the sig-cache by (src,dst) pair — it doesn't care which
+    # chipdb pip type the router chose.  Marked type="LOCAL" so np2fasm
+    # can distinguish from "SIG" sig-cache pips.
     local_wires: set[tuple[int, int]] = set()
     valid_labs = [(x, y) for x in LAB_X_FULL for y in LAB_Y_FULL
                   if (x, y) not in config.INVALID_LABS]
@@ -633,13 +629,20 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                             })
                         n_pips_m9k += 1
 
-    # ---------- Pips from Plan D' sig-cache (overlay) ----------
+    # ---------- Pips from sig-cache (FASM-backed overlay) ----------
+    # Each sig-cache entry is a bit-perfect verified (src_LE → dst_LE.port)
+    # route.  These bypass the synthetic LOCAL model entirely — the router
+    # can one-hop from any source Q wire to any destination datax wire that
+    # has a sig-cache entry, and np2fasm emits the ROUTE directive.
     cache_path = RESULTS / "route_cells_full.json"
     cache = json.loads(cache_path.read_text())
     known_wires = {w["name"] for w in wires}
     pip_count = 0
     skipped_unknown_src = 0
     skipped_unknown_dst = 0
+    sig_src_labs: set[tuple[int, int]] = set()
+    sig_dst_labs: set[tuple[int, int]] = set()
+    sig_lab_pairs: set[tuple[int, int, int, int]] = set()
     for key in cache.keys():
         try:
             left, right = key.split("->")
@@ -665,6 +668,9 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             "x": dx, "y": dy,
         })
         pip_count += 1
+        sig_src_labs.add((sx, sy))
+        sig_dst_labs.add((dx, dy))
+        sig_lab_pairs.add((sx, sy, dx, dy))
 
     return {
         "grid_w": grid_w,
@@ -682,6 +688,10 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             "n_pips_local": n_local_pips,
             "n_pips_carry": n_pips_carry,
             "n_pips_m9k": n_pips_m9k,
+            "n_sig_cache_total": len(cache),
+            "n_sig_src_labs": len(sig_src_labs),
+            "n_sig_dst_labs": len(sig_dst_labs),
+            "n_sig_lab_pairs": len(sig_lab_pairs),
             "pips_skipped_unknown_src": skipped_unknown_src,
             "pips_skipped_unknown_dst": skipped_unknown_dst,
         },
@@ -694,25 +704,24 @@ _RUNNER_TEMPLATE = '''\
 
 Do not edit by hand; regenerate with ``python3 fuzz/chipdb_gen.py``.
 """
-import json, os
+import gzip, json
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_DATA = json.loads((_HERE / "chipdb_ep4ce6_data.json").read_text())
+_DATA = json.loads(gzip.decompress(
+    (_HERE / "chipdb_ep4ce6_data.json.gz").read_bytes()))
 
-# ctx is injected by nextpnr-generic when invoked with --run.
-# Loc is exposed under the generic Python API.
 try:
     from nextpnrpy_generic import Loc  # type: ignore
 except ImportError:
-    Loc = globals().get("Loc")  # provided by --run environment
+    Loc = globals().get("Loc")
 
 _delays = {}
-for cost in set(p["delay"] for p in _DATA["pips"]):
+for cost in set(p[4] for p in _DATA["pips"]):
     _delays[cost] = ctx.getDelayFromNS(cost * 0.5)
 
 for w in _DATA["wires"]:
-    ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
+    ctx.addWire(name=w[0], type=w[1], x=w[2], y=w[3])
 
 for b in _DATA["bels"]:
     ctx.addBel(name=b["name"], type=b["type"],
@@ -726,15 +735,38 @@ for bp in _DATA["belpins"]:
         ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
-    ctx.addPip(name=p["name"], type=p["type"],
-               srcWire=p["src"], dstWire=p["dst"],
-               delay=_delays[p["delay"]],
-               loc=Loc(p["x"], p["y"], 0))
+    ctx.addPip(name=p[0], type=p[1],
+               srcWire=p[2], dstWire=p[3],
+               delay=_delays[p[4]],
+               loc=Loc(p[5], p[6], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",
       _DATA["stats"]["n_wires"], "wires,",
       _DATA["stats"]["n_pips_total"], "pips")
+
+# --run replaces the default flow, so we must drive pack/place/route
+# ourselves.  sys.argv inside --run only has the binary path, so read
+# the real command line from /proc/self/cmdline.
+def _run_hook(flag):
+    """Execute a --flag script if the user passed one."""
+    try:
+        args = open("/proc/self/cmdline").read().split(chr(0))
+    except OSError:
+        return
+    for i, a in enumerate(args):
+        if a == flag and i + 1 < len(args):
+            path = args[i + 1]
+            exec(compile(open(path).read(), path, "exec"), globals())
+            return
+
+_run_hook("--pre-pack")
+ctx.pack()
+_run_hook("--pre-place")
+ctx.place()
+_run_hook("--pre-route")
+ctx.route()
+_run_hook("--post-route")
 '''
 
 
@@ -773,7 +805,13 @@ def main() -> None:
     data = build_chipdb(num_local_tracks=args.local_tracks,
                         max_hop_dist=args.max_hop_dist,
                         sig_routing_only=args.sig_routing_only)
-    DATA_PATH.write_text(json.dumps(data, indent=1))
+    data["wires"] = [[w["name"], w["type"], w["x"], w["y"]]
+                     for w in data["wires"]]
+    data["pips"] = [[p["name"], p["type"], p["src"], p["dst"],
+                     p["delay"], p["x"], p["y"]]
+                    for p in data["pips"]]
+    blob = json.dumps(data, separators=(",", ":")).encode()
+    DATA_PATH.write_bytes(gzip.compress(blob, compresslevel=6))
     SCRIPT_PATH.write_text(_RUNNER_TEMPLATE)
 
     s = data["stats"]
@@ -785,11 +823,13 @@ def main() -> None:
     print(f"belpins: {s['n_belpins']:>7d}")
     print(f"pips total: {s['n_pips_total']:>7d} "
           f"(sig {s['n_pips_sig']} + local {s['n_pips_local']} "
-          f"+ carry {s['n_pips_carry']})")
-    print(f"pips skipped (unknown src slice): "
-          f"{s['pips_skipped_unknown_src']}")
-    print(f"pips skipped (unknown dst slice): "
-          f"{s['pips_skipped_unknown_dst']}")
+          f"+ carry {s['n_pips_carry']} + m9k {s['n_pips_m9k']})")
+    print(f"sig-cache: {s['n_sig_cache_total']} total, "
+          f"{s['n_pips_sig']} injected, "
+          f"{s['pips_skipped_unknown_src']}+{s['pips_skipped_unknown_dst']} skipped")
+    print(f"sig topology: {s['n_sig_src_labs']} src LABs, "
+          f"{s['n_sig_dst_labs']} dst LABs, "
+          f"{s['n_sig_lab_pairs']} LAB-pairs")
 
 
 if __name__ == "__main__":

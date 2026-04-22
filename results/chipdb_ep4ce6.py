@@ -3,25 +3,24 @@
 
 Do not edit by hand; regenerate with ``python3 fuzz/chipdb_gen.py``.
 """
-import json, os
+import gzip, json
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_DATA = json.loads((_HERE / "chipdb_ep4ce6_data.json").read_text())
+_DATA = json.loads(gzip.decompress(
+    (_HERE / "chipdb_ep4ce6_data.json.gz").read_bytes()))
 
-# ctx is injected by nextpnr-generic when invoked with --run.
-# Loc is exposed under the generic Python API.
 try:
     from nextpnrpy_generic import Loc  # type: ignore
 except ImportError:
-    Loc = globals().get("Loc")  # provided by --run environment
+    Loc = globals().get("Loc")
 
 _delays = {}
-for cost in set(p["delay"] for p in _DATA["pips"]):
+for cost in set(p[4] for p in _DATA["pips"]):
     _delays[cost] = ctx.getDelayFromNS(cost * 0.5)
 
 for w in _DATA["wires"]:
-    ctx.addWire(name=w["name"], type=w["type"], x=w["x"], y=w["y"])
+    ctx.addWire(name=w[0], type=w[1], x=w[2], y=w[3])
 
 for b in _DATA["bels"]:
     ctx.addBel(name=b["name"], type=b["type"],
@@ -35,12 +34,35 @@ for bp in _DATA["belpins"]:
         ctx.addBelInput(bel=bp["bel"], name=bp["pin"], wire=bp["wire"])
 
 for p in _DATA["pips"]:
-    ctx.addPip(name=p["name"], type=p["type"],
-               srcWire=p["src"], dstWire=p["dst"],
-               delay=_delays[p["delay"]],
-               loc=Loc(p["x"], p["y"], 0))
+    ctx.addPip(name=p[0], type=p[1],
+               srcWire=p[2], dstWire=p[3],
+               delay=_delays[p[4]],
+               loc=Loc(p[5], p[6], 0))
 
 print("[chipdb_ep4ce6] loaded:",
       _DATA["stats"]["n_bels"], "bels,",
       _DATA["stats"]["n_wires"], "wires,",
       _DATA["stats"]["n_pips_total"], "pips")
+
+# --run replaces the default flow, so we must drive pack/place/route
+# ourselves.  sys.argv inside --run only has the binary path, so read
+# the real command line from /proc/self/cmdline.
+def _run_hook(flag):
+    """Execute a --flag script if the user passed one."""
+    try:
+        args = open("/proc/self/cmdline").read().split(chr(0))
+    except OSError:
+        return
+    for i, a in enumerate(args):
+        if a == flag and i + 1 < len(args):
+            path = args[i + 1]
+            exec(compile(open(path).read(), path, "exec"), globals())
+            return
+
+_run_hook("--pre-pack")
+ctx.pack()
+_run_hook("--pre-place")
+ctx.place()
+_run_hook("--pre-route")
+ctx.route()
+_run_hook("--post-route")

@@ -380,6 +380,15 @@ def convert(
     carry_cells = {n: c for n, c in cells.items()
                    if c.get("type") == "CE6_CARRY"}
 
+    # LE positions occupied by carry chains — the chain walker (below)
+    # handles LUT_ARITH + DFF emission for these, so the main cell
+    # loop must skip them to avoid double-flip via XOR.
+    carry_le_pos: set[tuple[int, int, int]] = set()
+    for cn, cc in carry_cells.items():
+        cb = cell_bel.get(cn)
+        if cb and cb[0] == "SLICE":
+            carry_le_pos.add((cb[1], cb[2], cb[3]))
+
     # --- Build net driver/sink index up-front ---
     # Needed BEFORE the cell iteration so the IOB emission pass can
     # identify clock-driving IOBs (whose only sinks are DFF.CLK) and
@@ -459,17 +468,18 @@ def convert(
         params = cell.get("parameters", {})
 
         if kind == "SLICE" and ctype == "CE6_CARRY":
-            # Arith-mode LUT SRAM = 0x0000 for standard carry-chain
-            # operations (+1, +, -). The block-band cells configure
-            # dedicated XOR/AND circuitry that implements the adder
-            # function independently of LUT SRAM content. Quartus
-            # uses 0x0000 for all arith LEs (HW-verified 2026-04-13).
-            fasm.append(f"X{x}Y{y}N{n}.LUT_ARITH = 0x0000")
+            # Skip — the carry chain walker below handles LUT_ARITH
+            # emission with the correct LUT_MASK parameter and also
+            # validates N-contiguity.  Emitting here would double-flip
+            # SRAM cells via XOR for non-zero masks.
+            pass
         elif kind == "SLICE" and ctype in ("DFF", "$_DFF_P_"):
-            # Yosys-level DFF cell placed on its own SLICE bel. In
-            # Cyclone IV the FF lives inside the LE alongside the
-            # LCCOMB/arith combinational part, so the DFF bel and the
-            # matching LUT/CE6_CARRY bel should share the same (x,y,n).
+            # Skip DFFs co-located with a carry cell — the chain
+            # walker emits their DFF directive alongside LUT_ARITH.
+            if (x, y, n) in carry_le_pos:
+                has_dff = True
+                dff_les.add((x, y, n))
+                continue
             fasm.append(f"X{x}Y{y}N{n}.DFF")
             has_dff = True
             dff_les.add((x, y, n))
@@ -773,6 +783,7 @@ def convert(
 
     n_sig = 0
     n_miss = 0
+    n_miss_same_lab = 0
     n_skip = 0
     n_iob_route = 0
     n_iob_route_miss = 0
@@ -894,6 +905,7 @@ def convert(
                 continue  # dedup
             seen_routes.add(key)
 
+            same_lab = (sx == dx and sy == dy)
             fasm.append(
                 f"ROUTE X{sx}Y{sy}N{sn} -> "
                 f"X{dx}Y{dy}N{dn}.{port_name}")
@@ -902,7 +914,10 @@ def convert(
                 n_sig += 1
             else:
                 n_miss += 1
-                warnings.append(f"no sig-cache: {key}")
+                if same_lab:
+                    n_miss_same_lab += 1
+                tag = "same-LAB" if same_lab else "cross-LAB"
+                warnings.append(f"no sig-cache ({tag}): {key}")
 
     # Emit IOB_ROUTE lines after the main ROUTE block for readability.
     for (pin_loc, dx, dy, dn, port_name) in iob_routes:
@@ -943,8 +958,10 @@ def convert(
             insert_at = 1 if (fasm and fasm[0] == "NV_BASELINE_PACK") else 0
             fasm.insert(insert_at, "IOB_BASELINE_NV")
 
+    n_miss_cross = n_miss - n_miss_same_lab
     warnings.insert(0,
-        f"# {n_sig} ROUTE (FASM-backed), {n_miss} missing, "
+        f"# {n_sig} ROUTE (FASM-backed), "
+        f"{n_miss} missing ({n_miss_same_lab} same-LAB, {n_miss_cross} cross-LAB), "
         f"{n_skip} skipped (non-slice/CLK); "
         f"{n_iob_route} IOB_ROUTE, {n_iob_route_miss} IOB_ROUTE missing; "
         f"{n_outroute} OUTROUTE_G15, {n_outroute_miss} output route missing")
