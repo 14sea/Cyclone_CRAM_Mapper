@@ -56,6 +56,13 @@ results/a0_virgin_*.json
 results/neorv32_lab_targets.txt
 results/dff_n_sweep.json
 
+# η re-mining outputs (reference only — directive-replacement FALSIFIED 2026-04-23).
+# Regenerable from lits_pair_*.rbf via scripts/sigcache_remine/remine_legacy_entries.py.
+# Do NOT merge remined.json into route_cells.json — it breaks np2fasm ROUTE emission
+# (see memory: eta_remining_directive_replace_falsified.md).
+results/route_cells_remined.json
+results/sigcache_remine_report.json
+
 # σ⁻¹ mining intermediates (superseded by sigma_inv_fb8_groups.json)
 results/sigma_inv_existing_groups.json
 results/sigma_inv_fb8_gaps.json
