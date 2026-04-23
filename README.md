@@ -2260,6 +2260,17 @@ bootloader** (4712 LE / 2367 DFF / 19 M9K) on AX301 silicon at
 regardless of design density; it scales with RBF size (fixed
 368 011 B), not LE count.
 
+**Linux extended test (2026-04-24)**: `boot_linux.py --rbf` drove the
+full Quartus-flow host script against the ζ-rebuilt RBF — stage2
+upload, baud switch, kernel xmodem (1.5 MB, CRC match), DTB +
+initramfs all OK, **Linux 6.6.83 booted on RISC-V** and ran for
+~150 s (devtmpfs mounted, ttyNEO0 console attached, exec'd /sbin/init)
+before a kernel panic at `kernel/cred.c:103`. The panic is **not a
+ζ regression** — the RBF is SHA256-identical to Quartus gold; the
+panic is a RISC-V nommu kernel edge case. The ζ validation objective
+(open toolchain produces a silicon-functional NEORV32 bitstream)
+is met.
+
 ### When to use which
 
 | Design size / routing | Native path | ζ escape hatch |
@@ -2368,7 +2379,7 @@ closes the practical gap in the meantime.
 
 - [x] Phase 6c: **chipdb 26-track upgrade (2026-04-22)** — LOCAL bus widened from 8 to 26 synthetic tracks, total pips grew to 3.6M; routing graph is now closer to real Cyclone IV's ~40-LI-wire-per-LAB topology. Runner drives P&R end-to-end on the upgraded chipdb. Small-design HW validation passed; dense-design (NEORV32) routing is still blocked — the model is denser but still simpler than the real C4/R4/R24/LI switch matrices.
 
-- [x] Phase 7: **ζ BIT-workaround — open-toolchain escape hatch HW-validated end-to-end on NEORV32 (2026-04-23)** — `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + `fasm2rbf.py` round-trip takes any Quartus-produced RBF and rebuilds it byte-identically (emits one `BIT` directive per differing bit vs `nv_zero_global.rbf` baseline, CRC-patched). HW-validated at NEORV32 scale: 4712 LE / 2367 DFF / 19 M9K / 51 pins → 127 728 BIT directives (2634 hdr + 113 573 fab + 11 521 crc), ζ + fasm2rbf wall time ≈ 0.5 s. The rebuilt RBF boots the NEORV32 bootloader cleanly on AX301 at 19200-8N1 UART (banner + auto-boot countdown + SPI-flash probe + CMD prompt). This is the first SoC-class validation of the escape hatch. Users blocked by the chipdb routing model have a proven bounded workaround.
+- [x] Phase 7: **ζ BIT-workaround — open-toolchain escape hatch HW-validated end-to-end on NEORV32 (2026-04-23)** — `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + `fasm2rbf.py` round-trip takes any Quartus-produced RBF and rebuilds it byte-identically (emits one `BIT` directive per differing bit vs `nv_zero_global.rbf` baseline, CRC-patched). HW-validated at NEORV32 scale: 4712 LE / 2367 DFF / 19 M9K / 51 pins → 127 728 BIT directives (2634 hdr + 113 573 fab + 11 521 crc), ζ + fasm2rbf wall time ≈ 0.5 s. The rebuilt RBF boots the NEORV32 bootloader cleanly on AX301 at 19200-8N1 UART (banner + auto-boot countdown + SPI-flash probe + CMD prompt). Linux extended test (2026-04-24): kernel + DTB + initramfs transferred via xmodem, **Linux 6.6.83 ran ~150 s on RISC-V** (devtmpfs mounted, ttyNEO0 console attached, exec'd /sbin/init) before a kernel-level `kernel/cred.c:103` BUG_ON panic unrelated to the bitstream (RBF SHA256 matches Quartus gold). This is the first SoC-class validation of the escape hatch; users blocked by the chipdb routing model have a proven bounded workaround.
 
 ### Long-term direction: what this enables, and what it won't
 
