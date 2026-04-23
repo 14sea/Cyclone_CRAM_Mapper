@@ -2188,6 +2188,92 @@ its bit pattern depends on the chain's *length* but not on *which*
 LEs in the LAB are part of it.
 
 
+## Open Toolchain End-to-End: Native Path and ζ Escape Hatch
+
+Two separate paths reach silicon from the open bitstream codec — a
+**native** path (Yosys → nextpnr → FASM) and an **escape hatch** (take
+a Quartus RBF, diff against a baseline, emit pure `BIT` directives).
+Both produce valid flashable bitstreams via the same `fuzz/fasm2rbf.py`.
+The native path is the long-term goal; the escape hatch is the
+guaranteed-to-work fallback for any design Quartus can build.
+
+### Native path
+
+```text
+.v / .vhd
+   │
+   ├── Yosys techmap (synth/ep4ce6_map.v, synth/prims.v)
+   │     → LUT4, DFF, CE6_CARRY, EP4CE6_M9K, GENERIC_IOB
+   │
+   ├── nextpnr-generic (chipdb from fuzz/chipdb_gen.py)
+   │     → placed + routed JSON
+   │
+   ├── synth/np2fasm.py
+   │     → FASM (LUT, ROUTE, LUT_ARITH, M9K_MODE, IOB_*, GCLK_PIN,
+   │            LAB_CLK_SEL, LAB_CLK_SEL_LE, OUTROUTE_G15, IOB_PAD_NV)
+   │
+   ├── fuzz/fasm2rbf.py  (+ patch_rbf_crc)
+   │     → .rbf (368 011 B, CRC-patched)
+   │
+   └── openFPGALoader -c usb-blaster
+```
+
+HW-validated designs along this path: registered AND gate
+(KEY2&KEY3→DFF→LED0) at LAB(16,4), 5-bit carry counter, M9K smoke
+9×512 RAM, clock-pin pipeline on all 12 F17-reachable pins.
+
+### ζ escape hatch (Quartus gold → BIT FASM)
+
+For any design that is too dense for the current chipdb routing model
+(NEORV32-scale, ~6000+ LEs), `scripts/bit_workaround/quartus_gold_to_bit_fasm.py`
+provides a **deterministic** bypass:
+
+```text
+design.v / .vhd
+   │
+   ├── Quartus compile → design.rbf (gold)
+   │
+   ├── scripts/bit_workaround/quartus_gold_to_bit_fasm.py
+   │     → BIT-only FASM (one BIT directive per differing bit vs
+   │       results/rbf/nv_zero_global.rbf baseline)
+   │
+   ├── fuzz/fasm2rbf.py  (+ patch_rbf_crc)
+   │     → .rbf byte-identical to Quartus gold (cmp confirms)
+   │
+   └── openFPGALoader -c usb-blaster
+```
+
+This is useful because:
+1. It **proves** the codec round-trip is correct at SoC scale — the
+   rebuilt RBF is literally the same bytes Quartus produced.
+2. It is a real escape hatch. Users who hit the chipdb routing wall
+   have a bounded workflow: compile in Quartus once, everything
+   downstream stays open-toolchain.
+3. The BIT FASM is an inspectable intermediate — auditable line-by-line
+   against the codec's CRAM geometry, usable as a substrate for
+   bitstream mutation experiments (see "Long-term direction" below).
+
+HW-validated: two_lab AND→DFF cross-LAB route (2026-04-22), lits_pair
+route-family reconstruction (2026-04-23), and the **full NEORV32
+bootloader** (4712 LE / 2367 DFF / 19 M9K) on AX301 silicon at
+19200-8N1 UART (2026-04-23). ζ + fasm2rbf total wall time ≈ 0.5 s
+regardless of design density; it scales with RBF size (fixed
+368 011 B), not LE count.
+
+### When to use which
+
+| Design size / routing | Native path | ζ escape hatch |
+|-----------------------|-------------|----------------|
+| Small (≤ 50 LE), single LAB | ✅ primary | (redundant) |
+| Medium (50–500 LE), cross-LAB | ✅ if sig-cache covers routes | ✅ fallback |
+| Dense (> 1000 LE) / NEORV32-class | ❌ chipdb routing model blocks | ✅ primary |
+| Carry chains, M9K, clock pins | ✅ HW-validated primitives | ✅ works by construction |
+
+The native path is still the frontier — the chipdb routing model is
+the sole remaining blocker for Verilog-to-silicon without Quartus. ζ
+closes the practical gap in the meantime.
+
+
 ## Current Progress and Next Steps
 
 ### Completed ✓
@@ -2276,6 +2362,14 @@ LEs in the LAB are part of it.
 
 - [x] Phase 5.4: **LE carry chain in the open flow (HARDWARE-VERIFIED 2026-04-13)** — arith mode activation lives in the block band (frames 1692-1738, bp=2), not in LAB CRAM columns, and is a per-LAB mode switch, not a per-LE cell. Four pieces landed: (1) `chipdb_gen.py` declares 8,126 `cout→cin` direct pips between adjacent LE bels; (2) `synth/ep4ce6_map.v` + `synth/prims.v` add the CE6_CARRY primitive so Yosys lands `$alu` on chained LEs with the FF's `Q` wired directly into `CE6_CARRY.B` (no external "Route-A" buffer); (3) `synth/np2fasm.py` walks the carry chain and emits `LUT_ARITH` directives; (4) `fuzz/fasm2rbf.py` applies the arith blob from `results/arith_blockband_v4.json` (universal, position-independent at any LAB) for 8-LE half-LAB chains, or from `results/arith_blockband_by_width.json` (widths 2..16 single-LAB + 16+8 cross-LAB) for other chain lengths. AX301 silicon-accepted: identity + 8× `LUT_ARITH=0x0000` blinks bit-identically to Quartus's counter RBF; identity `Q<=Q` negative control stays dark.
 
+- [x] Phase 6: **σ⁻¹ 3-key LutCodec discovery (2026-04-21)** — the long-outstanding "pair mapping wrong" bug in `LutCodec.from_cram_model()` closed by adding a third discriminator axis: the previous `(foff, fb8)` 2-key table lookup was ambiguous across Y-groups, and adding `group = (y-2)//3` as the third key resolves it. New σ⁻¹ table `results/sigma_inv_fb8_groups.json` has **1,904 entries** (96% verified, 0% identity fallback), 5-level fallback chain (exact 3-key → nearest-foff 3-key → exact 2-key → nearest 2-key → identity). Known residue: Y=3 row (80 positions, wrapped addresses). Formula-based LutCodec is now silicon-reliable at all positions except Y=3.
+
+- [x] Phase 6b: **End-to-end HW validation on AX301 (2026-04-21 → 2026-04-22)** — three designs proven silicon-functional through the full open toolchain: (1) registered AND gate (KEY2&KEY3→DFF→LED0) at LAB(16,4), 10 FASM lines incl. multi-port IOB_ROUTE, 0 fabric diffs vs Quartus gold; (2) 5-bit carry counter at LAB(16,4) N=0..8, 18 FASM lines, 0 ROUTE directives (LE-internal carry feedback); (3) two-LAB cross-LAB AND→DFF→LED with BIT-only reconstruction from Quartus gold (byte-perfect vs gold, HW-verified). This is the first cross-LAB fabric route proven on silicon via the codec path.
+
+- [x] Phase 6c: **chipdb 26-track upgrade (2026-04-22)** — LOCAL bus widened from 8 to 26 synthetic tracks, total pips grew to 3.6M; routing graph is now closer to real Cyclone IV's ~40-LI-wire-per-LAB topology. Runner drives P&R end-to-end on the upgraded chipdb. Small-design HW validation passed; dense-design (NEORV32) routing is still blocked — the model is denser but still simpler than the real C4/R4/R24/LI switch matrices.
+
+- [x] Phase 7: **ζ BIT-workaround — open-toolchain escape hatch HW-validated end-to-end on NEORV32 (2026-04-23)** — `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + `fasm2rbf.py` round-trip takes any Quartus-produced RBF and rebuilds it byte-identically (emits one `BIT` directive per differing bit vs `nv_zero_global.rbf` baseline, CRC-patched). HW-validated at NEORV32 scale: 4712 LE / 2367 DFF / 19 M9K / 51 pins → 127 728 BIT directives (2634 hdr + 113 573 fab + 11 521 crc), ζ + fasm2rbf wall time ≈ 0.5 s. The rebuilt RBF boots the NEORV32 bootloader cleanly on AX301 at 19200-8N1 UART (banner + auto-boot countdown + SPI-flash probe + CMD prompt). This is the first SoC-class validation of the escape hatch. Users blocked by the chipdb routing model have a proven bounded workaround.
+
 ### Long-term direction: what this enables, and what it won't
 
 A common question: with the codec working, can modern ML (RL routing, GNN
@@ -2359,8 +2453,9 @@ single headline number.
 | IOB FASM (Phase 5.4) | `IOB_IN`/`IOB_OUT` 44/44; `IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pins; `IOB_ROUTE` 15/15; `IOB_OE` 16 pins | IOB_ROUTE HW-verified; BIDIR/OE codec-verified + bisected on silicon |
 | DSPMULT (Phase 5.0) | 22-cell silicon-clean set (23 mined − 1 falsified via bisection at frame 1729) | HW-bisected; np2fasm not wired (0 DSPMULTs in NEORV32) |
 | `nv_zero_global` retirement | `NV_BASELINE_PACK` directive + sub-directives reproduce the Quartus baseline byte-exact from PURE_ZERO | **HW silicon-equivalent confirmed** (Stage 0 flash 2026-04-16) |
-| Formula-based LutCodec | `from_cram_model(x, y, n)` eliminates per-LAB calibration; auto-fallback in bitgen | Landed; **pair mapping WRONG** for all positions except (10,10,0) |
-| Open-source toolchain (Phase 5.3) | Yosys → nextpnr → np2fasm → fasm2rbf, CRC-valid, LI-safe. Small designs flashable; NEORV32 blocked on LOCAL bus capacity (~2040 overused wires at 6500 LE) | Partially open; pipeline test (134-LE) FPGA-resets due to LutCodec pair mapping bug |
+| Formula-based LutCodec (σ⁻¹ 3-key) | `from_cram_model(x, y, n)` with 3-key σ⁻¹ table (`(foff, fb8, group)`), 1,904 entries, 5-level fallback | Fixed 2026-04-21 (96% verified); known Y=3 gap (80 positions) |
+| Open-source toolchain — native path (Phase 5.3) | Yosys → nextpnr-generic (chipdb 26 LOCAL tracks, 3.6M pips) → np2fasm → fasm2rbf. AND gate + 5-bit carry counter + M9K smoke HW-validated at single/cross-LAB scale | HW-verified for small/medium; chipdb routing model still too sparse for NEORV32-class density |
+| ζ BIT-workaround — escape hatch (Phase 7) | `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + fasm2rbf rebuilds any Quartus RBF byte-identically. 127k BIT directives for NEORV32; 0.5 s wall time | HW-validated end-to-end on NEORV32 bootloader (4712 LE / 19 M9K) on AX301, 2026-04-23 |
 
 ---
 
