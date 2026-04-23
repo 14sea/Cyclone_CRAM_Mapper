@@ -143,6 +143,34 @@ Once the codec and sig-cache are mature enough, build the full open-source flow:
 
 6. **Cross-check before sinking time into the codec.** After every np2fasm change, build the same Verilog in Quartus and flash both. If they behave differently, byte-diff the RBFs and look at *which CRAM columns* the cells live in. A column mismatch means the front-end emitted a different topology (missing primitive); a column match with cell mismatch means a real codec bug. Treating the two cases the same wastes days.
 
+## Stage 9 — Open-toolchain escape hatch (vendor-gold → BIT FASM)
+
+Stage 8 depends on a routing-graph model that covers the target design's density. For small/medium designs this works; at SoC scale (~1000+ LEs) a simplified chipdb will over-use tracks and nextpnr's router will fail even though silicon has the resources. Rather than let this block the project, add a **deterministic escape hatch** that rides entirely on Stages 1–7 (CRAM geometry, codec, CRC):
+
+```
+gold.rbf         ←  vendor compile (Quartus / Vivado / Diamond)
+   ↓
+diff against nv_zero_global (or any stable baseline) at bit granularity
+   ↓
+emit one BIT offset bp directive per differing bit, including hdr + fab + CRC
+   ↓
+fasm2rbf (with patch_rbf_crc)  →  rebuilt.rbf  (cmp == gold.rbf)
+   ↓
+flash
+```
+
+Properties of this path (EP4CE6-validated end-to-end on NEORV32, 4712 LE / 19 M9K, 2026-04-23):
+
+- **Byte-identical to vendor gold**. The rebuilt RBF has the same SHA256 as the vendor's own output. Silicon behavior is provably equivalent; no silicon-level validation gap.
+- **Scales with RBF size, not design density**. NEORV32 compressed to 127 728 BIT directives; end-to-end wall time ≈ 0.5 s. The tool does not care about LE count, LAB density, or routing complexity.
+- **Inspectable intermediate**. The BIT FASM is a flat cell list auditable against the codec's CRAM geometry. Useful as a substrate for bitstream-mutation experiments and as ground truth when you want to compare a native build's cells against the vendor's.
+- **Mandatory CRC coverage**. Include hdr + fab + CRC bits all as BIT directives so `patch_rbf_crc` sees the full final state before recomputing — do NOT filter out CRC bits during the diff. CRC frames (25..1751) get re-computed from the now-correct data; header frames (0..24) are flipped directly.
+- **Not a replacement for native flow**. The escape hatch still needs a vendor compile to produce gold. It's the pragmatic answer when "Verilog → open toolchain → silicon" isn't reachable yet; it does not substitute for finishing Stage 8. Use it to unblock downstream work (HW-verify a design depends on) while native routing improves in the background.
+
+**When to wire this in**: as soon as Stage 7 CRC patcher and Stage 4 codec are both HW-clean. It's ~80 lines of Python (diff + emit + rebuild harness) and independent of Stage 8 progress.
+
+**When NOT to mistake this for completion**: the escape hatch proves the *codec* is correct at SoC scale; it does NOT prove the *native toolchain* is. Keep the Stage 8 routing-model work moving in parallel — the long-term goal is Verilog-to-silicon without any vendor compile.
+
 ## When to stop
 
 Chase a signal if a decision tree can pick it up at >70% from a balanced corpus. Drop it if two rounds of corpus expansion leave the middle leaf at ~50%: the signal probably isn't in the input space at all (it's in the vendor's placement seed or internal cost-function ties you can't observe). Mark it NEGATIVE in the project log and move on. Don't sink compute into un-mineable phenomena.

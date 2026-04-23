@@ -13,6 +13,10 @@ python3 runner.py n_sweep 10 10                   # calibrate 16 minterms
 python3 analyze.py read_tt design.rbf zero.rbf 10 10 0
 python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 python3 fuzz/test_green_zone_harden.py            # 24 islands, 731/731 bit-perfect
+# ζ escape hatch (HW-validated on NEORV32, 2026-04-23):
+python3 scripts/bit_workaround/quartus_gold_to_bit_fasm.py gold.rbf design.bit.fasm
+python3 fuzz/fasm2rbf.py design.bit.fasm results/rbf/nv_zero_global.rbf rebuilt.rbf
+python3 scripts/uart_observe.py --baud 19200 --seconds 30  # capture UART after flash
 ```
 
 ## Directory Layout
@@ -22,7 +26,7 @@ python3 fuzz/test_green_zone_harden.py            # 24 islands, 731/731 bit-perf
 - `scripts/` — one-off investigation scripts kept for reproducibility (e.g. `scripts/arith_sweep/` — Phase 1 per-width arith blob sweep harness)
 - `tmp/` — **local scratch only, gitignored**. House rule: do NOT drop experimental work under `/tmp/`; use this dir instead. The moment a script is cited from docs or memory, move it out of `tmp/` into `scripts/` (or another proper location) so it survives reboots and is reachable from a clone.
 - `jailbreak/` — CE10 fitter probes (CE6≡CE10 same die, +65% fabric unlocked)
-- `results/` — `rbf/` (~2500 files), `route_cells_full.json` (13,487 sig-cache), `r4_iindex_table.json`, `ep4ce6_bitdb.sqlite`, `fingerprint_*.json` (15 green islands)
+- `results/` — `rbf/` (~2500 files), `route_cells_full.json` (38,683 sig-cache, 7-tuple sn>0), `r4_iindex_table.json`, `ep4ce6_bitdb.sqlite`, `fingerprint_*.json` (15 green islands), `sigma_inv_fb8_groups.json` (1,904-entry σ⁻¹ 3-key table), `nv_baseline_pack.json` (NV baseline sub-buckets)
 
 ## Chip Constants
 
@@ -176,6 +180,19 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 
 **nextpnr**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` not `--run`.
 
+## Phase 7 — ζ Escape Hatch (HW-validated on NEORV32, 2026-04-23)
+
+Two reachable paths from Verilog/VHDL to AX301 silicon:
+
+1. **Native**: `.v → Yosys → nextpnr-generic → np2fasm → fasm2rbf → flash`. HW-verified for small/medium designs (AND gate, 5-bit carry counter, M9K smoke, all 12 F17 clock pins). Blocked on chipdb routing-model density at NEORV32 scale.
+2. **ζ escape hatch**: `.v → Quartus → scripts/bit_workaround/quartus_gold_to_bit_fasm.py → fasm2rbf → flash`. Diffs Quartus gold RBF against `results/rbf/nv_zero_global.rbf`, emits one `BIT` directive per differing bit (no filtering — hdr + fab + CRC all included so `patch_rbf_crc` re-computes correctly on round-trip). Rebuilt RBF is byte-identical to Quartus gold; total ζ + fasm2rbf wall time ≈ 0.5 s regardless of design density.
+
+**HW-validated designs via ζ**: two_lab AND→DFF cross-LAB (2026-04-22), lits_pair route-family (2026-04-23), **full NEORV32 bootloader** (4712 LE / 2367 DFF / 19 M9K / 51 pins; 127 728 BIT = 2634 hdr + 113 573 fab + 11 521 crc) on AX301 at 19200-8N1 UART (2026-04-23). Linux 6.6.83 extended test (2026-04-24): kernel + DTB + initramfs transferred via xmodem, Linux ran ~150 s on RISC-V (devtmpfs, ttyNEO0, exec'd /sbin/init) before a kernel-level `kernel/cred.c:103` BUG_ON panic unrelated to the bitstream (RBF SHA256 = Quartus gold).
+
+**UART observation**: `scripts/uart_observe.py --port /dev/ttyUSB0 --baud 19200 --seconds 30` — timestamped chunk log + raw capture. NEORV32 bootloader runs at 19200-8N1 (not 115200 — that's PL2303 Linux-runtime capability only).
+
+**When to use which**: native for small/medium single/cross-LAB; ζ for NEORV32-class (>1000 LE) or any design Quartus can build but nextpnr can't route.
+
 ## Tools
 
 - **Quartus 21.1 Lite**: `$HOME/intelFPGA_lite/21.1/quartus/bin/`
@@ -183,6 +200,8 @@ Arithmetic mode activation lives in the **block band** (frames 1692-1738, bp=2),
 - **Programming**: `$HOME/see_neorv32_run_linux/tools/openFPGALoader/build/openFPGALoader -c usb-blaster`
 - **Hardware**: AX301 board, EP4CE6F17C8, USB-Blaster JTAG
 - **Pin map**: KEY1=E15, KEY2=E16, KEY3=M16, KEY4=M15, LED0=G15 (active-high; keys active-low)
+- **UART capture**: `scripts/uart_observe.py` (pyserial; default `/dev/ttyUSB0`, specify `--baud` — no default)
+- **NEORV32 Linux host flow**: `~/see_neorv32_run_linux/host/boot_linux.py --rbf <file.rbf>` drives stage2 upload + xmodem of kernel/DTB/initramfs (works against ζ-rebuilt RBFs byte-identical to Quartus gold)
 
 ## Licensing
 

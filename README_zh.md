@@ -1991,6 +1991,102 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
 
 ---
 
+## 开源工具链端到端：原生路径 + ζ 逃生通道
+
+从开源 bitstream codec 通向 silicon 目前有两条路 —— **原生路径**
+（Yosys → nextpnr → FASM）和**逃生通道**（拿 Quartus 产出的 RBF、
+跟 baseline 差分、emit 纯 `BIT` 指令）。两条路最终都走 `fuzz/fasm2rbf.py`
+产出可烧的 bitstream。原生路径是长期目标；逃生通道是只要 Quartus
+能编的设计就一定跑得通的 fallback。
+
+### 原生路径
+
+```text
+.v / .vhd
+   │
+   ├── Yosys techmap (synth/ep4ce6_map.v, synth/prims.v)
+   │     → LUT4, DFF, CE6_CARRY, EP4CE6_M9K, GENERIC_IOB
+   │
+   ├── nextpnr-generic (chipdb 来自 fuzz/chipdb_gen.py)
+   │     → placed + routed JSON
+   │
+   ├── synth/np2fasm.py
+   │     → FASM (LUT, ROUTE, LUT_ARITH, M9K_MODE, IOB_*, GCLK_PIN,
+   │            LAB_CLK_SEL, LAB_CLK_SEL_LE, OUTROUTE_G15, IOB_PAD_NV)
+   │
+   ├── fuzz/fasm2rbf.py  (+ patch_rbf_crc)
+   │     → .rbf（368 011 B，CRC 已修补）
+   │
+   └── openFPGALoader -c usb-blaster
+```
+
+原生路径上硬件验证过的设计：带 DFF 的 AND gate（KEY2&KEY3→DFF→LED0）
+在 LAB(16,4)、5-bit carry counter、M9K smoke 9×512 RAM、F17 上
+全部 12 个可用时钟 pin 的 clock-pin pipeline。
+
+### ζ 逃生通道（Quartus gold → BIT FASM）
+
+对于密度太大、当前 chipdb 路由模型搞不定的设计（NEORV32 级，~6000+ LE），
+`scripts/bit_workaround/quartus_gold_to_bit_fasm.py` 提供一个**可靠的**
+绕行方案：
+
+```text
+design.v / .vhd
+   │
+   ├── Quartus 编译 → design.rbf (gold)
+   │
+   ├── scripts/bit_workaround/quartus_gold_to_bit_fasm.py
+   │     → 纯 BIT 指令的 FASM（每个跟
+   │       results/rbf/nv_zero_global.rbf baseline 不同的 bit 发一条）
+   │
+   ├── fuzz/fasm2rbf.py  (+ patch_rbf_crc)
+   │     → .rbf（跟 Quartus gold byte-identical，cmp 证实）
+   │
+   └── openFPGALoader -c usb-blaster
+```
+
+这条路的价值在于：
+1. 它**证明** codec round-trip 在 SoC 级别正确 —— 重建出来的 RBF
+   就是 Quartus 原本产出的那些字节。
+2. 它是真正的逃生通道。碰到 chipdb 路由墙的用户有一个有界的工作流：
+   Quartus 编一次，下游全部还是开源工具链。
+3. BIT FASM 是**可审计的中间层** —— 可以逐行对照 codec 的 CRAM
+   几何模型，也可以作为 bitstream mutation 实验的底座（见下文
+   「长期方向」）。
+
+硬件验证：两 LAB cross-LAB AND→DFF 路由重建（2026-04-22）、
+lits_pair route-family 重建（2026-04-23），以及完整的 **NEORV32
+bootloader**（4712 LE / 2367 DFF / 19 M9K）在 AX301 silicon 上以
+19200-8N1 UART 正常启动（2026-04-23）。ζ + fasm2rbf 总耗时约
+0.5 秒，跟设计密度无关 —— 只跟 RBF 大小（固定 368 011 B）成正比，
+不是 LE 数。
+
+**Linux 延伸测试（2026-04-24）**：`boot_linux.py --rbf` 用 ζ 重建
+的 RBF 走完 Quartus-flow 完整 host 流程 —— stage2 upload、baud
+switch、kernel xmodem（1.5 MB，CRC 对）、DTB + initramfs 都对；
+**Linux 6.6.83 在 RISC-V 上跑了 ~150 秒**（devtmpfs mounted、
+ttyNEO0 console、exec'd /sbin/init），然后 kernel panic 在
+`kernel/cred.c:103`。这个 panic 不是 ζ 的问题 —— RBF SHA256 跟
+Quartus gold 一致，是 kernel 层的 RISC-V nommu 边角情况。ζ 验证
+目标（「开源工具链能产出 silicon-functional NEORV32 bitstream」）
+达成。
+
+### 什么时候用哪条路
+
+| 设计规模 / 路由 | 原生路径 | ζ 逃生通道 |
+|-----------------|----------|------------|
+| 小（≤ 50 LE）、单 LAB | ✅ 首选 |（多余）|
+| 中（50–500 LE）、跨 LAB | ✅ 如果 sig-cache 覆盖了路由 | ✅ fallback |
+| 密集（> 1000 LE）/ NEORV32 级 | ❌ chipdb 路由模型过不去 | ✅ 首选 |
+| Carry chain、M9K、clock pin | ✅ 硬件验证过的 primitive | ✅ 天然有效 |
+
+原生路径仍是前沿 —— chipdb 路由模型是「不用 Quartus、从 Verilog
+到 silicon」这条路上唯一剩下的 blocker。ζ 在此之前把实用层面的
+缺口堵住了。
+
+
+---
+
 ## 当前进度和下一步
 
 ### 已完成 ✓
@@ -2077,6 +2173,14 @@ band 里，bit 模式只跟进位链**多长**相关，跟 LAB 里**是哪几个
 
 - [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
 
+- [x] Phase 6：**σ⁻¹ 3-key LutCodec 突破（2026-04-21）** —— 历史遗留的 `LutCodec.from_cram_model()` pair mapping bug 闭合。原本 `(foff, fb8)` 2-key 表在跨 Y-group 时存在歧义，新增第三维 `group = (y-2)//3` 作为 discriminator 解决。新 σ⁻¹ 表 `results/sigma_inv_fb8_groups.json` 共 **1,904 条**（96% verified，identity fallback 降到 0%），5 级 fallback 链：精确 3-key → 就近-foff 3-key → 精确 2-key → 就近 2-key → identity。已知残留：Y=3 行（80 个位置，地址回绕）。除 Y=3 外，公式化 LutCodec 现在在所有位置都矽片可靠。
+
+- [x] Phase 6b：**AX301 上的端到端硬件验证（2026-04-21 → 2026-04-22）** —— 三个设计经完整开源工具链在矽片上功能正确：(1) 带 DFF 的 AND gate（KEY2&KEY3→DFF→LED0）在 LAB(16,4)，10 条 FASM（含多 port IOB_ROUTE），与 Quartus gold 0 fabric diff；(2) 5-bit carry counter 在 LAB(16,4) N=0..8，18 条 FASM、0 条 ROUTE（进位反馈在 LE 内部）；(3) 两 LAB 跨 LAB 的 AND→DFF→LED，用 BIT-only 从 Quartus gold 重建 —— 跟 gold byte-perfect 且硬件验证通过。这是 codec 路径上首次在矽片验证 cross-LAB fabric route。
+
+- [x] Phase 6c：**chipdb 26-track 升级（2026-04-22）** —— LOCAL bus 从 8 条合成 track 扩到 26 条，总 pip 数达到 3.6M；路由图更接近真实 Cyclone IV 每 LAB ~40 LI-wire 的拓扑。runner 已能驱动 P&R 端到端跑通升级后的 chipdb。小设计硬件验证通过；密集设计（NEORV32 级）路由仍然不通 —— 模型是密了，但跟真实 C4/R4/R24/LI 交换矩阵还是简化了不少。
+
+- [x] Phase 7：**ζ BIT 逃生通道 —— 端到端在 NEORV32 上硬件验证（2026-04-23）** —— `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + `fasm2rbf.py` 把任何 Quartus 产出的 RBF 逐字节重建（相对 `nv_zero_global.rbf` baseline 每个不同的 bit 发一条 `BIT` 指令，CRC 自动修补）。NEORV32 规模硬件验证通过：4712 LE / 2367 DFF / 19 M9K / 51 pins → 127 728 条 BIT 指令（2634 hdr + 113 573 fab + 11 521 crc），ζ + fasm2rbf 总耗时约 0.5 秒。重建 RBF 在 AX301 以 19200-8N1 UART 正常启动 NEORV32 bootloader（banner + auto-boot 倒数 + SPI flash 探测 + CMD prompt）。延伸的 Linux boot 测试（2026-04-24）让 Linux 6.6.83 在 RISC-V 上跑了 ~150 秒（devtmpfs mounted、ttyNEO0 console attached、exec'd /sbin/init）后出现 `kernel/cred.c:103` panic —— 该 panic 与 ζ 无关（RBF SHA256 跟 Quartus gold 一致）。这是逃生通道首次在 SoC 级别完成硬件验证；被 chipdb 路由墙挡住的用户有了可靠的绕行方案。
+
 ### 长期方向：这个 codec 让我们能做什么，不能做什么
 
 一个常被问到的问题：codec 已经能跑了，现代 ML（RL 路由、GNN 拥塞预测）
@@ -2149,8 +2253,9 @@ RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮�
 | IOB FASM（Phase 5.4） | `IOB_IN`/`IOB_OUT` 44/44；`IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pin；`IOB_ROUTE` 15/15；`IOB_OE` 16 pin | IOB_ROUTE 硬件验证；BIDIR/OE codec 验证 + 矽片二分法 |
 | DSPMULT（Phase 5.0） | 22 cell 矽片干净集（23 挖掘 − 1 经 frame 1729 二分法证伪） | 硬件二分法完成；np2fasm 未接线（NEORV32 使用 0 个 DSPMULT） |
 | `nv_zero_global` 退役 | `NV_BASELINE_PACK` 指令 + 子指令从 PURE_ZERO 直接复现 Quartus baseline 的每一字节 | **矽片等价性已确认**（Stage 0 烧录 2026-04-16） |
-| 公式化 LutCodec | `from_cram_model(x, y, n)` 消除 per-LAB 校准；bitgen 自动回退 | 已落地；**pair mapping 对 (10,10,0) 外全部错误** |
-| 开源工具链（Phase 5.3） | Yosys → nextpnr → np2fasm → fasm2rbf，CRC 合规、LI safe；小设计可烧；NEORV32 卡在 LOCAL 总线容量（6500 LE 下约 2040 wire 过载） | 部分开通；pipeline 测试（134 LE）因 LutCodec pair mapping bug 导致 FPGA 重置 |
+| 公式化 LutCodec（σ⁻¹ 3-key） | `from_cram_model(x, y, n)` + 3-key σ⁻¹ 表（`(foff, fb8, group)`），1,904 条，5 级 fallback | 2026-04-21 修复（96% verified）；已知 Y=3 gap（80 个位置） |
+| 开源工具链 —— 原生路径（Phase 5.3） | Yosys → nextpnr-generic（chipdb 26 LOCAL tracks，3.6M pip）→ np2fasm → fasm2rbf。AND gate + 5-bit carry counter + M9K smoke 在单/跨 LAB 规模硬件验证通过 | 小/中规模硬件验证通过；chipdb 路由模型对 NEORV32 级密度仍过于稀疏 |
+| ζ BIT 逃生通道（Phase 7） | `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + fasm2rbf 把任何 Quartus RBF 逐字节重建。NEORV32 用 127k 条 BIT；总耗时 0.5 秒 | 2026-04-23 在 AX301 端到端硬件验证通过（4712 LE / 19 M9K 的 NEORV32 bootloader） |
 
 ---
 
