@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "phase1": {
+      "path": "results/jtag_ir_raw.txt",
+      "max_dr": 1024,
+      "idcode": "020F10DD"
+    },
+    "phase2": {
+      "path": "results/jtag_ir_raw_configured.txt",
+      "mode": "CONFIGURED-state scan (expects prior FPGA configuration)",
+      "max_dr": 1024,
+      "idcode": "020F10DD"
+    },
+    "phase1_ir_count": 1024,
+    "phase2_ir_count": 1018,
+    "overlap_ir_count": 1018
+  },
+  "dr_len_changed": [
+    {
+      "ir": 8,
+      "ir_hex": "0x008",
+      "phase1_dr": 573,
+      "phase2_dr": 555
+    },
+    {
+      "ir": 15,
+      "ir_hex": "0x00F",
+      "phase1_dr": 183,
+      "phase2_dr": 201
+    },
+    {
+      "ir": 21,
+      "ir_hex": "0x015",
+      "phase1_dr": 8,
+      "phase2_dr": 39
+    }
+  ],
+  "value_changed": [
+    {
+      "ir": 7,
+      "ir_hex": "0x007",
+      "dr_len": 39,
+      "phase1_val": "0x00FFFFFFFF",
+      "phase2_val": "0x0000087B8F",
+      "phase1_hex": "0xFFFFFFFF",
+      "phase2_hex": "0x87B8F"
+    }
+  ],
+  "only_in_phase1": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "only_in_phase2": []
+}
