@@ -123623,5 +123623,653 @@
       "baseline_proj": "m9k_mode_gold_16x32_tdp_baseline",
       "note": "Site-specific X27_Y13_N0 mode=tdp, mode-invariant under INIT/WE/read-pipe variation."
     }
+  },
+  "X15_Y10_N0_8x64": {
+    "site": "X15_Y10_N0",
+    "width": 8,
+    "depth": 64,
+    "cells_by_template": {
+      "quartus_gold": [
+        [
+          361436,
+          2
+        ],
+        [
+          361617,
+          2
+        ],
+        [
+          361827,
+          2
+        ],
+        [
+          361857,
+          2
+        ],
+        [
+          362018,
+          5
+        ],
+        [
+          362648,
+          5
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362725,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362830,
+          6
+        ],
+        [
+          362831,
+          6
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          362902,
+          4
+        ],
+        [
+          362929,
+          4
+        ],
+        [
+          363112,
+          2
+        ],
+        [
+          363532,
+          2
+        ],
+        [
+          363993,
+          1
+        ],
+        [
+          364373,
+          2
+        ],
+        [
+          364598,
+          4
+        ],
+        [
+          364707,
+          2
+        ]
+      ]
+    },
+    "quartus_gold_source": {
+      "date": "2026-04-24",
+      "script": "scripts/m9k_mode_quartus_gold_mine.py",
+      "operation_mode": "SINGLE_PORT",
+      "mining_mode": "sp",
+      "n_variants": 3,
+      "variant_sizes": [
+        47,
+        47,
+        41
+      ],
+      "variants": [
+        "m9k_mode_gold_8x64_v0",
+        "m9k_mode_gold_8x64_v1",
+        "m9k_mode_gold_8x64_v2"
+      ],
+      "baseline_proj": "m9k_mode_gold_8x64_baseline",
+      "note": "Site-specific X15_Y10_N0 mode=sp, mode-invariant under INIT/WE/read-pipe variation."
+    }
+  },
+  "X15_Y11_N0_8x64": {
+    "site": "X15_Y11_N0",
+    "width": 8,
+    "depth": 64,
+    "cells_by_template": {
+      "quartus_gold": [
+        [
+          361617,
+          2
+        ],
+        [
+          361827,
+          2
+        ],
+        [
+          362018,
+          5
+        ],
+        [
+          362648,
+          5
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362830,
+          6
+        ],
+        [
+          362831,
+          6
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362890,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          362902,
+          4
+        ],
+        [
+          362929,
+          4
+        ],
+        [
+          363112,
+          2
+        ],
+        [
+          363208,
+          6
+        ],
+        [
+          363418,
+          6
+        ],
+        [
+          363532,
+          2
+        ],
+        [
+          363993,
+          1
+        ],
+        [
+          364598,
+          4
+        ],
+        [
+          364707,
+          2
+        ],
+        [
+          364851,
+          6
+        ],
+        [
+          365018,
+          4
+        ],
+        [
+          365060,
+          6
+        ]
+      ]
+    },
+    "quartus_gold_source": {
+      "date": "2026-04-24",
+      "script": "scripts/m9k_mode_quartus_gold_mine.py",
+      "operation_mode": "SINGLE_PORT",
+      "mining_mode": "sp",
+      "n_variants": 3,
+      "variant_sizes": [
+        38,
+        38,
+        47
+      ],
+      "variants": [
+        "m9k_mode_gold_8x64_v0",
+        "m9k_mode_gold_8x64_v1",
+        "m9k_mode_gold_8x64_v2"
+      ],
+      "baseline_proj": "m9k_mode_gold_8x64_baseline",
+      "note": "Site-specific X15_Y11_N0 mode=sp, mode-invariant under INIT/WE/read-pipe variation."
+    }
+  },
+  "X15_Y12_N0_8x64": {
+    "site": "X15_Y12_N0",
+    "width": 8,
+    "depth": 64,
+    "cells_by_template": {
+      "quartus_gold": [
+        [
+          361436,
+          2
+        ],
+        [
+          361617,
+          2
+        ],
+        [
+          361827,
+          2
+        ],
+        [
+          361857,
+          2
+        ],
+        [
+          362018,
+          5
+        ],
+        [
+          362131,
+          6
+        ],
+        [
+          362648,
+          5
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362830,
+          6
+        ],
+        [
+          362831,
+          6
+        ],
+        [
+          362878,
+          4
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362892,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          362929,
+          4
+        ],
+        [
+          363112,
+          2
+        ],
+        [
+          363208,
+          6
+        ],
+        [
+          363418,
+          6
+        ],
+        [
+          363532,
+          2
+        ],
+        [
+          363800,
+          6
+        ],
+        [
+          363993,
+          1
+        ],
+        [
+          364373,
+          2
+        ],
+        [
+          364598,
+          4
+        ],
+        [
+          364851,
+          6
+        ],
+        [
+          365126,
+          2
+        ],
+        [
+          365127,
+          2
+        ],
+        [
+          365213,
+          2
+        ]
+      ]
+    },
+    "quartus_gold_source": {
+      "date": "2026-04-24",
+      "script": "scripts/m9k_mode_quartus_gold_mine.py",
+      "operation_mode": "SINGLE_PORT",
+      "mining_mode": "sp",
+      "n_variants": 3,
+      "variant_sizes": [
+        43,
+        43,
+        44
+      ],
+      "variants": [
+        "m9k_mode_gold_8x64_v0",
+        "m9k_mode_gold_8x64_v1",
+        "m9k_mode_gold_8x64_v2"
+      ],
+      "baseline_proj": "m9k_mode_gold_8x64_baseline",
+      "note": "Site-specific X15_Y12_N0 mode=sp, mode-invariant under INIT/WE/read-pipe variation."
+    }
+  },
+  "X15_Y13_N0_8x64": {
+    "site": "X15_Y13_N0",
+    "width": 8,
+    "depth": 64,
+    "cells_by_template": {
+      "quartus_gold": [
+        [
+          361436,
+          2
+        ],
+        [
+          361617,
+          2
+        ],
+        [
+          361827,
+          2
+        ],
+        [
+          361857,
+          2
+        ],
+        [
+          362018,
+          5
+        ],
+        [
+          362648,
+          5
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362720,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362830,
+          6
+        ],
+        [
+          362831,
+          6
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          362902,
+          4
+        ],
+        [
+          362929,
+          4
+        ],
+        [
+          363112,
+          2
+        ],
+        [
+          363208,
+          6
+        ],
+        [
+          363418,
+          6
+        ],
+        [
+          363532,
+          2
+        ],
+        [
+          363993,
+          1
+        ],
+        [
+          364373,
+          2
+        ],
+        [
+          364598,
+          4
+        ],
+        [
+          364851,
+          6
+        ],
+        [
+          365060,
+          6
+        ],
+        [
+          365213,
+          2
+        ]
+      ]
+    },
+    "quartus_gold_source": {
+      "date": "2026-04-24",
+      "script": "scripts/m9k_mode_quartus_gold_mine.py",
+      "operation_mode": "SINGLE_PORT",
+      "mining_mode": "sp",
+      "n_variants": 3,
+      "variant_sizes": [
+        48,
+        48,
+        43
+      ],
+      "variants": [
+        "m9k_mode_gold_8x64_v0",
+        "m9k_mode_gold_8x64_v1",
+        "m9k_mode_gold_8x64_v2"
+      ],
+      "baseline_proj": "m9k_mode_gold_8x64_baseline",
+      "note": "Site-specific X15_Y13_N0 mode=sp, mode-invariant under INIT/WE/read-pipe variation."
+    }
+  },
+  "X15_Y14_N0_8x64": {
+    "site": "X15_Y14_N0",
+    "width": 8,
+    "depth": 64,
+    "cells_by_template": {
+      "quartus_gold": [
+        [
+          361436,
+          2
+        ],
+        [
+          361617,
+          2
+        ],
+        [
+          361827,
+          2
+        ],
+        [
+          361857,
+          2
+        ],
+        [
+          362018,
+          5
+        ],
+        [
+          362648,
+          5
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362831,
+          6
+        ],
+        [
+          362853,
+          6
+        ],
+        [
+          362892,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          362929,
+          4
+        ],
+        [
+          363112,
+          2
+        ],
+        [
+          363208,
+          6
+        ],
+        [
+          363418,
+          6
+        ],
+        [
+          363532,
+          2
+        ],
+        [
+          363866,
+          2
+        ],
+        [
+          363993,
+          1
+        ],
+        [
+          364373,
+          2
+        ],
+        [
+          364598,
+          4
+        ],
+        [
+          364707,
+          2
+        ],
+        [
+          364851,
+          6
+        ],
+        [
+          365060,
+          6
+        ]
+      ]
+    },
+    "quartus_gold_source": {
+      "date": "2026-04-24",
+      "script": "scripts/m9k_mode_quartus_gold_mine.py",
+      "operation_mode": "SINGLE_PORT",
+      "mining_mode": "sp",
+      "n_variants": 3,
+      "variant_sizes": [
+        43,
+        43,
+        43
+      ],
+      "variants": [
+        "m9k_mode_gold_8x64_v0",
+        "m9k_mode_gold_8x64_v1",
+        "m9k_mode_gold_8x64_v2"
+      ],
+      "baseline_proj": "m9k_mode_gold_8x64_baseline",
+      "note": "Site-specific X15_Y14_N0 mode=sp, mode-invariant under INIT/WE/read-pipe variation."
+    }
   }
 }

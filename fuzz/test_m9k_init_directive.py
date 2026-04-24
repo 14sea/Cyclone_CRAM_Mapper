@@ -604,7 +604,7 @@ def test_m9k_mode_quartus_gold_bucket_all_widths():
     f._M9K_MODE_CACHE = None
     base = _require_baseline()
     expected = {(4, 2048): 19, (9, 512): 52, (18, 512): 59,
-                (9, 1024): 43, (36, 256): 68}
+                (9, 1024): 43, (36, 256): 68, (8, 64): 23}
     for (w, d), n_expected in expected.items():
         cells = f._load_m9k_mode_cells(
             "X15_Y10_N0", w, d, template="quartus_gold",
@@ -636,10 +636,14 @@ def test_emit_m9k_mode_all_5_widths_functional_validated():
     Each width is now in `_M9K_MODE_FUNCTIONAL_VALIDATED` and np2fasm
     emits the `_quartus_gold` suffix (mode-invariant variant-
     intersection bucket) rather than the fabric-safe gi bucket.
+
+    (8, 64) joined 2026-04-26 — NEORV32 cache geometry, mined at the 5
+    physical M9K sites the Fitter uses (X15_Y10..Y14).
     """
     sys.path.insert(0, str(ROOT / "synth"))
     import np2fasm as npf
-    for w, d in [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256)]:
+    for w, d in [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
+                 (8, 64)]:
         cell = {
             "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
             "parameters": {"WIDTH_A": str(w), "DEPTH": str(d)},
@@ -652,7 +656,7 @@ def test_emit_m9k_mode_all_5_widths_functional_validated():
         assert warn is None, f"({w},{d}): unexpected warning: {warn}"
     print(
         "  test_emit_m9k_mode_all_5_widths_functional_validated: OK "
-        "(all 5 widths emit _quartus_gold — HW-validated 2026-04-24d)"
+        "(6 widths emit _quartus_gold — includes 2026-04-26 (8,64) cache)"
     )
 
 

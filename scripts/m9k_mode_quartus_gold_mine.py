@@ -87,6 +87,7 @@ TARGET_COMBOS = [
     (18, 512),
     (9, 1024),
     (36, 256),
+    (8, 64),
 ]
 
 # --all combos when --mode is not sp.  Per-M9K geometry drives these —

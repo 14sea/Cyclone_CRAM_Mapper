@@ -45,7 +45,7 @@ RESULTS_PATH = ROOT / "results" / "m9k_mode_bits.json"
 
 # (w, d) combos the mining script handles per mode. Must stay in sync with
 # TARGET_COMBOS_BY_MODE in m9k_mode_quartus_gold_mine.py.
-ALL_COMBOS = [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256)]
+ALL_COMBOS = [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256), (8, 64)]
 ALL_COMBOS_BY_MODE = {
     "sp":  ALL_COMBOS,
     # Per-M9K split geometry — NEORV32 dmem / imem 2048x8 primitives
@@ -66,6 +66,13 @@ _BUCKET_FOR_MODE = {
 # a bucket, but np2fasm cannot emit INIT_18x512 for the result —
 # skip to save Quartus time.
 W18_SITES = {(15, y, 0) for y in range(10, 15)}
+
+# (8, 64) is the NEORV32 cache RAM per-M9K geometry.  The Fitter
+# places dcache (4 M9Ks) at X15 Y11..Y14 and the 4 icache logical
+# instances share X15 Y10 — 5 unique physical M9Ks.  Mining at any
+# other site is wasted Quartus time since np2fasm will never emit
+# an (8, 64) cell outside this set.
+W8_64_SITES = {(15, y, 0) for y in range(10, 15)}
 
 # NEORV32 M9K physical sites (from neorv32_demo.fit.rpt RAM Summary).
 NEORV32_SITES = [
@@ -189,6 +196,8 @@ def main() -> int:
     for (x, y, n) in target_sites:
         for (w, d) in combos:
             if (w, d) == (18, 512) and (x, y, n) not in W18_SITES:
+                continue
+            if (w, d) == (8, 64) and (x, y, n) not in W8_64_SITES:
                 continue
             key = f"X{x}_Y{y}_N{n}_{w}x{d}"
             if _already_mined(key, today, args.mode) and not args.force:

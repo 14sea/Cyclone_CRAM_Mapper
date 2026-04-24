@@ -413,6 +413,10 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     # X15_Y10_N0; HW flash pending.
     _M9K_MODE_FUNCTIONAL_VALIDATED_SP = {
         (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
+        # (8, 64): NEORV32 dcache + icache per-M9K geometry (4×8×64 each).
+        # Mined 2026-04-26 at X15_Y10..Y14 — the 5 unique physical M9K
+        # sites the Fitter assigns to the cache RAMs.
+        (8, 64),
     }
     _M9K_MODE_FUNCTIONAL_VALIDATED_SDP = {(4, 2048)}
     _M9K_MODE_FUNCTIONAL_VALIDATED_TDP = {(16, 32)}
