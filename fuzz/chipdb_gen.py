@@ -93,6 +93,17 @@ SLICE_INPUTS = ("dataa", "datab", "datac", "datad")
 # Map sig-cache port labels to nextpnr-generic SLICE pin indices.
 PORT_TO_PIN_IDX = {"dataa": 0, "datab": 1, "datac": 2, "datad": 3}
 
+# Cyclone IV has 4 dedicated global clock networks (GCLK_BUS). Only the
+# 12 F17-package dedicated clock pins can drive them. Source of truth:
+# clk_pins_full_f17_coverage.md (A14/B14/M1 not on AX301 board, but
+# valid silicon-level GCLK sources so included here for completeness).
+F17_GCLK_PINS = frozenset([
+    "PIN_E1", "PIN_R8", "PIN_N1", "PIN_M1", "PIN_M2",
+    "PIN_T4", "PIN_R4", "PIN_M16", "PIN_M15", "PIN_E15",
+    "PIN_A14", "PIN_B14",
+])
+NUM_GCLK_TRACKS = 4
+
 
 def _wire_slice_cout(x: int, y: int, n: int) -> str:
     return f"slice_X{x}_Y{y}_N{n}_COUT"
@@ -436,11 +447,13 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
-            # LOCAL track -> slice inputs (I[0..3] and CLK)
+            # LOCAL track -> slice data inputs (I[0..3] only).
+            # slice_CLK is reachable ONLY via the GCLK_BUS/LAB_CLK tree
+            # (see "Dedicated global clock network" section below) so
+            # the router can't waste LOCAL bandwidth on clock nets.
             for n in LE_N:
                 dsts = [_wire_slice_in(x, y, n, port)
                         for port in SLICE_INPUTS]
-                dsts.append(f"slice_X{x}_Y{y}_N{n}_CLK")
                 for dw in dsts:
                     pips.append({
                         "name": f"pip_{lw}__{dw}",
@@ -476,31 +489,59 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                         nxi += dxi
                         nyi += dyi
 
-    # ---------- Dedicated global clock network ----------
-    # A single GCLK wire carries one clock net with direct fanout to
-    # every slice CLK pin. Bypasses LOCAL so the clock never competes
-    # with data arcs for track allocation. Any IOB_O can drive it.
-    wires.append({"name": "GCLK", "type": "GCLK", "x": 0, "y": 0})
-    for (pin_name, _pl) in iob_entries:
+    # ---------- Dedicated global clock network (GCLK_BUS) ----------
+    # 4 silicon GCLK tracks, drivable only by the 12 F17 clock pins, fan
+    # out through a per-LAB LAB_CLK intermediate wire to every slice's
+    # CLK pin. Matches the FASM directive hierarchy the FASM side
+    # already emits:
+    #   GCLK_PIN        — which pin drives which GCLK_BUS track
+    #   LAB_CLK_SEL     — per-LAB CLK source select (N-invariant)
+    #   LAB_CLK_SEL_LE  — per-LE CLK enable
+    # Topology:
+    #   IOB(clkpin).O -> GCLK_BUS[t]             (12 pins × 4 tracks)
+    #   GCLK_BUS[t]   -> LAB_CLK[x,y]            (4 tracks × #LABs)
+    #   LAB_CLK[x,y]  -> slice_CLK[x,y,n]        (16 slices / LAB)
+    # Non-clock IOBs do NOT get a GCLK source pip — matches silicon and
+    # keeps the router from using GCLK as a general fabric shortcut.
+    n_pips_gclk = 0
+    for t in range(NUM_GCLK_TRACKS):
+        wires.append({"name": f"GCLK_BUS_{t}", "type": "GCLK_BUS",
+                      "x": 0, "y": 0})
+    # 12 F17 clock pins → 4 GCLK_BUS tracks
+    for (pin_name, pin_loc) in iob_entries:
+        if pin_loc not in F17_GCLK_PINS:
+            continue
         safe = pin_name.replace("[", "_").replace("]", "")
         wo = _wire_iob(safe, "O")
-        pips.append({
-            "name": f"pip_iob_{safe}_O__GCLK",
-            "type": "IOB_TO_GCLK",
-            "src": wo, "dst": "GCLK",
-            "delay": PLACEHOLDER_DELAY, "x": 0, "y": 0,
-        })
-        n_local_pips += 1
+        for t in range(NUM_GCLK_TRACKS):
+            pips.append({
+                "name": f"pip_iob_{safe}_O__GCLK_BUS_{t}",
+                "type": "IOB_TO_GCLK",
+                "src": wo, "dst": f"GCLK_BUS_{t}",
+                "delay": PLACEHOLDER_DELAY, "x": 0, "y": 0,
+            })
+            n_pips_gclk += 1
+    # Per-LAB CLK wire + GCLK_BUS → LAB_CLK → slice_CLK fanout
     for (x, y) in valid_labs:
+        lab_clk = f"LAB_CLK_X{x}_Y{y}"
+        wires.append({"name": lab_clk, "type": "LAB_CLK", "x": x, "y": y})
+        for t in range(NUM_GCLK_TRACKS):
+            pips.append({
+                "name": f"pip_GCLK_BUS_{t}__{lab_clk}",
+                "type": "GCLK_TO_LAB_CLK",
+                "src": f"GCLK_BUS_{t}", "dst": lab_clk,
+                "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+            })
+            n_pips_gclk += 1
         for n in LE_N:
             cw = f"slice_X{x}_Y{y}_N{n}_CLK"
             pips.append({
-                "name": f"pip_GCLK__{cw}",
-                "type": "GCLK_TO_CLK",
-                "src": "GCLK", "dst": cw,
+                "name": f"pip_{lab_clk}__{cw}",
+                "type": "LAB_CLK_TO_SLICE",
+                "src": lab_clk, "dst": cw,
                 "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
             })
-            n_local_pips += 1
+            n_pips_gclk += 1
 
     # ---------- IOB <-> LOCAL bridge (per-bank gateways, rev 7) ----------
     # Each IOB connects to the fabric through a LOCAL gateway LAB near
@@ -598,15 +639,17 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             )
             for port, width, is_out in M9K_PORT_SPEC:
                 if port.startswith("CLK"):
-                    # Feed CLK directly from GCLK, not LOCAL.
+                    # Feed CLK_A/CLK_B from any of the 4 GCLK_BUS tracks,
+                    # not LOCAL. Matches silicon M9K clock-fanin.
                     cw = _wire_m9k_port(x, y, port)
-                    pips.append({
-                        "name": f"pip_GCLK__{cw}",
-                        "type": "GCLK_TO_M9K_CLK",
-                        "src": "GCLK", "dst": cw,
-                        "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
-                    })
-                    n_pips_m9k += 1
+                    for t in range(NUM_GCLK_TRACKS):
+                        pips.append({
+                            "name": f"pip_GCLK_BUS_{t}__{cw}",
+                            "type": "GCLK_TO_M9K_CLK",
+                            "src": f"GCLK_BUS_{t}", "dst": cw,
+                            "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                        })
+                        n_pips_m9k += 1
                     continue
                 bits = [_wire_m9k_port(x, y, port)] if width == 1 else \
                        [_wire_m9k_bit(x, y, port, i) for i in range(width)]
@@ -688,6 +731,7 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             "n_pips_local": n_local_pips,
             "n_pips_carry": n_pips_carry,
             "n_pips_m9k": n_pips_m9k,
+            "n_pips_gclk": n_pips_gclk,
             "n_sig_cache_total": len(cache),
             "n_sig_src_labs": len(sig_src_labs),
             "n_sig_dst_labs": len(sig_dst_labs),
@@ -823,7 +867,8 @@ def main() -> None:
     print(f"belpins: {s['n_belpins']:>7d}")
     print(f"pips total: {s['n_pips_total']:>7d} "
           f"(sig {s['n_pips_sig']} + local {s['n_pips_local']} "
-          f"+ carry {s['n_pips_carry']} + m9k {s['n_pips_m9k']})")
+          f"+ carry {s['n_pips_carry']} + m9k {s['n_pips_m9k']} "
+          f"+ gclk {s['n_pips_gclk']})")
     print(f"sig-cache: {s['n_sig_cache_total']} total, "
           f"{s['n_pips_sig']} injected, "
           f"{s['pips_skipped_unknown_src']}+{s['pips_skipped_unknown_dst']} skipped")
