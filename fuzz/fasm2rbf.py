@@ -812,12 +812,17 @@ def _load_iob_route_cells_legacy(pin, dx, dy, dn, port):
                 "results/iob_to_slice_sigcache.json missing"
             )
         data = json.loads(path.read_text())
-        single_le = data.get("single_le_cells", {})
-        if not single_le:
-            single_le = data.get("single_le_cells_stale", {})
-        absolute = data.get("absolute_cells", {})
-        merged = dict(absolute)
-        merged.update(single_le)
+        # Per-key preference:
+        #   1. ``single_le_cells`` — fresh 2026-04-24 Fix B re-mine
+        #      against the legacy apply-path (109 entries).
+        #   2. ``single_le_cells_stale`` — 2026-04-15 bucket, retained
+        #      as a fallback for any key that a future sweep drops.
+        #   3. ``absolute_cells`` — pair-derived reconstruction
+        #      (15 entries).  Fallback for designs whose key is only
+        #      present in the pair bucket.
+        merged = dict(data.get("absolute_cells", {}))
+        merged.update(data.get("single_le_cells_stale", {}))
+        merged.update(data.get("single_le_cells", {}))
         _IOB_ROUTE_LEGACY_CACHE = merged
     key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
     if key not in _IOB_ROUTE_LEGACY_CACHE:

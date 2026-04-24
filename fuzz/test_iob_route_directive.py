@@ -176,25 +176,35 @@ def test_iob_route_all_entries_self_consistent():
           f"in the CRAM frame range)")
 
 
-def test_single_le_bucket_is_quarantined():
-    """The `single_le_cells` bucket was moved to `single_le_cells_stale`
-    on 2026-04-24 (109 entries derived 2026-04-15 fail full-RBF
-    reconstruction after directive-stack drift). Loader + np2fasm must
-    both ignore it. This test asserts the JSON shape so a future
-    re-enable is a deliberate decision, not an accident."""
+def test_single_le_bucket_refreshed_by_fix_b():
+    """2026-04-24 Fix B re-mined all 109 single_le entries against the
+    legacy apply-path (``legacy_iob_route=True``).  The fresh bucket
+    lives under ``single_le_cells`` again; ``single_le_cells_stale``
+    is kept as a fallback for keys a future re-sweep drops.  The
+    legacy loader prefers ``single_le_cells`` per-key (see
+    ``_load_iob_route_cells_legacy``)."""
     data = json.loads(SIGCACHE.read_text())
-    assert "single_le_cells" not in data, (
-        "single_le_cells bucket is back in the JSON without the stale "
-        "suffix — verify the data is fresh (re-derived against current "
-        "directive stack) before renaming it back.")
+    assert "single_le_cells" in data, (
+        "single_le_cells bucket missing — Fix B re-mine not applied "
+        "yet? run scripts/iob_slice_mining/sweep_single_le.py "
+        "--orphans-only --skip-build --include-known")
     assert "single_le_cells_stale" in data, (
-        "stale bucket missing — did someone delete it? keep the data "
-        "quarantined; removing it loses 94 unique (pin, target) combos "
-        "worth re-mining.")
-    assert len(data["single_le_cells_stale"]) >= 109, (
-        "stale bucket shrank — unexpected edit.")
-    print("  test_single_le_bucket_is_quarantined: OK "
-          f"({len(data['single_le_cells_stale'])} entries quarantined)")
+        "stale bucket missing — keep it as a safety-net fallback for "
+        "the legacy loader.")
+    live_keys = set(data["single_le_cells"].keys())
+    stale_keys = set(data["single_le_cells_stale"].keys())
+    # Every formerly-quarantined key should now be freshly mined.
+    missed = stale_keys - live_keys
+    assert not missed, (
+        f"Fix B missed {len(missed)} stale keys: {sorted(missed)[:5]}... "
+        f"— re-run sweep_single_le.py --orphans-only --include-known "
+        f"to cover them.")
+    assert len(live_keys) >= 109, (
+        f"single_le_cells has {len(live_keys)} entries — expected ≥109 "
+        f"after Fix B.")
+    print("  test_single_le_bucket_refreshed_by_fix_b: OK "
+          f"({len(live_keys)} live entries; stale fallback retains "
+          f"{len(stale_keys)} for safety)")
 
 
 CFF800E_PROBE_RBF = (ROOT / "scripts" / "stage0_flash_bundle"
@@ -261,6 +271,41 @@ def test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf():
           "(byte-identical)")
 
 
+def test_fix_b_all_orphan_keys_routable_via_legacy():
+    """Every key that lives ONLY in ``single_le_cells_stale`` (i.e.,
+    not in ``absolute_cells`` or ``padnv_cells``) must now load via
+    the legacy path — that's the Fix B re-mine guarantee (94 keys,
+    2026-04-24).  Before Fix B these raised FasmError."""
+    data = json.loads(SIGCACHE.read_text())
+    stale = set(data.get("single_le_cells_stale", {}).keys())
+    live = set(data.get("absolute_cells", {}).keys()) | set(
+        data.get("padnv_cells", {}).keys())
+    orphans = sorted(stale - live)
+    assert len(orphans) >= 94, (
+        f"expected ≥94 stale-only keys, got {len(orphans)}")
+
+    f._IOB_ROUTE_LEGACY_CACHE = None
+    failed = []
+    sampled = 0
+    for key in orphans:
+        body = key[len("IOB_"):]
+        pin, rhs = body.split("->")
+        dx, dy, dn, port = rhs.split(",")
+        try:
+            cells = f._load_iob_route_cells_legacy(
+                pin, int(dx), int(dy), int(dn), port)
+            if not cells:
+                failed.append((key, "empty"))
+            sampled += 1
+        except f.FasmError as e:
+            failed.append((key, str(e)[:60]))
+    assert not failed, (
+        f"legacy loader failed for {len(failed)} orphan keys: "
+        f"{failed[:3]}")
+    print(f"  test_fix_b_all_orphan_keys_routable_via_legacy: OK "
+          f"({sampled} orphan keys load cleanly)")
+
+
 def test_legacy_iob_route_vs_live_drift_quantified():
     """Sanity: live path (legacy_iob_route=False) must drift from the
     HW-PASS RBF by a large, stable number of bytes (the 443 figure
@@ -297,9 +342,10 @@ def main():
         test_iob_route_xor_double_cancels,
         test_iob_route_bit_perfect_vs_pair_rbf_in_cram,
         test_iob_route_all_entries_self_consistent,
-        test_single_le_bucket_is_quarantined,
+        test_single_le_bucket_refreshed_by_fix_b,
         test_legacy_iob_route_loader_uses_single_le_bucket,
         test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf,
+        test_fix_b_all_orphan_keys_routable_via_legacy,
         test_legacy_iob_route_vs_live_drift_quantified,
     ]
     for t in tests:

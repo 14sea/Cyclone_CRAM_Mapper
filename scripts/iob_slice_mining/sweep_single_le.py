@@ -190,11 +190,21 @@ def derive_primary(pin, dx, dy, dn, port, gold_path):
     """Solve IOB_ROUTE_primary = gold_delta ^ (all other directives).
 
     Returns (primary_cells_sorted, n_data_diff, n_crc_diff).
+
+    2026-04-24 (Fix B): switched to ``legacy_iob_route=True`` verify
+    path.  The live path added dedup + hdr-skip in 6b6cda9 which drops
+    silicon-functional cells from single-LE designs (see
+    simple_led_directive_drift_bisect.md).  Cells mined here are applied
+    via pure XOR parity under the legacy loader's override cache, so
+    the re-derived single_le_cells bucket is self-consistent with the
+    ``legacy_iob_route=True`` apply path used by callers.
     """
     # Reset caches for a clean run
     f._IOB_BASELINE_HDR_CACHE = None
     f._IOB_MAP_CACHE = None
     f._IOB_ROUTE_CACHE = None
+    f._IOB_ROUTE_NODEDUP_KEYS = None
+    f._IOB_ROUTE_LEGACY_CACHE = None
     f._GCLK_PIN_CACHE = None
     f._LAB_CLK_SEL_CACHE.clear()
     f._LAB_CLK_SEL_LE_CACHE = None
@@ -226,9 +236,11 @@ def derive_primary(pin, dx, dy, dn, port, gold_path):
     primary = (gold_cells ^ other_cells)
     primary_sorted = sorted(list(c) for c in primary)
 
-    # Verify by patching in-memory and rebuilding
+    # Verify by patching the legacy cache and rebuilding via
+    # legacy_iob_route=True.  Callers consume the bucket through the
+    # same path, so the mined cells compose correctly end-to-end.
     key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
-    f._IOB_ROUTE_CACHE = {key: primary_sorted}
+    f._IOB_ROUTE_LEGACY_CACHE = {key: primary_sorted}
 
     fasm_text = (
         "IOB_BASELINE_NV\n"
@@ -240,7 +252,7 @@ def derive_primary(pin, dx, dy, dn, port, gold_path):
         f"LAB_CLK_SEL X{dx}Y{dy}\n"
         f"LAB_CLK_SEL_LE X{dx}Y{dy}N{dn}\n"
     )
-    out = f.bitgen(fasm_text, nv, patch_crc=True)
+    out = f.bitgen(fasm_text, nv, patch_crc=True, legacy_iob_route=True)
 
     data_diffs = 0
     crc_diffs = 0
@@ -253,16 +265,52 @@ def derive_primary(pin, dx, dy, dn, port, gold_path):
     return primary_sorted, data_diffs, crc_diffs
 
 
+def load_orphan_combos():
+    """Return the list of (pin, dx, dy, dn, port) tuples for every
+    stale-only key in results/iob_to_slice_sigcache.json — i.e., keys
+    in ``single_le_cells_stale`` that don't appear in ``absolute_cells``
+    or ``padnv_cells``.  These are the 94 unroutable combos flagged in
+    iob_single_le_quarantined.md.
+    """
+    import json
+    sig_path = REPO / "results" / "iob_to_slice_sigcache.json"
+    data = json.loads(sig_path.read_text())
+    stale = set(data.get("single_le_cells_stale", {}).keys())
+    live = set(data.get("absolute_cells", {}).keys()) | set(
+        data.get("padnv_cells", {}).keys()
+    )
+    orphans = sorted(stale - live)
+    combos = []
+    for k in orphans:
+        body = k[len("IOB_"):]
+        pin, rhs = body.split("->")
+        dx, dy, dn, port = rhs.split(",")
+        combos.append((pin, int(dx), int(dy), int(dn), port))
+    return combos
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--skip-build", action="store_true",
                     help="Assume RBFs already built, just derive")
+    ap.add_argument("--orphans-only", action="store_true",
+                    help="Enumerate stale-only keys instead of "
+                         "PINS x TARGETS cross-product")
+    ap.add_argument("--include-known", action="store_true",
+                    help="Also re-derive the 15 known-good keys "
+                         "(sanity check)")
     args = ap.parse_args()
 
-    combos = [(pin, dx, dy, dn, port)
-              for pin in PINS for (dx, dy, dn, port) in TARGETS]
+    if args.orphans_only:
+        combos = load_orphan_combos()
+        if args.include_known:
+            combos += [(pin, dx, dy, dn, port)
+                       for pin in PINS for (dx, dy, dn, port) in TARGETS]
+    else:
+        combos = [(pin, dx, dy, dn, port)
+                  for pin in PINS for (dx, dy, dn, port) in TARGETS]
     supported, skipped = filter_supported(combos)
     for c, err in skipped:
         print(f"  [skip] {c}: {err.splitlines()[0]}")
