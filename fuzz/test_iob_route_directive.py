@@ -197,6 +197,98 @@ def test_single_le_bucket_is_quarantined():
           f"({len(data['single_le_cells_stale'])} entries quarantined)")
 
 
+CFF800E_PROBE_RBF = (ROOT / "scripts" / "stage0_flash_bundle"
+                     / "simple_led_m9k_mode_goldintersect.rbf")
+
+CFF800E_PROBE_FASM = """\
+NV_BASELINE_PACK
+IOB_BASELINE_NV
+IOB_IN  PIN_E16
+IOB_OUT PIN_G15
+IOB_CLK_INPUT PIN_E1
+IOB_ROUTE PIN_E16 -> X10Y4N0.dataa
+GCLK_PIN PIN_E1
+LAB_CLK_SEL X10Y4
+LAB_CLK_SEL_LE X10Y4N0
+X15Y10N0.M9K_MODE_9x512_inferred_goldintersect
+"""
+
+
+def test_legacy_iob_route_loader_uses_single_le_bucket():
+    """`_load_iob_route_cells_legacy` must prefer the legacy single_le
+    bucket (164 cells for E16->10,4,0,dataa) over absolute_cells (196).
+
+    This is what reproduces the cff800e / d48c13e HW-PASS simple_led
+    probe semantics — the live loader switched to absolute_cells + dedup
+    + hdr-skip in 6b6cda9 which silently breaks silicon for single-LE
+    designs built against nv_zero_global."""
+    f._IOB_ROUTE_LEGACY_CACHE = None
+    cells = f._load_iob_route_cells_legacy("E16", 10, 4, 0, "dataa")
+    assert len(cells) == 164, (
+        f"legacy loader returned {len(cells)} cells — expected 164 "
+        f"(single_le_cells_stale bucket).  If bumped, the single_le "
+        f"override path is no longer consulted correctly.")
+    print(f"  test_legacy_iob_route_loader_uses_single_le_bucket: OK "
+          f"({len(cells)} cells, single_le override)")
+
+
+def test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf():
+    """`legacy_iob_route=True` + the cff800e FASM MUST reproduce the
+    committed simple_led_m9k_mode_goldintersect.rbf byte-for-byte.
+
+    That RBF was HW-validated on AX301 (LED follows KEY2) via the
+    overlay probe path documented in d48c13e and memory
+    m9k_mode_w18_hw_validated.md.  If this test drifts, the Fix-A
+    legacy path has regressed — the simple_led-class single-LE designs
+    will flash broken."""
+    if not CFF800E_PROBE_RBF.exists():
+        print("  test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf: "
+              "SKIP (reference RBF missing)")
+        return
+    from pure_zero_rbf import make_pure_zero_rbf
+    f._IOB_ROUTE_CACHE = None
+    f._IOB_ROUTE_NODEDUP_KEYS = None
+    f._IOB_ROUTE_LEGACY_CACHE = None
+    pure = make_pure_zero_rbf()
+    out = f.bitgen(CFF800E_PROBE_FASM, pure, patch_crc=True,
+                   legacy_iob_route=True)
+    ref = CFF800E_PROBE_RBF.read_bytes()
+    assert out == ref, (
+        f"legacy bitgen drift: "
+        f"{sum(1 for i in range(len(ref)) if out[i] != ref[i])} byte "
+        f"diffs vs committed HW-PASS probe RBF")
+    print("  test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf: OK "
+          "(byte-identical)")
+
+
+def test_legacy_iob_route_vs_live_drift_quantified():
+    """Sanity: live path (legacy_iob_route=False) must drift from the
+    HW-PASS RBF by a large, stable number of bytes (the 443 figure
+    logged in simple_led_directive_drift_bisect.md).  A smaller number
+    means the live path quietly converged (celebrate, then re-examine
+    the legacy flag's necessity).  A larger number means some other
+    data source changed — investigate before shipping."""
+    if not CFF800E_PROBE_RBF.exists():
+        print("  test_legacy_iob_route_vs_live_drift_quantified: "
+              "SKIP (reference RBF missing)")
+        return
+    from pure_zero_rbf import make_pure_zero_rbf
+    f._IOB_ROUTE_CACHE = None
+    f._IOB_ROUTE_NODEDUP_KEYS = None
+    f._IOB_ROUTE_LEGACY_CACHE = None
+    pure = make_pure_zero_rbf()
+    live = f.bitgen(CFF800E_PROBE_FASM, pure, patch_crc=True)
+    ref = CFF800E_PROBE_RBF.read_bytes()
+    drift = sum(1 for i in range(len(ref)) if live[i] != ref[i])
+    # Tolerate ±50 bytes of CRC chain noise around the documented 443.
+    assert 350 <= drift <= 550, (
+        f"live-vs-HW-PASS drift = {drift} (expected ~443). If this "
+        f"shrank unexpectedly, Fix A may be obsolete. If it grew, a new "
+        f"data file drifted — bisect before shipping.")
+    print(f"  test_legacy_iob_route_vs_live_drift_quantified: OK "
+          f"(live drift = {drift}; expected band 350..550)")
+
+
 def main():
     tests = [
         test_parse_iob_route,
@@ -206,9 +298,14 @@ def main():
         test_iob_route_bit_perfect_vs_pair_rbf_in_cram,
         test_iob_route_all_entries_self_consistent,
         test_single_le_bucket_is_quarantined,
+        test_legacy_iob_route_loader_uses_single_le_bucket,
+        test_legacy_iob_route_reproduces_cff800e_hw_pass_rbf,
+        test_legacy_iob_route_vs_live_drift_quantified,
     ]
     for t in tests:
         f._IOB_ROUTE_CACHE = None
+        f._IOB_ROUTE_NODEDUP_KEYS = None
+        f._IOB_ROUTE_LEGACY_CACHE = None
         t()
     print(f"\n{len(tests)}/{len(tests)} tests OK")
 

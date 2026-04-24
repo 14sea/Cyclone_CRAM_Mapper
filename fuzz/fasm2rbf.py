@@ -722,6 +722,9 @@ _IOB_ROUTE_CACHE = None
 _IOB_ROUTE_NODEDUP_KEYS: set | None = None
 
 
+_IOB_ROUTE_LEGACY_CACHE: dict | None = None
+
+
 def _load_iob_route_cells(pin, dx, dy, dn, port):
     """Return XOR-delta cells (off, bp) for IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}.
 
@@ -781,6 +784,49 @@ def _iob_route_needs_dedup(pin, dx, dy, dn, port):
         _load_iob_route_cells(pin, dx, dy, dn, port)
     key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
     return key not in _IOB_ROUTE_NODEDUP_KEYS
+
+
+def _load_iob_route_cells_legacy(pin, dx, dy, dn, port):
+    """Pre-6b6cda9 IOB_ROUTE lookup — consults ``single_le_cells`` /
+    ``single_le_cells_stale`` as the override bucket, falling back to
+    ``absolute_cells``.
+
+    The ``single_le_cells`` bucket was renamed to ``single_le_cells_stale``
+    in bdfec54 (quarantine) and the live path (``_load_iob_route_cells``)
+    no longer consults it.  Legacy bitgen mode (``legacy_iob_route=True``)
+    needs those cells verbatim: the cff800e / d48c13e HW-PASS simple_led
+    probes baked the 164-cell single_le_cells delta for
+    E16->X10Y4N0.dataa, and dropping to absolute_cells (196) + dedup + hdr
+    skip breaks silicon (43b byte drift vs HW-PASS ref).
+
+    Caller applies the returned cells via pure XOR parity with no dedup
+    or header-band filtering.
+    """
+    global _IOB_ROUTE_LEGACY_CACHE
+    if _IOB_ROUTE_LEGACY_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_to_slice_sigcache.json"
+        if not path.exists():
+            raise FasmError(
+                "IOB_ROUTE (legacy) directive used but "
+                "results/iob_to_slice_sigcache.json missing"
+            )
+        data = json.loads(path.read_text())
+        single_le = data.get("single_le_cells", {})
+        if not single_le:
+            single_le = data.get("single_le_cells_stale", {})
+        absolute = data.get("absolute_cells", {})
+        merged = dict(absolute)
+        merged.update(single_le)
+        _IOB_ROUTE_LEGACY_CACHE = merged
+    key = f"IOB_{pin}->{dx},{dy},{dn},{port}"
+    if key not in _IOB_ROUTE_LEGACY_CACHE:
+        raise FasmError(
+            f"IOB_ROUTE (legacy) PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}: "
+            f"no entry in single_le_cells_stale / absolute_cells buckets "
+            f"of iob_to_slice_sigcache.json."
+        )
+    return [tuple(c) for c in _IOB_ROUTE_LEGACY_CACHE[key]]
 
 
 def _load_iob_oe_cells(pin):
@@ -1415,8 +1461,20 @@ def _load_overhead():
 
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
-           lenient=False):
-    """Core entry — FASM text + base RBF → finished RBF bytes."""
+           lenient=False, legacy_iob_route=False):
+    """Core entry — FASM text + base RBF → finished RBF bytes.
+
+    ``legacy_iob_route=True`` restores the pre-6b6cda9 IOB_ROUTE cell
+    application path: cells come from the legacy
+    ``single_le_cells`` / ``single_le_cells_stale`` bucket (falling back
+    to ``absolute_cells``) and are applied via pure XOR parity with no
+    dedup stripping and no header-band ``off < 5282`` filter.  This
+    reproduces the semantics under which the cff800e / d48c13e simple_led
+    M9K_MODE probes were built and HW-validated on AX301.  The live path
+    (default ``legacy_iob_route=False``) is correct for pair-derived
+    ``padnv_cells`` / ``absolute_cells`` entries consumed by two_lab /
+    NEORV32 ζ flows.
+    """
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
      lab_clk_sel_les, iob_baseline_nv,
@@ -1612,9 +1670,21 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         #   single_le_cells / absolute_cells — legacy entries derived
         #       against IOB_BASELINE_NV path.  They include cells shared
         #       with other directives and NEED dedup stripping.
+        #
+        # When ``legacy_iob_route=True`` the caller is asking for the
+        # pre-6b6cda9 path: consult the legacy single_le bucket and
+        # apply cells via pure XOR parity (no dedup, no hdr-skip).  This
+        # reproduces cff800e / d48c13e HW-PASS simple_led semantics for
+        # single-LE designs that the live path breaks (443-byte drift).
         parity = {}
         skipped = 0
         for pin, dx, dy, dn, port in iob_routes:
+            if legacy_iob_route:
+                cells = _load_iob_route_cells_legacy(pin, dx, dy, dn, port)
+                for off, bp in cells:
+                    key = (off, bp)
+                    parity[key] = parity.get(key, 0) ^ 1
+                continue
             needs_dedup = _iob_route_needs_dedup(pin, dx, dy, dn, port)
             for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
                 if off < 5282:

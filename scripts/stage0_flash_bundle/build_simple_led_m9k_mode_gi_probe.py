@@ -61,12 +61,19 @@ def main() -> int:
     f._IOB_BASELINE_HDR_CACHE = None
     f._IOB_MAP_CACHE = None
     f._IOB_ROUTE_CACHE = None
+    f._IOB_ROUTE_NODEDUP_KEYS = None
+    f._IOB_ROUTE_LEGACY_CACHE = None
     f._GCLK_PIN_CACHE = None
     f._LAB_CLK_SEL_CACHE.clear()
     f._LAB_CLK_SEL_LE_CACHE = None
     f._M9K_MODE_CACHE = None
 
-    out = f.bitgen(FASM, pure, patch_crc=True)
+    # Single-LE simple_led-class designs need the pre-6b6cda9 IOB_ROUTE
+    # path (single_le_cells bucket + pure XOR parity, no dedup / hdr
+    # skip). The live path drifts 443 bytes from the cff800e HW-PASS
+    # reference and produces a silicon-broken LED. See
+    # simple_led_directive_drift_bisect.md.
+    out = f.bitgen(FASM, pure, patch_crc=True, legacy_iob_route=True)
 
     out_path = HERE / "simple_led_m9k_mode_goldintersect.rbf"
     out_path.write_bytes(out)
