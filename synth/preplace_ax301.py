@@ -69,11 +69,14 @@ for _kv in ctx.cells:
     bound += 1
 
 print(f"[preplace_ax301] IOB: bound={bound} already={already} "
-      f"unmapped={len(unmapped)} unavailable={len(unavailable)}")
+      f"unmapped={len(unmapped)} unavailable={len(unavailable)}",
+      file=sys.stderr, flush=True)
 if unmapped:
-    print(f"[preplace_ax301] unmapped cells: {unmapped}")
+    print(f"[preplace_ax301] unmapped cells: {unmapped}",
+          file=sys.stderr, flush=True)
 if unavailable:
-    print(f"[preplace_ax301] unavailable bels: {unavailable}")
+    print(f"[preplace_ax301] unavailable bels: {unavailable}",
+          file=sys.stderr, flush=True)
 
 # --- M9K pre-placement: bind EP4CE6_M9K cells to calibrated sites ---
 def _yosys_int(val):
@@ -137,6 +140,8 @@ for (_w, _d), _group in _m9k_cells_by_geom.items():
         _m9k_used.add(_site)
         _m9k_bound += 1
 
-print(f"[preplace_ax301] M9K: bound={_m9k_bound} errors={len(_m9k_err)}")
+print(f"[preplace_ax301] M9K: bound={_m9k_bound} errors={len(_m9k_err)}",
+      file=sys.stderr, flush=True)
 for _e in _m9k_err:
-    print(f"[preplace_ax301] M9K ERROR: {_e}")
+    print(f"[preplace_ax301] M9K ERROR: {_e}",
+          file=sys.stderr, flush=True)
