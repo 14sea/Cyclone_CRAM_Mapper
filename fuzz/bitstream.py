@@ -1356,13 +1356,24 @@ class LutCodec:
         slot = (y - 2) % 3
         group = (y - 2) // 3
         nd = cram_n_delta(n)
-        wrapped = slot == 1 and (24 + group * 3 + nd < 0)
-        if wrapped:
-            bp = 7 - group
-            addr_adj = 207
+        # Slot-1 wrap: Y=3 (group=0) admits the boundary N=12 (nd=-24) and
+        # shifts by 206; Y=6/9/12 shift by 207 and exclude the boundary.
+        if slot == 1 and group == 0:
+            wrapped = (24 + nd <= 0)
+            if wrapped:
+                bp = 7 - group
+                addr_adj = 206
+            else:
+                bp = cram_ctrl_bit(y)
+                addr_adj = 0
         else:
-            bp = cram_ctrl_bit(y)
-            addr_adj = 0
+            wrapped = slot == 1 and (24 + group * 3 + nd < 0)
+            if wrapped:
+                bp = 7 - group
+                addr_adj = 207
+            else:
+                bp = cram_ctrl_bit(y)
+                addr_adj = 0
         offset = SLOT_BASE[slot] + group * 3 + (1 if slot == 0 and group > 0 else 0)
         val = COLUMN_BASE[x] - 168 + offset + nd + addr_adj
         foff = val % 210

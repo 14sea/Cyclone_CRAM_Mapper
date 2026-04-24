@@ -1,0 +1,969 @@
+{
+  "description": "Y=3 (slot=1 group=0) wrapped-address \u03c3\u207b\u00b9 closure \u2014 80 entries covering N\u2208{12..30} \u00d7 fb8\u2208{0..7}. addr_adj=206 (not 207 as group\u22651 wraps use); N=12 (nd=-24) is inside the wrap region.",
+  "mining_date": "2026-04-24",
+  "mask": "0xFACE",
+  "addr_adj": 206,
+  "bp": 7,
+  "entries": {
+    "206,0,0": {
+      "foff": 206,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,0,0": {
+      "foff": 204,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,0,0": {
+      "foff": 192,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,0,0": {
+      "foff": 190,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,0,0": {
+      "foff": 184,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,0,0": {
+      "foff": 182,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,0,0": {
+      "foff": 176,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,0,0": {
+      "foff": 174,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,0,0": {
+      "foff": 168,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,0,0": {
+      "foff": 166,
+      "fb8": 0,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "source": "X3Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,1,0": {
+      "foff": 206,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,1,0": {
+      "foff": 204,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,1,0": {
+      "foff": 192,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,1,0": {
+      "foff": 190,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,1,0": {
+      "foff": 184,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,1,0": {
+      "foff": 182,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,1,0": {
+      "foff": 176,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,1,0": {
+      "foff": 174,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,1,0": {
+      "foff": 168,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,1,0": {
+      "foff": 166,
+      "fb8": 1,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X6Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,2,0": {
+      "foff": 206,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,2,0": {
+      "foff": 204,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,2,0": {
+      "foff": 192,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,2,0": {
+      "foff": 190,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,2,0": {
+      "foff": 184,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,2,0": {
+      "foff": 182,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,2,0": {
+      "foff": 176,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,2,0": {
+      "foff": 174,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,2,0": {
+      "foff": 168,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,2,0": {
+      "foff": 166,
+      "fb8": 2,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "source": "X21Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,3,0": {
+      "foff": 206,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,3,0": {
+      "foff": 204,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,3,0": {
+      "foff": 192,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,3,0": {
+      "foff": 190,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,3,0": {
+      "foff": 184,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,3,0": {
+      "foff": 182,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,3,0": {
+      "foff": 176,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,3,0": {
+      "foff": 174,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,3,0": {
+      "foff": 168,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,3,0": {
+      "foff": 166,
+      "fb8": 3,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "source": "X4Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,4,0": {
+      "foff": 206,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,4,0": {
+      "foff": 204,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,4,0": {
+      "foff": 192,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,4,0": {
+      "foff": 190,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,4,0": {
+      "foff": 184,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,4,0": {
+      "foff": 182,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,4,0": {
+      "foff": 176,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,4,0": {
+      "foff": 174,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,4,0": {
+      "foff": 168,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,4,0": {
+      "foff": 166,
+      "fb8": 4,
+      "group": 0,
+      "sigma_inv": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "source": "X7Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,5,0": {
+      "foff": 206,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,5,0": {
+      "foff": 204,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,5,0": {
+      "foff": 192,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,5,0": {
+      "foff": 190,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,5,0": {
+      "foff": 184,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,5,0": {
+      "foff": 182,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,5,0": {
+      "foff": 176,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,5,0": {
+      "foff": 174,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,5,0": {
+      "foff": 168,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,5,0": {
+      "foff": 166,
+      "fb8": 5,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X10Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,6,0": {
+      "foff": 206,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,6,0": {
+      "foff": 204,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,6,0": {
+      "foff": 192,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,6,0": {
+      "foff": 190,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,6,0": {
+      "foff": 184,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,6,0": {
+      "foff": 182,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,6,0": {
+      "foff": 176,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,6,0": {
+      "foff": 174,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,6,0": {
+      "foff": 168,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,6,0": {
+      "foff": 166,
+      "fb8": 6,
+      "group": 0,
+      "sigma_inv": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "source": "X13Y3N30 (wrapped, addr_adj=206)"
+    },
+    "206,7,0": {
+      "foff": 206,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N12 (wrapped, addr_adj=206)"
+    },
+    "204,7,0": {
+      "foff": 204,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N14 (wrapped, addr_adj=206)"
+    },
+    "192,7,0": {
+      "foff": 192,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N16 (wrapped, addr_adj=206)"
+    },
+    "190,7,0": {
+      "foff": 190,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N18 (wrapped, addr_adj=206)"
+    },
+    "184,7,0": {
+      "foff": 184,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N20 (wrapped, addr_adj=206)"
+    },
+    "182,7,0": {
+      "foff": 182,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N22 (wrapped, addr_adj=206)"
+    },
+    "176,7,0": {
+      "foff": 176,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N24 (wrapped, addr_adj=206)"
+    },
+    "174,7,0": {
+      "foff": 174,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N26 (wrapped, addr_adj=206)"
+    },
+    "168,7,0": {
+      "foff": 168,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N28 (wrapped, addr_adj=206)"
+    },
+    "166,7,0": {
+      "foff": 166,
+      "fb8": 7,
+      "group": 0,
+      "sigma_inv": [
+        0,
+        2,
+        1,
+        3
+      ],
+      "source": "X8Y3N30 (wrapped, addr_adj=206)"
+    }
+  }
+}
