@@ -2093,7 +2093,7 @@ python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf \
 pipeline 在 fasm2rbf 之后硬 gate `cmp -s rebuilt gold` —— 下游 codec
 任何回归会立刻暴露，不会白烧一轮 flash。
 
-两个配套工具：
+配套工具：
 
 - `scripts/bit_workaround/zeta_rbf_diff.py A.rbf B.rbf` —— region-aware
   的 diff，把 368 011 B RBF 切成 preamble / header-data /
@@ -2104,6 +2104,44 @@ pipeline 在 fasm2rbf 之后硬 gate `cmp -s rebuilt gold` —— 下游 codec
   test，跑三条无硬件 gate 对 HW-validated 的 `two_lab.rbf` gold
   （1710-bit 不变量）。适合当 pre-commit hook，ζ → fasm2rbf →
   byte-identity 整条链全绿才 exit 0。
+- `scripts/bit_workaround/zeta_regression.py` —— 语料库级回归：遍历
+  `tests/zeta_corpus/manifest.json` 里每个 fixture（由 SHA256 +
+  per-region cell counts 双重锚定），验证字节级往返 + region footprint
+  双重不变。selftest 抓不到的漂移（比如只影响单-LAB fixture 的 ζ
+  改动）这里会 fail loud。`--reanchor` 仅更新 `TBD` 条目；
+  `--reanchor-all` 接受当前值为新锚点（仅在有意改动时用）。
+- `scripts/bit_workaround/zeta_manifest_diff.py A.manifest.json B.manifest.json` ——
+  两个 pipeline manifest 的差分，完全不碰 RBF 本体。`zeta_pipeline.py`
+  每次成功后会在重建 RBF 旁边写一份 sidecar manifest（gold/rebuilt/base
+  的 SHA256、region cell counts、git HEAD、时间戳、所有 gate），
+  所以 bootloader v1↔v2 对比变成两份小 JSON 的 diff，不必重扫 bitstream。
+  同时能把高危场景（gold 相同但 rebuilt 不同 → ζ 或 fasm2rbf 漂移）
+  标成 HIGH severity。
+
+### pre-commit hook（按 clone 选择开启）
+
+`.githooks/pre-commit` 在每次 commit 之前跑 `zeta_selftest.py`。按
+clone 开启：
+
+```bash
+git config core.hooksPath .githooks
+# 临时跳过一次：ZETA_SKIP=1 git commit ...
+```
+
+Hook 对 gitignored fixture 有防御：如果本地没有 two-LAB gold，它会
+带 rebuild 提示直接跳过，不因此挡住 commit。
+
+### `--rebuild-check`（Quartus 决定性闸）
+
+ζ 隐含假设「同 Verilog → 同 gold RBF」。`.qpf` 输入时加
+`--rebuild-check` 会把 `quartus_map/fit/asm/cpf` 再跑一遍并字节比对两份
+RBF。这是在 Quartus 非决定性把下游 byte-identity 默默打穿之前唯一
+廉价的检出方式：
+
+```bash
+python3 scripts/bit_workaround/zeta_pipeline.py path/to/design.qpf \
+    --rebuild-check
+```
 
 ### 什么时候用哪条路
 

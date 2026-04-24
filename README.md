@@ -2294,7 +2294,7 @@ report. The pipeline hard-gates on `cmp -s rebuilt gold` after fasm2rbf —
 a regression anywhere downstream in the codec surfaces immediately and
 before any flash cycle is wasted.
 
-Two companion tools:
+Companion tools:
 
 - `scripts/bit_workaround/zeta_rbf_diff.py A.rbf B.rbf` — region-aware
   diff that splits the 368 011 B RBF into preamble / header-data /
@@ -2307,6 +2307,48 @@ Two companion tools:
   `two_lab.rbf` gold (1710-bit invariant). Suitable as a pre-commit
   hook. Exit 0 iff the full ζ → fasm2rbf → byte-identity chain is
   green.
+- `scripts/bit_workaround/zeta_regression.py` — iterates the pinned
+  corpus `tests/zeta_corpus/manifest.json` (each entry anchored by
+  SHA256 + per-region cell counts) and asserts every fixture still
+  round-trips byte-identical AND that its region footprint still
+  matches the anchor. Catches drift the selftest cannot — e.g. a ζ
+  change that breaks only single-LAB fixtures. `--reanchor` updates
+  entries marked `TBD`; `--reanchor-all` accepts current values as
+  new anchors (use only for intentional changes).
+- `scripts/bit_workaround/zeta_manifest_diff.py A.manifest.json B.manifest.json` —
+  diffs two pipeline manifests without touching the RBFs. `zeta_pipeline.py`
+  writes a sidecar manifest alongside every rebuilt RBF (SHA256 for
+  gold/rebuilt/base, region cell counts, git HEAD, timestamp, gates),
+  so bootloader v1 vs v2 comparisons become `diff` of two small JSON
+  files instead of re-scanning bitstreams. Also flags the high-
+  severity case (rebuilt differs but gold is identical → ζ or
+  fasm2rbf has drifted).
+
+### Pre-commit hook (opt-in)
+
+`.githooks/pre-commit` runs `zeta_selftest.py` before every commit.
+Per-clone opt-in:
+
+```bash
+git config core.hooksPath .githooks
+# skip once: ZETA_SKIP=1 git commit ...
+```
+
+The hook is defensive about gitignored fixtures: if the two-LAB gold is
+missing locally, it skips with a rebuild hint instead of blocking.
+
+### `--rebuild-check` (Quartus determinism gate)
+
+ζ assumes "same Verilog → same gold RBF". When ζ is handed a `.qpf`,
+`--rebuild-check` re-runs `quartus_map/fit/asm/cpf` once more and byte-
+compares the two RBFs. This is the only cheap way to detect Quartus
+non-determinism before it silently breaks downstream byte-identity
+assumptions:
+
+```bash
+python3 scripts/bit_workaround/zeta_pipeline.py path/to/design.qpf \
+    --rebuild-check
+```
 
 ### When to use which
 

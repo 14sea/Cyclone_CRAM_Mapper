@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# ζ pre-commit hook: run the sub-second selftest before every commit.
+#
+# Install with:
+#     git config core.hooksPath .githooks
+#
+# Skip once:
+#     ZETA_SKIP=1 git commit ...
+#
+# Rationale: `zeta_selftest.py` is an invariant gate — a 1710-bit round-trip
+# on a HW-validated two-LAB gold. If any commit breaks it, ζ or fasm2rbf has
+# drifted in a way that will cascade into every downstream production build.
+# Catching it here is strictly cheaper than catching it at flash time.
+set -e
+
+if [[ "${ZETA_SKIP:-}" == "1" ]]; then
+    echo "[pre-commit] ZETA_SKIP=1 set, skipping ζ selftest"
+    exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SELFTEST="$REPO_ROOT/scripts/bit_workaround/zeta_selftest.py"
+
+if [[ ! -f "$SELFTEST" ]]; then
+    echo "[pre-commit] selftest missing ($SELFTEST); skipping"
+    exit 0
+fi
+
+# Fixture is gitignored and may not exist locally; skip gracefully in that case.
+FIXTURE="$REPO_ROOT/tmp/chipdb_test/quartus_two_lab/output_files/two_lab.rbf"
+if [[ ! -f "$FIXTURE" ]]; then
+    echo "[pre-commit] ζ fixture missing ($FIXTURE); skipping"
+    echo "            rebuild via: cd tmp/chipdb_test/quartus_two_lab && quartus_sh --flow compile two_lab"
+    exit 0
+fi
+
+echo "[pre-commit] running ζ selftest..."
+if ! python3 "$SELFTEST" >/tmp/zeta_selftest.log 2>&1; then
+    echo "[pre-commit] ζ selftest FAILED — commit blocked."
+    echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+    echo "            last log:"
+    tail -20 /tmp/zeta_selftest.log | sed 's/^/              /'
+    exit 1
+fi
+echo "[pre-commit] ζ selftest OK"

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "description": "Golden corpus for \u03b6 production-pipeline regression. Each entry is a known-good Quartus RBF with a SHA256 anchor; zeta_regression.py asserts that \u03b6 \u2192 fasm2rbf round-trips byte-identical and that the region-cell counts still match. Missing fixtures are skipped with a warning; present-but-SHA-drifted fixtures fail loud.",
+  "base": {
+    "path": "results/rbf/nv_zero_global.rbf",
+    "sha256": "7f5979d1d863fa048a928ebc739146a027ecddbd9bee7631b5aaf0bb6be39b96",
+    "size": 368011,
+    "note": "\u03b6 XOR baseline; gitignored but must be present locally."
+  },
+  "entries": [
+    {
+      "name": "two_lab",
+      "path": "tmp/chipdb_test/quartus_two_lab/output_files/two_lab.rbf",
+      "sha256": "2af902969e9045e36e428a410b1f948ab9f2d6fa1754967450e40a114a296355",
+      "size": 368011,
+      "kind": "quartus_gold",
+      "design": "cross-LAB AND@X16Y4 \u2192 R4/C4/R24/C16 \u2192 DFF@X16Y14 \u2192 LED0",
+      "hw_validated": "2026-04-22",
+      "zeta_bits_total": 1710,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 862,
+        "header_crc": 48,
+        "fabric_data": 143,
+        "fabric_crc": 657,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 466,
+        "header_crc": 14,
+        "fabric_data": 143,
+        "fabric_crc": 171,
+        "postamble": 0
+      },
+      "notes": "First cross-LAB fabric route confirmed on silicon. Selftest invariant: 1710 bits."
+    },
+    {
+      "name": "lits_pair_y11_dataa",
+      "path": "results/rbf/lits_pair_X10Y10_to_X10Y11N0_dataa.rbf",
+      "sha256": "0b6886b1f6543de34c546fcb259da37a8cfd377aea99ad443e838c3aa41d0f09",
+      "size": 368011,
+      "kind": "quartus_gold",
+      "design": "single-LAB route X10Y10 \u2192 X10Y11N0.dataa (sig-cache mining template)",
+      "hw_validated": null,
+      "zeta_bits_total": 622,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 40,
+        "header_crc": 4,
+        "fabric_data": 98,
+        "fabric_crc": 480,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 25,
+        "header_crc": 2,
+        "fabric_data": 98,
+        "fabric_crc": 128,
+        "postamble": 0
+      },
+      "notes": "Route-family fixture; exercises LI MUX cell emission through \u03b6."
+    },
+    {
+      "name": "lits_pair_y11_datab",
+      "path": "results/rbf/lits_pair_X10Y10_to_X10Y11N0_datab.rbf",
+      "sha256": "a0a766dd450703396c515b418ddaa008891ef4c5984c5e1bcb989235f6fb001d",
+      "size": 368011,
+      "kind": "quartus_gold",
+      "design": "single-LAB route X10Y10 \u2192 X10Y11N0.datab (port variant of the y11_dataa fixture)",
+      "hw_validated": null,
+      "zeta_bits_total": 620,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 38,
+        "header_crc": 4,
+        "fabric_data": 98,
+        "fabric_crc": 480,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 24,
+        "header_crc": 2,
+        "fabric_data": 98,
+        "fabric_crc": 128,
+        "postamble": 0
+      },
+      "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation)."
+    },
+    {
+      "name": "nv_zero_global_self",
+      "path": "results/rbf/nv_zero_global.rbf",
+      "sha256": "7f5979d1d863fa048a928ebc739146a027ecddbd9bee7631b5aaf0bb6be39b96",
+      "size": 368011,
+      "kind": "baseline_self",
+      "design": "the \u03b6 baseline used against itself \u2014 \u03b6 must emit 0 BIT directives and fasm2rbf must return a byte-identical copy",
+      "hw_validated": "2026-04-23",
+      "zeta_bits_total": 0,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 0,
+        "header_crc": 0,
+        "fabric_data": 0,
+        "fabric_crc": 0,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 0,
+        "header_crc": 0,
+        "fabric_data": 0,
+        "fabric_crc": 0,
+        "postamble": 0
+      },
+      "notes": "Edge case: empty-FASM round-trip. Catches regressions where fasm2rbf perturbs CRC on zero-directive input."
+    }
+  ]
+}
