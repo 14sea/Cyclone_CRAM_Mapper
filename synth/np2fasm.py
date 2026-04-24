@@ -293,22 +293,31 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    # HW-validated set: overlay probes on the HW-PASS w=9 base confirmed
-    # (9,512) + (18,512) + (9,1024) + (36,256) + (4,2048) are silicon-safe.
-    # (4,2048): raw 24-cell gi bucket FAILed on 2026-04-24 (LED0 stuck on);
-    # bisection isolated an adjacent-byte pair interaction at frame 1733
-    # ((364092,2)+(364093,2)) — dropping (364093,2) breaks the pair and
-    # CLEAN23 PASSed silicon 2026-04-24. fasm2rbf._load_m9k_mode_cells masks
-    # (364093,2) for (4,2048) at load time via _M9K_MODE_SILICON_FALSIFIED.
-    _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256),
-                              (4, 2048)}
+    # "HW-validated" = the gi-bucket overlay on the simple_led baseline is
+    # silicon-FABRIC-safe (KEY2→LED0 still responds).  IT DOES NOT MEAN THE
+    # M9K IS FUNCTIONALLY CONFIGURED for that (w, d) mode.  2026-04-24
+    # data-path probe at X15_Y10_N0 showed real Quartus (4,2048) / (9,512)
+    # builds have 0% overlap with their respective gi buckets — the gi
+    # bucket is a site-invariant noise pattern that happens to be
+    # fabric-survivable, not Quartus's actual mode encoding.  See memory
+    # m9k_mode_gi_bucket_not_quartus_encoding.md.
+    #
+    # (4,2048) was rolled back from this set after the data-path probe
+    # proved the CLEAN23 overlay doesn't enable 4×2048 mode.  Other widths
+    # stay in the set for backward compatibility with existing callers /
+    # tests that rely on the fabric-safety gate, but their functional
+    # correctness is likewise unverified.  Full re-mining against real
+    # Quartus builds is tracked as a separate effort.
+    _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
     if (width, depth) not in _M9K_MODE_HW_VALIDATED:
         return (
             None,
             f"cell {cell_name}: M9K_MODE emission skipped for "
             f"{width}x{depth} at X{x}Y{y}N{n} — only "
-            f"{_M9K_MODE_HW_VALIDATED} are HW-validated (silicon-safe "
-            f"`inferred_goldintersect` buckets).",
+            f"{_M9K_MODE_HW_VALIDATED} are fabric-safe "
+            f"`inferred_goldintersect` overlays.  Note: gi buckets are "
+            f"NOT the real Quartus mode cells; see memory "
+            f"m9k_mode_gi_bucket_not_quartus_encoding.md.",
         )
     return (
         f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",

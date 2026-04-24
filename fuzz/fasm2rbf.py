@@ -183,13 +183,24 @@ _M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
 _M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred", "inferred_goldintersect")
 # Per-(width, depth) silicon-falsified masks. Applied at load time — cells
 # here are stripped from whichever template bucket the caller asked for.
+#
+# These masks are FABRIC-SAFETY-only: they clear cells whose XOR overlay on
+# the simple_led baseline leaves LED0 stuck / KEY2 inert.  They DO NOT
+# affirm that the remaining cells encode the real M9K (w, d) mode; a
+# 2026-04-24 data-path probe at X15_Y10_N0 showed real Quartus (4,2048)
+# and (9,512) builds have 0% overlap with their gi buckets, i.e. the gi
+# buckets are a site-invariant block-band pattern that is fabric-safe
+# but NOT what Quartus emits to configure a given M9K mode.  See memory
+# m9k_mode_gi_bucket_not_quartus_encoding.md.
+#
 # (4, 2048): bisection on AX301 2026-04-24 (scripts/stage0_flash_bundle/
-# build_m9k_mode_w4x2048_bisect.py) showed the 24-cell inferred_goldintersect
-# bucket fails silicon only when the adjacent-byte pair (364092,2)+(364093,2)
-# at frame 1733 is flipped together; either singleton passes.  Dropping
-# (364093,2) breaks the pair interaction and restores KEY2→LED0 on the
-# HW-PASS w=9 base (CLEAN23 PASS verified 2026-04-24). Memory:
-# m9k_mode_w4x2048_hw_fail.md (closure update).
+# build_m9k_mode_w4x2048_bisect.py) isolated an adjacent-byte pair
+# interaction at frame 1733 — (364092,2) and (364093,2) flipped together
+# break the fabric; either singleton is safe.  Dropping (364093,2) breaks
+# the pair and CLEAN23 PASSed silicon.  np2fasm's `_M9K_MODE_HW_VALIDATED`
+# set does NOT include (4,2048) after the data-path probe invalidated the
+# gi bucket as mode cells, but the mask is retained so any manual caller
+# asking for the (4,2048) bucket still gets the fabric-safe 23-cell form.
 _M9K_MODE_SILICON_FALSIFIED = {
     (4, 2048): {(364093, 2)},
 }
