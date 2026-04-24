@@ -1160,6 +1160,44 @@ class FasmError(ValueError):
     pass
 
 
+_PRAGMA_RE = re.compile(r"^\s*#\s*fasm2rbf\s*:\s*(\w+)\s*=\s*(\S+)\s*$")
+
+
+def parse_pragmas(text):
+    """Scan ``# fasm2rbf: key=value`` pragma comments.
+
+    Returns a dict of kwargs ready to forward to :func:`bitgen`.
+    Currently recognised keys:
+
+    * ``legacy_iob_route`` — boolean (``1``/``0`` / ``true``/``false``)
+
+    Unknown keys raise ``ValueError`` so silent drift is impossible.
+    Callers that use np2fasm's ``--legacy-iob-route`` should wire this
+    through explicitly::
+
+        pragmas = parse_pragmas(fasm_text)
+        rbf = bitgen(fasm_text, base_rbf, **pragmas)
+    """
+    out = {}
+    for line in text.splitlines():
+        m = _PRAGMA_RE.match(line)
+        if not m:
+            continue
+        key, val = m.group(1), m.group(2).lower()
+        if key == "legacy_iob_route":
+            if val in ("1", "true", "yes", "on"):
+                out["legacy_iob_route"] = True
+            elif val in ("0", "false", "no", "off"):
+                out["legacy_iob_route"] = False
+            else:
+                raise ValueError(
+                    f"parse_pragmas: legacy_iob_route={val!r} "
+                    f"must be 1/0/true/false")
+        else:
+            raise ValueError(f"parse_pragmas: unknown pragma {key!r}")
+    return out
+
+
 def parse_fasm(text):
     """Return (luts, routes) from FASM text.
 

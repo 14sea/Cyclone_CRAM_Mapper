@@ -332,6 +332,7 @@ def _parse_bel(bel_name: str) -> tuple[str, int, int, int] | None:
 def convert(
     routed_json: dict,
     baseline: str = "nv",
+    legacy_iob_route: bool = False,
 ) -> tuple[list[str], list[str]]:
     """Convert routed JSON to (fasm_lines, warnings).
 
@@ -343,12 +344,27 @@ def convert(
                Emit `NV_BASELINE_PACK` at the top so the byte-exact
                equivalent of nv_zero_global is synthesised before any
                routing / IOB directive applies.
+
+    legacy_iob_route=True emits a ``# fasm2rbf: legacy_iob_route=1``
+    pragma header.  The emitted FASM is otherwise identical — the same
+    ``IOB_ROUTE PIN_X -> X{dx}Y{dy}N{dn}.{port}`` lines are produced.
+    What changes downstream is how ``fuzz.fasm2rbf.bitgen`` interprets
+    those lines.  Callers that build the base_rbf via bitgen should
+    call ``fasm2rbf.parse_pragmas(fasm_text)`` and forward the result
+    to ``bitgen(**pragmas)`` so the pragma drives ``legacy_iob_route``
+    without a magic auto-override inside bitgen itself.
+
+    Use legacy mode for simple_led-class single-LE designs that must
+    match the pre-6b6cda9 IOB_ROUTE apply-path (see CLAUDE.md
+    IOB_ROUTE row + memory ``fix_a_legacy_iob_route_flag_landed.md``).
     """
     if baseline not in ("nv", "pure"):
         raise ValueError(
             f"convert(baseline={baseline!r}): must be 'nv' or 'pure'")
     fasm: list[str] = []
     warnings: list[str] = []
+    if legacy_iob_route:
+        fasm.append("# fasm2rbf: legacy_iob_route=1")
     if baseline == "pure":
         # Reproduce nv_zero_global on top of PURE_ZERO.  Everything else
         # in the emitted FASM (IOB_IN/OUT, ROUTE, GCLK_PIN, LAB_CLK_SEL,
@@ -980,29 +996,42 @@ def convert(
 
 
 def main() -> None:
-    # Very small CLI: [--base nv|pure] <routed.json> [output.fasm]
+    # Small CLI: [--base nv|pure] [--legacy-iob-route] <routed.json> [output.fasm]
     argv = list(sys.argv[1:])
     baseline = "nv"
-    if argv and argv[0] == "--base":
-        if len(argv) < 2 or argv[1] not in ("nv", "pure"):
-            print("--base expects 'nv' or 'pure'", file=sys.stderr)
+    legacy_iob_route = False
+    while argv and argv[0].startswith("--"):
+        if argv[0] == "--base":
+            if len(argv) < 2 or argv[1] not in ("nv", "pure"):
+                print("--base expects 'nv' or 'pure'", file=sys.stderr)
+                sys.exit(1)
+            baseline = argv[1]
+            argv = argv[2:]
+        elif argv[0] == "--legacy-iob-route":
+            legacy_iob_route = True
+            argv = argv[1:]
+        else:
+            print(f"unknown flag: {argv[0]}", file=sys.stderr)
             sys.exit(1)
-        baseline = argv[1]
-        argv = argv[2:]
 
     if len(argv) < 1:
         print(
             f"Usage: {sys.argv[0]} [--base nv|pure] "
-            f"<routed.json> [output.fasm]\n"
-            f"  --base pure  emit NV_BASELINE_PACK header so caller can\n"
-            f"               pass make_pure_zero_rbf() as base_rbf;\n"
-            f"               default nv assumes nv_zero_global.rbf base.",
+            f"[--legacy-iob-route] <routed.json> [output.fasm]\n"
+            f"  --base pure            emit NV_BASELINE_PACK header so caller\n"
+            f"                         can pass make_pure_zero_rbf() as base_rbf;\n"
+            f"                         default nv assumes nv_zero_global.rbf base.\n"
+            f"  --legacy-iob-route     emit `# fasm2rbf: legacy_iob_route=1`\n"
+            f"                         pragma; callers forward to bitgen via\n"
+            f"                         fasm2rbf.parse_pragmas(fasm_text).",
             file=sys.stderr,
         )
         sys.exit(1)
 
     routed = json.loads(Path(argv[0]).read_text())
-    fasm_lines, warnings = convert(routed, baseline=baseline)
+    fasm_lines, warnings = convert(
+        routed, baseline=baseline, legacy_iob_route=legacy_iob_route,
+    )
 
     out = sys.stdout
     if len(argv) >= 2:
