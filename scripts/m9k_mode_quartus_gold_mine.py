@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Quartus-gold M9K_MODE mining — replaces the `inferred_goldintersect`
-buckets (which were proven site-invariant fabric-safe overlays rather
-than real mode cells — see memory `m9k_mode_gi_bucket_not_quartus_encoding.md`).
+"""Quartus-gold M9K_MODE mining — real Quartus mode cells, mode-aware.
 
-Per (width, depth) we build:
+Per (width, depth, operation_mode) we build:
   * a matched baseline (same pinout, NO M9K, trivial passthrough)
   * N variants that share the SAME pinout + SAME M9K LOC (altsyncram `u`),
     but vary the INIT pattern and read-pipe depth
@@ -11,14 +9,26 @@ Per (width, depth) we build:
 Per-variant mode cells =
     block_band(variant_i.rbf ⊕ matched_baseline.rbf)
 
-Site-fixed (X15, Y10, N0), mode-invariant cells =
+Site-fixed, mode-invariant cells =
     intersection over all variants
 
 These land in `results/m9k_mode_bits.json`
-   → X15_Y10_N0_{W}x{D}.cells_by_template['quartus_gold']
+   → X{x}_Y{y}_N{n}_{W}x{D}.cells_by_template[<bucket>]
+
+Bucket selection via --mode:
+    sp  → cells_by_template["quartus_gold"]      (SINGLE_PORT,   default)
+    sdp → cells_by_template["quartus_gold_sdp"]  (DUAL_PORT)
+    tdp → cells_by_template["quartus_gold_tdp"]  (BIDIR_DUAL_PORT)
+
+SP covers inferred RAM / altsyncram passthrough, SDP covers NEORV32
+dmem/imem (8x2048 simple dual-port), TDP covers the NEORV32 regfile
+(32x32 true dual-port).  `cells_by_template["quartus_gold"]` is never
+overwritten by --mode=sdp/tdp; the buckets stay disjoint.
 
 Usage:
     python3 scripts/m9k_mode_quartus_gold_mine.py --width 4 --depth 2048
+    python3 scripts/m9k_mode_quartus_gold_mine.py --mode sdp --width 8 --depth 2048
+    python3 scripts/m9k_mode_quartus_gold_mine.py --mode tdp --width 32 --depth 32
     python3 scripts/m9k_mode_quartus_gold_mine.py --all --workers 3
     python3 scripts/m9k_mode_quartus_gold_mine.py --only-analyze --all
 """
@@ -50,10 +60,26 @@ RESULTS_PATH = ROOT / "results" / "m9k_mode_bits.json"
 DEFAULT_SITE_X = 15
 DEFAULT_SITE_Y = 10
 DEFAULT_SITE_N = 0
-# Populated by main() from --site; used by _qsf_variant / _mine_one.
+# Populated by main() from --site / --mode; used by the Verilog / QSF
+# helpers and by _mine_one for bucket naming + work-dir layout.
 SITE_X = DEFAULT_SITE_X
 SITE_Y = DEFAULT_SITE_Y
 SITE_N = DEFAULT_SITE_N
+SITE_MODE = "sp"
+
+# Per-mode bucket names written into cells_by_template.
+_BUCKET_FOR_MODE = {
+    "sp":  "quartus_gold",
+    "sdp": "quartus_gold_sdp",
+    "tdp": "quartus_gold_tdp",
+}
+
+# altsyncram operation_mode string per --mode flag.
+_OPMODE_FOR_MODE = {
+    "sp":  "SINGLE_PORT",
+    "sdp": "DUAL_PORT",
+    "tdp": "BIDIR_DUAL_PORT",
+}
 
 TARGET_COMBOS = [
     (4, 2048),
@@ -62,6 +88,21 @@ TARGET_COMBOS = [
     (9, 1024),
     (36, 256),
 ]
+
+# --all combos when --mode is not sp.  Per-M9K geometry drives these —
+# each (w, d) below fits in a single M9K (≤9216 bits inc. parity).
+# NEORV32 higher-level primitives like dmem/imem 2048x8 are split by
+# Quartus into multiple M9Ks (2x 2048x4 per 2048x8 instance), so the
+# per-M9K mode-cell mining happens at the split geometry, not the
+# logical primitive size.
+#
+# SDP 4x2048 — per-M9K split of NEORV32 dmem / imem 8x2048 primitive.
+# TDP 32x32  — cpu_regfile (fits in a single M9K, 1024 bits).
+TARGET_COMBOS_BY_MODE = {
+    "sp":  TARGET_COMBOS,
+    "sdp": [(4, 2048)],
+    "tdp": [(32, 32)],
+}
 
 PIN_POOL = [
     "PIN_E15", "PIN_E16", "PIN_M16", "PIN_M15",
@@ -72,7 +113,7 @@ PIN_POOL = [
     "PIN_F15", "PIN_B16", "PIN_G16", "PIN_K15",
     "PIN_K16", "PIN_L15", "PIN_L16", "PIN_N16",
     "PIN_D16", "PIN_D15", "PIN_C15", "PIN_C16",
-    "PIN_F14", "PIN_F16", "PIN_J14", "PIN_J15",
+    "PIN_F14", "PIN_P2",  "PIN_J14", "PIN_J15",  # F16 is ALTERA_nCEO on F17
     "PIN_J16", "PIN_T3",  "PIN_T7",  "PIN_T12",
     "PIN_T15", "PIN_P3",  "PIN_P11", "PIN_P16",
     "PIN_N2",  "PIN_N14",
@@ -88,20 +129,53 @@ def _fold_width(width: int) -> int:
     return min(width, 9)
 
 
-def _port_signals(width: int, depth: int) -> list[str]:
+def _port_signals(width: int, depth: int, mode: str = "sp") -> list[str]:
+    """Return the port-signal list for a given operation_mode.
+
+    Mode-aware so that SP / SDP / TDP Verilog / QSF use the same naming
+    convention throughout (avoids pin-map / port-decl drift).
+
+    SP: CLK, WE, ADDR, DIN, DOUT  (1 CLK)
+    SDP: CLK, WE_W, ADDRW, ADDRR, DINW, DOUTR  (1 shared CLK — NEORV32 style)
+    TDP: CLK, WE_A, WE_B, ADDRA, ADDRB, DINA, DINB, DOUTA, DOUTB  (1 shared CLK)
+    """
     addr_bits = _addr_bits(depth)
     ew = _fold_width(width)
-    sigs = ["CLK", "WE"]
-    sigs += [f"ADDR{i}" for i in range(addr_bits)]
-    sigs += [f"DIN{i}" for i in range(ew)]
-    sigs += [f"DOUT{i}" for i in range(ew)]
-    return sigs
+    if mode == "sp":
+        sigs = ["CLK", "WE"]
+        sigs += [f"ADDR{i}" for i in range(addr_bits)]
+        sigs += [f"DIN{i}" for i in range(ew)]
+        sigs += [f"DOUT{i}" for i in range(ew)]
+        return sigs
+    if mode == "sdp":
+        sigs = ["CLK", "WE_W"]
+        sigs += [f"ADDRW{i}" for i in range(addr_bits)]
+        sigs += [f"ADDRR{i}" for i in range(addr_bits)]
+        sigs += [f"DIN{i}" for i in range(ew)]
+        sigs += [f"DOUTR{i}" for i in range(ew)]
+        return sigs
+    if mode == "tdp":
+        # Shared DIN / DOUT pins to stay within the 45-pin PIN_POOL+CLK
+        # budget at (32,32) and (9,1024).  Independent ADDRA/B + WE_A/B
+        # + CLK is enough for the altsyncram operation_mode encoding —
+        # the BIDIR_DUAL_PORT mode cells are about port-count / direction,
+        # not per-port data fanout.
+        sigs = ["CLK", "WE_A", "WE_B"]
+        sigs += [f"ADDRA{i}" for i in range(addr_bits)]
+        sigs += [f"ADDRB{i}" for i in range(addr_bits)]
+        sigs += [f"DIN{i}" for i in range(ew)]
+        sigs += [f"DOUT{i}" for i in range(ew)]
+        return sigs
+    raise ValueError(f"unknown mode {mode!r}")
 
 
-def _pin_map(width: int, depth: int) -> dict[str, str]:
-    sigs = _port_signals(width, depth)
+def _pin_map(width: int, depth: int, mode: str = "sp") -> dict[str, str]:
+    sigs = _port_signals(width, depth, mode)
     if len(sigs) > 1 + len(PIN_POOL):
-        raise ValueError(f"{width}x{depth}: {len(sigs)} signals > pin budget")
+        raise ValueError(
+            f"mode={mode} {width}x{depth}: {len(sigs)} signals > pin budget "
+            f"({1 + len(PIN_POOL)})"
+        )
     pins: dict[str, str] = {"CLK": "PIN_E1"}
     remain = [p for p in PIN_POOL]
     for s in sigs:
@@ -111,9 +185,9 @@ def _pin_map(width: int, depth: int) -> dict[str, str]:
     return pins
 
 
-def _port_decl(width: int, depth: int) -> str:
+def _port_decl(width: int, depth: int, mode: str = "sp") -> str:
     parts: list[str] = []
-    for s in _port_signals(width, depth):
+    for s in _port_signals(width, depth, mode):
         if s.startswith("DOUT"):
             parts.append(f"output {s}")
         else:
@@ -121,7 +195,7 @@ def _port_decl(width: int, depth: int) -> str:
     return ",\n    ".join(parts)
 
 
-def _qsf_common(project: str, width: int, depth: int) -> list[str]:
+def _qsf_common(project: str, width: int, depth: int, mode: str = "sp") -> list[str]:
     lines = [
         'set_global_assignment -name FAMILY "Cyclone IV E"',
         "set_global_assignment -name DEVICE EP4CE6F17C8",
@@ -131,13 +205,13 @@ def _qsf_common(project: str, width: int, depth: int) -> list[str]:
         'set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"',
         "set_global_assignment -name SEED 1",
     ]
-    for sig, pin in _pin_map(width, depth).items():
+    for sig, pin in _pin_map(width, depth, mode).items():
         lines.append(f"set_location_assignment {pin} -to {sig}")
     return lines
 
 
-def _qsf_variant(project: str, width: int, depth: int) -> str:
-    lines = _qsf_common(project, width, depth)
+def _qsf_variant(project: str, width: int, depth: int, mode: str = "sp") -> str:
+    lines = _qsf_common(project, width, depth, mode)
     # altsyncram instance `u`; LOC pins it to the M9K block site.
     lines.append(
         f'set_location_assignment M9K_X{SITE_X}_Y{SITE_Y}_N{SITE_N} -to "u"'
@@ -145,8 +219,8 @@ def _qsf_variant(project: str, width: int, depth: int) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _qsf_baseline(project: str, width: int, depth: int) -> str:
-    return "\n".join(_qsf_common(project, width, depth)) + "\n"
+def _qsf_baseline(project: str, width: int, depth: int, mode: str = "sp") -> str:
+    return "\n".join(_qsf_common(project, width, depth, mode)) + "\n"
 
 
 def _init_mif(width: int, depth: int, variant: int) -> str:
@@ -170,6 +244,244 @@ def _init_mif(width: int, depth: int, variant: int) -> str:
         lines.append(f"  {i:0{addr_nibbles}X} : {v:0{nibbles}X};")
     lines.append("END;")
     return "\n".join(lines) + "\n"
+
+
+def _verilog_variant_sdp(width: int, depth: int, variant: int) -> str:
+    """altsyncram DUAL_PORT (simple dual-port) template.
+
+    Port A is the write side, port B is the read side.  Pin-budget-
+    constrained: both ports share CLK (matches NEORV32 dmem/imem, which
+    the fit report lists as Simple Dual Port / Single Clock).
+    """
+    addr_bits = _addr_bits(depth)
+    ew = _fold_width(width)
+
+    addrw_bus = ", ".join(f"ADDRW{i}" for i in range(addr_bits - 1, -1, -1))
+    addrr_bus = ", ".join(f"ADDRR{i}" for i in range(addr_bits - 1, -1, -1))
+    if width <= ew:
+        din_bus = ", ".join(f"DIN{i}" for i in range(width - 1, -1, -1))
+        din_expr = f"{{{din_bus}}}"
+        dout_assign = ", ".join(f"DOUTR{i}" for i in range(width - 1, -1, -1))
+        dout_stmt = f"    assign {{{dout_assign}}} = dout_r;"
+    else:
+        reps = (width + ew - 1) // ew
+        din_parts = ", ".join(f"DIN{i}" for i in range(ew - 1, -1, -1))
+        repl = f"{{{reps}{{{{{din_parts}}}}}}}"
+        if reps * ew > width:
+            repl += f"[{width - 1}:0]"
+        din_expr = repl
+        fold_parts = []
+        for i in range(0, width, ew):
+            hi = min(i + ew - 1, width - 1)
+            if hi - i + 1 == ew:
+                fold_parts.append(f"dout_r[{hi}:{i}]")
+            else:
+                fold_parts.append(
+                    f"{{{ew - (hi - i + 1)}'b0, dout_r[{hi}:{i}]}}"
+                )
+        xor_expr = " ^ ".join(fold_parts)
+        dout_assign = ", ".join(f"DOUTR{i}" for i in range(ew - 1, -1, -1))
+        dout_stmt = f"    assign {{{dout_assign}}} = {xor_expr};"
+
+    extra_pipe = ""
+    if variant == 2:
+        extra_pipe = f"""
+    reg [{width-1}:0] dout_q;
+    always @(posedge CLK) dout_q <= dout_r;
+"""
+        if width <= ew:
+            dout_stmt = (
+                "    assign {"
+                + ", ".join(f"DOUTR{i}" for i in range(width - 1, -1, -1))
+                + "} = dout_q;"
+            )
+        else:
+            fold_parts = []
+            for i in range(0, width, ew):
+                hi = min(i + ew - 1, width - 1)
+                if hi - i + 1 == ew:
+                    fold_parts.append(f"dout_q[{hi}:{i}]")
+                else:
+                    fold_parts.append(
+                        f"{{{ew - (hi - i + 1)}'b0, dout_q[{hi}:{i}]}}"
+                    )
+            xor_expr = " ^ ".join(fold_parts)
+            dout_assign = ", ".join(f"DOUTR{i}" for i in range(ew - 1, -1, -1))
+            dout_stmt = f"    assign {{{dout_assign}}} = {xor_expr};"
+
+    return f"""\
+// Auto-generated altsyncram DUAL_PORT (SDP) template v{variant} ({width},{depth}).
+module fuzz_top(
+    {_port_decl(width, depth, "sdp")}
+);
+    wire [{addr_bits-1}:0] addrw = {{{addrw_bus}}};
+    wire [{addr_bits-1}:0] addrr = {{{addrr_bus}}};
+    wire [{width-1}:0]     din_w = {din_expr};
+    wire [{width-1}:0]     dout;
+    reg  [{width-1}:0]     dout_r;
+    always @(posedge CLK) dout_r <= dout;
+{dout_stmt}
+{extra_pipe}
+
+    altsyncram #(
+        .operation_mode("DUAL_PORT"),
+        .width_a({width}), .widthad_a({addr_bits}), .numwords_a({depth}),
+        .width_b({width}), .widthad_b({addr_bits}), .numwords_b({depth}),
+        .lpm_type("altsyncram"),
+        .ram_block_type("M9K"),
+        .address_reg_b("CLOCK0"),
+        .outdata_reg_b("UNREGISTERED"),
+        .read_during_write_mode_mixed_ports("OLD_DATA"),
+        .clock_enable_input_a("NORMAL"),
+        .clock_enable_input_b("NORMAL"),
+        .clock_enable_output_a("NORMAL"),
+        .clock_enable_output_b("NORMAL"),
+        .init_file("mem_init.mif"),
+        .intended_device_family("Cyclone IV E")
+    ) u (
+        .clock0(CLK),
+        .address_a(addrw), .data_a(din_w), .wren_a(WE_W),
+        .address_b(addrr), .q_b(dout),
+        .aclr0(1'b0), .aclr1(1'b0),
+        .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .byteena_b(1'b1),
+        .clock1(1'b1), .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(),
+        .data_b({{{width}{{1'b0}}}}), .q_a(),
+        .rden_a(1'b1), .rden_b(1'b1), .wren_b(1'b0)
+    );
+endmodule
+"""
+
+
+def _verilog_variant_tdp(width: int, depth: int, variant: int) -> str:
+    """altsyncram BIDIR_DUAL_PORT (true dual-port) template.
+
+    Both port A and port B read + write with independent addresses /
+    wren; shared CLK (matches NEORV32 regfile = True Dual Port / Single
+    Clock per fit.rpt) so the pin budget stays within the 45-pin
+    PIN_POOL + PIN_E1 = 45 total.
+    """
+    addr_bits = _addr_bits(depth)
+    ew = _fold_width(width)
+
+    addra_bus = ", ".join(f"ADDRA{i}" for i in range(addr_bits - 1, -1, -1))
+    addrb_bus = ", ".join(f"ADDRB{i}" for i in range(addr_bits - 1, -1, -1))
+
+    def _din_shared() -> str:
+        # Shared DIN pins feed both port A and port B inputs identically.
+        if width <= ew:
+            bus = ", ".join(f"DIN{i}" for i in range(width - 1, -1, -1))
+            return f"{{{bus}}}"
+        reps = (width + ew - 1) // ew
+        parts = ", ".join(f"DIN{i}" for i in range(ew - 1, -1, -1))
+        repl = f"{{{reps}{{{{{parts}}}}}}}"
+        if reps * ew > width:
+            repl += f"[{width - 1}:0]"
+        return repl
+
+    def _dout_fold_shared(reg_a: str, reg_b: str) -> str:
+        # Shared DOUT pins = XOR of port A and port B read data, so Quartus
+        # can't optimise either port away.  XOR preserves mode-invariance
+        # under INIT variation (port-specific INIT differences cancel at
+        # the XOR anyway, which is exactly what the intersection wants).
+        combo = f"({reg_a} ^ {reg_b})"
+        if width <= ew:
+            assign = ", ".join(f"DOUT{i}" for i in range(width - 1, -1, -1))
+            return f"    assign {{{assign}}} = {combo};"
+        fold_parts = []
+        for i in range(0, width, ew):
+            hi = min(i + ew - 1, width - 1)
+            if hi - i + 1 == ew:
+                fold_parts.append(f"{combo[1:-1]}[{hi}:{i}]")
+            else:
+                fold_parts.append(
+                    f"{{{ew - (hi - i + 1)}'b0, {combo[1:-1]}[{hi}:{i}]}}"
+                )
+        # Wrap each component so `a^b[hi:i]` parses as `(a^b)[hi:i]` — use
+        # intermediate wires for clarity.
+        fold_parts = []
+        for i in range(0, width, ew):
+            hi = min(i + ew - 1, width - 1)
+            if hi - i + 1 == ew:
+                fold_parts.append(f"{reg_a}[{hi}:{i}] ^ {reg_b}[{hi}:{i}]")
+            else:
+                fold_parts.append(
+                    f"{{{ew - (hi - i + 1)}'b0, "
+                    f"{reg_a}[{hi}:{i}] ^ {reg_b}[{hi}:{i}]}}"
+                )
+        xor_expr = " ^ ".join(f"({p})" for p in fold_parts)
+        assign = ", ".join(f"DOUT{i}" for i in range(ew - 1, -1, -1))
+        return f"    assign {{{assign}}} = {xor_expr};"
+
+    din_a_expr = _din_shared()
+    din_b_expr = _din_shared()
+    dout_stmt = _dout_fold_shared("douta_r", "doutb_r")
+    dout_a_stmt = ""  # kept for template legibility below; unified
+    dout_b_stmt = ""
+
+    extra_pipe = ""
+    if variant == 2:
+        extra_pipe = f"""
+    reg [{width-1}:0] douta_q, doutb_q;
+    always @(posedge CLK) begin
+        douta_q <= douta_r;
+        doutb_q <= doutb_r;
+    end
+"""
+        dout_stmt = _dout_fold_shared("douta_q", "doutb_q")
+
+    return f"""\
+// Auto-generated altsyncram BIDIR_DUAL_PORT (TDP) template v{variant} ({width},{depth}).
+module fuzz_top(
+    {_port_decl(width, depth, "tdp")}
+);
+    wire [{addr_bits-1}:0] addra = {{{addra_bus}}};
+    wire [{addr_bits-1}:0] addrb = {{{addrb_bus}}};
+    wire [{width-1}:0]     din_a = {din_a_expr};
+    wire [{width-1}:0]     din_b = {din_b_expr};
+    wire [{width-1}:0]     douta, doutb;
+    reg  [{width-1}:0]     douta_r, doutb_r;
+    always @(posedge CLK) begin
+        douta_r <= douta;
+        doutb_r <= doutb;
+    end
+{dout_stmt}
+{extra_pipe}
+
+    altsyncram #(
+        .operation_mode("BIDIR_DUAL_PORT"),
+        .width_a({width}), .widthad_a({addr_bits}), .numwords_a({depth}),
+        .width_b({width}), .widthad_b({addr_bits}), .numwords_b({depth}),
+        .lpm_type("altsyncram"),
+        .ram_block_type("M9K"),
+        .outdata_reg_a("UNREGISTERED"),
+        .outdata_reg_b("UNREGISTERED"),
+        .address_reg_b("CLOCK0"),
+        .indata_reg_b("CLOCK0"),
+        .wrcontrol_wraddress_reg_b("CLOCK0"),
+        .read_during_write_mode_port_a("OLD_DATA"),
+        .read_during_write_mode_port_b("OLD_DATA"),
+        .read_during_write_mode_mixed_ports("OLD_DATA"),
+        .clock_enable_input_a("NORMAL"),
+        .clock_enable_input_b("NORMAL"),
+        .clock_enable_output_a("NORMAL"),
+        .clock_enable_output_b("NORMAL"),
+        .init_file("mem_init.mif"),
+        .intended_device_family("Cyclone IV E")
+    ) u (
+        .clock0(CLK), .clock1(1'b1),
+        .address_a(addra), .data_a(din_a), .wren_a(WE_A), .q_a(douta),
+        .address_b(addrb), .data_b(din_b), .wren_b(WE_B), .q_b(doutb),
+        .aclr0(1'b0), .aclr1(1'b0),
+        .addressstall_a(1'b0), .addressstall_b(1'b0),
+        .byteena_a(1'b1), .byteena_b(1'b1),
+        .clocken0(1'b1), .clocken1(1'b1),
+        .clocken2(1'b1), .clocken3(1'b1), .eccstatus(),
+        .rden_a(1'b1), .rden_b(1'b1)
+    );
+endmodule
+"""
 
 
 def _verilog_variant(width: int, depth: int, variant: int) -> str:
@@ -272,22 +584,55 @@ endmodule
 """
 
 
-def _verilog_baseline(width: int, depth: int) -> str:
+def _verilog_baseline(width: int, depth: int, mode: str = "sp") -> str:
+    """No-M9K baseline with matched pinout for a given mode.
+
+    Each DOUT* pin is a cheap XOR of the mode-specific input signals so
+    Quartus doesn't optimise the ports away.  Pinout matches the
+    corresponding --mode variant 1:1 so the variant⊕baseline diff is
+    localized to M9K block cells only.
+    """
     ew = _fold_width(width)
     addr_bits = _addr_bits(depth)
-    lines = []
-    for i in range(ew):
-        srcs = ["CLK", "WE", f"ADDR{i % addr_bits}", f"DIN{i % ew}"]
-        lines.append(f"    assign DOUT{i} = " + " ^ ".join(srcs) + ";")
+    lines: list[str] = []
+    if mode == "sp":
+        for i in range(ew):
+            srcs = ["CLK", "WE",
+                    f"ADDR{i % addr_bits}", f"DIN{i % ew}"]
+            lines.append(f"    assign DOUT{i} = " + " ^ ".join(srcs) + ";")
+    elif mode == "sdp":
+        for i in range(ew):
+            srcs = ["CLK", "WE_W",
+                    f"ADDRW{i % addr_bits}", f"ADDRR{i % addr_bits}",
+                    f"DIN{i % ew}"]
+            lines.append(f"    assign DOUTR{i} = " + " ^ ".join(srcs) + ";")
+    elif mode == "tdp":
+        for i in range(ew):
+            srcs = ["CLK", "WE_A", "WE_B",
+                    f"ADDRA{i % addr_bits}", f"ADDRB{i % addr_bits}",
+                    f"DIN{i % ew}"]
+            lines.append(f"    assign DOUT{i} = " + " ^ ".join(srcs) + ";")
+    else:
+        raise ValueError(f"unknown mode {mode!r}")
     body = "\n".join(lines)
     return f"""\
-// Auto-generated baseline (no M9K) matched pinout for ({width},{depth}).
+// Auto-generated baseline (no M9K, mode={mode}) matched pinout for ({width},{depth}).
 module fuzz_top(
-    {_port_decl(width, depth)}
+    {_port_decl(width, depth, mode)}
 );
 {body}
 endmodule
 """
+
+
+def _verilog_for_mode(width: int, depth: int, variant: int, mode: str) -> str:
+    if mode == "sp":
+        return _verilog_variant(width, depth, variant)
+    if mode == "sdp":
+        return _verilog_variant_sdp(width, depth, variant)
+    if mode == "tdp":
+        return _verilog_variant_tdp(width, depth, variant)
+    raise ValueError(f"unknown mode {mode!r}")
 
 
 def _block_band_cells(a: bytes, b: bytes) -> set[tuple[int, int]]:
@@ -326,30 +671,42 @@ def _build_one(args) -> tuple[str, str | None, str]:
 def _mine_one(width: int, depth: int, n_variants: int,
               workers: int, only_analyze: bool) -> dict:
     combo_tag = f"{width}x{depth}"
-    # Encode the site in the per-run work dir so multiple site
-    # mining calls at the same (w, d) don't clobber each other's
-    # baseline / variant RBFs.  The default-site work dir keeps
+    mode = SITE_MODE
+    mode_tag = "" if mode == "sp" else f"_{mode}"
+    bucket = _BUCKET_FOR_MODE[mode]
+    # Encode site + mode in the per-run work dir so multiple site /
+    # mode mining calls at the same (w, d) don't clobber each other's
+    # baseline / variant RBFs.  The default-site / SP work dir keeps
     # the legacy path `tmp/m9k_mode_quartus_gold/{w}x{d}/` so
     # downstream smoke tests (scripts/m9k_e2e_smoke.py) continue
-    # to find the X15_Y10_N0 artifacts at the path they expect.
+    # to find the X15_Y10_N0 SP artifacts at the path they expect.
     is_default_site = (SITE_X, SITE_Y, SITE_N) == (
         DEFAULT_SITE_X, DEFAULT_SITE_Y, DEFAULT_SITE_N)
-    if is_default_site:
+    if is_default_site and mode == "sp":
         work = WORK_ROOT / combo_tag
+    elif is_default_site:
+        work = WORK_ROOT / combo_tag / mode
     else:
-        work = WORK_ROOT / combo_tag / f"X{SITE_X}_Y{SITE_Y}_N{SITE_N}"
+        site_tag = f"X{SITE_X}_Y{SITE_Y}_N{SITE_N}"
+        if mode == "sp":
+            work = WORK_ROOT / combo_tag / site_tag
+        else:
+            work = WORK_ROOT / combo_tag / mode / site_tag
     work.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n=== mining ({width},{depth}) @ X{SITE_X}_Y{SITE_Y}_N{SITE_N} ===")
-    baseline_proj = f"m9k_mode_gold_{combo_tag}_baseline"
-    variant_projs = [f"m9k_mode_gold_{combo_tag}_v{i}" for i in range(n_variants)]
+    print(f"\n=== mining ({width},{depth}) mode={mode} "
+          f"@ X{SITE_X}_Y{SITE_Y}_N{SITE_N} ===")
+    baseline_proj = f"m9k_mode_gold_{combo_tag}{mode_tag}_baseline"
+    variant_projs = [
+        f"m9k_mode_gold_{combo_tag}{mode_tag}_v{i}" for i in range(n_variants)
+    ]
 
     jobs = []
-    jobs.append((baseline_proj, work, _verilog_baseline(width, depth),
-                 _qsf_baseline(baseline_proj, width, depth), None))
+    jobs.append((baseline_proj, work, _verilog_baseline(width, depth, mode),
+                 _qsf_baseline(baseline_proj, width, depth, mode), None))
     for i, p in enumerate(variant_projs):
-        jobs.append((p, work, _verilog_variant(width, depth, i),
-                     _qsf_variant(p, width, depth),
+        jobs.append((p, work, _verilog_for_mode(width, depth, i, mode),
+                     _qsf_variant(p, width, depth, mode),
                      _init_mif(width, depth, i)))
 
     if not only_analyze:
@@ -406,7 +763,7 @@ def _mine_one(width: int, depth: int, n_variants: int,
         "depth": depth,
     })
     cbt = entry.get("cells_by_template", {})
-    cbt["quartus_gold"] = sorted(gold_cells)
+    cbt[bucket] = sorted(gold_cells)
     entry["cells_by_template"] = cbt
     # Preserve legacy gi / inferred / altsyncram buckets if this is a
     # first-time entry at (X15, Y10) for this (w, d); copy them from
@@ -423,14 +780,17 @@ def _mine_one(width: int, depth: int, n_variants: int,
         if "cells" in sibling_entry and "cells" not in entry:
             entry["cells"] = list(sibling_entry["cells"])
         break
-    entry["quartus_gold_source"] = {
+    provenance_key = f"{bucket}_source"
+    entry[provenance_key] = {
         "date": time.strftime("%Y-%m-%d"),
         "script": "scripts/m9k_mode_quartus_gold_mine.py",
+        "operation_mode": _OPMODE_FOR_MODE[mode],
+        "mining_mode": mode,
         "n_variants": len(per_variant),
         "variant_sizes": per_variant_size,
         "variants": variant_projs,
         "baseline_proj": baseline_proj,
-        "note": f"Site-specific X{SITE_X}_Y{SITE_Y}_N{SITE_N}, "
+        "note": f"Site-specific X{SITE_X}_Y{SITE_Y}_N{SITE_N} mode={mode}, "
                 f"mode-invariant under INIT/WE/read-pipe variation.",
     }
     mode_bits[key] = entry
@@ -442,6 +802,8 @@ def _mine_one(width: int, depth: int, n_variants: int,
     print(f"[mine] merged quartus_gold ({len(gold_cells)} cells) into {key}")
 
     return {"width": width, "depth": depth,
+            "mode": mode,
+            "bucket": bucket,
             "n_variants": len(per_variant),
             "variant_sizes": per_variant_size,
             "gold_cells": len(gold_cells),
@@ -460,17 +822,24 @@ def main() -> int:
                     help="M9K site as X,Y,N (default 15,10,0). Real Quartus "
                          "mode cells shift per Y within an M9K column — mine "
                          "each site that np2fasm expects to emit for.")
+    ap.add_argument("--mode", choices=("sp", "sdp", "tdp"), default="sp",
+                    help="altsyncram operation_mode (sp=SINGLE_PORT default, "
+                         "sdp=DUAL_PORT for NEORV32 dmem/imem 8x2048, "
+                         "tdp=BIDIR_DUAL_PORT for NEORV32 regfile 32x32). "
+                         "Mined cells land in "
+                         "cells_by_template['quartus_gold'|'_sdp'|'_tdp'].")
     args = ap.parse_args()
 
-    global SITE_X, SITE_Y, SITE_N
+    global SITE_X, SITE_Y, SITE_N, SITE_MODE
     try:
         SITE_X, SITE_Y, SITE_N = (int(s) for s in args.site.split(","))
     except ValueError:
         ap.error(f"--site must be X,Y,N; got {args.site!r}")
         return 1
+    SITE_MODE = args.mode
 
     if args.all:
-        combos = TARGET_COMBOS
+        combos = TARGET_COMBOS_BY_MODE[SITE_MODE]
     elif args.width and args.depth:
         combos = [(args.width, args.depth)]
     else:

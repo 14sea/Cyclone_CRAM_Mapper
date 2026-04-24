@@ -173,7 +173,8 @@ _M9K_INIT_RE = re.compile(
 _M9K_MODE_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
     r"(?P<width>\d+)x(?P<depth>\d+)"
-    r"(?:_(?P<template>quartus_gold|inferred_goldintersect|altsyncram|inferred))?$"
+    r"(?:_(?P<template>quartus_gold_sdp|quartus_gold_tdp|quartus_gold"
+    r"|inferred_goldintersect|altsyncram|inferred))?$"
 )
 _M9K_MODE_CACHE = None
 # Default template when the bare `M9K_MODE_{w}x{d}` form is emitted.
@@ -194,6 +195,13 @@ _M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
 # reconstruction blinks on AX301 as expected.
 _M9K_MODE_VALID_TEMPLATES = (
     "altsyncram", "inferred", "inferred_goldintersect", "quartus_gold",
+    # Per-operation-mode buckets (mined 2026-04-25 by
+    # scripts/m9k_mode_quartus_gold_mine.py --mode {sdp,tdp}).
+    # `quartus_gold` above stays the SP (SINGLE_PORT) bucket; the two
+    # below are the DUAL_PORT (SDP) and BIDIR_DUAL_PORT (TDP) equivalents.
+    # Emission dispatch happens in np2fasm._emit_m9k_mode based on the
+    # techmapped EP4CE6_M9K cell's MODE parameter.
+    "quartus_gold_sdp", "quartus_gold_tdp",
 )
 # Per-(width, depth) silicon-falsified masks. Applied at load time — cells
 # here are stripped from whichever template bucket the caller asked for.

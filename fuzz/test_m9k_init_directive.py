@@ -656,6 +656,86 @@ def test_emit_m9k_mode_all_5_widths_functional_validated():
     )
 
 
+def test_m9k_mode_sdp_tdp_template_parses():
+    """Parser accepts the 2026-04-25 SDP / TDP template suffixes.
+
+    `quartus_gold_sdp` / `quartus_gold_tdp` are the per-operation-mode
+    buckets written by `scripts/m9k_mode_quartus_gold_mine.py --mode sdp`
+    and `--mode tdp`.  The bare form still defaults to altsyncram, and
+    `quartus_gold` (SP) must keep parsing too — the new regex alternative
+    must not shadow the existing suffix.
+    """
+    fasm = (
+        "X15Y10N0.M9K_MODE_8x2048_quartus_gold_sdp\n"
+        "X15Y10N0.M9K_MODE_32x32_quartus_gold_tdp\n"
+        "X15Y10N0.M9K_MODE_9x512_quartus_gold\n"   # SP must still parse
+        "X15Y10N0.M9K_MODE_9x512\n"                 # bare defaults altsyncram
+    )
+    parsed = f.parse_fasm(fasm)
+    m9k_modes = parsed[17]
+    assert m9k_modes == [
+        (15, 10, 0, 8, 2048, "quartus_gold_sdp"),
+        (15, 10, 0, 32, 32, "quartus_gold_tdp"),
+        (15, 10, 0, 9, 512, "quartus_gold"),
+        (15, 10, 0, 9, 512, "altsyncram"),
+    ], m9k_modes
+    assert "quartus_gold_sdp" in f._M9K_MODE_VALID_TEMPLATES
+    assert "quartus_gold_tdp" in f._M9K_MODE_VALID_TEMPLATES
+    print("  test_m9k_mode_sdp_tdp_template_parses: OK")
+
+
+def test_m9k_mode_sdp_tdp_unmined_raises_clear_error():
+    """Requesting an SDP / TDP bucket that hasn't been mined yet must
+    surface a clean FasmError.  This guards the load path — the mining
+    sweeps land buckets one site at a time; until the X15_Y10_N0 SDP /
+    TDP buckets exist in m9k_mode_bits.json, any caller emitting
+    `M9K_MODE_*_quartus_gold_sdp` / `_tdp` should get a clear "bucket
+    missing" error, not a silent no-op or a KeyError.
+    """
+    base = _require_baseline()
+    for tmpl, combo in [
+        ("quartus_gold_sdp", "8x2048"),
+        ("quartus_gold_tdp", "32x32"),
+    ]:
+        fasm = f"X15Y10N0.M9K_MODE_{combo}_{tmpl}\n"
+        f._M9K_MODE_CACHE = None
+        import json
+        path = ROOT / "results" / "m9k_mode_bits.json"
+        data = json.loads(path.read_text())
+        bucket_sizes = []
+        for k, v in data.items():
+            if not k.endswith(f"_{combo}"):
+                continue
+            cbt = v.get("cells_by_template") or {}
+            if tmpl in cbt:
+                bucket_sizes.append((k, len(cbt[tmpl])))
+        if bucket_sizes:
+            # Bucket is already populated — the FasmError path is moot
+            # for this (tmpl, combo) pair.  Skip rather than fail so the
+            # test stays green after mining lands.
+            print(
+                f"  test_m9k_mode_sdp_tdp_unmined_raises_clear_error "
+                f"[{tmpl}]: skipped ({len(bucket_sizes)} sites already "
+                f"mined)"
+            )
+            continue
+        try:
+            f.bitgen(fasm, base)
+        except f.FasmError as e:
+            assert tmpl in str(e) or combo in str(e), (
+                f"[{tmpl}] FasmError msg did not mention template or "
+                f"geometry: {e!r}"
+            )
+            print(
+                f"  test_m9k_mode_sdp_tdp_unmined_raises_clear_error "
+                f"[{tmpl}]: OK (FasmError)"
+            )
+            continue
+        raise AssertionError(
+            f"expected FasmError for unmined {tmpl} on {combo}"
+        )
+
+
 def test_m9k_init_wrong_hex_length_raises():
     width, depth = 9, 512
     # Correct length = ceil(9*512/4) = 1152 hex chars.
@@ -703,6 +783,8 @@ def main():
         test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_mode_quartus_gold_bucket_all_widths,
         test_emit_m9k_mode_all_5_widths_functional_validated,
+        test_m9k_mode_sdp_tdp_template_parses,
+        test_m9k_mode_sdp_tdp_unmined_raises_clear_error,
         test_m9k_init_wrong_hex_length_raises,
     ]
     for t in tests:

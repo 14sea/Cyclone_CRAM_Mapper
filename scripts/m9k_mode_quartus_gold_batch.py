@@ -43,9 +43,21 @@ from m9k_init_basis import M9K_INIT_ANCHORS  # noqa: E402
 
 RESULTS_PATH = ROOT / "results" / "m9k_mode_bits.json"
 
-# (w, d) combos the mining script handles. Must stay in sync with
-# TARGET_COMBOS in m9k_mode_quartus_gold_mine.py.
+# (w, d) combos the mining script handles per mode. Must stay in sync with
+# TARGET_COMBOS_BY_MODE in m9k_mode_quartus_gold_mine.py.
 ALL_COMBOS = [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256)]
+ALL_COMBOS_BY_MODE = {
+    "sp":  ALL_COMBOS,
+    # Per-M9K split geometry — NEORV32 dmem / imem 2048x8 primitives
+    # get decomposed into 2x (2048x4) per primitive by Quartus.
+    "sdp": [(4, 2048)],
+    "tdp": [(32, 32)],    # NEORV32 cpu_regfile, 1024-bit single M9K
+}
+_BUCKET_FOR_MODE = {
+    "sp":  "quartus_gold",
+    "sdp": "quartus_gold_sdp",
+    "tdp": "quartus_gold_tdp",
+}
 
 # (18, 512) INIT anchors are only calibrated for X15_Y10..14 per
 # `fuzz/m9k_init_basis.py`. Mining at other Y values would produce
@@ -84,21 +96,22 @@ def _anchor_sites() -> set[tuple[int, int, int]]:
     return out
 
 
-def _already_mined(site_key: str, today: str) -> bool:
+def _already_mined(site_key: str, today: str, mode: str) -> bool:
     if not RESULTS_PATH.exists():
         return False
     data = json.loads(RESULTS_PATH.read_text())
     entry = data.get(site_key)
     if not entry:
         return False
-    qg = entry.get("cells_by_template", {}).get("quartus_gold")
+    bucket = _BUCKET_FOR_MODE[mode]
+    qg = entry.get("cells_by_template", {}).get(bucket)
     if not qg:
         return False
-    src = entry.get("quartus_gold_source", {})
+    src = entry.get(f"{bucket}_source", {})
     return src.get("date") == today
 
 
-def _mine_one_site_width(x: int, y: int, n: int, w: int, d: int,
+def _mine_one_site_width(x: int, y: int, n: int, w: int, d: int, mode: str,
                           workers: int, dry_run: bool) -> tuple[str, float]:
     site_tag = f"X{x}_Y{y}_N{n}"
     combo_tag = f"{w}x{d}"
@@ -109,6 +122,7 @@ def _mine_one_site_width(x: int, y: int, n: int, w: int, d: int,
         str(ROOT / "scripts/m9k_mode_quartus_gold_mine.py"),
         "--site", f"{x},{y},{n}",
         "--width", str(w), "--depth", str(d),
+        "--mode", mode,
         "--workers", str(workers),
     ]
     if dry_run:
@@ -143,12 +157,19 @@ def main() -> int:
     ap.add_argument("--force", action="store_true",
                     help="Re-mine even if quartus_gold already present today.")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--mode", choices=("sp", "sdp", "tdp"), default="sp",
+                    help="altsyncram operation_mode to mine (default sp). "
+                         "sdp sweeps (8,2048) for NEORV32 dmem/imem; tdp "
+                         "sweeps (32,32) for the regfile. Each mode lands "
+                         "in its own cells_by_template bucket — `quartus_gold` "
+                         "(SP), `_sdp`, `_tdp` — so re-running does not "
+                         "overwrite sibling buckets.")
     args = ap.parse_args()
 
     if (args.width and not args.depth) or (args.depth and not args.width):
         ap.error("--width and --depth must be supplied together")
 
-    combos = ALL_COMBOS
+    combos = ALL_COMBOS_BY_MODE[args.mode]
     if args.width:
         combos = [(args.width, args.depth)]
 
@@ -168,26 +189,27 @@ def main() -> int:
             if (w, d) == (18, 512) and (x, y, n) not in W18_SITES:
                 continue
             key = f"X{x}_Y{y}_N{n}_{w}x{d}"
-            if _already_mined(key, today) and not args.force:
+            if _already_mined(key, today, args.mode) and not args.force:
                 continue
             plan.append((x, y, n, w, d))
 
     total_est = len(plan) * 25.0  # ~25s per (site, width) run at 4 workers
-    print(f"[batch] plan: {len(plan)} mining calls "
+    print(f"[batch] mode={args.mode} plan: {len(plan)} mining calls "
           f"(estimated ~{total_est/60:.1f} min @ {args.workers} workers)",
           flush=True)
 
     if args.dry_run:
         for (x, y, n, w, d) in plan:
-            print(f"  would mine X{x}_Y{y}_N{n} {w}x{d}")
+            print(f"  would mine X{x}_Y{y}_N{n} {w}x{d} mode={args.mode}")
         return 0
 
     t_start = time.time()
     results: list[tuple[str, float]] = []
     for i, (x, y, n, w, d) in enumerate(plan, 1):
-        print(f"[{i}/{len(plan)}] mining X{x}_Y{y}_N{n} {w}x{d} ...",
-              flush=True)
-        r = _mine_one_site_width(x, y, n, w, d, args.workers, False)
+        print(f"[{i}/{len(plan)}] mining X{x}_Y{y}_N{n} {w}x{d} "
+              f"mode={args.mode} ...", flush=True)
+        r = _mine_one_site_width(x, y, n, w, d, args.mode,
+                                  args.workers, False)
         results.append(r)
 
     el_total = time.time() - t_start
