@@ -29,6 +29,22 @@ to overwrite the manifest with the current SHA256s and region counts. The
 re-anchor flag is the only supported way to update this file — hand edits
 defeat the point.
 
+## Fixture sources
+
+- `two_lab` — built locally by Quartus at
+  `tmp/chipdb_test/quartus_two_lab/` (run `quartus_sh --flow compile two_lab`
+  in that dir if missing).
+- `lits_pair_y11_*` — produced by the sig-cache mining factory under
+  `results/rbf/` (regenerable via `fuzz/route_synth.py` mining).
+- `neorv32_demo` — NEORV32 bootloader gold; external source is
+  `~/see_neorv32_run_linux/output/neorv32_demo.rbf`. Copy it into
+  `tmp/zeta_fixtures/neorv32_demo.rbf` (the path pinned by
+  `manifest.json`) to activate this entry in the regression. The
+  external repo is read-only by house rule — do not modify
+  `~/see_neorv32_run_linux/` directly.
+- `nv_zero_global_self` — the ζ baseline at `results/rbf/nv_zero_global.rbf`,
+  used against itself as the empty round-trip edge case.
+
 ## Adding a fixture
 
 1. Produce a Quartus gold RBF under `tmp/` or `results/rbf/`.

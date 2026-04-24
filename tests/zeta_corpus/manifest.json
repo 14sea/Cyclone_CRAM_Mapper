@@ -90,6 +90,33 @@
       "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation)."
     },
     {
+      "name": "neorv32_demo",
+      "path": "tmp/zeta_fixtures/neorv32_demo.rbf",
+      "sha256": "827022f81523f5d906043e827256c4b4322ca1cf736c964ef0c454aa2b3caa76",
+      "size": 368011,
+      "kind": "quartus_gold",
+      "design": "NEORV32 bootloader (4712 LE / 2367 DFF / 19 M9K / 51 pins) \u2014 production-scale RISC-V SoC; HW-validated via \u03b6 end-to-end at 19200-8N1 on AX301 (2026-04-23)",
+      "hw_validated": "2026-04-23",
+      "zeta_bits_total": 127728,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 2570,
+        "header_crc": 64,
+        "fabric_data": 113573,
+        "fabric_crc": 11521,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 1710,
+        "header_crc": 24,
+        "fabric_data": 93066,
+        "fabric_crc": 2848,
+        "postamble": 0
+      },
+      "notes": "Fixture sourced from ~/see_neorv32_run_linux/output/neorv32_demo.rbf; copied locally under tmp/zeta_fixtures/ (gitignored). Proves the corpus scales to full-NEORV32 designs."
+    },
+    {
       "name": "nv_zero_global_self",
       "path": "results/rbf/nv_zero_global.rbf",
       "sha256": "7f5979d1d863fa048a928ebc739146a027ecddbd9bee7631b5aaf0bb6be39b96",
