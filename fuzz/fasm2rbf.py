@@ -725,20 +725,24 @@ _IOB_ROUTE_NODEDUP_KEYS: set | None = None
 def _load_iob_route_cells(pin, dx, dy, dn, port):
     """Return XOR-delta cells (off, bp) for IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}.
 
-    Cells come from results/iob_to_slice_sigcache.json.  Three buckets
+    Cells come from results/iob_to_slice_sigcache.json.  Two live buckets
     are consulted in priority order:
 
       1. ``padnv_cells`` — derived for the IOB_PAD_NV directive path as
          ``(gold_fab ⊕ base_fab) - LUT_cells`` where *base* includes
          IOB_PAD_NV, OUTROUTE, CLK, and IOB_CLK_INPUT but NOT IOB_ROUTE.
          These entries compose correctly via XOR parity **without** dedup
-         stripping, because they already exclude directive-overlap cells
-         from their own definition.
+         stripping.
 
-      2. ``single_le_cells`` — derived for the IOB_BASELINE_NV path.
-         Legacy; requires dedup stripping.
+      2. ``absolute_cells`` — pair-template fallback (15 HW-verified
+         entries at X∈{10,16}, Y∈{4,10}). Requires dedup.
 
-      3. ``absolute_cells`` — pair-template fallback.  Requires dedup.
+    ``single_le_cells_stale`` in the JSON is quarantined as of 2026-04-24
+    and is NOT consulted — directive-stack drift since 2026-04-15 derives
+    caused full-RBF reconstructions to miss (120 byte diffs vs
+    simple_led gold for E16->10,4,0,dataa). 94 pin/target combos that
+    exist ONLY in that bucket are intentionally unroutable until a
+    re-sweep lands.
     """
     global _IOB_ROUTE_CACHE, _IOB_ROUTE_NODEDUP_KEYS
     if _IOB_ROUTE_CACHE is None:
@@ -752,10 +756,8 @@ def _load_iob_route_cells(pin, dx, dy, dn, port):
             )
         data = json.loads(path.read_text())
         padnv = data.get("padnv_cells", {})
-        single_le = data.get("single_le_cells", {})
         absolute = data.get("absolute_cells", {})
         merged = dict(absolute)
-        merged.update(single_le)
         merged.update(padnv)
         _IOB_ROUTE_CACHE = merged
         _IOB_ROUTE_NODEDUP_KEYS = set(padnv.keys())

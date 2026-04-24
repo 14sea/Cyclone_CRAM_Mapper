@@ -42,7 +42,7 @@
       "size": 368011,
       "kind": "quartus_gold",
       "design": "single-LAB route X10Y10 \u2192 X10Y11N0.dataa (sig-cache mining template)",
-      "hw_validated": null,
+      "hw_validated": "2026-04-24",
       "zeta_bits_total": 622,
       "region_bits": {
         "preamble": 0,
@@ -60,7 +60,7 @@
         "fabric_crc": 128,
         "postamble": 0
       },
-      "notes": "Route-family fixture; exercises LI MUX cell emission through \u03b6."
+      "notes": "Route-family fixture; exercises LI MUX cell emission through \u03b6. HW config-chain validated on AX301 2026-04-24 (\u03b6 pipeline flash gate OK; RBF config accepted, DONE pin asserted). Functional LED behavior not asserted \u2014 mining-template masks (LUT1=0xA0A0, LUT2=0xFF00) don't drive predictable output for a human observer."
     },
     {
       "name": "lits_pair_y11_datab",
@@ -69,7 +69,7 @@
       "size": 368011,
       "kind": "quartus_gold",
       "design": "single-LAB route X10Y10 \u2192 X10Y11N0.datab (port variant of the y11_dataa fixture)",
-      "hw_validated": null,
+      "hw_validated": "2026-04-24",
       "zeta_bits_total": 620,
       "region_bits": {
         "preamble": 0,
@@ -87,7 +87,7 @@
         "fabric_crc": 128,
         "postamble": 0
       },
-      "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation)."
+      "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation). HW config-chain validated on AX301 2026-04-24 (ζ pipeline flash gate OK)."
     },
     {
       "name": "neorv32_demo",

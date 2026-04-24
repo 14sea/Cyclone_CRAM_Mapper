@@ -50,18 +50,16 @@ def test_parse_iob_route():
 def test_iob_route_loader_known_entry():
     cells = f._load_iob_route_cells("E16", 10, 4, 0, "dataa")
     assert isinstance(cells, list), type(cells)
-    # Loader returns the single_le_cells override (164 cells, derived
-    # from simple_led gold) when present; otherwise the absolute_cells
-    # fallback (196 cells, pair-reconstruction).  (E16, 10,4,0, dataa)
-    # has both — the override is the active choice for single-LE
-    # designs.
-    assert len(cells) == 164, f"E16->10,4,0,dataa = {len(cells)} cells"
-    # every cell is a (off, bp) tuple of plain ints
+    # Loader returns the absolute_cells pair-reconstruction entry
+    # (196 cells). The single_le_cells override (164 cells, derived
+    # 2026-04-15) was quarantined 2026-04-24 after directive-stack
+    # drift — see test_single_le_bucket_is_quarantined.
+    assert len(cells) == 196, f"E16->10,4,0,dataa = {len(cells)} cells"
     for off, bp in cells:
         assert isinstance(off, int) and isinstance(bp, int)
         assert 0 <= bp < 8
     print(f"  test_iob_route_loader_known_entry: OK ({len(cells)} cells, "
-          f"single_le override)")
+          f"absolute_cells)")
 
 
 def test_iob_route_loader_unknown_raises():
@@ -94,11 +92,8 @@ def test_iob_route_bit_perfect_vs_pair_rbf_in_cram():
     intentionally scoped out; those belong to IOB_IN / IOB_OUT, not
     IOB_ROUTE.
 
-    This test uses the raw `absolute_cells` entry (not the loader),
-    because for (E16, 10,4,0, dataa) the loader now prefers the
-    single_le_cells override — that override targets simple_led gold,
-    not pair RBF.  Both are valid; the directive picks the right one
-    for its context.
+    This test uses the raw `absolute_cells` entry (which the loader
+    also returns now that single_le_cells is quarantined).
     """
     PRE = 32
     FRAME = 210
@@ -181,105 +176,25 @@ def test_iob_route_all_entries_self_consistent():
           f"in the CRAM frame range)")
 
 
-def test_iob_route_single_le_simple_led_end_to_end():
-    """End-to-end: the full directive stack + IOB_ROUTE with single_le
-    override must reproduce simple_led_E16_to_G15 gold byte-for-byte.
-
-    This is the "primary-only" path — strips pair-template secondary-LE
-    decoration so a single-LE design hits full RBF 0 diffs.
-    """
-    f._IOB_BASELINE_HDR_CACHE = None
-    f._IOB_MAP_CACHE = None
-    f._IOB_ROUTE_CACHE = None
-    f._GCLK_PIN_CACHE = None
-    f._LAB_CLK_SEL_CACHE.clear()
-    f._LAB_CLK_SEL_LE_CACHE = None
-    f._IOB_CLK_INPUT_CACHE = None
-    base = NV_ZERO.read_bytes()
-    gold_path = (ROOT / "scripts" / "iob_slice_mining" / "work"
-                 / "simple_led_E16_to_G15" / "output_files"
-                 / "simple_led_E16_to_G15.rbf")
-    gold = gold_path.read_bytes()
-    fasm = ("IOB_BASELINE_NV\n"
-            "IOB_IN  PIN_E16\n"
-            "IOB_OUT PIN_G15\n"
-            "IOB_CLK_INPUT PIN_E1\n"
-            "IOB_ROUTE PIN_E16 -> X10Y4N0.dataa\n"
-            "GCLK_PIN PIN_E1\n"
-            "LAB_CLK_SEL X10Y4\n"
-            "LAB_CLK_SEL_LE X10Y4N0\n")
-    out = f.bitgen(fasm, base, patch_crc=True)
-    n_diff = sum(1 for i in range(len(out)) if out[i] != gold[i])
-    assert n_diff == 0, f"{n_diff} byte diffs vs simple_led gold"
-    print("  test_iob_route_single_le_simple_led_end_to_end: OK "
-          "(full RBF byte-identical to simple_led_E16_to_G15.rbf)")
-
-
-def test_iob_route_single_le_sweep_all_entries():
-    """Every entry in single_le_cells must reproduce the matching
-    single-LE Quartus gold byte-for-byte through the full 8-directive
-    stack (IOB_BASELINE_NV + IOB_IN + IOB_OUT + IOB_CLK_INPUT +
-    IOB_ROUTE + GCLK_PIN + LAB_CLK_SEL + LAB_CLK_SEL_LE).
-
-    Skips entries whose gold RBF isn't built locally (run
-    `scripts/iob_slice_mining/sweep_single_le.py` first to generate
-    them).  At least one entry (E16->10,4,0,dataa via
-    simple_led_E16_to_G15) must succeed, else the test fails.
-    """
+def test_single_le_bucket_is_quarantined():
+    """The `single_le_cells` bucket was moved to `single_le_cells_stale`
+    on 2026-04-24 (109 entries derived 2026-04-15 fail full-RBF
+    reconstruction after directive-stack drift). Loader + np2fasm must
+    both ignore it. This test asserts the JSON shape so a future
+    re-enable is a deliberate decision, not an accident."""
     data = json.loads(SIGCACHE.read_text())
-    single_le = data.get("single_le_cells", {})
-    assert single_le, "no single_le_cells entries in sigcache"
-    work = ROOT / "scripts" / "iob_slice_mining" / "work"
-    base = NV_ZERO.read_bytes()
-    ok = 0
-    skipped = 0
-    for key in sorted(single_le):
-        # key: "IOB_{pin}->{dx},{dy},{dn},{port}"
-        src, dst = key.split("->")
-        pin = src[4:]
-        dx, dy, dn, port = dst.split(",")
-        # Candidate gold paths: sweep_single_le layout first, then the
-        # legacy simple_led_E16_to_G15 for the original entry.
-        cand = [
-            work / f"single_le_{pin}_to_{dx}_{dy}_{dn}_{port}"
-                 / "output_files"
-                 / f"single_le_{pin}_to_{dx}_{dy}_{dn}_{port}.rbf",
-        ]
-        if pin == "E16" and (dx, dy, dn, port) == ("10", "4", "0", "dataa"):
-            cand.append(work / "simple_led_E16_to_G15" / "output_files"
-                        / "simple_led_E16_to_G15.rbf")
-        gold_path = next((p for p in cand if p.exists()), None)
-        if gold_path is None:
-            skipped += 1
-            continue
-        gold = gold_path.read_bytes()
-        # Reset caches for a clean run
-        f._IOB_BASELINE_HDR_CACHE = None
-        f._IOB_MAP_CACHE = None
-        f._IOB_ROUTE_CACHE = None
-        f._GCLK_PIN_CACHE = None
-        f._LAB_CLK_SEL_CACHE.clear()
-        f._LAB_CLK_SEL_LE_CACHE = None
-        f._IOB_CLK_INPUT_CACHE = None
-        fasm = ("IOB_BASELINE_NV\n"
-                f"IOB_IN  PIN_{pin}\n"
-                "IOB_OUT PIN_G15\n"
-                "IOB_CLK_INPUT PIN_E1\n"
-                f"IOB_ROUTE PIN_{pin} -> X{dx}Y{dy}N{dn}.{port}\n"
-                "GCLK_PIN PIN_E1\n"
-                f"LAB_CLK_SEL X{dx}Y{dy}\n"
-                f"LAB_CLK_SEL_LE X{dx}Y{dy}N{dn}\n")
-        out = f.bitgen(fasm, base, patch_crc=True)
-        n_diff = sum(1 for i in range(len(out)) if out[i] != gold[i])
-        assert n_diff == 0, f"{key}: {n_diff} byte diffs vs gold"
-        ok += 1
-    assert ok > 0, (
-        "no single_le gold RBFs found — run "
-        "scripts/iob_slice_mining/sweep_single_le.py first"
-    )
-    print(f"  test_iob_route_single_le_sweep_all_entries: OK "
-          f"({ok} entries byte-identical vs gold, {skipped} skipped "
-          f"— gold RBF not built locally)")
+    assert "single_le_cells" not in data, (
+        "single_le_cells bucket is back in the JSON without the stale "
+        "suffix — verify the data is fresh (re-derived against current "
+        "directive stack) before renaming it back.")
+    assert "single_le_cells_stale" in data, (
+        "stale bucket missing — did someone delete it? keep the data "
+        "quarantined; removing it loses 94 unique (pin, target) combos "
+        "worth re-mining.")
+    assert len(data["single_le_cells_stale"]) >= 109, (
+        "stale bucket shrank — unexpected edit.")
+    print("  test_single_le_bucket_is_quarantined: OK "
+          f"({len(data['single_le_cells_stale'])} entries quarantined)")
 
 
 def main():
@@ -290,8 +205,7 @@ def main():
         test_iob_route_xor_double_cancels,
         test_iob_route_bit_perfect_vs_pair_rbf_in_cram,
         test_iob_route_all_entries_self_consistent,
-        test_iob_route_single_le_simple_led_end_to_end,
-        test_iob_route_single_le_sweep_all_entries,
+        test_single_le_bucket_is_quarantined,
     ]
     for t in tests:
         f._IOB_ROUTE_CACHE = None

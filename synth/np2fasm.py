@@ -98,15 +98,15 @@ _IOB_ROUTE_PATH = HERE.parent / "results" / "iob_to_slice_sigcache.json"
 
 def _iob_route_available(pin_loc: str, dx: int, dy: int, dn: int,
                          port: str) -> bool:
-    """True if the IOB→SLICE route is in the sig-cache (either
-    absolute_cells or single_le_cells bucket — fasm2rbf's
-    `_iob_route_cells` loader merges both)."""
+    """True if the IOB→SLICE route is in a LIVE sig-cache bucket
+    (absolute_cells or padnv_cells). `single_le_cells_stale` is
+    quarantined (see fasm2rbf._load_iob_route_cells); np2fasm must NOT
+    emit IOB_ROUTE for those stale keys or fasm2rbf will raise."""
     global _IOB_ROUTE_KEYS
     if _IOB_ROUTE_KEYS is None:
         if _IOB_ROUTE_PATH.exists():
             data = json.loads(_IOB_ROUTE_PATH.read_text())
             keys = set(data.get("absolute_cells", {}).keys())
-            keys |= set(data.get("single_le_cells", {}).keys())
             keys |= set(data.get("padnv_cells", {}).keys())
             _IOB_ROUTE_KEYS = keys
         else:
