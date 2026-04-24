@@ -2271,6 +2271,43 @@ panic is a RISC-V nommu kernel edge case. The ζ validation objective
 (open toolchain produces a silicon-functional NEORV32 bitstream)
 is met.
 
+### ζ production pipeline (CI-friendly)
+
+The three-step ζ conversion (Quartus → BIT FASM → rebuilt RBF → flash →
+UART verify) is wrapped by `scripts/bit_workaround/zeta_pipeline.py`
+into a single command with machine-readable gates:
+
+```bash
+# RBF input, round-trip + byte-identity only (no hardware):
+python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf
+
+# Quartus project input (runs map/fit/asm/cpf first):
+python3 scripts/bit_workaround/zeta_pipeline.py path/to/design.qpf
+
+# Full end-to-end with board:
+python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf \
+    --flash --uart-seconds 10 --baud 19200 --expect "NEORV32"
+```
+
+Exit 0 iff every requested gate passed; `--json` emits a machine-readable
+report. The pipeline hard-gates on `cmp -s rebuilt gold` after fasm2rbf —
+a regression anywhere downstream in the codec surfaces immediately and
+before any flash cycle is wasted.
+
+Two companion tools:
+
+- `scripts/bit_workaround/zeta_rbf_diff.py A.rbf B.rbf` — region-aware
+  diff that splits the 368 011 B RBF into preamble / header-data /
+  header-crc / fabric-data / fabric-crc / postamble and reports
+  per-region byte/bit differences plus a frame histogram. Avoids the
+  "any data bit flipped → CRC chain churn → raw `cmp` unreadable"
+  failure mode.
+- `scripts/bit_workaround/zeta_selftest.py` — sub-second CI-style smoke
+  test of all three no-hardware gates against the HW-validated
+  `two_lab.rbf` gold (1710-bit invariant). Suitable as a pre-commit
+  hook. Exit 0 iff the full ζ → fasm2rbf → byte-identity chain is
+  green.
+
 ### When to use which
 
 | Design size / routing | Native path | ζ escape hatch |

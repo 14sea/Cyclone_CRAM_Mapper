@@ -2071,6 +2071,40 @@ Quartus gold 一致，是 kernel 层的 RISC-V nommu 边角情况。ζ 验证
 目标（「开源工具链能产出 silicon-functional NEORV32 bitstream」）
 达成。
 
+### ζ 产线化管线（CI 友好）
+
+三步 ζ 转换（Quartus → BIT FASM → 重建 RBF → 烧写 → UART 验证）
+被包成一条命令，带机器可读的 gate：
+`scripts/bit_workaround/zeta_pipeline.py`
+
+```bash
+# RBF 输入，只做 round-trip + byte-identity（不动硬件）：
+python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf
+
+# Quartus 工程输入（先跑 map/fit/asm/cpf）：
+python3 scripts/bit_workaround/zeta_pipeline.py path/to/design.qpf
+
+# 端到端含板子：
+python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf \
+    --flash --uart-seconds 10 --baud 19200 --expect "NEORV32"
+```
+
+只有所有 requested gate 全过才 exit 0；`--json` 输出机器可读报告。
+pipeline 在 fasm2rbf 之后硬 gate `cmp -s rebuilt gold` —— 下游 codec
+任何回归会立刻暴露，不会白烧一轮 flash。
+
+两个配套工具：
+
+- `scripts/bit_workaround/zeta_rbf_diff.py A.rbf B.rbf` —— region-aware
+  的 diff，把 368 011 B RBF 切成 preamble / header-data /
+  header-crc / fabric-data / fabric-crc / postamble 六区，输出
+  per-region byte/bit 差异 + frame histogram。避开「任一 data bit
+  翻动 → CRC 连锁 → raw cmp 根本看不懂」的老痛点。
+- `scripts/bit_workaround/zeta_selftest.py` —— 亚秒级 CI 风格 smoke
+  test，跑三条无硬件 gate 对 HW-validated 的 `two_lab.rbf` gold
+  （1710-bit 不变量）。适合当 pre-commit hook，ζ → fasm2rbf →
+  byte-identity 整条链全绿才 exit 0。
+
 ### 什么时候用哪条路
 
 | 设计规模 / 路由 | 原生路径 | ζ 逃生通道 |
