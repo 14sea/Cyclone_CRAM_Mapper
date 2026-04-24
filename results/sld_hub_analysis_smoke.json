@@ -1,0 +1,3269 @@
+[
+  {
+    "vir_hex": "FFFFFFFF",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000000",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000001",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000002",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000003",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000004",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000005",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000006",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "00000007",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "0000005A",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  },
+  {
+    "vir_hex": "000000A5",
+    "analysis": {
+      "hub_header": {
+        "raw": "0x00000000",
+        "m": 0,
+        "n": 0,
+        "mfg_id": 0,
+        "hub_ip_rev": 0,
+        "info_version": 0,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        },
+        {
+          "raw": "0x00000000",
+          "inst_id": 0,
+          "mfg_id_hi": 0,
+          "node_id": 0,
+          "node_id_hex": "0x000",
+          "node_version": 0,
+          "classification": "SignalTap II"
+        }
+      ],
+      "unknown_node_count": 0,
+      "unknown_nodes": []
+    }
+  }
+]

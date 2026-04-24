@@ -1,0 +1,6349 @@
+[
+  {
+    "vir_hex": "FFFFFFFF",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000000",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000001",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000002",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000003",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000004",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000005",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000006",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "00000007",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "0000005A",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  },
+  {
+    "vir_hex": "000000A5",
+    "analysis": {
+      "hub_header": {
+        "raw": "0xFFFFFFFF",
+        "m": 31,
+        "n": 255,
+        "mfg_id": 2047,
+        "hub_ip_rev": 15,
+        "info_version": 15,
+        "looks_valid": false
+      },
+      "nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ],
+      "unknown_node_count": 31,
+      "unknown_nodes": [
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        },
+        {
+          "raw": "0xFFFFFFFF",
+          "inst_id": 31,
+          "mfg_id_hi": 255,
+          "node_id": 2047,
+          "node_id_hex": "0x7FF",
+          "node_version": 255,
+          "classification": "UNKNOWN \u2014 lead!"
+        }
+      ]
+    }
+  }
+]
