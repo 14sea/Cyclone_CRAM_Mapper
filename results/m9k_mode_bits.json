@@ -47946,7 +47946,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y4_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -48828,7 +48828,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y5_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -49710,7 +49710,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y6_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -50580,7 +50580,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y7_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -51470,7 +51470,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y8_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -52356,7 +52356,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y9_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -53206,7 +53206,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y3_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -54068,7 +54068,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y4_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -54974,7 +54974,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y5_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -55840,7 +55840,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y6_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -56734,7 +56734,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y7_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -57632,7 +57632,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y8_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -63730,7 +63730,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y12_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -64632,7 +64632,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y13_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -65518,7 +65518,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y14_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -66396,7 +66396,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y15_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -67286,7 +67286,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y16_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -68240,7 +68240,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y9_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -69126,7 +69126,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y12_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -79987,7 +79987,7 @@
         6
       ]
     ],
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -81284,7 +81284,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y11_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -91355,7 +91355,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y11_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -94372,7 +94372,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y13_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -95741,7 +95741,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y2_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -99136,7 +99136,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X15_Y3_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -104303,7 +104303,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y2_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -113626,7 +113626,7 @@
       "baseline_proj": "m9k_mode_gold_4x2048_baseline",
       "note": "Site-specific X27_Y10_N0, mode-invariant under INIT/WE/read-pipe variation."
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_sdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "DUAL_PORT",
@@ -115596,7 +115596,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -115912,7 +115912,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -116256,7 +116256,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -116564,7 +116564,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -116884,7 +116884,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -117184,7 +117184,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -117516,7 +117516,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -117832,7 +117832,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -118140,7 +118140,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -118456,7 +118456,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -118792,7 +118792,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -119104,7 +119104,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -119436,7 +119436,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -119748,7 +119748,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -120064,7 +120064,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -120400,7 +120400,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -120712,7 +120712,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -121036,7 +121036,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -121396,7 +121396,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -121692,7 +121692,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -121988,7 +121988,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -122292,7 +122292,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -122612,7 +122612,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -122944,7 +122944,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -123284,7 +123284,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",
@@ -123604,7 +123604,7 @@
         ]
       ]
     },
-    "inferred_goldintersect_source": {
+    "quartus_gold_tdp_source": {
       "date": "2026-04-24",
       "script": "scripts/m9k_mode_quartus_gold_mine.py",
       "operation_mode": "BIDIR_DUAL_PORT",

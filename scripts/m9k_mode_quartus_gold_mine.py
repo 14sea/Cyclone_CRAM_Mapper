@@ -783,9 +783,13 @@ def _mine_one(width: int, depth: int, n_variants: int,
         if sibling_key == key or not sibling_key.endswith(suffix):
             continue
         sibling_cbt = sibling_entry.get("cells_by_template", {})
-        for bucket in ("altsyncram", "inferred", "inferred_goldintersect"):
-            if bucket in sibling_cbt and bucket not in cbt:
-                cbt[bucket] = list(sibling_cbt[bucket])
+        # NB: different loop var (`legacy_bucket`, not `bucket`) so the
+        # outer `bucket` from `_BUCKET_FOR_MODE[mode]` isn't shadowed —
+        # prior shadowing wrote the provenance to
+        # `inferred_goldintersect_source` for every SDP/TDP mining run.
+        for legacy_bucket in ("altsyncram", "inferred", "inferred_goldintersect"):
+            if legacy_bucket in sibling_cbt and legacy_bucket not in cbt:
+                cbt[legacy_bucket] = list(sibling_cbt[legacy_bucket])
         if "cells" in sibling_entry and "cells" not in entry:
             entry["cells"] = list(sibling_entry["cells"])
         break
