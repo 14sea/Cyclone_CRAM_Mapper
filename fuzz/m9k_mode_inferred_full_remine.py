@@ -105,7 +105,7 @@ WIDE_PIN_MAP = {
     "DOUT11": "PIN_C15",
     "DOUT12": "PIN_C16",
     "DOUT13": "PIN_F14",
-    "DOUT14": "PIN_F16",
+    "DOUT14": "PIN_P2",   # was PIN_F16; reserved as ALTERA_nCEO on F17 (default nCEO="output driving ground")
     "DOUT15": "PIN_J14",
     "DOUT16": "PIN_J15",
     "DOUT17": "PIN_J16",

@@ -439,6 +439,48 @@ def test_m9k_mode_template_goldintersect_subset_of_inferred():
     )
 
 
+def test_m9k_mode_w18_template_buckets_landed():
+    """w=18 ungating gate (2026-04-24): re-mined under collision-free
+    WIDE_PIN_MAP (F16 → P2 for DOUT14).  Asserts the three-bucket shape
+    for X15_Y10_N0_18x512 with the expected cell counts:
+      inferred = 147 (site-invariant across 5 anchors)
+      inferred_goldintersect = 74 = inferred ∩ w=18 Quartus smoke gold
+    """
+    base = _require_baseline()
+    fasm_inf = "X15Y10N0.M9K_MODE_18x512_inferred\n"
+    fasm_gi  = "X15Y10N0.M9K_MODE_18x512_inferred_goldintersect\n"
+    HDR = 32
+
+    def _diffs(fasm_text):
+        f._M9K_MODE_CACHE = None
+        out = f.bitgen(fasm_text, base)
+        diffs = set()
+        for off in range(len(base)):
+            x = base[off] ^ out[off]
+            if not x:
+                continue
+            in_frame = (off - HDR) % 210
+            if off < HDR or in_frame >= 208:
+                continue
+            for bp in range(8):
+                if x & (1 << bp):
+                    diffs.add((off, bp))
+        return diffs
+
+    inf = _diffs(fasm_inf)
+    gi = _diffs(fasm_gi)
+    assert gi <= inf, (
+        f"w=18 goldintersect ({len(gi)}) must be ⊆ inferred ({len(inf)}); "
+        f"leak = {len(gi - inf)} cells"
+    )
+    assert len(inf) == 147, f"w=18 inferred expected 147, got {len(inf)}"
+    assert len(gi) == 74, f"w=18 inferred_goldintersect expected 74, got {len(gi)}"
+    print(
+        f"  test_m9k_mode_w18_template_buckets_landed: OK "
+        f"(inferred={len(inf)}, goldintersect={len(gi)} ⊆ inferred)"
+    )
+
+
 def test_m9k_mode_template_unknown_raises():
     """Stage C.1: parser rejects unknown template names.
 
@@ -460,21 +502,34 @@ def test_m9k_mode_template_inferred_missing_bucket_raises():
     """Stage C.1: requesting `_inferred` against an entry that has no
     `cells_by_template` (legacy schema) must raise `FasmError`.
 
-    After the Stage C.1 full re-mine (fuzz/m9k_mode_inferred_full_remine.py,
-    2026-04-17), all 31 w=9 anchors gained `cells_by_template["inferred"]`.
-    The 5 w=18 anchors (X15_Y10..14_N0_18x512) remain legacy-only — use one
-    as the missing-bucket test target.
+    After the Stage C.1 full re-mine (2026-04-17) and the w=18 re-mine
+    (2026-04-24), every production anchor carries `cells_by_template`.
+    Simulate a legacy entry by monkey-patching the cache: inject a
+    synthetic X99Y99_N0_9x512 entry with only the old-schema `cells`
+    field, then request `_inferred` for it.
     """
     base = _require_baseline()
     f._M9K_MODE_CACHE = None
-    fasm = "X15Y14N0.M9K_MODE_18x512_inferred\n"
+    # Load the real cache, then inject a legacy-schema entry.
+    import json
+    path = f.ROOT / "results" / "m9k_mode_bits.json"
+    f._M9K_MODE_CACHE = json.loads(path.read_text())
+    f._M9K_MODE_CACHE["X99_Y99_N0_9x512"] = {
+        "site": "X99_Y99_N0",
+        "width": 9,
+        "depth": 512,
+        "cells": [[120028, 0]],  # synthetic legacy cell
+    }
     try:
+        fasm = "X99Y99N0.M9K_MODE_9x512_inferred\n"
         f.bitgen(fasm, base)
     except f.FasmError as e:
         msg = str(e)
         assert "inferred" in msg and "cells_by_template" in msg, msg
         print("  test_m9k_mode_template_inferred_missing_bucket_raises: OK")
         return
+    finally:
+        f._M9K_MODE_CACHE = None
     raise AssertionError(
         "expected FasmError for legacy entry queried as `_inferred`"
     )
@@ -521,6 +576,7 @@ def main():
         test_m9k_mode_template_subflag_parses,
         test_m9k_mode_template_buckets_differ,
         test_m9k_mode_template_goldintersect_subset_of_inferred,
+        test_m9k_mode_w18_template_buckets_landed,
         test_m9k_mode_template_unknown_raises,
         test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_init_wrong_hex_length_raises,

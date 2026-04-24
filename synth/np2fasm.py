@@ -272,10 +272,14 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
       with the explicit `_inferred_goldintersect` suffix — the one
       HW-validated bucket.
 
-      w=18 sites currently lack any mined cells (5 anchors skipped
-      due to pin F16 collision in the mining harness).  The helper
-      returns a warning and no line in that case so the RAM still
-      carries correct INIT data, matching the prior gated behaviour.
+      w=18 sites (5 X15_Y10..Y14_N0 anchors) were ungated 2026-04-24
+      after re-mining under a collision-free WIDE_PIN_MAP (PIN_F16
+      → PIN_P2 for DOUT14; F16 is reserved as ALTERA_nCEO on F17).
+      Site-invariant inferred = 147 cells; inferred_goldintersect =
+      74 cells (inferred ∩ w=18 Quartus smoke gold, identical across
+      all 5 sites).  HW flash on w=18 still pending — the gate opens
+      on codec + round-trip correctness; silicon validation follows
+      the same pattern as the w=9 HW-validated path.
 
     Without this line the open-toolchain RBF carries valid INIT data
     but the silicon block remains in its "M9K idle" configuration, so
@@ -289,7 +293,7 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    _M9K_MODE_MINED = {(9, 512), (9, 1024), (4, 2048), (36, 256)}
+    _M9K_MODE_MINED = {(9, 512), (9, 1024), (4, 2048), (36, 256), (18, 512)}
     if (width, depth) not in _M9K_MODE_MINED:
         return (
             None,

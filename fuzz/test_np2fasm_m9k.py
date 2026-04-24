@@ -246,18 +246,19 @@ def test_emit_m9k_mode_synthetic_cell():
     print("  test_emit_m9k_mode_synthetic_cell: OK")
 
 
-def test_emit_m9k_mode_w18_warns_and_skips():
-    """w=18 sites don't yet carry a silicon-validated
-    `inferred_goldintersect` bucket — helper must warn and skip."""
+def test_emit_m9k_mode_w18_emits_goldintersect():
+    """w=18 sites ungated 2026-04-24 after re-mining under a collision-
+    free WIDE_PIN_MAP (F16 → P2 for DOUT14).  Helper now emits the
+    `inferred_goldintersect` suffix identically to w=9."""
     mock_cell = {
         "type": "EP4CE6_M9K",
         "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
         "parameters": {"INIT": "0", "WIDTH_A": 18, "DEPTH": 512},
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
-    assert line is None, f"expected no FASM for w=18, got {line!r}"
-    assert warn and "skipped" in warn, f"expected 'skipped' in warning: {warn!r}"
-    print("  test_emit_m9k_mode_w18_warns_and_skips: OK")
+    assert warn is None, f"unexpected warning: {warn!r}"
+    assert line == "X15Y10N0.M9K_MODE_18x512_inferred_goldintersect", line
+    print("  test_emit_m9k_mode_w18_emits_goldintersect: OK")
 
 
 def test_emit_m9k_mode_rejects_non_m9k_bel():
@@ -350,7 +351,7 @@ def main():
         test_convert_skips_ep4ce6_m9k_blackbox_module,
         test_emit_m9k_init_convert_skips_unplaced,
         test_emit_m9k_mode_synthetic_cell,
-        test_emit_m9k_mode_w18_warns_and_skips,
+        test_emit_m9k_mode_w18_emits_goldintersect,
         test_emit_m9k_mode_rejects_non_m9k_bel,
         test_convert_emits_m9k_mode_goldintersect,
     ]
