@@ -252,6 +252,61 @@ def _emit_m9k_init(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     return (f"X{x}Y{y}N{n}.INIT_{width}x{depth} = 0x{hex_blob}", None)
 
 
+# Lazy-loaded set of (x, y, n, w, d) triples with a `quartus_gold`
+# bucket in results/m9k_mode_bits.json.  Populated on first call to
+# `_mined_quartus_gold_triples()`; cleared across processes
+# automatically because the cache lives in module scope.
+_MINED_QG_TRIPLES: set[tuple[int, int, int, int, int]] | None = None
+
+
+def _mined_quartus_gold_triples() -> set[tuple[int, int, int, int, int]]:
+    """Return every (X, Y, N, W, D) with a `quartus_gold` bucket
+    populated in `results/m9k_mode_bits.json`.
+
+    Reads the JSON on first call and caches the parsed triple set.
+    Keys are expected in the form `X{x}_Y{y}_N{n}_{w}x{d}` —
+    the same schema emitted by
+    `scripts/m9k_mode_quartus_gold_mine.py`.
+    Entries without a `cells_by_template.quartus_gold` list are
+    ignored so the cache tracks "really mined" rather than any
+    historical bucket (e.g. `inferred_goldintersect` aliases).
+    """
+    global _MINED_QG_TRIPLES
+    if _MINED_QG_TRIPLES is not None:
+        return _MINED_QG_TRIPLES
+
+    triples: set[tuple[int, int, int, int, int]] = set()
+    path = FUZZ.parent / "results" / "m9k_mode_bits.json"
+    if not path.exists():
+        _MINED_QG_TRIPLES = triples
+        return _MINED_QG_TRIPLES
+
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        _MINED_QG_TRIPLES = triples
+        return _MINED_QG_TRIPLES
+
+    pattern = re.compile(
+        r"^X(\d+)_Y(\d+)_N(\d+)_(\d+)x(\d+)$"
+    )
+    for key, entry in data.items():
+        m = pattern.match(key)
+        if not m:
+            continue
+        if not isinstance(entry, dict):
+            continue
+        by_template = entry.get("cells_by_template") or {}
+        qg = by_template.get("quartus_gold")
+        if not qg:
+            continue
+        x, y, n, w, d = (int(g) for g in m.groups())
+        triples.add((x, y, n, w, d))
+
+    _MINED_QG_TRIPLES = triples
+    return _MINED_QG_TRIPLES
+
+
 def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     """Return (fasm_line, warning) for the per-(site, W, D, template) enable.
 
@@ -339,10 +394,10 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     _M9K_MODE_FUNCTIONAL_VALIDATED = {
         (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
     }
-    _M9K_MODE_FUNCTIONAL_SITES = {(15, 10, 0)}
     _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
     if (width, depth) in _M9K_MODE_FUNCTIONAL_VALIDATED:
-        if (x, y, n) in _M9K_MODE_FUNCTIONAL_SITES:
+        mined_triples = _mined_quartus_gold_triples()
+        if (x, y, n, width, depth) in mined_triples:
             return (
                 f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_quartus_gold",
                 None,
@@ -350,12 +405,13 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
         return (
             None,
             f"cell {cell_name}: M9K_MODE emission skipped for site "
-            f"X{x}Y{y}N{n} — `quartus_gold` buckets are mined at "
-            f"X15_Y10_N0 only (see memory "
-            f"m9k_mode_quartus_gold_hw_validated_2026_04_24d.md).  "
-            f"Per-site mining via "
-            f"scripts/m9k_mode_quartus_gold_mine.py is the follow-up "
-            f"for NEORV32-scale M9K usage.",
+            f"X{x}Y{y}N{n} {width}x{depth} — no `quartus_gold` "
+            f"bucket in results/m9k_mode_bits.json for this (site, "
+            f"width, depth) triple.  Re-mine via "
+            f"`scripts/m9k_mode_quartus_gold_mine.py --site "
+            f"{x},{y},{n} --width {width} --depth {depth}` "
+            f"(or `scripts/m9k_mode_quartus_gold_batch.py` for a "
+            f"site sweep) to populate it.",
         )
     return (
         None,

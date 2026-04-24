@@ -292,24 +292,94 @@ def test_emit_m9k_mode_gates_off_non_x15_y10_sites():
     bytes.  Helper must warn+skip for any M9K site outside the
     validated set.
     """
-    # Same column, different Y — must skip.
-    for bel in ["M9K_X15_Y4_N0", "M9K_X15_Y14_N0",
-                "M9K_X27_Y10_N0", "M9K_X15_Y10_N1"]:
-        mock_cell = {
-            "type": "EP4CE6_M9K",
-            "attributes": {"NEXTPNR_BEL": bel},
-            "parameters": {"INIT": "0", "WIDTH_A": 9, "DEPTH": 512},
-        }
-        line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
-        assert line is None, f"{bel}: expected skip, got emit {line!r}"
-        assert warn is not None and "X15_Y10_N0 only" in warn, (
-            f"{bel}: warning should cite the single-site mining "
-            f"constraint; got: {warn!r}"
-        )
+    # Sites that have no `quartus_gold` bucket in the JSON must skip
+    # with a warning that points to the mining script.  Picks bels
+    # that are permanently outside the mining scope:
+    #   - `M9K_X15_Y4_N0`: no 9x512 INIT anchor calibrated, so the
+    #     batch-driver skips it and np2fasm won't emit even if the
+    #     bucket existed.  Durable skip.
+    #   - `M9K_X15_Y10_N1`: N=1 doesn't exist for M9K (only N=0).
+    #     Durable skip.
+    # Also force the triple-set cache to a known-empty state so the
+    # assertion is robust against whatever lives in
+    # `results/m9k_mode_bits.json` at test time (the file grows as
+    # more sites are mined).
+    saved_cache = nf._MINED_QG_TRIPLES
+    nf._MINED_QG_TRIPLES = set()
+    try:
+        for bel in ["M9K_X15_Y4_N0", "M9K_X15_Y14_N0",
+                    "M9K_X27_Y10_N0", "M9K_X15_Y10_N1"]:
+            mock_cell = {
+                "type": "EP4CE6_M9K",
+                "attributes": {"NEXTPNR_BEL": bel},
+                "parameters": {"INIT": "0", "WIDTH_A": 9, "DEPTH": 512},
+            }
+            line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+            assert line is None, f"{bel}: expected skip, got emit {line!r}"
+            assert warn is not None and "quartus_gold" in warn and (
+                "m9k_mode_quartus_gold_mine" in warn
+                or "m9k_mode_quartus_gold_batch" in warn
+            ), (
+                f"{bel}: warning should name the mining script; "
+                f"got: {warn!r}"
+            )
+    finally:
+        nf._MINED_QG_TRIPLES = saved_cache
     print(
         "  test_emit_m9k_mode_gates_off_non_x15_y10_sites: OK "
-        "(per-site mining is the follow-up)"
+        "(per-site mining gate now keyed off JSON bucket presence)"
     )
+
+
+def test_emit_m9k_mode_gate_reads_mined_triples_from_json():
+    """Once `results/m9k_mode_bits.json` gains a per-site
+    `quartus_gold` bucket for (site, W, D), `_emit_m9k_mode` must
+    emit at that site without needing a code change.  Verified by
+    stubbing the cache with a synthetic triple and confirming the
+    helper emits `M9K_MODE_{w}x{d}_quartus_gold` for the new site.
+    """
+    saved_cache = nf._MINED_QG_TRIPLES
+    # Inject a synthetic extra site (18, 512 at X15_Y11_N0 — a real
+    # NEORV32 site — so the triple is anchored in reality rather
+    # than fantasy).  Re-use the module globals directly to avoid
+    # mutating results/m9k_mode_bits.json from a unit test.
+    nf._MINED_QG_TRIPLES = {
+        (15, 10, 0, 18, 512),
+        (15, 11, 0, 18, 512),  # the new one
+    }
+    try:
+        mock_cell = {
+            "type": "EP4CE6_M9K",
+            "attributes": {"NEXTPNR_BEL": "M9K_X15_Y11_N0"},
+            "parameters": {"INIT": "0", "WIDTH_A": 18, "DEPTH": 512},
+        }
+        line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+        assert line == "X15Y11N0.M9K_MODE_18x512_quartus_gold", (
+            f"expected emit at newly-mined site; got line={line!r} "
+            f"warn={warn!r}"
+        )
+        assert warn is None, (
+            f"expected no warning on ungated site; got: {warn!r}"
+        )
+
+        # Sanity: a site NOT in the injected set still gets a skip
+        # (even though the code was not changed).
+        mock_cell_off = {
+            "type": "EP4CE6_M9K",
+            "attributes": {"NEXTPNR_BEL": "M9K_X27_Y11_N0"},
+            "parameters": {"INIT": "0", "WIDTH_A": 18, "DEPTH": 512},
+        }
+        line2, warn2 = nf._emit_m9k_mode("u_ram", mock_cell_off)
+        assert line2 is None, (
+            f"expected skip at unmined site; got emit {line2!r}"
+        )
+        assert warn2 is not None and "quartus_gold" in warn2, (
+            f"expected skip warning to mention quartus_gold; "
+            f"got: {warn2!r}"
+        )
+    finally:
+        nf._MINED_QG_TRIPLES = saved_cache
+    print("  test_emit_m9k_mode_gate_reads_mined_triples_from_json: OK")
 
 
 def test_emit_m9k_mode_rejects_non_m9k_bel():
@@ -404,6 +474,7 @@ def main():
         test_emit_m9k_mode_w18_emits_quartus_gold,
         test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold,
         test_emit_m9k_mode_gates_off_non_x15_y10_sites,
+        test_emit_m9k_mode_gate_reads_mined_triples_from_json,
         test_emit_m9k_mode_rejects_non_m9k_bel,
         test_convert_emits_m9k_mode_quartus_gold,
     ]
