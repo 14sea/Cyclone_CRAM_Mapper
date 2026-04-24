@@ -326,7 +326,18 @@ def _build_one(args) -> tuple[str, str | None, str]:
 def _mine_one(width: int, depth: int, n_variants: int,
               workers: int, only_analyze: bool) -> dict:
     combo_tag = f"{width}x{depth}"
-    work = WORK_ROOT / combo_tag
+    # Encode the site in the per-run work dir so multiple site
+    # mining calls at the same (w, d) don't clobber each other's
+    # baseline / variant RBFs.  The default-site work dir keeps
+    # the legacy path `tmp/m9k_mode_quartus_gold/{w}x{d}/` so
+    # downstream smoke tests (scripts/m9k_e2e_smoke.py) continue
+    # to find the X15_Y10_N0 artifacts at the path they expect.
+    is_default_site = (SITE_X, SITE_Y, SITE_N) == (
+        DEFAULT_SITE_X, DEFAULT_SITE_Y, DEFAULT_SITE_N)
+    if is_default_site:
+        work = WORK_ROOT / combo_tag
+    else:
+        work = WORK_ROOT / combo_tag / f"X{SITE_X}_Y{SITE_Y}_N{SITE_N}"
     work.mkdir(parents=True, exist_ok=True)
 
     print(f"\n=== mining ({width},{depth}) @ X{SITE_X}_Y{SITE_Y}_N{SITE_N} ===")
