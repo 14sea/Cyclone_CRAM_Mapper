@@ -32,6 +32,10 @@ from compile import setup_project, compile_full, generate_rbf
 WORK_ROOT = ROOT / "tmp"
 COMBOS = [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256)]
 
+DEFAULT_SITE = (15, 10, 0)  # X, Y, N — calibration baseline
+# Populated by main() from --site; used by _qsf / build_one.
+SITE_X, SITE_Y, SITE_N = DEFAULT_SITE
+
 # AX301 pins.  CLK=E1 (dedicated); KEY2=E16 drives WE internally so
 # Quartus doesn't fold the RAM into combinational logic; KEY3=M16
 # supplies a varying DIN bit for the same reason.  LED0=G15.
@@ -103,9 +107,12 @@ def _qsf(width: int, depth: int) -> str:
     ]
     for sig, pin in PINS.items():
         lines.append(f"set_location_assignment {pin} -to {sig}")
-    # Pin the inferred M9K at X15_Y10_N0.
+    # Pin the inferred M9K at the caller-selected M9K site.  Default
+    # is X15_Y10_N0 (the original calibration baseline); override via
+    # --site X,Y,N.
     lines.append(
-        'set_instance_assignment -name LOCATION M9K_X15_Y10_N0 '
+        f'set_instance_assignment -name LOCATION '
+        f'M9K_X{SITE_X}_Y{SITE_Y}_N{SITE_N} '
         '-to "altsyncram:mem_rtl_0|altsyncram_*:auto_generated|ram_block1a*"'
     )
     return "\n".join(lines) + "\n"
@@ -113,9 +120,14 @@ def _qsf(width: int, depth: int) -> str:
 
 def build_one(width: int, depth: int) -> Path:
     combo = f"{width}x{depth}"
-    work = WORK_ROOT / f"m9k_blink_{combo}"
+    # Encode the site in the work dir + project name so per-site
+    # builds don't stomp on each other (different RBF + fit.rpt).
+    site_suffix = ""
+    if (SITE_X, SITE_Y, SITE_N) != DEFAULT_SITE:
+        site_suffix = f"_X{SITE_X}_Y{SITE_Y}_N{SITE_N}"
+    work = WORK_ROOT / f"m9k_blink_{combo}{site_suffix}"
     work.mkdir(parents=True, exist_ok=True)
-    project = f"m9k_blink_{combo}"
+    project = f"m9k_blink_{combo}{site_suffix}"
     proj_dir = setup_project(project, _verilog(width, depth),
                              _qsf(width, depth), str(work))
     # fuzz_top.v is Quartus's default file — our top entity is m9k_blink
@@ -138,7 +150,19 @@ def main() -> int:
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--width", type=int)
     ap.add_argument("--depth", type=int)
+    ap.add_argument("--site", default="15,10,0",
+                    help="M9K site X,Y,N (default 15,10,0 — the "
+                         "calibration baseline).  Use a different "
+                         "site to HW-validate per-site mining.")
     args = ap.parse_args()
+
+    global SITE_X, SITE_Y, SITE_N
+    try:
+        SITE_X, SITE_Y, SITE_N = (int(s) for s in args.site.split(","))
+    except ValueError:
+        ap.error(f"--site must be X,Y,N; got {args.site!r}")
+        return 1
+
     if args.all:
         combos = COMBOS
     elif args.width and args.depth:
