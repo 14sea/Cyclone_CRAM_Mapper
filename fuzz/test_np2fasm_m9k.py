@@ -261,6 +261,23 @@ def test_emit_m9k_mode_w18_emits_goldintersect():
     print("  test_emit_m9k_mode_w18_emits_goldintersect: OK")
 
 
+def test_emit_m9k_mode_w4x2048_ungated_after_bisect():
+    """(4, 2048) was HW-FAIL on 2026-04-24 with the raw 24-cell gi bucket
+    (LED0 stuck on under KEY2).  Silicon bisection isolated an adjacent-
+    byte pair interaction at frame 1733 ((364092,2)+(364093,2)); dropping
+    (364093,2) breaks the pair and CLEAN23 PASSed AX301.  np2fasm now
+    emits for (4, 2048); fasm2rbf strips the falsified cell at load time."""
+    mock_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {"INIT": "0", "WIDTH_A": 4, "DEPTH": 2048},
+    }
+    line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+    assert warn is None, f"unexpected warning: {warn!r}"
+    assert line == "X15Y10N0.M9K_MODE_4x2048_inferred_goldintersect", line
+    print("  test_emit_m9k_mode_w4x2048_ungated_after_bisect: OK")
+
+
 def test_emit_m9k_mode_rejects_non_m9k_bel():
     mock_cell = {
         "type": "EP4CE6_M9K",
@@ -352,6 +369,7 @@ def main():
         test_emit_m9k_init_convert_skips_unplaced,
         test_emit_m9k_mode_synthetic_cell,
         test_emit_m9k_mode_w18_emits_goldintersect,
+        test_emit_m9k_mode_w4x2048_ungated_after_bisect,
         test_emit_m9k_mode_rejects_non_m9k_bel,
         test_convert_emits_m9k_mode_goldintersect,
     ]

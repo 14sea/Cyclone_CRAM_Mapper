@@ -293,20 +293,22 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    # HW-validated set (2026-04-24): overlay probes on the HW-PASS w=9 base
-    # confirmed (9,512) + (18,512) + (9,1024) + (36,256) are silicon-safe.
-    # (4,2048) FAILed silicon — applying its 24-cell inferred_goldintersect
-    # bucket on the simple_led base left LED0 stuck on with KEY2 inert, so
-    # it is excluded here until re-mined or diagnosed.
-    _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
+    # HW-validated set: overlay probes on the HW-PASS w=9 base confirmed
+    # (9,512) + (18,512) + (9,1024) + (36,256) + (4,2048) are silicon-safe.
+    # (4,2048): raw 24-cell gi bucket FAILed on 2026-04-24 (LED0 stuck on);
+    # bisection isolated an adjacent-byte pair interaction at frame 1733
+    # ((364092,2)+(364093,2)) — dropping (364093,2) breaks the pair and
+    # CLEAN23 PASSed silicon 2026-04-24. fasm2rbf._load_m9k_mode_cells masks
+    # (364093,2) for (4,2048) at load time via _M9K_MODE_SILICON_FALSIFIED.
+    _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256),
+                              (4, 2048)}
     if (width, depth) not in _M9K_MODE_HW_VALIDATED:
         return (
             None,
             f"cell {cell_name}: M9K_MODE emission skipped for "
             f"{width}x{depth} at X{x}Y{y}N{n} — only "
             f"{_M9K_MODE_HW_VALIDATED} are HW-validated (silicon-safe "
-            f"`inferred_goldintersect` buckets). (4,2048) is mined but "
-            f"FAILs silicon; see memory m9k_mode_w4x2048_hw_fail.md.",
+            f"`inferred_goldintersect` buckets).",
         )
     return (
         f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",

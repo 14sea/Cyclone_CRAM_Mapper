@@ -181,6 +181,18 @@ _M9K_MODE_CACHE = None
 # the altsyncram bucket (the closer match to gold per probe data).
 _M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
 _M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred", "inferred_goldintersect")
+# Per-(width, depth) silicon-falsified masks. Applied at load time — cells
+# here are stripped from whichever template bucket the caller asked for.
+# (4, 2048): bisection on AX301 2026-04-24 (scripts/stage0_flash_bundle/
+# build_m9k_mode_w4x2048_bisect.py) showed the 24-cell inferred_goldintersect
+# bucket fails silicon only when the adjacent-byte pair (364092,2)+(364093,2)
+# at frame 1733 is flipped together; either singleton passes.  Dropping
+# (364093,2) breaks the pair interaction and restores KEY2→LED0 on the
+# HW-PASS w=9 base (CLEAN23 PASS verified 2026-04-24). Memory:
+# m9k_mode_w4x2048_hw_fail.md (closure update).
+_M9K_MODE_SILICON_FALSIFIED = {
+    (4, 2048): {(364093, 2)},
+}
 # DSPMULT global-enable: a single boolean directive that XOR-applies the
 # 23-cell intersection across all 42 X=20 mult sites (re-mined 2026-04-16
 # under specimen factory; fuzz/dspmult_persite_remine.py + analyzer).
@@ -470,13 +482,18 @@ def _load_m9k_mode_cells(site, width, depth, template=None):
                 f"fuzz/m9k_mode_template_probe.py to populate "
                 f"cells_by_template['inferred']."
             )
-        return [tuple(c) for c in entry["cells"]]
-    if chosen not in by_template:
+        raw = [tuple(c) for c in entry["cells"]]
+    elif chosen not in by_template:
         raise FasmError(
             f"M9K_MODE {site} {width}x{depth}: template {chosen!r} not "
             f"in cells_by_template (have: {sorted(by_template)})"
         )
-    return [tuple(c) for c in by_template[chosen]]
+    else:
+        raw = [tuple(c) for c in by_template[chosen]]
+    mask = _M9K_MODE_SILICON_FALSIFIED.get((width, depth))
+    if mask:
+        raw = [c for c in raw if c not in mask]
+    return raw
 
 
 def _load_dspmult_global_on_cells():

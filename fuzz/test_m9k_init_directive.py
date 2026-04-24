@@ -481,6 +481,63 @@ def test_m9k_mode_w18_template_buckets_landed():
     )
 
 
+def test_m9k_mode_w4x2048_silicon_mask_applied():
+    """Silicon bisection on AX301 (2026-04-24) showed (4,2048)'s 24-cell
+    `inferred_goldintersect` bucket FAILs as-is, driven by an adjacent-
+    byte pair interaction at frame 1733 — (364092,2) and (364093,2) both
+    flipped together stick LED0 high.  CLEAN23 = 24 − {(364093,2)} PASSes
+    silicon, so the loader masks (364093,2) whenever (4,2048) is asked
+    for.  This test verifies both that (364093,2) is in the raw JSON (so
+    the mask is load-bearing) and that `_load_m9k_mode_cells` strips it.
+    """
+    import json as _json
+    # Load raw JSON so we can assert the cell is present before the mask.
+    with open(ROOT / "results" / "m9k_mode_bits.json") as fh:
+        raw = _json.load(fh)
+    raw_entry = None
+    for _k, _v in raw.items():
+        if _v.get("width") == 4 and _v.get("depth") == 2048:
+            raw_entry = _v
+            break
+    assert raw_entry is not None, "no (4,2048) entry in m9k_mode_bits.json"
+    raw_gi = {tuple(c) for c in raw_entry["cells_by_template"]["inferred_goldintersect"]}
+    assert (364093, 2) in raw_gi, (
+        "(364093,2) must be in the raw gi bucket for the mask to matter"
+    )
+
+    # Now go through the loader and confirm the cell is stripped.
+    f._M9K_MODE_CACHE = None
+    cells = f._load_m9k_mode_cells(
+        "X15_Y10_N0", 4, 2048, template="inferred_goldintersect",
+    )
+    cell_set = set(cells)
+    assert (364093, 2) not in cell_set, (
+        "silicon-falsified cell (364093,2) leaked through the mask"
+    )
+    assert (364092, 2) in cell_set, (
+        "non-leaky partner (364092,2) should stay in the bucket; only "
+        "(364093,2) is masked (CLEAN23 PASS on AX301)"
+    )
+    assert len(cell_set) == len(raw_gi) - 1, (
+        f"expected mask to drop exactly one cell; got "
+        f"{len(raw_gi) - len(cell_set)} dropped "
+        f"(raw={len(raw_gi)}, masked={len(cell_set)})"
+    )
+
+    # Other widths are untouched by the mask.
+    f._M9K_MODE_CACHE = None
+    w9 = f._load_m9k_mode_cells(
+        "X15_Y10_N0", 9, 512, template="inferred_goldintersect",
+    )
+    assert (364093, 2) not in set(w9), (
+        "mask is per-(w,d); shouldn't bleed into w=9x512"
+    )
+    print(
+        f"  test_m9k_mode_w4x2048_silicon_mask_applied: OK "
+        f"(gi raw={len(raw_gi)}, masked={len(cell_set)})"
+    )
+
+
 def test_m9k_mode_template_unknown_raises():
     """Stage C.1: parser rejects unknown template names.
 
@@ -577,6 +634,7 @@ def main():
         test_m9k_mode_template_buckets_differ,
         test_m9k_mode_template_goldintersect_subset_of_inferred,
         test_m9k_mode_w18_template_buckets_landed,
+        test_m9k_mode_w4x2048_silicon_mask_applied,
         test_m9k_mode_template_unknown_raises,
         test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_init_wrong_hex_length_raises,
