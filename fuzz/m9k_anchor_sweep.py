@@ -29,14 +29,13 @@ RBF_DIR = ROOT / "results" / "rbf"
 # Sites to probe. Keep 9x512 so we isolate the *site* axis first; once
 # that generalizes, a second pass can vary WIDTH/DEPTH.
 SITES = [
-    # NEORV32 Linux demo M9K inventory (neorv32_demo.fit.rpt, 31 sites).
-    # Uniform 9x512 probe — per-site anchors for arbitrary future
-    # 9x512 writes; cross-shape generalization deferred to a second
-    # targeted pass. M9Ks only legal at N=0 on Cyclone IV E.
-    *[(f"X15_Y{y}_N0", 9, 512) for y in
-      (5,6,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23)],
-    *[(f"X27_Y{y}_N0", 9, 512) for y in
-      (11,12,13,14,15,16,17,18,19,20,21,22,23)],
+    # Gap sites — the 12 NEORV32 M9K positions still missing a 9x512
+    # INIT anchor after the 2026-04-24f session.  Restricted list so
+    # this sweep is ~10 min instead of ~40.  The 31 sites mined in
+    # earlier sessions are preserved in fuzz/m9k_init_basis.py; this
+    # run only appends the gap.
+    *[(f"X15_Y{y}_N0", 9, 512) for y in (2, 3, 4, 7)],
+    *[(f"X27_Y{y}_N0", 9, 512) for y in (2, 3, 5, 6, 7, 8, 9, 10)],
 ]
 
 PROBES = [
