@@ -2245,13 +2245,19 @@ python3 scripts/bit_workaround/zeta_pipeline.py path/to/design.qpf \
 
 - [x] Phase 5.4：**开源流程里的 LE 进位链 —— 硬件上已验证（2026-04-13）** —— 算术模式激活住在 block band（frames 1692-1738，bp=2），**不**住在 LAB CRAM 列里；而且是 per-LAB 的模式开关，不是 per-LE 的 cell。四块拼图落地：(1) `chipdb_gen.py` 声明了 8,126 条相邻 LE bel 之间的 `cout→cin` 直连 pip；(2) `synth/ep4ce6_map.v` + `synth/prims.v` 加了 CE6_CARRY primitive，让 Yosys 把 `$alu` 落到链式 LE 上，并让 FF 的 `Q` 直接接到 `CE6_CARRY.B`（不插任何外部 "Route-A" buffer）；(3) `synth/np2fasm.py` 走进位链并发出 `LUT_ARITH` 指令；(4) `fuzz/fasm2rbf.py` 针对 8-LE 半 LAB 链直接套用 `results/arith_blockband_v4.json` 的通用 blob（位置无关，任何 LAB 都能用），其它 chain 长度则查 `results/arith_blockband_by_width.json`（widths 2..16 单 LAB + 16+8 跨 LAB）。AX301 矽片收案：identity + 8 条 `LUT_ARITH=0x0000` 烧出的 LED 行为跟 Quartus counter RBF 逐 bit 一致；identity `Q<=Q` 的阴性对照组 LED 熄灭
 
-- [x] Phase 6：**σ⁻¹ 3-key LutCodec 突破（2026-04-21）** —— 历史遗留的 `LutCodec.from_cram_model()` pair mapping bug 闭合。原本 `(foff, fb8)` 2-key 表在跨 Y-group 时存在歧义，新增第三维 `group = (y-2)//3` 作为 discriminator 解决。新 σ⁻¹ 表 `results/sigma_inv_fb8_groups.json` 共 **1,904 条**（96% verified，identity fallback 降到 0%），5 级 fallback 链：精确 3-key → 就近-foff 3-key → 精确 2-key → 就近 2-key → identity。已知残留：Y=3 行（80 个位置，地址回绕）。除 Y=3 外，公式化 LutCodec 现在在所有位置都矽片可靠。
+- [x] Phase 6：**σ⁻¹ 3-key LutCodec 突破（2026-04-21）+ 缺口补齐（2026-04-24）** —— 历史遗留的 `LutCodec.from_cram_model()` pair mapping bug 闭合。原本 `(foff, fb8)` 2-key 表在跨 Y-group 时存在歧义，新增第三维 `group = (y-2)//3` 作为 discriminator 解决。σ⁻¹ 表 `results/sigma_inv_fb8_groups.json` 在 2026-04-24 从 1,904 条扩到 **2,112 条**：Y=3 wrap 缺口 +80 条（wrap 使用 `addr_adj=206` 并含边界 N=12；Y≥6 slot=1 group 仍用 207 与严格 `<`）和 Group-4 × fb8∈{0,1,3,4} 缺口 +128 条（用替代 X 列 X=11/16/12/17 的 FACE probe；主要的窄列代表 X=3/6/4/7 撑不起 16-LUT 模板）同时落地。5 级 fallback 链保留。**残留**（无法关闭）：fb8=7 × group=4 受矽片几何约束 —— X=8 是唯一的 fb8=7 列，而它在 Y≥12 没有 LAB（Quartus 在 CE6 和 CE10 上都拒绝 `LCCOMB_X8_Y{14,16}_N*`）；这 32 个位置回退到 nearest-group（group=3 fb8=7）。
 
 - [x] Phase 6b：**AX301 上的端到端硬件验证（2026-04-21 → 2026-04-22）** —— 三个设计经完整开源工具链在矽片上功能正确：(1) 带 DFF 的 AND gate（KEY2&KEY3→DFF→LED0）在 LAB(16,4)，10 条 FASM（含多 port IOB_ROUTE），与 Quartus gold 0 fabric diff；(2) 5-bit carry counter 在 LAB(16,4) N=0..8，18 条 FASM、0 条 ROUTE（进位反馈在 LE 内部）；(3) 两 LAB 跨 LAB 的 AND→DFF→LED，用 BIT-only 从 Quartus gold 重建 —— 跟 gold byte-perfect 且硬件验证通过。这是 codec 路径上首次在矽片验证 cross-LAB fabric route。
 
 - [x] Phase 6c：**chipdb 26-track 升级（2026-04-22）** —— LOCAL bus 从 8 条合成 track 扩到 26 条，总 pip 数达到 3.6M；路由图更接近真实 Cyclone IV 每 LAB ~40 LI-wire 的拓扑。runner 已能驱动 P&R 端到端跑通升级后的 chipdb。小设计硬件验证通过；密集设计（NEORV32 级）路由仍然不通 —— 模型是密了，但跟真实 C4/R4/R24/LI 交换矩阵还是简化了不少。
 
 - [x] Phase 7：**ζ BIT 逃生通道 —— 端到端在 NEORV32 上硬件验证（2026-04-23）** —— `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + `fasm2rbf.py` 把任何 Quartus 产出的 RBF 逐字节重建（相对 `nv_zero_global.rbf` baseline 每个不同的 bit 发一条 `BIT` 指令，CRC 自动修补）。NEORV32 规模硬件验证通过：4712 LE / 2367 DFF / 19 M9K / 51 pins → 127 728 条 BIT 指令（2634 hdr + 113 573 fab + 11 521 crc），ζ + fasm2rbf 总耗时约 0.5 秒。重建 RBF 在 AX301 以 19200-8N1 UART 正常启动 NEORV32 bootloader（banner + auto-boot 倒数 + SPI flash 探测 + CMD prompt）。延伸的 Linux boot 测试（2026-04-24）让 Linux 6.6.83 在 RISC-V 上跑了 ~150 秒（devtmpfs mounted、ttyNEO0 console attached、exec'd /sbin/init）后出现 `kernel/cred.c:103` panic —— 该 panic 与 ζ 无关（RBF SHA256 跟 Quartus gold 一致）。这是逃生通道首次在 SoC 级别完成硬件验证；被 chipdb 路由墙挡住的用户有了可靠的绕行方案。
+
+- [x] **simple_led 单-LE 路径抢救 + M9K_MODE 宽度扫描 + pragma 通道（2026-04-24）** —— ζ 逃生通道落地之后的三个后续工作：
+  - **Fix A（commit `8c660ef`）**：`bitgen(..., legacy_iob_route=True)` 还原 pre-6b6cda9 的 IOB_ROUTE 应用路径，供 simple_led 类单 LE 设计使用（纯 XOR parity，无 dedup，无 hdr-skip）。默认路径对配对派生 / IOB_PAD_NV 设计（two_lab、NEORV32 ζ、multi-LE）仍然正确。`simple_led` w=9/w=18 probe 现在能逐字节重建到 HW-PASS reference。
+  - **Fix B（commit `af22c9f`）**：`scripts/iob_slice_mining/sweep_single_le.py` 改用 legacy 应用路径验证，新增 `--orphans-only` / `--include-known` 两个 flag；109 条 `single_le_cells`（X∈{3,4,6,7,8,10,16} × Y∈{4,10,17,18,19,21}）每条都与 Quartus gold 缓存 byte-identical。loader 优先级变成 `single_le_cells > single_le_cells_stale > absolute_cells`，所有 sigcache key 都重新可路由。
+  - **M9K_MODE 宽度硬件扫描（commit `f22b884`）**：用 overlay probe 在 `cff800e` HW-PASS w=9 基线上扫描，(9,1024) 和 (36,256) 在 AX301 矽片通过；(4,2048) 失败（LED0 常亮、KEY2 无响应 —— 24-cell gi 桶被矽片拒绝），在 `np2fasm._M9K_MODE_HW_VALIDATED` 中关闭门控。硬件已验证集现在是 `{(9,512), (18,512), (9,1024), (36,256)}`。**与基线的 overlap 并不是矽片安全性的判别器**（(36,256) 0 overlap 通过；(4,2048) 0 overlap 失败）。
+  - **np2fasm pragma 通道（commit `612c520`）**：`np2fasm --legacy-iob-route` / `convert(legacy_iob_route=True)` 在 FASM 顶端 prepend `# fasm2rbf: legacy_iob_route=1`。`fasm2rbf.parse_pragmas(text)` 把 pragma 还原成 kwarg dict，调用方显式 forward 给 `bitgen(**pragmas)` —— 不在 bitgen 内部做神奇的自动覆盖。6/6 测试。
 
 ### 长期方向：这个 codec 让我们能做什么，不能做什么
 
@@ -2320,12 +2326,12 @@ RBF 做异常检测。这些都不是「ML 打败 Quartus」，而是「ML 帮�
 | 路由综合（绿区岛） | CE6 标准 15 岛 686/686 bit-perfect；越狱 / 边缘 9 岛 45/45 靠 snapshot fallback；总 harness 731/731 | 闭合（2026-04-14） |
 | FASM sig-cache（Phase 4.5） | **38,683 条目**（2026-04-19 扩展）；7-tuple（支持 sn>0）；NEORV32 v2 路由 miss = 0 | 生产 |
 | M9K init 编解码器（Phase 5.2） | 2D 线性公式；33+5 anchor（含 18×512）；M9K pipeline 端到端闭合（Yosys→prepack→np2fasm→fasm2rbf） | 硬件已验证（芯片接受开源工具链 M9K RBF，2026-04-16） |
-| M9K_MODE（Phase 5.2） | `_inferred_goldintersect` 38-cell 站点不变集；np2fasm 发射对 w=9 解除门控 | 硬件已验证（2026-04-17） |
+| M9K_MODE（Phase 5.2） | `_inferred_goldintersect` 按 (w,d) 的站点不变集；np2fasm 发射门控 `_M9K_MODE_HW_VALIDATED = {(9,512),(18,512),(9,1024),(36,256)}`；(4,2048) 矽片失败（门控关闭） | 硬件已验证 4/5 宽度（2026-04-17, 2026-04-24） |
 | GCLK 管线（Phase 5.4） | `GCLK_PIN`（F17 上 12 个 pin）+ `LAB_CLK_SEL` + `LAB_CLK_SEL_LE` N∈{0,2,4,6,8}；基于 AUTO baseline 做 XOR 合成 | 硬件验证（14 LAB × 5 N-slot；Stage 0 烧录 2026-04-16） |
-| IOB FASM（Phase 5.4） | `IOB_IN`/`IOB_OUT` 44/44；`IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pin；`IOB_ROUTE` 15/15；`IOB_OE` 16 pin | IOB_ROUTE 硬件验证；BIDIR/OE codec 验证 + 矽片二分法 |
+| IOB FASM（Phase 5.4） | `IOB_IN`/`IOB_OUT` 44/44；`IOB_IN_BIDIR`/`IOB_OUT_BIDIR` 16 sdram_dq pin；`IOB_ROUTE` 双应用路径（默认配对派生 + Fix A `legacy_iob_route=True` 用于 single-LE 设计）；`single_le_cells` 109 条 Fix-B 在 legacy 路径下重挖；`IOB_OE` 16 pin | IOB_ROUTE 两条路径均硬件验证；BIDIR/OE codec 验证 + 矽片二分法 |
 | DSPMULT（Phase 5.0） | 22 cell 矽片干净集（23 挖掘 − 1 经 frame 1729 二分法证伪） | 硬件二分法完成；np2fasm 未接线（NEORV32 使用 0 个 DSPMULT） |
 | `nv_zero_global` 退役 | `NV_BASELINE_PACK` 指令 + 子指令从 PURE_ZERO 直接复现 Quartus baseline 的每一字节 | **矽片等价性已确认**（Stage 0 烧录 2026-04-16） |
-| 公式化 LutCodec（σ⁻¹ 3-key） | `from_cram_model(x, y, n)` + 3-key σ⁻¹ 表（`(foff, fb8, group)`），1,904 条，5 级 fallback | 2026-04-21 修复（96% verified）；已知 Y=3 gap（80 个位置） |
+| 公式化 LutCodec（σ⁻¹ 3-key） | `from_cram_model(x, y, n)` + 3-key σ⁻¹ 表（`(foff, fb8, group)`），**2,112 条**，5 级 fallback；Y=3 wrap + Group-4 fb8∈{0,1,3,4} 两个缺口于 2026-04-24 补齐 | 生产（2026-04-24）；残留 fb8=7 × group=4 受矽片几何限制（X=8 在 Y≥12 无 LAB） |
 | 开源工具链 —— 原生路径（Phase 5.3） | Yosys → nextpnr-generic（chipdb 26 LOCAL tracks，3.6M pip）→ np2fasm → fasm2rbf。AND gate + 5-bit carry counter + M9K smoke 在单/跨 LAB 规模硬件验证通过 | 小/中规模硬件验证通过；chipdb 路由模型对 NEORV32 级密度仍过于稀疏 |
 | ζ BIT 逃生通道（Phase 7） | `scripts/bit_workaround/quartus_gold_to_bit_fasm.py` + fasm2rbf 把任何 Quartus RBF 逐字节重建。NEORV32 用 127k 条 BIT；总耗时 0.5 秒 | 2026-04-23 在 AX301 端到端硬件验证通过（4712 LE / 19 M9K 的 NEORV32 bootloader） |
 
