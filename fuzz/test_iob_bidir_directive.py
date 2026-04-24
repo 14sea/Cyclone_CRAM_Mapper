@@ -95,20 +95,16 @@ def test_bitgen_bidir_r5_no_fabric_overlap_simple_led():
     This is the regression lock for the Stage B-narrow `$tribuf` path —
     if any bidir cell set starts to overlap the simple_led bridge or
     fabric, this test will trip before an HW flash attempt.
+
+    The simple_led baseline is built inline from the same directive stack
+    so the test is self-contained (no dependency on a checked-in RBF that
+    can drift across codec changes).
     """
-    import pathlib
     PRE = 32
     FRAME = 210
     SAFE_LO, SAFE_HI = 1692, 1738
     pure = make_pure_zero_rbf()
-    base_path = (pathlib.Path(REPO) / "scripts" / "iob_slice_mining"
-                 / "work" / "simple_led_E16_to_G15" / "fasm_pure.rbf")
-    if not base_path.exists():
-        print("  test_bitgen_bidir_r5_no_fabric_overlap_simple_led: "
-              "SKIP (simple_led baseline not built)")
-        return
-    base = base_path.read_bytes()
-    fasm = (
+    simple_led_fasm = (
         "NV_BASELINE_PACK\n"
         "IOB_BASELINE_NV\n"
         "IOB_IN  PIN_E16\n"
@@ -118,17 +114,25 @@ def test_bitgen_bidir_r5_no_fabric_overlap_simple_led():
         "GCLK_PIN PIN_E1\n"
         "LAB_CLK_SEL X10Y4\n"
         "LAB_CLK_SEL_LE X10Y4N0\n"
+    )
+    fasm = simple_led_fasm + (
         "IOB_IN_BIDIR  PIN_R5\n"
         "IOB_OUT_BIDIR PIN_R5\n"
         "IOB_OE        PIN_R5\n"
     )
-    _reset_caches()
-    f._IOB_BASELINE_HDR_CACHE = None
-    f._IOB_ROUTE_CACHE = None
-    f._GCLK_PIN_CACHE = None
-    f._LAB_CLK_SEL_CACHE.clear()
-    f._LAB_CLK_SEL_LE_CACHE = None
-    f._IOB_OE_CACHE = None
+
+    def _full_reset():
+        _reset_caches()
+        f._IOB_BASELINE_HDR_CACHE = None
+        f._IOB_ROUTE_CACHE = None
+        f._GCLK_PIN_CACHE = None
+        f._LAB_CLK_SEL_CACHE.clear()
+        f._LAB_CLK_SEL_LE_CACHE = None
+        f._IOB_OE_CACHE = None
+
+    _full_reset()
+    base = f.bitgen(simple_led_fasm, pure, patch_crc=True)
+    _full_reset()
     out = f.bitgen(fasm, pure, patch_crc=True)
 
     def bits(a, b):
