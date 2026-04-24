@@ -173,14 +173,28 @@ _M9K_INIT_RE = re.compile(
 _M9K_MODE_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
     r"(?P<width>\d+)x(?P<depth>\d+)"
-    r"(?:_(?P<template>inferred_goldintersect|altsyncram|inferred))?$"
+    r"(?:_(?P<template>quartus_gold|inferred_goldintersect|altsyncram|inferred))?$"
 )
 _M9K_MODE_CACHE = None
 # Default template when the bare `M9K_MODE_{w}x{d}` form is emitted.
 # Backward-compatible: legacy callers and existing test fixtures get
 # the altsyncram bucket (the closer match to gold per probe data).
 _M9K_MODE_DEFAULT_TEMPLATE = "altsyncram"
-_M9K_MODE_VALID_TEMPLATES = ("altsyncram", "inferred", "inferred_goldintersect")
+# `quartus_gold` is the 2026-04-24 re-mined bucket: per-(w,d) variant
+# intersection of real Quartus data-path builds at X15_Y10_N0, diffed
+# against a pinout-matched no-M9K baseline.  Sizes: (4,2048)=19,
+# (9,512)=52, (18,512)=59, (9,1024)=43, (36,256)=68.  See
+# scripts/m9k_mode_quartus_gold_mine.py + memory
+# m9k_mode_quartus_gold_mining_landed.md.  This bucket is
+# CONTENT-CORRECT (cells appear in the real Quartus diff, unlike the
+# `inferred_goldintersect` bucket which the 2026-04-24 data-path probe
+# proved to be fabric-safe noise).  End-to-end functional HW
+# validation is per-width: a width only migrates into
+# `np2fasm._M9K_MODE_FUNCTIONAL_VALIDATED` after its data-path
+# reconstruction blinks on AX301 as expected.
+_M9K_MODE_VALID_TEMPLATES = (
+    "altsyncram", "inferred", "inferred_goldintersect", "quartus_gold",
+)
 # Per-(width, depth) silicon-falsified masks. Applied at load time — cells
 # here are stripped from whichever template bucket the caller asked for.
 #

@@ -592,6 +592,84 @@ def test_m9k_mode_template_inferred_missing_bucket_raises():
     )
 
 
+def test_m9k_mode_quartus_gold_bucket_all_widths():
+    """2026-04-24: `quartus_gold` is the per-(w,d) variant-intersection
+    re-mine against real Quartus data-path builds at X15_Y10_N0 (see
+    scripts/m9k_mode_quartus_gold_mine.py + memory
+    `m9k_mode_quartus_gold_mining_landed.md`).  The bucket must be
+    loadable for all 5 standard widths, non-empty, and round-trip
+    XOR-cancel via `bitgen` — same contract as every other M9K_MODE
+    template.
+    """
+    f._M9K_MODE_CACHE = None
+    base = _require_baseline()
+    expected = {(4, 2048): 19, (9, 512): 52, (18, 512): 59,
+                (9, 1024): 43, (36, 256): 68}
+    for (w, d), n_expected in expected.items():
+        cells = f._load_m9k_mode_cells(
+            "X15_Y10_N0", w, d, template="quartus_gold",
+        )
+        assert len(cells) == n_expected, (
+            f"{w}x{d}: expected {n_expected} quartus_gold cells, "
+            f"got {len(cells)}"
+        )
+        line = f"X15Y10N0.M9K_MODE_{w}x{d}_quartus_gold\n"
+        rbf_once = f.bitgen(line, base)
+        rbf_twice = f.bitgen(line + line, base)
+        assert rbf_once != base, (
+            f"{w}x{d}: quartus_gold bucket is empty or zero-flip"
+        )
+        assert rbf_twice == base, (
+            f"{w}x{d}: quartus_gold double-flip didn't cancel "
+            f"(len diff = {sum(1 for a,b in zip(rbf_twice, base) if a!=b)})"
+        )
+    print(
+        f"  test_m9k_mode_quartus_gold_bucket_all_widths: OK "
+        f"({expected})"
+    )
+
+
+def test_emit_m9k_mode_widths_gated_off_functional():
+    """Per session 2026-04-24d plan: the FUNCTIONAL gate (quartus_gold
+    emission) starts empty until per-width data-path HW validation
+    lands.  The fabric-safe gate (inferred_goldintersect emission) is
+    unchanged from 2026-04-24 post-revert.  Verify the two-tier gate
+    by inspecting np2fasm._emit_m9k_mode routing for each standard
+    width.
+    """
+    sys.path.insert(0, str(ROOT / "synth"))
+    import np2fasm as npf
+    cell_tmpl = {
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {},
+    }
+    expectations = {
+        (4, 2048):  ("skip",      None),
+        (9, 512):   ("fabric",    "inferred_goldintersect"),
+        (18, 512):  ("fabric",    "inferred_goldintersect"),
+        (9, 1024):  ("fabric",    "inferred_goldintersect"),
+        (36, 256):  ("fabric",    "inferred_goldintersect"),
+    }
+    for (w, d), (tier, suffix) in expectations.items():
+        cell = {
+            "attributes": cell_tmpl["attributes"],
+            "parameters": {"WIDTH_A": str(w), "DEPTH": str(d)},
+        }
+        line, warn = npf._emit_m9k_mode("mem.ram", cell)
+        if tier == "skip":
+            assert line is None, f"({w},{d}): expected skip, got {line!r}"
+            assert warn is not None and "skipped" in warn, warn
+        else:
+            assert line is not None, f"({w},{d}): expected emit, got warn={warn}"
+            assert suffix in line, (
+                f"({w},{d}): expected suffix {suffix!r} in {line!r}"
+            )
+    print(
+        "  test_emit_m9k_mode_widths_gated_off_functional: OK "
+        "(quartus_gold emission pending per-width HW validation)"
+    )
+
+
 def test_m9k_init_wrong_hex_length_raises():
     width, depth = 9, 512
     # Correct length = ceil(9*512/4) = 1152 hex chars.
@@ -637,6 +715,8 @@ def main():
         test_m9k_mode_w4x2048_silicon_mask_applied,
         test_m9k_mode_template_unknown_raises,
         test_m9k_mode_template_inferred_missing_bucket_raises,
+        test_m9k_mode_quartus_gold_bucket_all_widths,
+        test_emit_m9k_mode_widths_gated_off_functional,
         test_m9k_init_wrong_hex_length_raises,
     ]
     for t in tests:

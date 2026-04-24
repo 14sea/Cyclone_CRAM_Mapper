@@ -293,35 +293,44 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    # "HW-validated" = the gi-bucket overlay on the simple_led baseline is
-    # silicon-FABRIC-safe (KEY2→LED0 still responds).  IT DOES NOT MEAN THE
-    # M9K IS FUNCTIONALLY CONFIGURED for that (w, d) mode.  2026-04-24
-    # data-path probe at X15_Y10_N0 showed real Quartus (4,2048) / (9,512)
-    # builds have 0% overlap with their respective gi buckets — the gi
-    # bucket is a site-invariant noise pattern that happens to be
-    # fabric-survivable, not Quartus's actual mode encoding.  See memory
-    # m9k_mode_gi_bucket_not_quartus_encoding.md.
+    # Two-tier gate:
+    #   _M9K_MODE_FUNCTIONAL_VALIDATED  — widths whose data-path
+    #     reconstruction has been observed to work on AX301 silicon.
+    #     Emission uses the `quartus_gold` bucket (real Quartus mode
+    #     cells, mined 2026-04-24 by scripts/m9k_mode_quartus_gold_mine.py).
+    #     Starts empty — each width joins only after its m9k_blink-style
+    #     data-path is flashed and the LED blinks as expected.
+    #   _M9K_MODE_HW_VALIDATED          — widths whose gi-bucket overlay on
+    #     the simple_led baseline is fabric-safe (KEY2→LED0 keeps
+    #     responding) but whose functional correctness is NOT proven.
+    #     The 2026-04-24 data-path probe at X15_Y10_N0 showed the gi
+    #     bucket has ~0% overlap with real Quartus (w,d) mode diffs;
+    #     emission here is preserved for back-compat with existing
+    #     fixtures/callers but yields a fabric-only flip.  See memory
+    #     `m9k_mode_gi_bucket_not_quartus_encoding.md`.
     #
-    # (4,2048) was rolled back from this set after the data-path probe
-    # proved the CLEAN23 overlay doesn't enable 4×2048 mode.  Other widths
-    # stay in the set for backward compatibility with existing callers /
-    # tests that rely on the fabric-safety gate, but their functional
-    # correctness is likewise unverified.  Full re-mining against real
-    # Quartus builds is tracked as a separate effort.
+    # Prefer FUNCTIONAL; fall back to fabric-safe; else skip+warn.
+    _M9K_MODE_FUNCTIONAL_VALIDATED: set[tuple[int, int]] = set()
     _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
-    if (width, depth) not in _M9K_MODE_HW_VALIDATED:
+    if (width, depth) in _M9K_MODE_FUNCTIONAL_VALIDATED:
         return (
+            f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_quartus_gold",
             None,
-            f"cell {cell_name}: M9K_MODE emission skipped for "
-            f"{width}x{depth} at X{x}Y{y}N{n} — only "
-            f"{_M9K_MODE_HW_VALIDATED} are fabric-safe "
-            f"`inferred_goldintersect` overlays.  Note: gi buckets are "
-            f"NOT the real Quartus mode cells; see memory "
-            f"m9k_mode_gi_bucket_not_quartus_encoding.md.",
+        )
+    if (width, depth) in _M9K_MODE_HW_VALIDATED:
+        return (
+            f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
+            None,
         )
     return (
-        f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
         None,
+        f"cell {cell_name}: M9K_MODE emission skipped for "
+        f"{width}x{depth} at X{x}Y{y}N{n} — not in functional "
+        f"({_M9K_MODE_FUNCTIONAL_VALIDATED}) or fabric-safe "
+        f"({_M9K_MODE_HW_VALIDATED}) gate.  `quartus_gold` buckets "
+        f"are mined for all 5 standard widths but functional HW "
+        f"validation is pending; see memory "
+        f"m9k_mode_gi_bucket_not_quartus_encoding.md.",
     )
 
 
