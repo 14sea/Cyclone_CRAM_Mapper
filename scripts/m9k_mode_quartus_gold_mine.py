@@ -101,7 +101,10 @@ TARGET_COMBOS = [
 TARGET_COMBOS_BY_MODE = {
     "sp":  TARGET_COMBOS,
     "sdp": [(4, 2048)],
-    "tdp": [(32, 32)],
+    # Per-M9K TDP geometry — M9K's BIDIR_DUAL_PORT caps each port's
+    # data width at 18 (Cyclone IV datasheet), so NEORV32's logical
+    # 32x32 cpu_regfile is split by Quartus into 2x (16x32) TDP M9Ks.
+    "tdp": [(16, 32)],
 }
 
 PIN_POOL = [
@@ -370,66 +373,77 @@ def _verilog_variant_tdp(width: int, depth: int, variant: int) -> str:
 
     def _din_shared() -> str:
         # Shared DIN pins feed both port A and port B inputs identically.
+        # Quartus Verilog-2001 does not accept part-select of a
+        # concatenation expression (`{N{...}}[hi:lo]`) — the slice has
+        # to come from an identifier.  When the replicated width would
+        # overflow, generate the expanded concatenation explicitly and
+        # let Quartus truncate naturally during the wire assignment
+        # (LHS width = `width`, RHS concat = reps*ew ≥ width; Quartus
+        # takes the LSBs).
         if width <= ew:
             bus = ", ".join(f"DIN{i}" for i in range(width - 1, -1, -1))
             return f"{{{bus}}}"
         reps = (width + ew - 1) // ew
-        parts = ", ".join(f"DIN{i}" for i in range(ew - 1, -1, -1))
-        repl = f"{{{reps}{{{{{parts}}}}}}}"
-        if reps * ew > width:
-            repl += f"[{width - 1}:0]"
-        return repl
+        per_rep = ", ".join(f"DIN{i}" for i in range(ew - 1, -1, -1))
+        if reps * ew == width:
+            return f"{{{reps}{{{{{per_rep}}}}}}}"
+        # Emit `reps` explicit copies and LSB-truncate to `width`.
+        pieces = [f"{{{per_rep}}}" for _ in range(reps)]
+        # Keep only the lowest `width` bits out of `reps*ew` total.
+        extra = reps * ew - width
+        # Drop the leading `extra` MSB bits from the highest-order
+        # replica so the total width matches.
+        msb_keep = ew - extra
+        top_bus = ", ".join(f"DIN{i}" for i in range(msb_keep - 1, -1, -1))
+        pieces[0] = f"{{{top_bus}}}"
+        return "{" + ", ".join(pieces) + "}"
 
-    def _dout_fold_shared(reg_a: str, reg_b: str) -> str:
-        # Shared DOUT pins = XOR of port A and port B read data, so Quartus
-        # can't optimise either port away.  XOR preserves mode-invariance
-        # under INIT variation (port-specific INIT differences cancel at
-        # the XOR anyway, which is exactly what the intersection wants).
-        combo = f"({reg_a} ^ {reg_b})"
+    def _dout_fold_single(reg: str) -> str:
+        # Fold a width-bit internal register/wire onto the ew-bit DOUT pad
+        # bus via LSB-aligned XOR chunks.  All slicing happens on an
+        # identifier (never on a concatenation expression) so the Quartus
+        # Verilog-2001 parser is happy.
         if width <= ew:
             assign = ", ".join(f"DOUT{i}" for i in range(width - 1, -1, -1))
-            return f"    assign {{{assign}}} = {combo};"
-        fold_parts = []
+            return f"    assign {{{assign}}} = {reg};"
+        fold_parts: list[str] = []
         for i in range(0, width, ew):
             hi = min(i + ew - 1, width - 1)
             if hi - i + 1 == ew:
-                fold_parts.append(f"{combo[1:-1]}[{hi}:{i}]")
+                fold_parts.append(f"{reg}[{hi}:{i}]")
             else:
                 fold_parts.append(
-                    f"{{{ew - (hi - i + 1)}'b0, {combo[1:-1]}[{hi}:{i}]}}"
+                    f"{{{ew - (hi - i + 1)}'b0, {reg}[{hi}:{i}]}}"
                 )
-        # Wrap each component so `a^b[hi:i]` parses as `(a^b)[hi:i]` — use
-        # intermediate wires for clarity.
-        fold_parts = []
-        for i in range(0, width, ew):
-            hi = min(i + ew - 1, width - 1)
-            if hi - i + 1 == ew:
-                fold_parts.append(f"{reg_a}[{hi}:{i}] ^ {reg_b}[{hi}:{i}]")
-            else:
-                fold_parts.append(
-                    f"{{{ew - (hi - i + 1)}'b0, "
-                    f"{reg_a}[{hi}:{i}] ^ {reg_b}[{hi}:{i}]}}"
-                )
-        xor_expr = " ^ ".join(f"({p})" for p in fold_parts)
+        xor_expr = " ^ ".join(fold_parts)
         assign = ", ".join(f"DOUT{i}" for i in range(ew - 1, -1, -1))
         return f"    assign {{{assign}}} = {xor_expr};"
 
     din_a_expr = _din_shared()
     din_b_expr = _din_shared()
-    dout_stmt = _dout_fold_shared("douta_r", "doutb_r")
-    dout_a_stmt = ""  # kept for template legibility below; unified
-    dout_b_stmt = ""
-
+    # Drive DOUT pins through a named combinational XOR wire
+    # (`dout_sum = douta ^ doutb`) rather than piping user-space regs
+    # in between M9K.q and the output pads — those get register-packed
+    # into the M9K's outdata_reg_* slot, which collides with the TDP
+    # mode's limited packable-register capacity and errors with
+    # "Cannot place RAM cell ... location out of memory".  For the
+    # mining goal we only need the altsyncram placed in the correct
+    # operation_mode so the mode cells land in the expected block-band
+    # frames — output-pin timing doesn't matter.
+    common_wires = (
+        f"    wire [{width-1}:0] dout_sum = douta ^ doutb;\n"
+    )
     extra_pipe = ""
+    dout_stmt = _dout_fold_single("dout_sum")
     if variant == 2:
-        extra_pipe = f"""
-    reg [{width-1}:0] douta_q, doutb_q;
-    always @(posedge CLK) begin
-        douta_q <= douta_r;
-        doutb_q <= doutb_r;
-    end
-"""
-        dout_stmt = _dout_fold_shared("douta_q", "doutb_q")
+        # Variant 2 registers the XOR combo in LE fabric (no M9K
+        # interaction) so the per-variant intersection tightens under
+        # pipe-depth change without re-triggering the packing error.
+        extra_pipe = (
+            f"    reg [{width-1}:0] dout_sum_q;\n"
+            f"    always @(posedge CLK) dout_sum_q <= dout_sum;\n"
+        )
+        dout_stmt = _dout_fold_single("dout_sum_q")
 
     return f"""\
 // Auto-generated altsyncram BIDIR_DUAL_PORT (TDP) template v{variant} ({width},{depth}).
@@ -441,13 +455,8 @@ module fuzz_top(
     wire [{width-1}:0]     din_a = {din_a_expr};
     wire [{width-1}:0]     din_b = {din_b_expr};
     wire [{width-1}:0]     douta, doutb;
-    reg  [{width-1}:0]     douta_r, doutb_r;
-    always @(posedge CLK) begin
-        douta_r <= douta;
-        doutb_r <= doutb;
-    end
+{common_wires}{extra_pipe}
 {dout_stmt}
-{extra_pipe}
 
     altsyncram #(
         .operation_mode("BIDIR_DUAL_PORT"),

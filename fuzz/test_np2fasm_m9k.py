@@ -304,8 +304,12 @@ def test_emit_m9k_mode_gates_off_non_x15_y10_sites():
     # assertion is robust against whatever lives in
     # `results/m9k_mode_bits.json` at test time (the file grows as
     # more sites are mined).
-    saved_cache = nf._MINED_QG_TRIPLES
-    nf._MINED_QG_TRIPLES = set()
+    saved_cache = nf._MINED_QG_BY_BUCKET
+    nf._MINED_QG_BY_BUCKET = {
+        "quartus_gold": set(),
+        "quartus_gold_sdp": set(),
+        "quartus_gold_tdp": set(),
+    }
     try:
         for bel in ["M9K_X15_Y4_N0", "M9K_X15_Y14_N0",
                     "M9K_X27_Y10_N0", "M9K_X15_Y10_N1"]:
@@ -324,7 +328,7 @@ def test_emit_m9k_mode_gates_off_non_x15_y10_sites():
                 f"got: {warn!r}"
             )
     finally:
-        nf._MINED_QG_TRIPLES = saved_cache
+        nf._MINED_QG_BY_BUCKET = saved_cache
     print(
         "  test_emit_m9k_mode_gates_off_non_x15_y10_sites: OK "
         "(per-site mining gate now keyed off JSON bucket presence)"
@@ -338,14 +342,18 @@ def test_emit_m9k_mode_gate_reads_mined_triples_from_json():
     stubbing the cache with a synthetic triple and confirming the
     helper emits `M9K_MODE_{w}x{d}_quartus_gold` for the new site.
     """
-    saved_cache = nf._MINED_QG_TRIPLES
+    saved_cache = nf._MINED_QG_BY_BUCKET
     # Inject a synthetic extra site (18, 512 at X15_Y11_N0 — a real
     # NEORV32 site — so the triple is anchored in reality rather
     # than fantasy).  Re-use the module globals directly to avoid
     # mutating results/m9k_mode_bits.json from a unit test.
-    nf._MINED_QG_TRIPLES = {
-        (15, 10, 0, 18, 512),
-        (15, 11, 0, 18, 512),  # the new one
+    nf._MINED_QG_BY_BUCKET = {
+        "quartus_gold": {
+            (15, 10, 0, 18, 512),
+            (15, 11, 0, 18, 512),  # the new one
+        },
+        "quartus_gold_sdp": set(),
+        "quartus_gold_tdp": set(),
     }
     try:
         mock_cell = {
@@ -378,7 +386,7 @@ def test_emit_m9k_mode_gate_reads_mined_triples_from_json():
             f"got: {warn2!r}"
         )
     finally:
-        nf._MINED_QG_TRIPLES = saved_cache
+        nf._MINED_QG_BY_BUCKET = saved_cache
     print("  test_emit_m9k_mode_gate_reads_mined_triples_from_json: OK")
 
 
@@ -460,6 +468,101 @@ def test_emit_m9k_init_convert_skips_unplaced():
     print("  test_emit_m9k_init_convert_skips_unplaced: OK")
 
 
+def test_emit_m9k_mode_dispatches_on_mode_param():
+    """MODE parameter in the techmapped cell routes emission to the
+    per-operation-mode bucket: SP → quartus_gold, SDP → quartus_gold_sdp,
+    TDP → quartus_gold_tdp.  synth/ep4ce6_map.v sets MODE("SP") /
+    MODE("SDP") / MODE("TDP") on the EP4CE6_M9K primitive instance.
+    """
+    # SP: (4, 2048) at X15_Y10_N0 — mined 2026-04-24 (19 cells).
+    sp_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": "0", "WIDTH_A": 4, "DEPTH": 2048, "MODE": "SP",
+        },
+    }
+    line, warn = nf._emit_m9k_mode("u_ram_sp", sp_cell)
+    assert line == "X15Y10N0.M9K_MODE_4x2048_quartus_gold", (
+        f"SP: expected SP bucket suffix; got {line!r} warn={warn!r}"
+    )
+    assert warn is None, f"SP: unexpected warn {warn!r}"
+
+    # SDP: (4, 2048) at X15_Y10_N0 — mined 2026-04-25 (116 cells).
+    sdp_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": "0", "WIDTH_A": 4, "DEPTH": 2048, "MODE": "SDP",
+        },
+    }
+    line, warn = nf._emit_m9k_mode("u_ram_sdp", sdp_cell)
+    assert line == "X15Y10N0.M9K_MODE_4x2048_quartus_gold_sdp", (
+        f"SDP: expected SDP bucket suffix; got {line!r} warn={warn!r}"
+    )
+    assert warn is None, f"SDP: unexpected warn {warn!r}"
+
+    # TDP: (16, 32) at X15_Y10_N0 — mined 2026-04-25 (72 cells).
+    tdp_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": "0", "WIDTH_A": 16, "DEPTH": 32, "MODE": "TDP",
+        },
+    }
+    line, warn = nf._emit_m9k_mode("u_ram_tdp", tdp_cell)
+    assert line == "X15Y10N0.M9K_MODE_16x32_quartus_gold_tdp", (
+        f"TDP: expected TDP bucket suffix; got {line!r} warn={warn!r}"
+    )
+    assert warn is None, f"TDP: unexpected warn {warn!r}"
+
+    # Unknown MODE → skip with a clear warn mentioning known modes.
+    bad_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": "0", "WIDTH_A": 9, "DEPTH": 512, "MODE": "QDP",
+        },
+    }
+    line, warn = nf._emit_m9k_mode("u_bad", bad_cell)
+    assert line is None and warn is not None and "QDP" in warn, (
+        f"unknown MODE should warn; got line={line!r} warn={warn!r}"
+    )
+
+    # Default MODE (absent) → SP legacy path.
+    legacy_cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {"INIT": "0", "WIDTH_A": 9, "DEPTH": 512},
+    }
+    line, warn = nf._emit_m9k_mode("u_ram_legacy", legacy_cell)
+    assert line == "X15Y10N0.M9K_MODE_9x512_quartus_gold", (
+        f"legacy (no MODE): expected SP bucket; got {line!r} "
+        f"warn={warn!r}"
+    )
+    print("  test_emit_m9k_mode_dispatches_on_mode_param: OK")
+
+
+def test_emit_m9k_mode_sdp_unmined_width_warns():
+    """SDP gate only validates (4, 2048) today — other widths must skip
+    cleanly with a warning that points at the mining script."""
+    cell = {
+        "type": "EP4CE6_M9K",
+        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
+        "parameters": {
+            "INIT": "0", "WIDTH_A": 8, "DEPTH": 1024, "MODE": "SDP",
+        },
+    }
+    line, warn = nf._emit_m9k_mode("u_ram", cell)
+    assert line is None, f"SDP 8x1024 not in gate; expected skip, got {line!r}"
+    assert warn is not None, "expected warning"
+    assert "sdp" in warn.lower() or "SDP" in warn, f"warn should cite SDP: {warn}"
+    assert "m9k_mode_quartus_gold_mine" in warn, (
+        f"warn should point to mining script: {warn}"
+    )
+    print("  test_emit_m9k_mode_sdp_unmined_width_warns: OK")
+
+
 def main():
     tests = [
         test_parse_yosys_init_round_trip,
@@ -477,6 +580,8 @@ def main():
         test_emit_m9k_mode_gate_reads_mined_triples_from_json,
         test_emit_m9k_mode_rejects_non_m9k_bel,
         test_convert_emits_m9k_mode_quartus_gold,
+        test_emit_m9k_mode_dispatches_on_mode_param,
+        test_emit_m9k_mode_sdp_unmined_width_warns,
     ]
     for t in tests:
         t()

@@ -51,7 +51,9 @@ ALL_COMBOS_BY_MODE = {
     # Per-M9K split geometry — NEORV32 dmem / imem 2048x8 primitives
     # get decomposed into 2x (2048x4) per primitive by Quartus.
     "sdp": [(4, 2048)],
-    "tdp": [(32, 32)],    # NEORV32 cpu_regfile, 1024-bit single M9K
+    # M9K TDP per-port width caps at 18 (Cyclone IV datasheet) so the
+    # logical 32x32 cpu_regfile splits into 2x (16x32) TDP M9Ks.
+    "tdp": [(16, 32)],
 }
 _BUCKET_FOR_MODE = {
     "sp":  "quartus_gold",
