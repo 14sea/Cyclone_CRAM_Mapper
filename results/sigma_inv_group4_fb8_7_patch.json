@@ -1,0 +1,6 @@
+{
+  "description": "\u03c3\u207b\u00b9 fb8=7 group=4 closure via 8-LUT half-LAB probes (X=8 is the only fb8=7 column; 16-LUT template did not fit at Y=14/16).",
+  "mining_date": "2026-04-24",
+  "mask": "0xFACE",
+  "entries": {}
+}
