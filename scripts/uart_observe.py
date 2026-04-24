@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Capture NEORV32 UART output for a fixed window after flash.
+"""Capture UART output for a fixed window after flash.
 
-Reads /dev/ttyUSB0 at 115200-8N1, timestamps each chunk, and writes both
-a hex-escaped log and the raw bytes so we can diff against what the
-Quartus gold produced (if we ever capture that reference).
+Timestamps each chunk and writes both a hex-escaped log and the raw
+bytes so callers can diff against a reference capture. The baud rate
+MUST be supplied explicitly — NEORV32 bootloader is 19200, PL2303 Linux
+runtime is 115200, and silently defaulting to the wrong one wastes a
+flash cycle.
 """
 import argparse, sys, time
 from pathlib import Path
@@ -13,7 +15,8 @@ import serial
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", default="/dev/ttyUSB0")
-    ap.add_argument("--baud", type=int, default=115200)
+    ap.add_argument("--baud", type=int, required=True,
+                    help="UART baud (no default — NEORV32=19200, PL2303 Linux=115200)")
     ap.add_argument("--seconds", type=float, default=30.0)
     ap.add_argument("--out", type=Path, default=Path("tmp/neorv32_zeta/uart_log.txt"))
     ap.add_argument("--raw", type=Path, default=Path("tmp/neorv32_zeta/uart_raw.bin"))
