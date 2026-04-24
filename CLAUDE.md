@@ -13,10 +13,16 @@ python3 runner.py n_sweep 10 10                   # calibrate 16 minterms
 python3 analyze.py read_tt design.rbf zero.rbf 10 10 0
 python3 analyze.py write_tt zero.rbf 0x8888 output.rbf 10 10 0
 python3 fuzz/test_green_zone_harden.py            # 24 islands, 731/731 bit-perfect
-# ζ escape hatch (HW-validated on NEORV32, 2026-04-23):
+# ζ production pipeline (one-shot; preferred entry point):
+python3 scripts/bit_workaround/zeta_pipeline.py gold.rbf                    # round-trip + byte-identity gate
+python3 scripts/bit_workaround/zeta_pipeline.py design.qpf --flash \
+    --uart-seconds 10 --baud 19200 --expect "NEORV32"                        # end-to-end w/ HW
+python3 scripts/bit_workaround/zeta_selftest.py                              # sub-second CI smoke test
+python3 scripts/bit_workaround/zeta_rbf_diff.py A.rbf B.rbf --top-frames 10  # region-aware diff
+# Raw two-step form (use when you want the BIT FASM as an inspectable intermediate):
 python3 scripts/bit_workaround/quartus_gold_to_bit_fasm.py gold.rbf design.bit.fasm
 python3 fuzz/fasm2rbf.py design.bit.fasm results/rbf/nv_zero_global.rbf rebuilt.rbf
-python3 scripts/uart_observe.py --baud 19200 --seconds 30  # capture UART after flash
+python3 scripts/uart_observe.py --baud 19200 --seconds 30  # --baud required, no default
 ```
 
 ## Directory Layout
@@ -186,6 +192,8 @@ Two reachable paths from Verilog/VHDL to AX301 silicon:
 
 1. **Native**: `.v → Yosys → nextpnr-generic → np2fasm → fasm2rbf → flash`. HW-verified for small/medium designs (AND gate, 5-bit carry counter, M9K smoke, all 12 F17 clock pins). Blocked on chipdb routing-model density at NEORV32 scale.
 2. **ζ escape hatch**: `.v → Quartus → scripts/bit_workaround/quartus_gold_to_bit_fasm.py → fasm2rbf → flash`. Diffs Quartus gold RBF against `results/rbf/nv_zero_global.rbf`, emits one `BIT` directive per differing bit (no filtering — hdr + fab + CRC all included so `patch_rbf_crc` re-computes correctly on round-trip). Rebuilt RBF is byte-identical to Quartus gold; total ζ + fasm2rbf wall time ≈ 0.5 s regardless of design density.
+
+**ζ production pipeline (2026-04-24, CI-friendly)**: `scripts/bit_workaround/zeta_pipeline.py` is the canonical entry point — wraps the raw ζ + fasm2rbf + byte-identity gate + optional flash + optional UART verify into one command with exit-code + JSON semantics. `zeta_selftest.py` is a sub-second regression gate (1710-bit two_lab invariant) suitable as a pre-commit hook. `zeta_rbf_diff.py` is a region-aware RBF diff (preamble / header-data / header-crc / fabric-data / fabric-crc / postamble) — use it instead of `cmp -l` when comparing two bitstream builds (raw cmp is dominated by CRC chain churn the moment any data bit flips). All three documented in README §"ζ production pipeline".
 
 **HW-validated designs via ζ**: two_lab AND→DFF cross-LAB (2026-04-22), lits_pair route-family (2026-04-23), **full NEORV32 bootloader** (4712 LE / 2367 DFF / 19 M9K / 51 pins; 127 728 BIT = 2634 hdr + 113 573 fab + 11 521 crc) on AX301 at 19200-8N1 UART (2026-04-23). Linux 6.6.83 extended test (2026-04-24): kernel + DTB + initramfs transferred via xmodem, Linux ran ~150 s on RISC-V (devtmpfs, ttyNEO0, exec'd /sbin/init) before a kernel-level `kernel/cred.c:103` BUG_ON panic unrelated to the bitstream (RBF SHA256 = Quartus gold).
 
