@@ -629,44 +629,30 @@ def test_m9k_mode_quartus_gold_bucket_all_widths():
     )
 
 
-def test_emit_m9k_mode_widths_gated_off_functional():
-    """Per session 2026-04-24d plan: the FUNCTIONAL gate (quartus_gold
-    emission) starts empty until per-width data-path HW validation
-    lands.  The fabric-safe gate (inferred_goldintersect emission) is
-    unchanged from 2026-04-24 post-revert.  Verify the two-tier gate
-    by inspecting np2fasm._emit_m9k_mode routing for each standard
-    width.
+def test_emit_m9k_mode_all_5_widths_functional_validated():
+    """2026-04-24d HW sweep on AX301: all 5 standard widths' m9k_blink
+    data-path builds blinked LED0 at the expected ~0.186 Hz cadence,
+    confirming Quartus's M9K modes work functionally on CE6 silicon.
+    Each width is now in `_M9K_MODE_FUNCTIONAL_VALIDATED` and np2fasm
+    emits the `_quartus_gold` suffix (mode-invariant variant-
+    intersection bucket) rather than the fabric-safe gi bucket.
     """
     sys.path.insert(0, str(ROOT / "synth"))
     import np2fasm as npf
-    cell_tmpl = {
-        "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
-        "parameters": {},
-    }
-    expectations = {
-        (4, 2048):  ("skip",      None),
-        (9, 512):   ("fabric",    "inferred_goldintersect"),
-        (18, 512):  ("fabric",    "inferred_goldintersect"),
-        (9, 1024):  ("fabric",    "inferred_goldintersect"),
-        (36, 256):  ("fabric",    "inferred_goldintersect"),
-    }
-    for (w, d), (tier, suffix) in expectations.items():
+    for w, d in [(4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256)]:
         cell = {
-            "attributes": cell_tmpl["attributes"],
+            "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
             "parameters": {"WIDTH_A": str(w), "DEPTH": str(d)},
         }
         line, warn = npf._emit_m9k_mode("mem.ram", cell)
-        if tier == "skip":
-            assert line is None, f"({w},{d}): expected skip, got {line!r}"
-            assert warn is not None and "skipped" in warn, warn
-        else:
-            assert line is not None, f"({w},{d}): expected emit, got warn={warn}"
-            assert suffix in line, (
-                f"({w},{d}): expected suffix {suffix!r} in {line!r}"
-            )
+        assert line is not None, f"({w},{d}): expected emit, got warn={warn}"
+        assert f"M9K_MODE_{w}x{d}_quartus_gold" in line, (
+            f"({w},{d}): expected _quartus_gold suffix in {line!r}"
+        )
+        assert warn is None, f"({w},{d}): unexpected warning: {warn}"
     print(
-        "  test_emit_m9k_mode_widths_gated_off_functional: OK "
-        "(quartus_gold emission pending per-width HW validation)"
+        "  test_emit_m9k_mode_all_5_widths_functional_validated: OK "
+        "(all 5 widths emit _quartus_gold — HW-validated 2026-04-24d)"
     )
 
 
@@ -716,7 +702,7 @@ def main():
         test_m9k_mode_template_unknown_raises,
         test_m9k_mode_template_inferred_missing_bucket_raises,
         test_m9k_mode_quartus_gold_bucket_all_widths,
-        test_emit_m9k_mode_widths_gated_off_functional,
+        test_emit_m9k_mode_all_5_widths_functional_validated,
         test_m9k_init_wrong_hex_length_raises,
     ]
     for t in tests:

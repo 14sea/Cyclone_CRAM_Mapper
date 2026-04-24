@@ -310,7 +310,18 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     #     `m9k_mode_gi_bucket_not_quartus_encoding.md`.
     #
     # Prefer FUNCTIONAL; fall back to fabric-safe; else skip+warn.
-    _M9K_MODE_FUNCTIONAL_VALIDATED: set[tuple[int, int]] = set()
+    # FUNCTIONAL_VALIDATED: each width has been data-path-flashed on AX301
+    # via a counter-driven m9k_blink analog at X15_Y10_N0 (see
+    # scripts/m9k_blink_build.py) and observed to blink LED0 at the
+    # expected ~0.186 Hz cadence (2026-04-24d HW sweep by the user on
+    # silicon: all 5 widths stable 2.7 s on / 2.7 s off).  This confirms
+    # Quartus's (w, d) M9K mode works end-to-end on CE6 silicon.  The
+    # `quartus_gold` bucket — per-(w, d) variant-intersection against a
+    # pinout-matched no-M9K baseline — is mode-invariant and
+    # content-correct vs real Quartus data-path diffs.
+    _M9K_MODE_FUNCTIONAL_VALIDATED = {
+        (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
+    }
     _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
     if (width, depth) in _M9K_MODE_FUNCTIONAL_VALIDATED:
         return (

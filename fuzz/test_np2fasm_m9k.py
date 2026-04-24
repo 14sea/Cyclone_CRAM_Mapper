@@ -226,11 +226,11 @@ def test_emit_m9k_mode_synthetic_cell():
     accompanies INIT.  Without this line the silicon block stays in
     its idle configuration and never reads back the user pattern.
 
-    HW flash 2026-04-17: the helper emits the explicit
-    `_inferred_goldintersect` suffix — the Stage C.1 intersection of
-    the inferred-RAM mining template with the Quartus smoke gold
-    (38 cells at w=9, site-invariant) PASSed silicon.  convert()
-    now emits the line whenever a w=9 M9K cell is placed.
+    2026-04-24d HW sweep on AX301: m9k_blink data-path build at
+    (9, 512) blinked LED0 at the expected ~0.186 Hz cadence, joining
+    _M9K_MODE_FUNCTIONAL_VALIDATED.  The helper now emits the
+    `_quartus_gold` suffix (variant-intersection against real Quartus
+    diffs) rather than the fabric-safe gi bucket.
     """
     width, depth = 9, 512
     mock_cell = {
@@ -241,15 +241,17 @@ def test_emit_m9k_mode_synthetic_cell():
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
     assert warn is None, f"unexpected warning: {warn!r}"
     assert line == (
-        f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred_goldintersect"
+        f"X15Y10N0.M9K_MODE_{width}x{depth}_quartus_gold"
     ), line
     print("  test_emit_m9k_mode_synthetic_cell: OK")
 
 
-def test_emit_m9k_mode_w18_emits_goldintersect():
-    """w=18 sites ungated 2026-04-24 after re-mining under a collision-
-    free WIDE_PIN_MAP (F16 → P2 for DOUT14).  Helper now emits the
-    `inferred_goldintersect` suffix identically to w=9."""
+def test_emit_m9k_mode_w18_emits_quartus_gold():
+    """w=18 sites joined _M9K_MODE_FUNCTIONAL_VALIDATED 2026-04-24d
+    after the m9k_blink_18x512 gold blinked on AX301 silicon.  Helper
+    emits the `_quartus_gold` suffix (variant-intersection mining at
+    X15_Y10_N0 against a pinout-matched no-M9K baseline).
+    """
     mock_cell = {
         "type": "EP4CE6_M9K",
         "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
@@ -257,28 +259,29 @@ def test_emit_m9k_mode_w18_emits_goldintersect():
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
     assert warn is None, f"unexpected warning: {warn!r}"
-    assert line == "X15Y10N0.M9K_MODE_18x512_inferred_goldintersect", line
-    print("  test_emit_m9k_mode_w18_emits_goldintersect: OK")
+    assert line == "X15Y10N0.M9K_MODE_18x512_quartus_gold", line
+    print("  test_emit_m9k_mode_w18_emits_quartus_gold: OK")
 
 
-def test_emit_m9k_mode_w4x2048_reverted_after_datapath_probe():
+def test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold():
     """(4, 2048) was briefly ungated on 2026-04-24 after the CLEAN23
-    bisection proved the 23-cell overlay was fabric-safe.  A follow-up
-    data-path probe the same day (Quartus gold build of a 4×2048 M9K at
-    X15_Y10_N0 vs results/rbf/m9k_baseline_empty.rbf) showed real mode
-    cells have zero overlap with the gi bucket — CLEAN23 is fabric-safe
-    but does NOT configure 4×2048 mode.  The ungate was reverted; this
-    test asserts the revert stuck and the warning cites the data-path
-    finding.  See memory m9k_mode_gi_bucket_not_quartus_encoding.md."""
+    bisection proved the 23-cell overlay was fabric-safe; that ungate
+    was reverted later the same day when a data-path probe showed the
+    gi bucket has zero overlap with real Quartus mode cells.  On
+    2026-04-24d the quartus_gold variant-intersection re-mine (19
+    cells at X15_Y10_N0) + an m9k_blink_4x2048 data-path HW flash
+    (LED0 at 0.186 Hz on AX301) restored the ungate through the
+    FUNCTIONAL_VALIDATED gate; emission now uses the `_quartus_gold`
+    suffix.  See memory m9k_mode_quartus_gold_mining_landed.md."""
     mock_cell = {
         "type": "EP4CE6_M9K",
         "attributes": {"NEXTPNR_BEL": "M9K_X15_Y10_N0"},
         "parameters": {"INIT": "0", "WIDTH_A": 4, "DEPTH": 2048},
     }
     line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
-    assert line is None, f"expected no FASM emission post-revert; got {line!r}"
-    assert warn is not None and "m9k_mode_gi_bucket_not_quartus_encoding" in warn, warn
-    print("  test_emit_m9k_mode_w4x2048_reverted_after_datapath_probe: OK")
+    assert warn is None, f"unexpected warning: {warn!r}"
+    assert line == "X15Y10N0.M9K_MODE_4x2048_quartus_gold", line
+    print("  test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold: OK")
 
 
 def test_emit_m9k_mode_rejects_non_m9k_bel():
@@ -292,11 +295,10 @@ def test_emit_m9k_mode_rejects_non_m9k_bel():
     print("  test_emit_m9k_mode_rejects_non_m9k_bel: OK")
 
 
-def test_convert_emits_m9k_mode_goldintersect():
-    """convert() now emits one M9K_MODE_{w}x{d}_inferred_goldintersect
-    line per placed w=9 EP4CE6_M9K cell (HW-validated 2026-04-17).
-    w=18 sites warn instead — they lack a goldintersect bucket until
-    the mining harness covers them."""
+def test_convert_emits_m9k_mode_quartus_gold():
+    """convert() emits one M9K_MODE_{w}x{d}_quartus_gold line per
+    placed EP4CE6_M9K cell (HW-validated 2026-04-24d across all 5
+    standard widths)."""
     width, depth = 9, 512
     words = [(i + 1) & ((1 << width) - 1) for i in range(depth)]
     bits = "".join(f"{w:0{width}b}" for w in reversed(words))
@@ -322,10 +324,10 @@ def test_convert_emits_m9k_mode_goldintersect():
     mode_lines = [l for l in fasm if ".M9K_MODE_" in l]
     init_lines = [l for l in fasm if ".INIT_" in l]
     assert mode_lines == [
-        f"X15Y10N0.M9K_MODE_{width}x{depth}_inferred_goldintersect"
-    ], f"expected one goldintersect MODE line; got: {mode_lines}"
+        f"X15Y10N0.M9K_MODE_{width}x{depth}_quartus_gold"
+    ], f"expected one quartus_gold MODE line; got: {mode_lines}"
     assert len(init_lines) == 1, f"expected 1 INIT line, got {init_lines}"
-    print("  test_convert_emits_m9k_mode_goldintersect: OK")
+    print("  test_convert_emits_m9k_mode_quartus_gold: OK")
 
 
 def test_emit_m9k_init_convert_skips_unplaced():
@@ -371,10 +373,10 @@ def main():
         test_convert_skips_ep4ce6_m9k_blackbox_module,
         test_emit_m9k_init_convert_skips_unplaced,
         test_emit_m9k_mode_synthetic_cell,
-        test_emit_m9k_mode_w18_emits_goldintersect,
-        test_emit_m9k_mode_w4x2048_reverted_after_datapath_probe,
+        test_emit_m9k_mode_w18_emits_quartus_gold,
+        test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold,
         test_emit_m9k_mode_rejects_non_m9k_bel,
-        test_convert_emits_m9k_mode_goldintersect,
+        test_convert_emits_m9k_mode_quartus_gold,
     ]
     for t in tests:
         t()
