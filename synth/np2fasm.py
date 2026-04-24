@@ -293,14 +293,20 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     params = cell.get("parameters", {})
     width = _parse_yosys_int(params.get("WIDTH_A", 9), default=9)
     depth = _parse_yosys_int(params.get("DEPTH", 512), default=512)
-    _M9K_MODE_MINED = {(9, 512), (9, 1024), (4, 2048), (36, 256), (18, 512)}
-    if (width, depth) not in _M9K_MODE_MINED:
+    # HW-validated set (2026-04-24): overlay probes on the HW-PASS w=9 base
+    # confirmed (9,512) + (18,512) + (9,1024) + (36,256) are silicon-safe.
+    # (4,2048) FAILed silicon — applying its 24-cell inferred_goldintersect
+    # bucket on the simple_led base left LED0 stuck on with KEY2 inert, so
+    # it is excluded here until re-mined or diagnosed.
+    _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
+    if (width, depth) not in _M9K_MODE_HW_VALIDATED:
         return (
             None,
             f"cell {cell_name}: M9K_MODE emission skipped for "
-            f"{width}x{depth} at X{x}Y{y}N{n} — only {_M9K_MODE_MINED} "
-            f"have mined `inferred_goldintersect` buckets; mine new "
-            f"widths via scripts/m9k_mode_width_mine.py.",
+            f"{width}x{depth} at X{x}Y{y}N{n} — only "
+            f"{_M9K_MODE_HW_VALIDATED} are HW-validated (silicon-safe "
+            f"`inferred_goldintersect` buckets). (4,2048) is mined but "
+            f"FAILs silicon; see memory m9k_mode_w4x2048_hw_fail.md.",
         )
     return (
         f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
