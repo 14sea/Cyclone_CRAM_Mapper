@@ -284,6 +284,34 @@ def test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold():
     print("  test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold: OK")
 
 
+def test_emit_m9k_mode_gates_off_non_x15_y10_sites():
+    """2026-04-24d site-gate: `quartus_gold` buckets are mined at
+    X15_Y10_N0 only.  Real Quartus mode cells are site-specific
+    (different Y within a column → different absolute byte offsets);
+    re-using the X15_Y10 bucket at another site would flip the wrong
+    bytes.  Helper must warn+skip for any M9K site outside the
+    validated set.
+    """
+    # Same column, different Y — must skip.
+    for bel in ["M9K_X15_Y4_N0", "M9K_X15_Y14_N0",
+                "M9K_X27_Y10_N0", "M9K_X15_Y10_N1"]:
+        mock_cell = {
+            "type": "EP4CE6_M9K",
+            "attributes": {"NEXTPNR_BEL": bel},
+            "parameters": {"INIT": "0", "WIDTH_A": 9, "DEPTH": 512},
+        }
+        line, warn = nf._emit_m9k_mode("u_ram", mock_cell)
+        assert line is None, f"{bel}: expected skip, got emit {line!r}"
+        assert warn is not None and "X15_Y10_N0 only" in warn, (
+            f"{bel}: warning should cite the single-site mining "
+            f"constraint; got: {warn!r}"
+        )
+    print(
+        "  test_emit_m9k_mode_gates_off_non_x15_y10_sites: OK "
+        "(per-site mining is the follow-up)"
+    )
+
+
 def test_emit_m9k_mode_rejects_non_m9k_bel():
     mock_cell = {
         "type": "EP4CE6_M9K",
@@ -375,6 +403,7 @@ def main():
         test_emit_m9k_mode_synthetic_cell,
         test_emit_m9k_mode_w18_emits_quartus_gold,
         test_emit_m9k_mode_w4x2048_ungated_via_quartus_gold,
+        test_emit_m9k_mode_gates_off_non_x15_y10_sites,
         test_emit_m9k_mode_rejects_non_m9k_bel,
         test_convert_emits_m9k_mode_quartus_gold,
     ]

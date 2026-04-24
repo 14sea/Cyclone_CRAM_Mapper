@@ -309,39 +309,62 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     #     fixtures/callers but yields a fabric-only flip.  See memory
     #     `m9k_mode_gi_bucket_not_quartus_encoding.md`.
     #
-    # Prefer FUNCTIONAL; fall back to fabric-safe; else skip+warn.
-    # FUNCTIONAL_VALIDATED: each width has been data-path-flashed on AX301
-    # via a counter-driven m9k_blink analog at X15_Y10_N0 (see
-    # scripts/m9k_blink_build.py) and observed to blink LED0 at the
-    # expected ~0.186 Hz cadence (2026-04-24d HW sweep by the user on
-    # silicon: all 5 widths stable 2.7 s on / 2.7 s off).  This confirms
-    # Quartus's (w, d) M9K mode works end-to-end on CE6 silicon.  The
-    # `quartus_gold` bucket — per-(w, d) variant-intersection against a
-    # pinout-matched no-M9K baseline — is mode-invariant and
-    # content-correct vs real Quartus data-path diffs.
+    # Two-tier (width, depth) gate × (site) gate.
+    #
+    # FUNCTIONAL_VALIDATED: each (w, d) here has been data-path-flashed
+    # on AX301 via a counter-driven m9k_blink analog
+    # (`scripts/m9k_blink_build.py`) and observed to blink LED0 at the
+    # expected ~0.186 Hz cadence (2026-04-24d HW sweep — all 5 widths
+    # stable 2.7 s on / 2.7 s off).  Quartus's (w, d) mode works
+    # end-to-end on CE6 silicon; the `quartus_gold` bucket is mode-
+    # invariant and content-correct vs real Quartus diffs.
+    #
+    # Site gate (FUNCTIONAL_SITES): the `quartus_gold` buckets are mined
+    # at X15_Y10_N0 ONLY.  Real Quartus mode cells are site-specific
+    # (different Y within an M9K column have different absolute byte
+    # offsets inside frames 1692..1738 — see the red-flag observation
+    # in memory `m9k_mode_gi_bucket_not_quartus_encoding.md`), so
+    # reusing the X15_Y10_N0 bucket at a different site would flip the
+    # wrong bytes and mis-configure (or brick) silicon.  Emission for
+    # any other M9K site is gated off until per-site quartus_gold
+    # mining lands.
+    #
+    # FABRIC-SAFE fallback (HW_VALIDATED): the old `inferred_goldintersect`
+    # bucket — fabric-safe overlay only, NOT real mode cells — was
+    # previously emitted for 4 widths at any site (it's trivially
+    # "site-invariant" because it's noise, not mode encoding).  That
+    # gate is retained only for back-compat with manual callers asking
+    # for `_inferred_goldintersect` directly; np2fasm itself no longer
+    # emits the gi suffix now that quartus_gold is ungated.
     _M9K_MODE_FUNCTIONAL_VALIDATED = {
         (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
     }
+    _M9K_MODE_FUNCTIONAL_SITES = {(15, 10, 0)}
     _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
     if (width, depth) in _M9K_MODE_FUNCTIONAL_VALIDATED:
+        if (x, y, n) in _M9K_MODE_FUNCTIONAL_SITES:
+            return (
+                f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_quartus_gold",
+                None,
+            )
         return (
-            f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_quartus_gold",
             None,
-        )
-    if (width, depth) in _M9K_MODE_HW_VALIDATED:
-        return (
-            f"X{x}Y{y}N{n}.M9K_MODE_{width}x{depth}_inferred_goldintersect",
-            None,
+            f"cell {cell_name}: M9K_MODE emission skipped for site "
+            f"X{x}Y{y}N{n} — `quartus_gold` buckets are mined at "
+            f"X15_Y10_N0 only (see memory "
+            f"m9k_mode_quartus_gold_hw_validated_2026_04_24d.md).  "
+            f"Per-site mining via "
+            f"scripts/m9k_mode_quartus_gold_mine.py is the follow-up "
+            f"for NEORV32-scale M9K usage.",
         )
     return (
         None,
         f"cell {cell_name}: M9K_MODE emission skipped for "
         f"{width}x{depth} at X{x}Y{y}N{n} — not in functional "
-        f"({_M9K_MODE_FUNCTIONAL_VALIDATED}) or fabric-safe "
-        f"({_M9K_MODE_HW_VALIDATED}) gate.  `quartus_gold` buckets "
-        f"are mined for all 5 standard widths but functional HW "
-        f"validation is pending; see memory "
-        f"m9k_mode_gi_bucket_not_quartus_encoding.md.",
+        f"gate {_M9K_MODE_FUNCTIONAL_VALIDATED}.  The fabric-safe "
+        f"`inferred_goldintersect` gate ({_M9K_MODE_HW_VALIDATED}) "
+        f"is no longer emitted by np2fasm; use `quartus_gold` or "
+        f"mine the missing width.",
     )
 
 

@@ -47,9 +47,13 @@ BLOCK_FRAME_HI = 1738
 WORK_ROOT = ROOT / "tmp" / "m9k_mode_quartus_gold"
 RESULTS_PATH = ROOT / "results" / "m9k_mode_bits.json"
 
-SITE_X = 15
-SITE_Y = 10
-SITE_N = 0
+DEFAULT_SITE_X = 15
+DEFAULT_SITE_Y = 10
+DEFAULT_SITE_N = 0
+# Populated by main() from --site; used by _qsf_variant / _mine_one.
+SITE_X = DEFAULT_SITE_X
+SITE_Y = DEFAULT_SITE_Y
+SITE_N = DEFAULT_SITE_N
 
 TARGET_COMBOS = [
     (4, 2048),
@@ -441,7 +445,18 @@ def main() -> int:
     ap.add_argument("--variants", type=int, default=3)
     ap.add_argument("--workers", type=int, default=2)
     ap.add_argument("--only-analyze", action="store_true")
+    ap.add_argument("--site", default=f"{DEFAULT_SITE_X},{DEFAULT_SITE_Y},{DEFAULT_SITE_N}",
+                    help="M9K site as X,Y,N (default 15,10,0). Real Quartus "
+                         "mode cells shift per Y within an M9K column — mine "
+                         "each site that np2fasm expects to emit for.")
     args = ap.parse_args()
+
+    global SITE_X, SITE_Y, SITE_N
+    try:
+        SITE_X, SITE_Y, SITE_N = (int(s) for s in args.site.split(","))
+    except ValueError:
+        ap.error(f"--site must be X,Y,N; got {args.site!r}")
+        return 1
 
     if args.all:
         combos = TARGET_COMBOS
