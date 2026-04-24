@@ -81,7 +81,11 @@ INTRA_DELAY = 2          # intra-LAB direct pips — within-LAB
 LOCAL_DELAY = 5          # LOCAL_IN / LOCAL_OUT — entering/leaving bus
 HOP_DELAY = 15           # LOCAL_HOP — base cost (scaled ×distance)
 MAX_HOP_DIST = 8         # Reach 8 valid neighbours per direction
-PLACEHOLDER_DELAY = 1    # default (used for GCLK, IOB bridge)
+PLACEHOLDER_DELAY = 1    # default (used for IOB bridge)
+DEDICATED_DELAY = 0      # GCLK_BUS / GND_BUS — zero-delay dedicated
+                         # networks (silicon-accurate); pips cost 0 so
+                         # router2 prefers them over LOCAL for their
+                         # exclusive fan-out (CLOCK, constant-0).
 
 # Number of parallel LOCAL tracks per LAB.  Real Cyclone IV has 26 LI
 # wires per LAB; match that so the router has realistic capacity for
@@ -518,7 +522,7 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                 "name": f"pip_iob_{safe}_O__GCLK_BUS_{t}",
                 "type": "IOB_TO_GCLK",
                 "src": wo, "dst": f"GCLK_BUS_{t}",
-                "delay": PLACEHOLDER_DELAY, "x": 0, "y": 0,
+                "delay": DEDICATED_DELAY, "x": 0, "y": 0,
             })
             n_pips_gclk += 1
     # Per-LAB CLK wire + GCLK_BUS → LAB_CLK → slice_CLK fanout
@@ -530,7 +534,7 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                 "name": f"pip_GCLK_BUS_{t}__{lab_clk}",
                 "type": "GCLK_TO_LAB_CLK",
                 "src": f"GCLK_BUS_{t}", "dst": lab_clk,
-                "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                "delay": DEDICATED_DELAY, "x": x, "y": y,
             })
             n_pips_gclk += 1
         for n in LE_N:
@@ -539,7 +543,7 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                 "name": f"pip_{lab_clk}__{cw}",
                 "type": "LAB_CLK_TO_SLICE",
                 "src": lab_clk, "dst": cw,
-                "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                "delay": DEDICATED_DELAY, "x": x, "y": y,
             })
             n_pips_gclk += 1
 
@@ -623,6 +627,65 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             })
             n_local_pips += 3
 
+    # ---------- Dedicated GND (constant-0) network ----------
+    # nextpnr-generic's packer materialises $PACKER_GND as a SLICE cell
+    # whose F output drives every constant-0 sink in the design. In
+    # NEORV32 the vast majority (~1066) of those sinks are unused M9K
+    # DIN bits — routing that fanout through LOCAL saturates fabric
+    # tracks identically to how CLOCK would without GCLK_BUS.
+    #
+    # Mirror the GCLK treatment: one dedicated GND_BUS wire; any
+    # SLICE.F can drive it (so whichever slice the packer places
+    # $PACKER_GND on becomes the driver); GND_BUS fans out directly
+    # to every M9K_DIN bit. Real data bits still reach M9K_DIN via
+    # LOCAL → M9K_IN pips (below) — router chooses GND_BUS only for
+    # the PACKER_GND net since that's the only cost-efficient user.
+    n_pips_gnd = 0
+    # 4 GND_BUS wires distributed at quadrant centres so every sink's
+    # per-arc bounding box includes at least one. router2's BB filter
+    # excludes a single global wire from half the arcs when it sits at
+    # one corner of the die; a quadrant set costs only 4× pips while
+    # ensuring GND_BUS is always considered. Each SLICE.F can drive any
+    # of the 4 wires; each M9K DIN/ADDR bit can read from any. Router
+    # picks whichever the PACKER_GND net already occupies.
+    xmax = max(LAB_X_FULL)
+    ymax = max(LAB_Y_FULL)
+    GND_BUS_LOCS = [
+        (xmax // 4,       ymax // 4),       # NW
+        (xmax * 3 // 4,   ymax // 4),       # NE
+        (xmax // 4,       ymax * 3 // 4),   # SW
+        (xmax * 3 // 4,   ymax * 3 // 4),   # SE
+    ]
+    for i, (gx, gy) in enumerate(GND_BUS_LOCS):
+        wires.append({"name": f"GND_BUS_{i}", "type": "GND_BUS",
+                      "x": gx, "y": gy})
+    # Zero-delay chain pips between every GND_BUS pair so once
+    # $PACKER_GND binds one quadrant wire the router can extend the
+    # tree to the other three for free. Without this, only sinks
+    # within the bound wire's arc-BB can use GND_BUS.
+    for i, (ix, iy) in enumerate(GND_BUS_LOCS):
+        for j, (jx, jy) in enumerate(GND_BUS_LOCS):
+            if i == j:
+                continue
+            pips.append({
+                "name": f"pip_GND_BUS_{i}__GND_BUS_{j}",
+                "type": "GND_CHAIN",
+                "src": f"GND_BUS_{i}", "dst": f"GND_BUS_{j}",
+                "delay": DEDICATED_DELAY, "x": jx, "y": jy,
+            })
+            n_pips_gnd += 1
+    for (x, y) in valid_labs:
+        for n in LE_N:
+            fw = f"slice_X{x}_Y{y}_N{n}_F"
+            for i, (gx, gy) in enumerate(GND_BUS_LOCS):
+                pips.append({
+                    "name": f"pip_{fw}__GND_BUS_{i}",
+                    "type": "SLICE_F_TO_GND",
+                    "src": fw, "dst": f"GND_BUS_{i}",
+                    "delay": DEDICATED_DELAY, "x": gx, "y": gy,
+                })
+                n_pips_gnd += 1
+
     # ---------- M9K <-> LOCAL bridge + GCLK -> CLK ----------
     # Mirrors the IOB gateway-LAB pattern above. For each M9K site,
     # pick the nearest valid LAB column on the same row (or closest Y
@@ -647,12 +710,27 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                             "name": f"pip_GCLK_BUS_{t}__{cw}",
                             "type": "GCLK_TO_M9K_CLK",
                             "src": f"GCLK_BUS_{t}", "dst": cw,
-                            "delay": PLACEHOLDER_DELAY, "x": x, "y": y,
+                            "delay": DEDICATED_DELAY, "x": x, "y": y,
                         })
                         n_pips_m9k += 1
                     continue
                 bits = [_wire_m9k_port(x, y, port)] if width == 1 else \
                        [_wire_m9k_bit(x, y, port, i) for i in range(width)]
+                # GND_BUS → DIN/ADDR bit: gives PACKER_GND a direct
+                # cheap path to M9K inputs that would otherwise
+                # saturate LOCAL. Matches the NEORV32 sink profile:
+                # 1002 DIN bits + 64 ADDR_A[0..1] bits from
+                # $PACKER_GND. Output ports (DOUT) skipped.
+                if port.startswith("DIN") or port.startswith("ADDR"):
+                    for w in bits:
+                        for i in range(len(GND_BUS_LOCS)):
+                            pips.append({
+                                "name": f"pip_GND_BUS_{i}__{w}",
+                                "type": "GND_TO_M9K_IN",
+                                "src": f"GND_BUS_{i}", "dst": w,
+                                "delay": DEDICATED_DELAY, "x": x, "y": y,
+                            })
+                            n_pips_gnd += 1
                 for w in bits:
                     for t in range(num_local_tracks):
                         gw = f"LOCAL_X{gx}_Y{gy}_T{t}"
@@ -732,6 +810,7 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
             "n_pips_carry": n_pips_carry,
             "n_pips_m9k": n_pips_m9k,
             "n_pips_gclk": n_pips_gclk,
+            "n_pips_gnd": n_pips_gnd,
             "n_sig_cache_total": len(cache),
             "n_sig_src_labs": len(sig_src_labs),
             "n_sig_dst_labs": len(sig_dst_labs),
@@ -868,7 +947,7 @@ def main() -> None:
     print(f"pips total: {s['n_pips_total']:>7d} "
           f"(sig {s['n_pips_sig']} + local {s['n_pips_local']} "
           f"+ carry {s['n_pips_carry']} + m9k {s['n_pips_m9k']} "
-          f"+ gclk {s['n_pips_gclk']})")
+          f"+ gclk {s['n_pips_gclk']} + gnd {s['n_pips_gnd']})")
     print(f"sig-cache: {s['n_sig_cache_total']} total, "
           f"{s['n_pips_sig']} injected, "
           f"{s['pips_skipped_unknown_src']}+{s['pips_skipped_unknown_dst']} skipped")
