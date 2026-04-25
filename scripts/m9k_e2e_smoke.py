@@ -1,6 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Open-toolchain M9K end-to-end smoke (algebraic byte check).
 
+⚠️  SCOPE CAVEAT (2026-04-25): This smoke validates byte agreement
+between np2fasm/fasm2rbf and Quartus *only when the mining baseline
+RBF is used as `base_rbf`*.  It does NOT prove silicon correctness
+of the production codec emission path, which uses `nv_zero_global`
+as `base_rbf`.  See memory `m9k_mode_codec_silicon_broken_2026_04_25`
+— the `_quartus_gold*` bucket polarity is mined relative to
+`matched_baseline`, not `nv_zero_global`, and ~85% of bucket cells
+disagree between the two bases, so codec-on-zero emission silicon-
+resets at every site tested.  Quartus-gold flashes still work; this
+smoke is byte-level only with the same base the bucket was mined
+against.
+
 Constructs a minimal nextpnr-style placed JSON containing a single
 `EP4CE6_M9K` cell at `M9K_X15_Y10_N0` with an INIT parameter that
 matches the Quartus `m9k_mode_gold_18x512_v0.rbf` variant
@@ -16,28 +28,28 @@ v0 gold in three regions:
     Expected 0/9 216 byte differences when `INIT_18x512` is correct.
   * `m9k_mode_block_band` — frames 1692..1738, where the
     `quartus_gold` bucket encodes the M9K mode/enable cells.
-    Expected gap = 26 cells (INIT-dependent metadata cells that
-    live in the block band outside the `quartus_gold` bucket —
-    these vary per variant and are intentionally excluded from the
-    INIT-invariant MODE intersection).  A functional M9K on silicon
-    does NOT need these 26 cells — HW sweep 2026-04-24d flashed
-    the 5-width blink set without them and the LEDs blinked.
+    Documented gap ≈ 26 cells (INIT-dependent metadata cells the
+    3-variant intersection drops).  Earlier doc said silicon does
+    not need these 26 cells; that claim was based on Quartus-gold
+    flashes (which DO contain those cells), NOT codec-emission
+    flashes — see silicon-broken memo.  The 26-cell delta here is a
+    byte-level mining artifact, not a silicon-correctness statement.
   * `everything_else` — all other CRAM bytes.  Expected to differ
     because the synthetic JSON has no counter / IOB / GCLK.
 
 A PASS on `m9k_init_frames` (= 0 diffs) and on the `quartus_gold`
-subset of `m9k_mode_block_band` proves that
-  np2fasm's `_emit_m9k_init` + `_emit_m9k_mode`
-combined with fasm2rbf's `INIT_18x512` + `M9K_MODE_18x512_quartus_gold`
-codecs reproduce the exact silicon bytes Quartus emits for (18, 512)
-INIT + MODE at `X15_Y10_N0`.  That closes the last untested link in
-the open-toolchain M9K chain: np2fasm → fasm2rbf → silicon bytes.
+subset of `m9k_mode_block_band` proves byte-level reproduction of
+Quartus v0's bucket cells *against the same mining baseline*.  It
+does NOT close the np2fasm → fasm2rbf → silicon-bytes loop on the
+production `--base nv` path.  Treat this as a regression gate for
+the codec arithmetic, not a silicon validator.
 
 Full `Verilog → Yosys → nextpnr → np2fasm → fasm2rbf` for m9k_blink
 is still blocked on (a) 28-bit carry chain > single-LAB prepack
-budget, (b) IOB prepack helper not yet written.  Those are tracked
-separately — this smoke is the byte-level closure of just the M9K
-layer of the pipeline.
+budget, (b) IOB prepack helper not yet written, plus (c) the
+`quartus_gold + nv_zero_global` codec polarity bug above.  Those are
+tracked separately — this smoke is the byte-level closure of just
+the M9K layer of the pipeline.
 
 Usage::
 
