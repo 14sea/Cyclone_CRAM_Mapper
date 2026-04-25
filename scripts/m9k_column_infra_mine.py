@@ -9,9 +9,15 @@ Discovery (2026-04-26):
   * Pairwise Jaccard between sites = 0.00 — every (X,Y) is fully
     disjoint, so the codec needs a per-site bucket (mirrors M9K_INIT).
 
-Bucket = (v0 ⊕ matched_baseline) ∩ {region(X), bp(Y)}.
+Bucket = (v0 ⊕ nv_zero_global) ∩ {region(X), bp(Y) ∪ secondary_bp}.
   bp(y) = (6 - group) if slot == 2 else (7 - group)
   slot, group = (y - 2) % 3, (y - 2) // 3
+  secondary_bp = {bp(y) - 1} if slot == 1 else ∅
+
+Mining vs nv_zero_global (not matched_baseline) — the matched_baseline
+path leaked ~60 cells/site of `bl ⊕ nv_zero_global ∩ region ∩ bp(Y)`
+that v0 also has, so XOR-applying them to nv_zero_global moved AWAY
+from v0 (same pollution pattern as M9K_BLOCK_TAIL and M9K_MODE D3).
 
 Inputs: tmp/m9k_mode_quartus_gold/4x2048/sdp/<site>/{v0,baseline}.rbf
 Output: results/m9k_column_infra.json with per-site infra_cells list.
@@ -84,12 +90,11 @@ def column_infra(diff: set[tuple[int, int]], x: int, y: int) -> set[tuple[int, i
             if bp in target_bps and lo <= (off - PRE) // FRAME <= hi}
 
 
-def mine_site(site_dir: Path, w: int, d: int, mode: str) -> dict:
+def mine_site(site_dir: Path, w: int, d: int, mode: str, nv: bytes) -> dict:
     x, y, n = parse_site(site_dir.name)
     tag = f"{w}x{d}_{mode}"
     v0 = (site_dir / f"m9k_mode_gold_{tag}_v0.rbf").read_bytes()
-    bl = (site_dir / f"m9k_mode_gold_{tag}_baseline.rbf").read_bytes()
-    diff = diff_cells(v0, bl)
+    diff = diff_cells(v0, nv)
     bucket = column_infra(diff, x, y)
     return {
         "site": site_dir.name,
@@ -107,12 +112,13 @@ def main(argv: list[str]) -> int:
     if not base.exists():
         print(f"missing baselines/v0 at {base}")
         return 2
+    nv = (ROOT / "results/rbf/nv_zero_global.rbf").read_bytes()
     sites = sorted(p.name for p in base.iterdir()
                    if p.is_dir() and p.name.startswith("X")
                    and "_Y" in p.name and "_N" in p.name)
     results = {}
     for site in sites:
-        info = mine_site(base / site, 4, 2048, "sdp")
+        info = mine_site(base / site, 4, 2048, "sdp", nv)
         results[site] = info
         bps = ",".join(str(b) for b in info["target_bps"])
         print(f"  {site:14} bp={bps:5} region={info['region']:9} "
