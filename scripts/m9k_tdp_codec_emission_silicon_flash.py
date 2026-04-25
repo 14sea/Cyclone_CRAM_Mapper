@@ -1,22 +1,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""TDP codec-emission silicon-flash reconstruction at X15_Y10_N0.
+"""TDP codec-APPLY-path byte-identity check (NOT codec emission validation).
 
-Adapted from `m9k_codec_emission_silicon_flash.py` (SDP at X15_Y16_N0,
-silicon-validated 2026-04-26).  Same per-(design, site) reconstruction
-flow, applied to TDP 16x32 (NEORV32 regfile config) at the
-TDP-calibration site X15_Y10_N0.
+⚠️ TAUTOLOGY CAVEAT (audit 2026-04-25): the reconstruction here is
+mathematical identity, not a measured test.  Specifically:
 
-Goal: prove the codec-emission silicon-PASS approach generalizes from
-SDP to TDP, closing one more NEORV32-relevant config.
+    structured    = iob | mode | col_infra      # subset of target
+    lab_residual  = target − structured         # by definition
+    union         = structured | lab_residual   # ≡ target
+    rebuilt       = nv ⊕ union ≡ nv ⊕ target ≡ gold
 
-What this validates if PASS:
-  * Per-(design, site) codec reconstruction works for TDP, not just SDP.
-  * The 3-directive (IOB_PIN_BANK_INFRA + M9K_MODE BLOCK_BAND +
-    M9K_COLUMN_INFRA bp=Y) + LAB_RESIDUAL structure is mode-agnostic.
-  * Header CRC fixup logic is mode-agnostic.
+So `rebuilt == gold` is forced, not verified.  The AX301 silicon
+flash just re-runs Quartus gold via XOR; LED blink only proves gold
+works on silicon (already known per `m9k_mode_tdp_hw_validated_2026_04_25`).
 
-Pre-flash check: rebuilt RBF must be byte-identical to Quartus gold
-(0 residual after CRC patch + header-CRC fixup).
+This script is retained as a regression baseline for the codec-apply
+infrastructure (XOR + patch_rbf_crc + header-CRC fixup) — it confirms
+those steps preserve gold byte-for-byte for TDP fixtures.  It does
+NOT validate codec EMISSION for unseen designs.  See
+`memory/m9k_tdp_codec_emission_silicon_pass_2026_04_25.md` for the
+honest framing.
 """
 from __future__ import annotations
 import sys

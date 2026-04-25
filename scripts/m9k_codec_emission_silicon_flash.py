@@ -1,24 +1,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Silicon flash validation for the codec emission path.
+"""SDP codec-APPLY-path byte-identity check (NOT codec emission validation).
 
-Takes blink_v0 (HW-validated AX301 design at X15_Y16_N0 SDP 4x2048)
-as the gold target.  Mines its 3 directive contributions vs
-nv_zero_global (IOB_PIN_BANK_INFRA = HEADER ∪ BLOCK_BAND_POST,
-M9K_MODE BLOCK_BAND, M9K_COLUMN_INFRA bp=Y) plus a LAB_RESIDUAL
-catch-all (np2fasm LUT/ROUTE side).  Applies the union to
-nv_zero_global, CRC-patches, runs the safety validator, and produces
-a flash candidate.
+⚠️ TAUTOLOGY CAVEAT (audit 2026-04-25): the reconstruction is a
+mathematical identity, not a measured test.  Specifically:
 
-What this validates:
-  * Per-(design, site) codec reconstruction works on silicon.
-  * The directive structure captures enough cells for the design's
-    M9K to function (LED blink at ~0.186 Hz).
-  * Whatever residual cells the codec misses are non-load-bearing
-    for THIS specific design.
+    structured    = iob | mode | col_infra      # subset of target
+    lab_residual  = target − structured         # by definition
+    union         = structured | lab_residual   # ≡ target
+    rebuilt       = nv ⊕ union ≡ nv ⊕ target ≡ gold
 
-Caveat: blink already passes safety at silicon when flashed as-is.
-This test confirms the codec PATH works, not directive generality
-(`m9k_directives_design_dependent_2026_04_26.md`).
+So `rebuilt == gold` is forced math.  The AX301 silicon flash just
+re-runs Quartus gold via XOR; the LED blink only re-confirms gold
+works on silicon (already known).  This script is a regression
+baseline for the codec-apply infrastructure (XOR + patch_rbf_crc
++ header-CRC fixup), NOT codec-emission silicon validation for
+unseen designs.
+
+The original 2026-04-26 framing said "Per-(design, site) codec
+reconstruction works on silicon" — that is correct in the trivial
+sense that gold rebuilds to itself; it is NOT a validation of
+codec emission for new designs.  See
+`memory/m9k_codec_emission_silicon_flash_2026_04_26.md` for the
+audit-caveated framing.
 """
 from __future__ import annotations
 import json

@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""SP codec-emission silicon-flash reconstruction (8x64 cache config).
+"""SP codec-APPLY-path byte-identity check (NOT codec emission validation).
 
-Adapted from `m9k_codec_emission_silicon_flash.py` (SDP) and
-`m9k_tdp_codec_emission_silicon_flash.py` (TDP, silicon-validated
-2026-04-25).  Closes the SP cache config — NEORV32 cache data lanes
-use SP 8x64 (8 instances per cache, 16 total in icache+dcache).
+⚠️ TAUTOLOGY CAVEAT (audit 2026-04-25): same identity issue as the
+TDP/SDP versions — `union = structured | lab_residual ≡ target` by
+construction, so rebuilt = gold byte-identical is forced math.  AX301
+LED blink just re-runs Quartus gold; codec-EMISSION silicon validity
+for unseen designs is NOT tested here.
 
-Default site: X15_Y10_N0 (matches the (8,64) cache mining anchor).
+See `memory/m9k_sp_codec_emission_silicon_pass_2026_04_25.md` for
+the honest framing.  Retained as regression baseline for the codec-
+apply infrastructure across SP fixtures.
 """
 from __future__ import annotations
 import sys
