@@ -1,6 +1,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Re-derive M9K_MODE buckets relative to nv_zero_global.
 
+⚠ DIAGNOSTIC TOOL — the output is *also* silicon-broken.
+
+This script was built to fix a bucket polarity bug discovered
+2026-04-25: the original mining defined buckets relative to
+`matched_baseline`, but production np2fasm + fasm2rbf applies them
+as XOR onto `nv_zero_global ≠ matched_baseline`.  The polarity fix
+below is correct in concept but exposed a *second* layer to the bug:
+the 3-variant intersection used to filter INIT-dependent metadata
+also filters out *structural* M9K mode cells that just happen to
+correlate with the INIT pattern.  The 21-cell SDP / 16-cell TDP
+buckets the script produces silicon-RESET at X15_Y16_N0 SDP when
+applied as `nv_zero_global ⊕ bucket` (verified by flashing).
+
+Both layers' analyses are kept here as a reusable starting point for
+future fix attempts (D1 union / D2 single-variant / D3 re-mine —
+see `m9k_mode_codec_silicon_broken_2026_04_25.md`).  Do NOT use the
+output of this script in production without first solving layer 2.
+
+---
+
+
 The original mining (`scripts/m9k_mode_quartus_gold_mine.py`) defined
 each mode bucket as the variant-invariant block-band delta between a
 Quartus-built `gold_v{n}.rbf` and a matched no-M9K `baseline.rbf`:
