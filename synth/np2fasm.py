@@ -409,9 +409,10 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     # mined and byte-level round-trip verified via the open toolchain;
     # HW silicon validation is separately tracked in memory entries
     # (m9k_mode_quartus_gold_hw_validated_*).  SP = 5 widths HW-
-    # validated 2026-04-24d.  SDP (4, 2048) HW-validated 2026-04-25 at
-    # X15_Y10_N0 (m9k_sdp_blink LED0 stable ~0.186 Hz).  TDP = codec-
-    # verified 2026-04-25 at X15_Y10_N0; HW flash pending.
+    # validated 2026-04-24d.  SDP (4, 2048) and TDP (16, 32) HW-
+    # validated 2026-04-25 at X15_Y10_N0 (m9k_sdp_blink and
+    # m9k_tdp_blink, both LED0 stable ~0.186 Hz).  Triad SP / SDP /
+    # TDP closed at the calibration site.
     _M9K_MODE_FUNCTIONAL_VALIDATED_SP = {
         (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
         # (8, 64): NEORV32 dcache + icache per-M9K geometry (4×8×64 each).
