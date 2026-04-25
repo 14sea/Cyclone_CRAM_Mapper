@@ -38,6 +38,23 @@ def y_to_bp(y: int) -> int:
     return (6 - group) if slot == 2 else (7 - group)
 
 
+def y_to_bps(y: int) -> tuple[int, ...]:
+    """Bp(s) the M9K column-infra cells live at for this Y.
+
+    slot=0/2 sites: a single bp.  slot=1 sites span two adjacent bp
+    values (primary bp(Y) and secondary bp(Y) - 1) because the middle
+    LE-slot's column-infra straddles the boundary between two groups.
+    Verified by 2026-04-26 codec emission sweep: applying only bp(Y)
+    leaves a structured 326-1616 cell residual at bp(Y)-1 for every
+    slot=1 site, and at bp(Y)-1 only.
+    """
+    slot = (y - 2) % 3
+    primary = y_to_bp(y)
+    if slot == 1:
+        return (primary, primary - 1)
+    return (primary,)
+
+
 def diff_cells(a: bytes, b: bytes) -> set[tuple[int, int]]:
     cells: set[tuple[int, int]] = set()
     for off in range(PRE, len(a)):
@@ -61,10 +78,10 @@ def column_infra(diff: set[tuple[int, int]], x: int, y: int) -> set[tuple[int, i
     region = COL_REGION.get(x)
     if region is None:
         return set()
-    target_bp = y_to_bp(y)
+    target_bps = set(y_to_bps(y))
     lo, hi = region
     return {(off, bp) for (off, bp) in diff
-            if bp == target_bp and lo <= (off - PRE) // FRAME <= hi}
+            if bp in target_bps and lo <= (off - PRE) // FRAME <= hi}
 
 
 def mine_site(site_dir: Path, w: int, d: int, mode: str) -> dict:
@@ -77,7 +94,7 @@ def mine_site(site_dir: Path, w: int, d: int, mode: str) -> dict:
     return {
         "site": site_dir.name,
         "x": x, "y": y, "n": n,
-        "target_bp": y_to_bp(y),
+        "target_bps": list(y_to_bps(y)),
         "region": "lab_low" if x == 15 else "lab_high" if x == 27 else "?",
         "total_diff": len(diff),
         "infra_count": len(bucket),
@@ -97,7 +114,8 @@ def main(argv: list[str]) -> int:
     for site in sites:
         info = mine_site(base / site, 4, 2048, "sdp")
         results[site] = info
-        print(f"  {site:14} bp={info['target_bp']} region={info['region']:9} "
+        bps = ",".join(str(b) for b in info["target_bps"])
+        print(f"  {site:14} bp={bps:5} region={info['region']:9} "
               f"infra={info['infra_count']:5}")
 
     # Save
