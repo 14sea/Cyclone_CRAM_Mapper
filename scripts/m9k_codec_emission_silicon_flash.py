@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Silicon flash validation for the 4-directive codec emission path.
+"""Silicon flash validation for the codec emission path.
 
 Takes blink_v0 (HW-validated AX301 design at X15_Y16_N0 SDP 4x2048)
-as the gold target.  Mines its 4 directive contributions vs nv_zero_global.
-Applies the union to nv_zero_global, CRC-patches, runs the safety
-validator, and produces a flash candidate.
+as the gold target.  Mines its 3 directive contributions vs
+nv_zero_global (IOB_PIN_BANK_INFRA = HEADER ∪ BLOCK_BAND_POST,
+M9K_MODE BLOCK_BAND, M9K_COLUMN_INFRA bp=Y) plus a LAB_RESIDUAL
+catch-all (np2fasm LUT/ROUTE side).  Applies the union to
+nv_zero_global, CRC-patches, runs the safety validator, and produces
+a flash candidate.
 
 What this validates:
   * Per-(design, site) codec reconstruction works on silicon.
-  * The 4-directive structure captures enough cells for the design's
+  * The directive structure captures enough cells for the design's
     M9K to function (LED blink at ~0.186 Hz).
   * Whatever residual cells the codec misses are non-load-bearing
     for THIS specific design.
@@ -66,28 +69,30 @@ def main():
     target = diff_cells(blink, nv)
     print(f"Target (blink ⊕ nv): {len(target)} cells")
 
-    # Mine 4 directives FROM blink itself
+    # Mine 3 directives FROM blink itself.  IOB_PIN_BANK_INFRA covers
+    # HEADER ∪ BLOCK_BAND_POST as one pinout-driven bucket; M9K_MODE
+    # is BLOCK_BAND; M9K_COLUMN_INFRA is bp=Y-formula in lab cols.
     bp_y = 2  # Y=16 → bp=2
-    header_b = filter_region(target, HEADER, None)
+    iob_pin_bank = (filter_region(target, HEADER, None)
+                    | filter_region(target, BLOCK_BAND_POST, None))
     bb_b = filter_region(target, BLOCK_BAND, None)
-    bb_post_b = filter_region(target, BLOCK_BAND_POST, None)
     col_b = filter_region(target, LAB_LOW, {bp_y})
 
-    # 5th "catch-all" bucket: cells outside the 4 structured directives.
+    # Catch-all bucket: cells outside the 3 structured directives.
     # These would normally be emitted by np2fasm/sig-cache as LUT/ROUTE
     # directives.  Including them here makes the test a complete
     # reconstruction (silicon-functional) while still exercising the
-    # 4-directive M9K-side path for measurement.
-    structured = header_b | bb_b | bb_post_b | col_b
+    # M9K-side directive path for measurement.
+    structured = iob_pin_bank | bb_b | col_b
     lab_residual = target - structured
 
     union = structured | lab_residual
-    print(f"  HEADER bucket:     {len(header_b)}")
-    print(f"  BLOCK_BAND bucket: {len(bb_b)}")
-    print(f"  BLOCK_BAND_POST:   {len(bb_post_b)}  (expected 0 for AX301)")
-    print(f"  COLUMN_INFRA bp=2: {len(col_b)}")
-    print(f"  LAB_RESIDUAL:      {len(lab_residual)}  (would be np2fasm LUT/ROUTE)")
-    print(f"  Union (deduped):   {len(union)}")
+    print(f"  IOB_PIN_BANK_INFRA: {len(iob_pin_bank)}  "
+          f"(HEADER ∪ BLOCK_BAND_POST; AX301 has 0 in BB_POST)")
+    print(f"  M9K_MODE BLOCK_BAND: {len(bb_b)}")
+    print(f"  M9K_COLUMN_INFRA bp=2: {len(col_b)}")
+    print(f"  LAB_RESIDUAL:        {len(lab_residual)}  (would be np2fasm LUT/ROUTE)")
+    print(f"  Union (deduped):     {len(union)}")
 
     # Apply to nv_zero_global
     rebuilt = bytearray(nv)
@@ -95,12 +100,12 @@ def main():
         rebuilt[off] ^= 1 << bp
     final = bytearray(patch_rbf_crc(bytes(rebuilt)))
 
-    # patch_rbf_crc skips header frames (0..24).  When HEADER bucket
-    # changes data in a header frame, its CRC at +208/+209 must come
-    # from gold (we can't recompute since the chip's header CRC scheme
-    # isn't documented).  Copy gold's CRC bytes for any header frame
-    # touched by the HEADER bucket.
-    touched_header_frames = {(off - PRE) // FRAME for off, _ in header_b}
+    # patch_rbf_crc skips header frames (0..24).  When the IOB pin-bank
+    # bucket changes data in a header frame, its CRC at +208/+209 must
+    # come from gold (we can't recompute since the chip's header CRC
+    # scheme isn't documented).  Copy gold's CRC bytes for any header
+    # frame touched.
+    touched_header_frames = {(off - PRE) // FRAME for off, _ in iob_pin_bank}
     for fnum in touched_header_frames:
         if fnum > 24:
             continue

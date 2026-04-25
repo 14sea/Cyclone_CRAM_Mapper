@@ -11,7 +11,8 @@ Gold-replace pattern at one (X,Y) SDP site:
 
 If gap is small enough (<300 cells, all in header or block_band/post),
 the silicon flash is the next step. The remaining cells correspond to
-the unimplemented IOB_PIN_BANK_INFRA + M9K_BLOCK_TAIL + D3 directives.
+the unimplemented IOB_PIN_BANK_INFRA (which now also folds in the
+former M9K_BLOCK_TAIL block_band_post slice) + D3 directives.
 """
 from __future__ import annotations
 import json

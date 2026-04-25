@@ -34,7 +34,6 @@ def main():
     nv = (ROOT / "results/rbf/nv_zero_global.rbf").read_bytes()
     d3 = json.loads((ROOT / "results/m9k_mode_d3.json").read_text())
     infra = json.loads((ROOT / "results/m9k_column_infra.json").read_text())
-    tail = json.loads((ROOT / "results/m9k_block_tail.json").read_text())
     iob = json.loads((ROOT / "results/iob_pin_bank_infra.json").read_text())
     base = ROOT / "tmp/m9k_mode_quartus_gold/4x2048/sdp"
 
@@ -61,9 +60,8 @@ def main():
 
         d3_cells = set(tuple(c) for c in d3.get(site, {}).get("mode_d3_cells", []))
         infra_cells = set(tuple(c) for c in infra.get(site, {}).get("infra_cells", []))
-        tail_cells = set(tuple(c) for c in tail.get(site, {}).get("tail_cells", []))
         iob_cells = set(tuple(c) for c in iob.get("per_site", {}).get(site, []))
-        union = init_cells | d3_cells | infra_cells | tail_cells | iob_cells
+        union = init_cells | d3_cells | infra_cells | iob_cells
 
         rebuilt = bytearray(nv)
         for off, bp in union:

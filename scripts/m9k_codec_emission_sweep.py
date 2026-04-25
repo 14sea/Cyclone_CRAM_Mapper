@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Sweep codec emission probe across all 26 SDP sites.
 
-For each site, applies (M9K_INIT ∩ target) ∪ M9K_MODE ∪ M9K_COLUMN_INFRA
-to nv_zero_global (CRC-patched), diffs vs Quartus v0 gold, and reports
-the remaining gap broken down by region.
+For each site, applies M9K_INIT ∩ target, M9K_MODE D3, M9K_COLUMN_INFRA,
+and IOB_PIN_BANK_INFRA (HEADER ∪ BLOCK_BAND_POST) to nv_zero_global,
+CRC-patches, diffs vs Quartus v0 gold, and reports the remaining gap
+broken down by region.
 
-Sanity check: gap structure should be stable across sites
-(~700 header + ~120 block_band + ~25 block_band_post + small misc).
+Sanity check: gap structure should be stable across sites.
 Outlier sites flag a mining problem.
 """
 from __future__ import annotations
@@ -54,7 +54,6 @@ def main():
     nv = (ROOT / "results/rbf/nv_zero_global.rbf").read_bytes()
     d3_data = json.loads((ROOT / "results/m9k_mode_d3.json").read_text())
     infra_data = json.loads((ROOT / "results/m9k_column_infra.json").read_text())
-    tail_data = json.loads((ROOT / "results/m9k_block_tail.json").read_text())
     iob_data = json.loads((ROOT / "results/iob_pin_bank_infra.json").read_text())
 
     base = ROOT / "tmp/m9k_mode_quartus_gold/4x2048/sdp"
@@ -94,15 +93,12 @@ def main():
         infra_cells = set(tuple(c) for c in
                           infra_data.get(site, {}).get("infra_cells", []))
 
-        # M9K_BLOCK_TAIL
-        tail_cells = set(tuple(c) for c in
-                         tail_data.get(site, {}).get("tail_cells", []))
-
-        # IOB_PIN_BANK_INFRA (per-site bucket)
+        # IOB_PIN_BANK_INFRA (per-site, HEADER ∪ BLOCK_BAND_POST —
+        # absorbs the legacy M9K_BLOCK_TAIL bucket)
         iob_cells = set(tuple(c) for c in
                         iob_data.get("per_site", {}).get(site, []))
 
-        union = init_cells | mode_cells | infra_cells | tail_cells | iob_cells
+        union = init_cells | mode_cells | infra_cells | iob_cells
         rebuilt = bytearray(nv)
         for off, bp in union:
             rebuilt[off] ^= 1 << bp
