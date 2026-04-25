@@ -31,9 +31,17 @@ def total(grid):
 
 
 def hotspots(grid, top_n=20):
+    """Return [(overuse, x, y), ...] sorted descending.
+
+    CSV axis convention (verified 2026-04-25 audit): outer index = X
+    (rows = grid_w), inner index = Y (cols ≈ grid_h).  For canonical
+    chipdb that's 56 rows × 25-26 cols.  EARLIER VERSIONS HAD THIS
+    SWAPPED — historical hotspot reports of "(x=21, y=26)" should
+    actually be read as (X=26, Y=21).
+    """
     cells = []
-    for y, row in enumerate(grid):
-        for x, v in enumerate(row):
+    for x, row in enumerate(grid):
+        for y, v in enumerate(row):
             if v > 0:
                 cells.append((v, x, y))
     cells.sort(reverse=True)

@@ -26,30 +26,31 @@ def parse_grid(csv_path: Path):
 def main():
     iters = sorted(int(p.stem.split("_")[-1])
                    for p in PROBE.glob("heatmap_v9_congestion_by_coordinate_*.csv"))
-    print(f"Tracking hotspot (x=21, y=26) across {len(iters)} iters.")
-    print(f"  Also tracking iter total + #cells > 0 + top-1 hotspot.\n")
+    # CSV axis convention (audit 2026-04-25): outer=X (grid_w=56),
+    # inner=Y (grid_h≈26).  v9 hotspot is at X=26, Y=21 (NOT 21,26).
+    HOT_X, HOT_Y = 26, 21
+    print(f"Tracking hotspot (X={HOT_X}, Y={HOT_Y}) across {len(iters)} iters.")
+    print(f"  CSV outer=X, inner=Y.  Top-1 reported as (X, Y).\n")
     print(f"{'iter':>4}  {'total':>6}  {'>0_cells':>8}  "
-          f"{'(21,26)':>8}  {'top1':>6}  {'top1_xy':>10}")
+          f"{f'(X={HOT_X},Y={HOT_Y})':>10}  {'top1':>6}  {'top1_XY':>10}")
     persistent_top1 = []
     for it in iters:
         grid = parse_grid(PROBE / f"heatmap_v9_congestion_by_coordinate_{it}.csv")
         tot = sum(sum(r) for r in grid)
         nz = sum(1 for row in grid for v in row if v > 0)
-        # Get value at (21, 26) — note CSV row=Y, col=X
-        v_2126 = grid[26][21] if len(grid) > 26 and len(grid[26]) > 21 else 0
-        # Find top-1 hotspot
+        v_hot = grid[HOT_X][HOT_Y] if len(grid) > HOT_X and len(grid[HOT_X]) > HOT_Y else 0
+        # Find top-1 hotspot — outer=X, inner=Y
         top = (0, -1, -1)
-        for y, row in enumerate(grid):
-            for x, v in enumerate(row):
+        for x, row in enumerate(grid):
+            for y, v in enumerate(row):
                 if v > top[0]:
                     top = (v, x, y)
         persistent_top1.append((top[1], top[2]))
-        print(f"{it:>4}  {tot:>6}  {nz:>8}  {v_2126:>8}  "
+        print(f"{it:>4}  {tot:>6}  {nz:>8}  {v_hot:>10}  "
               f"{top[0]:>6}  {f'({top[1]},{top[2]})':>10}")
 
-    # How many iters did (21, 26) remain top-1?
-    top1_at_2126 = sum(1 for x, y in persistent_top1 if (x, y) == (21, 26))
-    print(f"\n(21, 26) was top-1 in {top1_at_2126}/{len(iters)} iters.")
+    top1_at_hot = sum(1 for x, y in persistent_top1 if (x, y) == (HOT_X, HOT_Y))
+    print(f"\n(X={HOT_X}, Y={HOT_Y}) was top-1 in {top1_at_hot}/{len(iters)} iters.")
     # Migration?
     from collections import Counter
     c = Counter(persistent_top1)
