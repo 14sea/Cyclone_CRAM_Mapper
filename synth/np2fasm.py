@@ -413,6 +413,22 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     # validated 2026-04-25 at X15_Y10_N0 (m9k_sdp_blink and
     # m9k_tdp_blink, both LED0 stable ~0.186 Hz).  Triad SP / SDP /
     # TDP closed at the calibration site.
+    #
+    # !! CODEC-EMISSION SILICON STATUS (discovered 2026-04-25):
+    # Every "HW-validated" line above refers to *Quartus-built* RBFs
+    # being flashed.  The np2fasm + fasm2rbf codec emission path
+    # (this function → `M9K_MODE_*` directive → `fasm2rbf --base nv`)
+    # is silicon-broken at every site tested: the bucket polarity is
+    # mined relative to a no-M9K Quartus baseline, but production
+    # applies it as XOR onto `nv_zero_global` (~85% bit-mismatch),
+    # AND the 3-variant intersection over-filters silicon-required
+    # cells.  See `~/.claude/projects/-home-test-EP4CE6/memory/
+    # m9k_mode_codec_silicon_broken_2026_04_25.md` for the full
+    # diagnosis + deferred fix paths (D1/D2/D3).
+    # The gates below remain populated because byte-round-trip via
+    # the *mining* baseline still works (m9k_e2e_smoke.py).  Full
+    # fix is multi-session and out of scope here.  ζ path is
+    # unaffected and remains the production NEORV32 silicon route.
     _M9K_MODE_FUNCTIONAL_VALIDATED_SP = {
         (4, 2048), (9, 512), (18, 512), (9, 1024), (36, 256),
         # (8, 64): NEORV32 dcache + icache per-M9K geometry (4×8×64 each).
