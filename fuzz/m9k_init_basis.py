@@ -117,10 +117,12 @@ M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
     # independently. All-zero INIT is correct regardless; non-zero INIT
     # needs per-site calibration sweep before trusting.
     # --- 9×1024 (same anchor as 9×512) ---
-    # ⚠️  FORMULA NOT CALIBRATED FOR NON-ZERO INIT at depth=1024.
-    # The stride (w//2)*210 was derived for depth=512 only.  All-zero
-    # INIT is correct (zero delta).  Non-zero content needs a dedicated
-    # calibration sweep before trusting.
+    # ⚠️  THESE ENTRIES USE THE WRONG FORMULA FOR NON-ZERO INIT at depth=1024.
+    # 9×1024 stores 4 words per frame (vs 2 for 9×512); the linear formula
+    # `byte = anchor + (w//2)*210 - (w%2) - 2*bit` gives wrong cells.
+    # Calibrated 2026-04-27 — use `write_init_sp9x1024` / `read_init_sp9x1024`
+    # and `SP_9X1024_BASE_FRAMES` instead.  Anchors retained for backward-
+    # compat with allzero use (zero delta = no flips).
     ("X15_Y5_N0",   9, 1024): (120092, 6),
     ("X15_Y6_N0",   9, 1024): (119955, 5),
     ("X15_Y8_N0",   9, 1024): (120095, 5),
@@ -219,10 +221,12 @@ M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
     ("X27_Y9_N0",   4, 2048): (261078, 4),
     ("X27_Y10_N0",  4, 2048): (261148, 4),
     # --- 36×256 (same anchor as 9×512) ---
-    # ⚠️  FORMULA NOT CALIBRATED FOR NON-ZERO INIT at depth=256.
-    # The stride (w//2)*210 was derived for depth=512 only.  All-zero
-    # INIT is correct (zero delta).  Non-zero content needs a dedicated
-    # calibration sweep before trusting.
+    # ⚠️  THESE ENTRIES USE THE WRONG FORMULA FOR NON-ZERO INIT at width=36.
+    # 36×256 splits each word across two frame regions (lower base+0 for bits
+    # 0..15+32..33; upper base+128 for bits 16..31+34..35); the simple linear
+    # formula gives wrong cells.  Calibrated 2026-04-27 — use
+    # `write_init_sp36x256` / `read_init_sp36x256` and `SP_36X256_BASE_FRAMES`
+    # instead.  Anchors retained for backward-compat with allzero use.
     ("X15_Y5_N0",  36, 256): (120092, 6),
     ("X15_Y6_N0",  36, 256): (119955, 5),
     ("X15_Y8_N0",  36, 256): (120095, 5),
@@ -274,12 +278,12 @@ FRAME_SIZE = 210
 CRC_SLOTS = (208, 209)   # per-frame CRC bytes — never touch directly
 PREAMBLE   = 32
 
-# ── SDP 4×2048 bit-0 codec ───────────────────────────────────────────────────
+# ── SDP 4×2048 4-bit codec ───────────────────────────────────────────────────
 # Calibrated 2026-04-27 via single-word Quartus probes at X15_Y10_N0.
 # Layout: 8 words per CRAM frame; byte positions indexed by (word % 8);
 #         all cells at bp=4. base_frame = (sp_9x512_anchor - PREAMBLE - 86) // 210.
-# Coverage: bit 0 only. Bits 1-3 are at unknown positions (not yet probed).
-# Valid for blink-style designs where LED = dout[0] and MIF drives bit 0.
+# Bit-stride: bif(w,bit) = _SDP_4X2048_BIF[w%8] - 2*bit (bits 0..3 covered).
+# Validated: bit 0 silicon (stripe64), bits 1-3 Quartus-probe (XOR-design).
 #
 # Word→frame: frame = base_frame + word // 8
 # Word→byte:  SDP_4X2048_BIF[word % 8]
@@ -308,28 +312,38 @@ SDP_4X2048_BASE_FRAMES: dict[str, int] = {
 }
 
 
-def sdp_4x2048_cell(base_frame: int, word: int) -> tuple[int, int]:
-    """Return (byte_offset, bp) for the bit-0 INIT cell of the given word.
+def sdp_4x2048_cell(base_frame: int, word: int, bit: int = 0) -> tuple[int, int]:
+    """Return (byte_offset, bp) for the SDP 4×2048 INIT cell of (word, bit).
 
-    Only bit 0 is covered by this formula (calibrated 2026-04-27).
+    Calibrated 2026-04-27 at X15_Y10_N0:
+      bif(w, bit) = _SDP_4X2048_BIF[w % 8] - 2 * bit
+      frame(w)   = base_frame + w // 8
+      bp         = 4 (constant for all bits at this site)
+
+    bit ∈ {0, 1, 2, 3}.
     """
+    if not 0 <= bit < 4:
+        raise ValueError(f"SDP 4×2048 has 4 bits per word; got bit={bit}")
     frame  = base_frame + word // 8
-    bif    = _SDP_4X2048_BIF[word % 8]
+    bif    = _SDP_4X2048_BIF[word % 8] - 2 * bit
     offset = PREAMBLE + frame * FRAME_SIZE + bif
     return offset, _SDP_4X2048_BP
 
 
 def read_init_sdp4x2048(rbf_bytes: bytes, base_frame: int,
                          depth: int = 2048) -> list[int]:
-    """Read bit-0 INIT words from a SDP 4×2048 RBF.
+    """Read INIT words (full 4-bit) from a SDP 4×2048 RBF.
 
-    Returns a list of `depth` values in {0, 1} — only bit 0 per word.
+    Returns a list of `depth` values in [0, 0xF] — bits 0..3 per word.
     """
     words = []
     for w in range(depth):
-        offset, bp = sdp_4x2048_cell(base_frame, w)
-        val = 1 if (rbf_bytes[offset] & (1 << bp)) else 0
-        words.append(val)
+        v = 0
+        for bit in range(4):
+            offset, bp = sdp_4x2048_cell(base_frame, w, bit)
+            if rbf_bytes[offset] & (1 << bp):
+                v |= (1 << bit)
+        words.append(v)
     return words
 
 
@@ -340,26 +354,175 @@ def write_init_sdp4x2048(
     target_words: list[int],
     depth: int = 2048,
 ) -> bytes:
-    """XOR-delta writer for SDP 4×2048 bit-0 INIT cells.
+    """XOR-delta writer for SDP 4×2048 INIT cells (full 4-bit).
 
-    base_words / target_words: each entry is 0 or 1 (bit 0 only).
+    base_words / target_words: each entry is in [0, 0xF].
     Caller must run patch_rbf_crc() afterwards.
     """
     if len(base_words) != depth or len(target_words) != depth:
         raise ValueError(f"expected {depth} words")
     out = bytearray(rbf_bytes)
     for w in range(depth):
-        if (base_words[w] & 1) == (target_words[w] & 1):
+        delta = (base_words[w] ^ target_words[w]) & 0xF
+        if delta == 0:
             continue
-        offset, bp = sdp_4x2048_cell(base_frame, w)
-        off_in_frame = (offset - PREAMBLE) % FRAME_SIZE
-        if off_in_frame in CRC_SLOTS:
-            raise ValueError(f"sdp cell w={w} lands on CRC slot offset {offset}")
-        out[offset] ^= (1 << bp)
+        for bit in range(4):
+            if not (delta & (1 << bit)):
+                continue
+            offset, bp = sdp_4x2048_cell(base_frame, w, bit)
+            off_in_frame = (offset - PREAMBLE) % FRAME_SIZE
+            if off_in_frame in CRC_SLOTS:
+                raise ValueError(
+                    f"sdp cell w={w} bit={bit} lands on CRC slot offset {offset}"
+                )
+            out[offset] ^= (1 << bp)
     return bytes(out)
 
 
 # ── end SDP 4×2048 codec ──────────────────────────────────────────────────────
+
+
+# ── SP 9×1024 codec ──────────────────────────────────────────────────────────
+# Calibrated 2026-04-27 at X15_Y10_N0 via single-word/single-bit Quartus probes
+# (XOR-fold design forces all 9 bits into CRAM).
+# Layout: 4 words per CRAM frame (vs 2 for 9×512); -2 byte stride per bit.
+#   frame(w)     = base_frame + w // 4
+#   bif(w, bit)  = _SP_9X1024_BIF[w % 4] - 2*bit
+#   bp           = 4 (constant at this site)
+# base_frame is shared with 9×512 (same physical M9K block at X15_Y10_N0).
+
+_SP_9X1024_BIF = [86, 68, 85, 67]  # indexed by word % 4
+_SP_9X1024_BP  = 4
+
+SP_9X1024_BASE_FRAMES: dict[str, int] = {
+    "X15_Y10_N0": 571,  # = (120028 - PREAMBLE - 86) // FRAME_SIZE
+    # Other sites: extrapolate via (sp_9x512_anchor - PREAMBLE - 86) // 210.
+    # Only X15_Y10_N0 is silicon-validated.
+}
+
+
+def sp_9x1024_cell(base_frame: int, word: int, bit: int) -> tuple[int, int]:
+    if not 0 <= bit < 9:
+        raise ValueError(f"SP 9×1024 has 9 bits per word; got bit={bit}")
+    frame  = base_frame + word // 4
+    bif    = _SP_9X1024_BIF[word % 4] - 2 * bit
+    offset = PREAMBLE + frame * FRAME_SIZE + bif
+    return offset, _SP_9X1024_BP
+
+
+def read_init_sp9x1024(rbf_bytes: bytes, base_frame: int,
+                        depth: int = 1024) -> list[int]:
+    words = []
+    for w in range(depth):
+        v = 0
+        for bit in range(9):
+            offset, bp = sp_9x1024_cell(base_frame, w, bit)
+            if rbf_bytes[offset] & (1 << bp):
+                v |= (1 << bit)
+        words.append(v)
+    return words
+
+
+def write_init_sp9x1024(rbf_bytes: bytes, base_frame: int,
+                         base_words: list[int], target_words: list[int],
+                         depth: int = 1024) -> bytes:
+    if len(base_words) != depth or len(target_words) != depth:
+        raise ValueError(f"expected {depth} words")
+    out = bytearray(rbf_bytes)
+    for w in range(depth):
+        delta = (base_words[w] ^ target_words[w]) & 0x1FF
+        if delta == 0:
+            continue
+        for bit in range(9):
+            if not (delta & (1 << bit)):
+                continue
+            offset, bp = sp_9x1024_cell(base_frame, w, bit)
+            off_in_frame = (offset - PREAMBLE) % FRAME_SIZE
+            if off_in_frame in CRC_SLOTS:
+                raise ValueError(
+                    f"sp9x1024 cell w={w} bit={bit} lands on CRC slot {offset}"
+                )
+            out[offset] ^= (1 << bp)
+    return bytes(out)
+
+
+# ── SP 36×256 codec ──────────────────────────────────────────────────────────
+# Calibrated 2026-04-27 at X15_Y10_N0 via 36-bit single-bit probes.
+# Layout: 36 bits split across two frames (lower base+0, upper base+128).
+#   bit 0..15  → lower half, position = bit
+#   bit 16..31 → upper half, position = bit - 16
+#   bit 32, 33 → lower half, position = 16, 17
+#   bit 34, 35 → upper half, position = 16, 17
+# Within a half: 2 words/frame, frame = base + word//2,
+# bif = 86 - 2*pos - (word%2), bp = 4.
+
+_SP_36X256_BP = 4
+_SP_36X256_UPPER_OFFSET = 128
+
+SP_36X256_BASE_FRAMES: dict[str, int] = {
+    "X15_Y10_N0": 571,
+    # Other sites extrapolated via (sp_9x512_anchor - PREAMBLE - 86) // 210.
+}
+
+
+def _sp_36x256_bit_to_half_pos(bit: int) -> tuple[int, int]:
+    if not 0 <= bit < 36:
+        raise ValueError(f"SP 36×256 has 36 bits per word; got bit={bit}")
+    if bit < 32:
+        half = (bit // 16) % 2
+        pos  = bit % 16
+    else:
+        half = (bit - 32) // 2  # 32,33→0; 34,35→1
+        pos  = 16 + (bit - 32) % 2  # 32,34→16; 33,35→17
+    return half, pos
+
+
+def sp_36x256_cell(base_frame: int, word: int, bit: int) -> tuple[int, int]:
+    half, pos = _sp_36x256_bit_to_half_pos(bit)
+    frame  = base_frame + word // 2 + half * _SP_36X256_UPPER_OFFSET
+    bif    = 86 - 2 * pos - (word % 2)
+    offset = PREAMBLE + frame * FRAME_SIZE + bif
+    return offset, _SP_36X256_BP
+
+
+def read_init_sp36x256(rbf_bytes: bytes, base_frame: int,
+                        depth: int = 256) -> list[int]:
+    words = []
+    for w in range(depth):
+        v = 0
+        for bit in range(36):
+            offset, bp = sp_36x256_cell(base_frame, w, bit)
+            if rbf_bytes[offset] & (1 << bp):
+                v |= (1 << bit)
+        words.append(v)
+    return words
+
+
+def write_init_sp36x256(rbf_bytes: bytes, base_frame: int,
+                         base_words: list[int], target_words: list[int],
+                         depth: int = 256) -> bytes:
+    if len(base_words) != depth or len(target_words) != depth:
+        raise ValueError(f"expected {depth} words")
+    out = bytearray(rbf_bytes)
+    mask = (1 << 36) - 1
+    for w in range(depth):
+        delta = (base_words[w] ^ target_words[w]) & mask
+        if delta == 0:
+            continue
+        for bit in range(36):
+            if not (delta & (1 << bit)):
+                continue
+            offset, bp = sp_36x256_cell(base_frame, w, bit)
+            off_in_frame = (offset - PREAMBLE) % FRAME_SIZE
+            if off_in_frame in CRC_SLOTS:
+                raise ValueError(
+                    f"sp36x256 cell w={w} bit={bit} lands on CRC slot {offset}"
+                )
+            out[offset] ^= (1 << bp)
+    return bytes(out)
+
+
+# ── end SP 9×1024 / 36×256 codecs ─────────────────────────────────────────────
 
 
 def init_cell(anchor: int, word: int, bit: int, bp: int = 6) -> tuple[int, int]:

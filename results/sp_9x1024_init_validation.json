@@ -1,0 +1,151 @@
+{
+  "site": "X15_Y10_N0",
+  "anchor": 120028,
+  "bp": 4,
+  "probes": {
+    "w0_b0": {
+      "predicted": {
+        "offset": 120028,
+        "frame": 571,
+        "bif": 86,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120028,
+          "frame": 571,
+          "bif": 86,
+          "bp": 4
+        }
+      ]
+    },
+    "w1_b0": {
+      "predicted": {
+        "offset": 120027,
+        "frame": 571,
+        "bif": 85,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120010,
+          "frame": 571,
+          "bif": 68,
+          "bp": 4
+        }
+      ]
+    },
+    "w2_b0": {
+      "predicted": {
+        "offset": 120238,
+        "frame": 572,
+        "bif": 86,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120027,
+          "frame": 571,
+          "bif": 85,
+          "bp": 4
+        }
+      ]
+    },
+    "w3_b0": {
+      "predicted": {
+        "offset": 120237,
+        "frame": 572,
+        "bif": 85,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120009,
+          "frame": 571,
+          "bif": 67,
+          "bp": 4
+        }
+      ]
+    },
+    "w4_b0": {
+      "predicted": {
+        "offset": 120448,
+        "frame": 573,
+        "bif": 86,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120238,
+          "frame": 572,
+          "bif": 86,
+          "bp": 4
+        }
+      ]
+    },
+    "w1023_b0": {
+      "predicted": {
+        "offset": 227337,
+        "frame": 1082,
+        "bif": 85,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 173559,
+          "frame": 826,
+          "bif": 67,
+          "bp": 4
+        }
+      ]
+    },
+    "w0_b8": {
+      "predicted": {
+        "offset": 120012,
+        "frame": 571,
+        "bif": 70,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120012,
+          "frame": 571,
+          "bif": 70,
+          "bp": 4
+        }
+      ]
+    },
+    "w1_b4": {
+      "predicted": {
+        "offset": 120019,
+        "frame": 571,
+        "bif": 77,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 120002,
+          "frame": 571,
+          "bif": 60,
+          "bp": 4
+        }
+      ]
+    },
+    "w3_b8": {
+      "predicted": {
+        "offset": 120221,
+        "frame": 572,
+        "bif": 69,
+        "bp": 4
+      },
+      "observed": [
+        {
+          "offset": 119993,
+          "frame": 571,
+          "bif": 51,
+          "bp": 4
+        }
+      ]
+    }
+  }
+}
