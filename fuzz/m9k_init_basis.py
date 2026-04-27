@@ -117,6 +117,10 @@ M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
     # independently. All-zero INIT is correct regardless; non-zero INIT
     # needs per-site calibration sweep before trusting.
     # --- 9×1024 (same anchor as 9×512) ---
+    # ⚠️  FORMULA NOT CALIBRATED FOR NON-ZERO INIT at depth=1024.
+    # The stride (w//2)*210 was derived for depth=512 only.  All-zero
+    # INIT is correct (zero delta).  Non-zero content needs a dedicated
+    # calibration sweep before trusting.
     ("X15_Y5_N0",   9, 1024): (120092, 6),
     ("X15_Y6_N0",   9, 1024): (119955, 5),
     ("X15_Y8_N0",   9, 1024): (120095, 5),
@@ -215,6 +219,10 @@ M9K_INIT_ANCHORS: dict[tuple[str, int, int], tuple[int, int]] = {
     ("X27_Y9_N0",   4, 2048): (261078, 4),
     ("X27_Y10_N0",  4, 2048): (261148, 4),
     # --- 36×256 (same anchor as 9×512) ---
+    # ⚠️  FORMULA NOT CALIBRATED FOR NON-ZERO INIT at depth=256.
+    # The stride (w//2)*210 was derived for depth=512 only.  All-zero
+    # INIT is correct (zero delta).  Non-zero content needs a dedicated
+    # calibration sweep before trusting.
     ("X15_Y5_N0",  36, 256): (120092, 6),
     ("X15_Y6_N0",  36, 256): (119955, 5),
     ("X15_Y8_N0",  36, 256): (120095, 5),
