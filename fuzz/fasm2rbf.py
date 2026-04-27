@@ -1950,9 +1950,52 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     if m9k_inits:
         from m9k_init_basis import (
             M9K_INIT_ANCHORS, write_init, read_init,
+            SDP_4X2048_BASE_FRAMES, write_init_sdp4x2048, read_init_sdp4x2048,
+            SP_9X1024_BASE_FRAMES,  write_init_sp9x1024,  read_init_sp9x1024,
+            SP_36X256_BASE_FRAMES,  write_init_sp36x256,  read_init_sp36x256,
         )
+        # Dispatch table: (width, depth) → (base_frames_dict, read_fn, write_fn).
+        # Entries here use the dedicated codec instead of the legacy linear
+        # `write_init`, because the M9K's per-(width, depth) cell layout differs.
+        _SPECIAL_INIT_CODECS = {
+            (4, 2048):  (SDP_4X2048_BASE_FRAMES, read_init_sdp4x2048, write_init_sdp4x2048),
+            (9, 1024):  (SP_9X1024_BASE_FRAMES,  read_init_sp9x1024,  write_init_sp9x1024),
+            (36, 256):  (SP_36X256_BASE_FRAMES,  read_init_sp36x256,  write_init_sp36x256),
+        }
         for x, y, n, width, depth, target_words in m9k_inits:
             site = f"X{x}_Y{y}_N{n}"
+            special = _SPECIAL_INIT_CODECS.get((width, depth))
+
+            if special is not None:
+                base_frames, _read_fn, _write_fn = special
+                if site not in base_frames:
+                    if lenient:
+                        sys.stderr.write(
+                            f"warn: M9K {site} {width}x{depth}: no calibrated "
+                            f"base_frame for dedicated codec — skipping INIT\n"
+                        )
+                        continue
+                    raise FasmError(
+                        f"M9K {site} {width}x{depth}: no calibrated base_frame; "
+                        f"only X15_Y10_N0 is silicon-validated for this width."
+                    )
+                base_frame = base_frames[site]
+                try:
+                    base_words = _read_fn(work, base_frame, depth=depth)
+                    work = _write_fn(work, base_frame, base_words, target_words,
+                                     depth=depth)
+                except (IndexError, Exception) as e:
+                    if lenient:
+                        sys.stderr.write(
+                            f"warn: M9K {site} {width}x{depth}: "
+                            f"INIT codec error ({e}) — skipping\n"
+                        )
+                        continue
+                    raise
+                continue
+
+            # Legacy linear-formula path: 9×512 / 18×512 (other widths fall
+            # through here and will fail the anchor check below).
             key = (site, width, depth)
             if key not in M9K_INIT_ANCHORS:
                 if lenient:
