@@ -58,7 +58,12 @@ MINE_SITES = (
     [(27, y) for y in M9K_SITES_X27]
 )
 
-# Pin pool — avoid dedicated clock, JTAG, and config pins
+# Pin pool — avoid dedicated clock, JTAG, and config pins.
+# PIN_F16 deliberately EXCLUDED: reserved as ALTERA_nCEO on F17, using
+# it as user IO requires special QSF flags (see WIDE_PIN_MAP in
+# fuzz/m9k_mode_inferred_full_remine.py which substitutes F16→P2).
+# Fitter throws "multiple pins assigned to F16" if F16 ever lands in
+# the assigned subset (caught by SDP w=9 d=1024 mining 2026-04-28).
 PIN_POOL = [
     "PIN_E15", "PIN_E16", "PIN_M16", "PIN_M15",
     "PIN_A8", "PIN_A11", "PIN_A14", "PIN_B14",
@@ -68,10 +73,15 @@ PIN_POOL = [
     "PIN_F15", "PIN_B16", "PIN_G16", "PIN_K15",
     "PIN_K16", "PIN_L15", "PIN_L16", "PIN_N16",
     "PIN_D16", "PIN_D15", "PIN_C15", "PIN_C16",
-    "PIN_F14", "PIN_F16", "PIN_J14", "PIN_J15",
-    "PIN_J16", "PIN_T3", "PIN_T7", "PIN_T12",
-    "PIN_T15", "PIN_P3", "PIN_P11", "PIN_P16",
-    "PIN_N2", "PIN_N14",
+    "PIN_F14", "PIN_J14", "PIN_J15", "PIN_J16",
+    "PIN_T3", "PIN_T7", "PIN_T12", "PIN_T15",
+    "PIN_P3", "PIN_P11", "PIN_P16", "PIN_N2",
+    "PIN_N14",
+    # Extension for SDP/TDP — additional input-capable F17 GPIOs not
+    # in the original (w=4/9/36, d=*) SP set.  Source: results/iob_cell_map.json.
+    "PIN_P2", "PIN_G1", "PIN_R3", "PIN_R10",
+    "PIN_R11", "PIN_R12", "PIN_T4", "PIN_T10",
+    "PIN_T11",
 ]
 
 
@@ -79,8 +89,13 @@ def _addr_bits(depth: int) -> int:
     return max(1, int(math.ceil(math.log2(depth))))
 
 
-def _make_pin_map(width: int, depth: int) -> dict[str, str]:
-    """Build a signal→pin mapping that fits the F17 pin budget."""
+def _make_pin_map(width: int, depth: int, mode: str = "sp") -> dict[str, str]:
+    """Build a signal→pin mapping that fits the F17 pin budget.
+
+    mode="sp"  : CLK, WE, ADDR{i}, DIN{i}, DOUT{i}
+    mode="sdp" : CLK, WE_W, ADDRW{i}, ADDRR{i}, DIN{i}, DOUT{i}
+                 (write + read on separate addresses, single shared CLK)
+    """
     addr_bits = _addr_bits(depth)
     if width <= 18:
         ext_din = width
@@ -89,14 +104,24 @@ def _make_pin_map(width: int, depth: int) -> dict[str, str]:
         ext_din = 4
         ext_dout = 4
 
-    signals = ["CLK", "WE"]
-    signals += [f"ADDR{i}" for i in range(addr_bits)]
-    signals += [f"DIN{i}" for i in range(ext_din)]
-    signals += [f"DOUT{i}" for i in range(ext_dout)]
+    if mode == "sp":
+        signals = ["CLK", "WE"]
+        signals += [f"ADDR{i}" for i in range(addr_bits)]
+        signals += [f"DIN{i}" for i in range(ext_din)]
+        signals += [f"DOUT{i}" for i in range(ext_dout)]
+    elif mode == "sdp":
+        signals = ["CLK", "WE_W"]
+        signals += [f"ADDRW{i}" for i in range(addr_bits)]
+        signals += [f"ADDRR{i}" for i in range(addr_bits)]
+        signals += [f"DIN{i}" for i in range(ext_din)]
+        signals += [f"DOUT{i}" for i in range(ext_dout)]
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
 
     if len(signals) > len(PIN_POOL):
         raise ValueError(
-            f"Need {len(signals)} pins but only {len(PIN_POOL)} available"
+            f"Need {len(signals)} pins (mode={mode}, w={width}, d={depth}) "
+            f"but only {len(PIN_POOL)} available"
         )
 
     pin_map = {}
@@ -109,25 +134,34 @@ def _make_pin_map(width: int, depth: int) -> dict[str, str]:
     return pin_map
 
 
-def _make_harness(width: int, depth: int) -> Harness:
-    pins = _make_pin_map(width, depth)
+def _make_harness(width: int, depth: int, mode: str = "sp") -> Harness:
+    pins = _make_pin_map(width, depth, mode=mode)
     return Harness(
         iob_pins=tuple(pins.items()),
         clk_signal="CLK",
         seed=1,
-        name=f"m9k_w{width}d{depth}",
+        name=f"m9k_{mode}_w{width}d{depth}",
         optimizations_off=(),
     )
 
 
-def _port_decl(width: int, depth: int) -> str:
+def _port_decl(width: int, depth: int, mode: str = "sp") -> str:
     addr_bits = _addr_bits(depth)
     ext_din = width if width <= 18 else 4
     ext_dout = width if width <= 18 else 4
-    parts = ["input CLK", "input WE"]
-    parts += [f"input ADDR{i}" for i in range(addr_bits)]
-    parts += [f"input DIN{i}" for i in range(ext_din)]
-    parts += [f"output DOUT{i}" for i in range(ext_dout)]
+    if mode == "sp":
+        parts = ["input CLK", "input WE"]
+        parts += [f"input ADDR{i}" for i in range(addr_bits)]
+        parts += [f"input DIN{i}" for i in range(ext_din)]
+        parts += [f"output DOUT{i}" for i in range(ext_dout)]
+    elif mode == "sdp":
+        parts = ["input CLK", "input WE_W"]
+        parts += [f"input ADDRW{i}" for i in range(addr_bits)]
+        parts += [f"input ADDRR{i}" for i in range(addr_bits)]
+        parts += [f"input DIN{i}" for i in range(ext_din)]
+        parts += [f"output DOUT{i}" for i in range(ext_dout)]
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
     return ",\n    ".join(parts)
 
 
@@ -194,40 +228,115 @@ endmodule
 """
 
 
-def _baseline_spec(width: int, depth: int) -> M9kSpecimen:
-    h = _make_harness(width, depth)
+def verilog_inferred_sdp_ram(width: int, depth: int) -> str:
+    """Inferred Simple Dual Port RAM — separate read/write addresses,
+    shared CLK.  Quartus + Yosys both infer SDP from this idiom because
+    the read and write paths use distinct addresses with no read-during-
+    write same-address contention.
+    """
+    addr_bits = _addr_bits(depth)
+    ext_din = width if width <= 18 else 4
+    ext_dout = width if width <= 18 else 4
+
+    addrw_bus = ", ".join(f"ADDRW{i}" for i in range(addr_bits - 1, -1, -1))
+    addrr_bus = ", ".join(f"ADDRR{i}" for i in range(addr_bits - 1, -1, -1))
+
+    if width <= ext_din:
+        din_bus = ", ".join(f"DIN{i}" for i in range(width - 1, -1, -1))
+        din_expr = f"{{{din_bus}}}"
+        dout_assign = ", ".join(f"DOUT{i}" for i in range(width - 1, -1, -1))
+        dout_lines = f"    assign {{{dout_assign}}} = dout_r;"
+    else:
+        # width > ext_din path (folded data; not exercised at NEORV32 SDP shapes)
+        raise ValueError(
+            f"SDP wide-data folding not implemented (w={width}, ext_din={ext_din})")
+
+    return f"""\
+module fuzz_top(
+    {_port_decl(width, depth, "sdp")}
+);
+    wire [{addr_bits-1}:0] addrw = {{{addrw_bus}}};
+    wire [{addr_bits-1}:0] addrr = {{{addrr_bus}}};
+    wire [{width-1}:0]     din   = {din_expr};
+    reg  [{width-1}:0]     dout_r;
+{dout_lines}
+
+    (* ramstyle = "M9K" *) reg [{width-1}:0] mem [0:{depth-1}];
+    integer i;
+    initial begin
+        for (i = 0; i < {depth}; i = i + 1)
+            mem[i] = i[{width-1}:0] ^ {width}'h1A5;
+    end
+    always @(posedge CLK) begin
+        if (WE_W) mem[addrw] <= din;
+    end
+    always @(posedge CLK) begin
+        dout_r <= mem[addrr];
+    end
+endmodule
+"""
+
+
+def verilog_baseline_sdp(width: int, depth: int) -> str:
+    ext_din = width if width <= 18 else 4
+    ext_dout = width if width <= 18 else 4
+    parts = [f"    assign DOUT{i} = DIN{i % ext_din};" for i in range(ext_dout)]
+    body = "\n".join(parts)
+    return f"""\
+module fuzz_top(
+    {_port_decl(width, depth, "sdp")}
+);
+{body}
+endmodule
+"""
+
+
+def _baseline_spec(width: int, depth: int, mode: str = "sp") -> M9kSpecimen:
+    h = _make_harness(width, depth, mode=mode)
+    if mode == "sp":
+        verilog = verilog_baseline(width, depth)
+    elif mode == "sdp":
+        verilog = verilog_baseline_sdp(width, depth)
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
     return M9kSpecimen(
         m9k_loc=None,
         init_mif=False,
-        name=f"m9k_w{width}d{depth}_baseline",
+        name=f"m9k_{mode}_w{width}d{depth}_baseline",
         harness=h,
-        verilog=verilog_baseline(width, depth),
+        verilog=verilog,
         placement={},
     )
 
 
-def _site_spec(x: int, y: int, width: int, depth: int) -> M9kSpecimen:
-    h = _make_harness(width, depth)
+def _site_spec(x: int, y: int, width: int, depth: int, mode: str = "sp") -> M9kSpecimen:
+    h = _make_harness(width, depth, mode=mode)
+    if mode == "sp":
+        verilog = verilog_inferred_ram(width, depth)
+    elif mode == "sdp":
+        verilog = verilog_inferred_sdp_ram(width, depth)
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
     return M9kSpecimen(
         m9k_loc=f"M9K_X{x}_Y{y}_N0",
         init_mif=False,
-        name=f"m9k_w{width}d{depth}_X{x}_Y{y}",
+        name=f"m9k_{mode}_w{width}d{depth}_X{x}_Y{y}",
         harness=h,
-        verilog=verilog_inferred_ram(width, depth),
+        verilog=verilog,
         placement={},
     )
 
 
 def _build_job(args):
-    x, y, width, depth = args
+    x, y, width, depth, mode = args
     WORK_ROOT.mkdir(parents=True, exist_ok=True)
-    spec = _site_spec(x, y, width, depth)
+    spec = _site_spec(x, y, width, depth, mode=mode)
     t0 = time.time()
     try:
         rbf = spec.build(WORK_ROOT)
-        return (x, y, width, depth, str(rbf), None, time.time() - t0)
+        return (x, y, width, depth, mode, str(rbf), None, time.time() - t0)
     except Exception as exc:
-        return (x, y, width, depth, None, repr(exc), time.time() - t0)
+        return (x, y, width, depth, mode, None, repr(exc), time.time() - t0)
 
 
 # ---------------------------------------------------------------------------
@@ -278,12 +387,21 @@ SMOKE_DOUT_POOL = [
 SMOKE_ADDR_POOL = [
     "PIN_E15", "PIN_E16", "PIN_M16", "PIN_A8", "PIN_A11",
     "PIN_A14", "PIN_B14", "PIN_T2", "PIN_T8",
-    # extension for d>512 (need addr_bits up to 12)
-    "PIN_J1", "PIN_J2", "PIN_F1",
+    # extension for SDP/TDP (need 2× addr) — input-capable pins not
+    # otherwise allocated to SMOKE_PIN_POOL or SMOKE_DOUT_POOL.
+    # Source: results/iob_cell_map.json::input_pins, minus pins already
+    # used elsewhere in this smoke harness.
+    "PIN_G1", "PIN_R3", "PIN_R10", "PIN_R11",
+    "PIN_R12", "PIN_T4", "PIN_T10", "PIN_T11",
+    # additional F17 GPIOs validated in mining harness PIN_POOL —
+    # safe for input use even though not in iob_cell_map's
+    # narrowly-validated input_pins set (mining proves this).
+    "PIN_T15", "PIN_P3", "PIN_P11", "PIN_N2", "PIN_N14",
 ]
 
 
-def _smoke_qsf(width: int, depth: int, m9k_loc: str | None) -> str:
+def _smoke_qsf(width: int, depth: int, m9k_loc: str | None,
+               mode: str = "sp") -> str:
     """Flat smoke-gold QSF — mirrors `tmp/m9k_smoke/ram_9x512.qsf` style.
 
     Crucially differs from `Specimen.render_qsf()` in:
@@ -301,8 +419,11 @@ def _smoke_qsf(width: int, depth: int, m9k_loc: str | None) -> str:
         raise ValueError(f"smoke pin pool too small for width={width}")
     if width > len(SMOKE_DOUT_POOL):
         raise ValueError(f"smoke dout pool too small for width={width}")
-    if addr_bits > len(SMOKE_ADDR_POOL):
-        raise ValueError(f"smoke addr pool too small for depth={depth}")
+    needed_addr = addr_bits * (2 if mode == "sdp" else 1)
+    if needed_addr > len(SMOKE_ADDR_POOL):
+        raise ValueError(
+            f"smoke addr pool too small for depth={depth} mode={mode} "
+            f"(need {needed_addr}, have {len(SMOKE_ADDR_POOL)})")
 
     lines = [
         'set_global_assignment -name FAMILY "Cyclone IV E"',
@@ -312,31 +433,43 @@ def _smoke_qsf(width: int, depth: int, m9k_loc: str | None) -> str:
         'set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files',
         'set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"',
         'set_location_assignment PIN_E1  -to CLK',
-        'set_location_assignment PIN_M15 -to WE',
     ]
-    for i in range(addr_bits):
-        lines.append(f'set_location_assignment {SMOKE_ADDR_POOL[i]} -to ADDR[{i}]')
+    addr_pool_iter = iter(SMOKE_ADDR_POOL)
+    if mode == "sp":
+        lines.append('set_location_assignment PIN_M15 -to WE')
+        for i in range(addr_bits):
+            lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDR[{i}]')
+    elif mode == "sdp":
+        lines.append('set_location_assignment PIN_M15 -to WE_W')
+        for i in range(addr_bits):
+            lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRW[{i}]')
+        for i in range(addr_bits):
+            lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRR[{i}]')
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
     for i in range(width):
         lines.append(f'set_location_assignment {SMOKE_PIN_POOL[i]} -to DIN[{i}]')
     for i in range(width):
         lines.append(f'set_location_assignment {SMOKE_DOUT_POOL[i]} -to DOUT[{i}]')
     if m9k_loc is not None:
-        # Mirror ram_9x512.qsf's ALTSYNCRAM hierarchical name.  Quartus
-        # auto-generates the wrapper as `mem_rtl_0|...|ram_block1a0`
-        # for an inferred (* ramstyle = "M9K" *) reg array.
+        # Quartus auto-generates an unstable hierarchical wrapper name
+        # for an inferred RAM:  `altsyncram:mem_rtl_0|altsyncram_<HASH>
+        # :auto_generated|ALTSYNCRAM`.  The middle <HASH> (e.g. iqf1
+        # for SP, f2p1 for SDP) is parameter-set-driven and changes
+        # build-to-build.  Pinning by full hierarchical path silently
+        # fails (Quartus places the M9K freely, smoke cells offset
+        # from mining cells, gi collapses).  Use a wildcard glob
+        # against the leaf instance name `ALTSYNCRAM` — matches both
+        # SP and SDP variants regardless of hash.
         lines.append(
             f'set_instance_assignment -name LOCATION {m9k_loc} '
-            f'-to "mem_rtl_0|auto_generated|ram_block1a0"'
+            f'-to "*|ALTSYNCRAM"'
         )
     return "\n".join(lines) + "\n"
 
 
 def verilog_smoke_gold(width: int, depth: int) -> str:
-    """Bus-style inferred-RAM Verilog (mirror of ram_9x512.v).
-
-    Module name `fuzz_top` (so compile.py's hardcoded fuzz_top.v works)
-    but signals are flat busses, not bit-sliced.
-    """
+    """Bus-style inferred-SP-RAM Verilog (mirror of ram_9x512.v)."""
     addr_bits = _addr_bits(depth)
     return f"""\
 module fuzz_top(
@@ -361,11 +494,7 @@ endmodule
 
 
 def verilog_smoke_baseline(width: int, depth: int) -> str:
-    """Bus-style pass-through (no M9K) — paired baseline for smoke gold.
-
-    Same port shape as `verilog_smoke_gold` so the QSF is identical
-    and the diff isolates only the M9K block-band cells.
-    """
+    """Bus-style pass-through (no M9K) — paired baseline for SP smoke gold."""
     addr_bits = _addr_bits(depth)
     return f"""\
 module fuzz_top(
@@ -376,6 +505,53 @@ module fuzz_top(
     output wire [{width-1}:0]      DOUT
 );
     // CLK/WE/ADDR are intentionally unused — only DIN→DOUT routing.
+    assign DOUT = DIN;
+endmodule
+"""
+
+
+def verilog_smoke_gold_sdp(width: int, depth: int) -> str:
+    """Bus-style inferred-SDP-RAM Verilog — separate read/write addresses,
+    shared CLK.  Two-always idiom forces Quartus to infer SDP.
+    """
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE_W,
+    input  wire [{addr_bits-1}:0]  ADDRW,
+    input  wire [{addr_bits-1}:0]  ADDRR,
+    input  wire [{width-1}:0]      DIN,
+    output reg  [{width-1}:0]      DOUT
+);
+    (* ramstyle = "M9K" *) reg [{width-1}:0] mem [0:{depth-1}];
+    integer i;
+    initial begin
+        for (i = 0; i < {depth}; i = i + 1)
+            mem[i] = i[{width-1}:0] ^ {width}'h1A5;
+    end
+    always @(posedge CLK) begin
+        if (WE_W) mem[ADDRW] <= DIN;
+    end
+    always @(posedge CLK) begin
+        DOUT <= mem[ADDRR];
+    end
+endmodule
+"""
+
+
+def verilog_smoke_baseline_sdp(width: int, depth: int) -> str:
+    """Bus-style pass-through (no M9K) — paired baseline for SDP smoke gold."""
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE_W,
+    input  wire [{addr_bits-1}:0]  ADDRW,
+    input  wire [{addr_bits-1}:0]  ADDRR,
+    input  wire [{width-1}:0]      DIN,
+    output wire [{width-1}:0]      DOUT
+);
     assign DOUT = DIN;
 endmodule
 """
@@ -402,18 +578,25 @@ def _build_smoke(verilog: str, qsf: str, name: str, work: Path) -> Path:
     return Path(rbf)
 
 
-def _build_smoke_gold(width: int, depth: int) -> tuple[Path, Path]:
-    """Build (smoke_gold, smoke_baseline) for the given (w, d).  Returns
-    a path pair suitable for `_block_band_cells(smoke_gold, smoke_baseline)`.
+def _build_smoke_gold(width: int, depth: int, mode: str = "sp") -> tuple[Path, Path]:
+    """Build (smoke_gold, smoke_baseline) for the given (w, d, mode).
+    Returns a path pair suitable for
+    `_block_band_cells(smoke_gold, smoke_baseline)`.
     """
     sx, sy, sn = SMOKE_ANCHOR_SITE
     m9k_loc = f"M9K_X{sx}_Y{sy}_N{sn}"
-    smoke_v = verilog_smoke_gold(width, depth)
-    base_v = verilog_smoke_baseline(width, depth)
-    smoke_q = _smoke_qsf(width, depth, m9k_loc=m9k_loc)
-    base_q = _smoke_qsf(width, depth, m9k_loc=None)
-    name_g = f"smoke_gold_w{width}d{depth}"
-    name_b = f"smoke_base_w{width}d{depth}"
+    if mode == "sp":
+        smoke_v = verilog_smoke_gold(width, depth)
+        base_v = verilog_smoke_baseline(width, depth)
+    elif mode == "sdp":
+        smoke_v = verilog_smoke_gold_sdp(width, depth)
+        base_v = verilog_smoke_baseline_sdp(width, depth)
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
+    smoke_q = _smoke_qsf(width, depth, m9k_loc=m9k_loc, mode=mode)
+    base_q = _smoke_qsf(width, depth, m9k_loc=None, mode=mode)
+    name_g = f"smoke_gold_{mode}_w{width}d{depth}"
+    name_b = f"smoke_base_{mode}_w{width}d{depth}"
     rbf_g = _build_smoke(smoke_v, smoke_q, name_g, WORK_ROOT)
     rbf_b = _build_smoke(base_v, base_q, name_b, WORK_ROOT)
     return rbf_g, rbf_b
@@ -423,8 +606,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Mine M9K_MODE for new widths")
     ap.add_argument("--width", type=int, help="Data width (4, 9, 36)")
     ap.add_argument("--depth", type=int, help="Address depth (256, 1024, 2048)")
+    ap.add_argument("--mode", type=str, default="sp", choices=["sp", "sdp"],
+                    help="M9K operation mode (default sp)")
     ap.add_argument("--all", action="store_true",
-                    help="Mine all three NEORV32-needed combos")
+                    help="Mine all three NEORV32-needed SP combos")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--sites", type=int, default=8,
                     help="Number of Y sites per X column to mine (default 8)")
@@ -440,23 +625,25 @@ def main() -> int:
         return 1
 
     for width, depth in combos:
-        rc = _mine_one(width, depth, args.workers, args.sites, args.only_analyze)
+        rc = _mine_one(width, depth, args.workers, args.sites, args.only_analyze,
+                       mode=args.mode)
         if rc != 0:
             return rc
     return 0
 
 
 def _mine_one(width: int, depth: int, workers: int, n_sites: int,
-              only_analyze: bool) -> int:
+              only_analyze: bool, mode: str = "sp") -> int:
     print(f"\n{'='*60}")
-    print(f"Mining M9K_MODE {width}x{depth}")
+    print(f"Mining M9K_MODE {mode.upper()} {width}x{depth}")
     print(f"{'='*60}")
 
     addr_bits = _addr_bits(depth)
     ext_din = width if width <= 18 else 4
     ext_dout = width if width <= 18 else 4
+    addr_pins = addr_bits * (2 if mode == "sdp" else 1)
     print(f"  addr_bits={addr_bits}, ext_din={ext_din}, ext_dout={ext_dout}")
-    print(f"  total pins = {2 + addr_bits + ext_din + ext_dout}")
+    print(f"  total pins = {2 + addr_pins + ext_din + ext_dout}")
 
     sites_x15 = [(15, y) for y in M9K_SITES_X15[:n_sites]]
     sites_x27 = [(27, y) for y in M9K_SITES_X27[:n_sites]]
@@ -466,7 +653,7 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     WORK_ROOT.mkdir(parents=True, exist_ok=True)
 
     # Step 1: build baseline
-    bl_spec = _baseline_spec(width, depth)
+    bl_spec = _baseline_spec(width, depth, mode=mode)
     bl_rbf_path = WORK_ROOT / f"{bl_spec.project_name()}.rbf"
     if not only_analyze:
         print(f"\n[mine] building baseline ...", flush=True)
@@ -482,14 +669,14 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     if not only_analyze:
         print(f"\n[mine] building {len(sites)} per-site specimens "
               f"(workers={workers})", flush=True)
-        todo = [(x, y, width, depth) for x, y in sites]
+        todo = [(x, y, width, depth, mode) for x, y in sites]
         with mp.Pool(processes=max(1, workers)) as pool:
             results = list(pool.imap_unordered(_build_job, todo))
-        errors = [r for r in results if r[5] is not None]
-        for x, y, w, d, _rbf, err, _el in errors:
+        errors = [r for r in results if r[6] is not None]
+        for x, y, w, d, _m, _rbf, err, _el in errors:
             print(f"  FAIL X{x}_Y{y} {w}x{d}: {err}", flush=True)
-        ok_results = [r for r in results if r[5] is None]
-        for x, y, w, d, rbf, _err, el in sorted(ok_results):
+        ok_results = [r for r in results if r[6] is None]
+        for x, y, w, d, _m, rbf, _err, el in sorted(ok_results):
             print(f"  OK   X{x:>2}_Y{y:<2}  ({el:.1f}s)", flush=True)
         if errors:
             print(f"[mine] {len(errors)} build(s) failed; continuing with "
@@ -500,7 +687,7 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     bl_bytes = bl_rbf_path.read_bytes()
     per_site: dict[str, set[tuple[int, int]]] = {}
     for x, y in sites:
-        spec = _site_spec(x, y, width, depth)
+        spec = _site_spec(x, y, width, depth, mode=mode)
         rbf_path = WORK_ROOT / f"{spec.project_name()}.rbf"
         if not rbf_path.exists():
             print(f"  SKIP X{x}_Y{y}: RBF not found")
@@ -536,16 +723,15 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     # ∩ alone.  Mirrors the original 2026-04-17 w=9 / 2026-04-24 w=18
     # silicon-validated methodology.
     if not only_analyze:
-        print(f"\n[mine] building smoke-gold + smoke-baseline ...", flush=True)
+        print(f"\n[mine] building smoke-gold + smoke-baseline ({mode.upper()}) ...", flush=True)
         t0 = time.time()
-        smoke_gold_rbf, smoke_base_rbf = _build_smoke_gold(width, depth)
+        smoke_gold_rbf, smoke_base_rbf = _build_smoke_gold(width, depth, mode=mode)
         print(f"  smoke_gold      -> {smoke_gold_rbf.name}")
         print(f"  smoke_baseline  -> {smoke_base_rbf.name}")
         print(f"  ({time.time()-t0:.1f}s for both)", flush=True)
     else:
-        sx, sy, sn = SMOKE_ANCHOR_SITE
-        smoke_gold_rbf = WORK_ROOT / f"smoke_gold_w{width}d{depth}.rbf"
-        smoke_base_rbf = WORK_ROOT / f"smoke_base_w{width}d{depth}.rbf"
+        smoke_gold_rbf = WORK_ROOT / f"smoke_gold_{mode}_w{width}d{depth}.rbf"
+        smoke_base_rbf = WORK_ROOT / f"smoke_base_{mode}_w{width}d{depth}.rbf"
         if not smoke_gold_rbf.exists() or not smoke_base_rbf.exists():
             print(f"ERROR: smoke RBFs not found for --only-analyze")
             return 1
@@ -569,6 +755,17 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     else:
         mode_bits = {}
 
+    # Bucket naming: SP -> "inferred" / "inferred_goldintersect"
+    # SDP -> "inferred_sdp" / "inferred_goldintersect_sdp" (mirrors the
+    # existing "quartus_gold_sdp" precedent so np2fasm's per-mode
+    # dispatch table can pick the right bucket on pivot to gi).
+    if mode == "sp":
+        inf_key, gi_key = "inferred", "inferred_goldintersect"
+    elif mode == "sdp":
+        inf_key, gi_key = "inferred_sdp", "inferred_goldintersect_sdp"
+    else:
+        raise ValueError(f"unsupported mode {mode!r}")
+
     for key, cells in per_site.items():
         parts = key.split("_")
         site = f"{parts[0]}_{parts[1]}_{parts[2]}"
@@ -576,15 +773,16 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
             "site": site,
             "width": width,
             "depth": depth,
-            "source": f"scripts/m9k_mode_width_mine.py {width}x{depth}",
+            "source": f"scripts/m9k_mode_width_mine.py {mode} {width}x{depth}",
         })
         entry["cells"] = sorted(cells)
         cbt = entry.get("cells_by_template", {})
-        cbt["inferred"] = sorted(cells)
-        cbt["inferred_goldintersect"] = sorted(gi)
+        cbt[inf_key] = sorted(cells)
+        cbt[gi_key] = sorted(gi)
         entry["cells_by_template"] = cbt
-        entry["inferred_goldintersect_source"] = {
+        entry[f"{gi_key}_source"] = {
             "method": "cross-site ∩ ∩ smoke_gold(block_band)",
+            "mode": mode,
             "smoke_gold_rbf": smoke_gold_rbf.name,
             "smoke_baseline_rbf": smoke_base_rbf.name,
             "smoke_anchor_site": f"X{SMOKE_ANCHOR_SITE[0]}_Y{SMOKE_ANCHOR_SITE[1]}_N{SMOKE_ANCHOR_SITE[2]}",
