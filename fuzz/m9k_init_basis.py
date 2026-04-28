@@ -423,8 +423,12 @@ _SP_9X1024_BP  = 4
 
 SP_9X1024_BASE_FRAMES: dict[str, int] = {
     "X15_Y10_N0": 571,  # = (120028 - PREAMBLE - 86) // FRAME_SIZE
-    # Other sites: extrapolate via (sp_9x512_anchor - PREAMBLE - 86) // 210.
-    # Only X15_Y10_N0 is silicon-validated.
+    # Cross-site coverage open.  The naïve extrapolation formula
+    # `(sp_9x512_anchor - PREAMBLE - 86) // 210` was applied to SDP 4×2048
+    # and 2026-04-28 audit found it diverges from Quartus ground truth at
+    # non-Y10 sites (TP=0/4096); the same formula has NOT been audited for
+    # 9×1024.  Until validated, non-Y10 entries should be added only after
+    # per-site Quartus probe + silicon flash, not by extrapolation.
 }
 
 
@@ -488,7 +492,10 @@ _SP_36X256_UPPER_OFFSET = 128
 
 SP_36X256_BASE_FRAMES: dict[str, int] = {
     "X15_Y10_N0": 571,
-    # Other sites extrapolated via (sp_9x512_anchor - PREAMBLE - 86) // 210.
+    # Cross-site coverage open.  Same extrapolation caveat as
+    # SP_9X1024_BASE_FRAMES: the SP-anchor formula was falsified at SDP
+    # scale via 2026-04-28 Quartus diff and has NOT been audited for
+    # 36×256.  Add non-Y10 entries only after per-site validation.
 }
 
 
