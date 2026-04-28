@@ -290,25 +290,44 @@ PREAMBLE   = 32
 _SDP_4X2048_BIF = [86, 78, 68, 60, 85, 77, 67, 59]   # indexed by word % 8
 _SDP_4X2048_BP  = 4
 
-# Calibrated base_frame per site: (sp_anchor - PREAMBLE - 86) // FRAME_SIZE.
-# X15_Y10_N0: (120028 - 32 - 86) // 210 = 571.
-# Other sites are extrapolated via the sp_anchor formula; single-word calibration
-# at those sites has NOT been done. Use at own risk for non-Y10 sites.
+# SDP 4×2048 base_frame is silicon-validated ONLY at X15_Y10_N0.
+#
+# 2026-04-28 calibration finding: the `(sp_9x512_anchor - 118) // 210`
+# extrapolation formula does NOT hold at other sites. Diff of Quartus
+# gold blink vs allzero base at X15_Y16_N0 and X27_Y7_N0 produced TP=0
+# against the formula:
+#
+#   site         | extrapolated frame | actual SDP frame | bp
+#   X15_Y10_N0   | 571                | 571 ✓            | 4
+#   X15_Y16_N0   | 571 (codec wrote)  | 699 (real)       | 2 (not 4)
+#   X27_Y7_N0    | 1243 (codec wrote) | 1371 (real)      | 5 (not 4)
+#
+# Real SDP cell counts at non-Y10 sites are also ~2300 (vs predicted
+# 4096) — physical layout differs in non-trivial ways. Cross-site SDP
+# requires per-site mining (8 single-word probes per site to remap
+# word→bif, plus characterization of the cell-count gap).
+#
+# The dict below is therefore restricted to silicon-validated sites.
+# Callers will get a KeyError on non-Y10 sites — that's intentional.
 SDP_4X2048_BASE_FRAMES: dict[str, int] = {
-    site: (anchor - PREAMBLE - 86) // FRAME_SIZE
-    for site, anchor in {
-        "X15_Y5_N0":  120092, "X15_Y6_N0":  119955, "X15_Y8_N0":  120095,
-        "X15_Y9_N0":  119958, "X15_Y10_N0": 120028, "X15_Y11_N0": 120098,
-        "X15_Y12_N0": 119961, "X15_Y13_N0": 120031, "X15_Y14_N0": 120101,
-        "X15_Y15_N0": 119964, "X15_Y16_N0": 120034, "X15_Y17_N0": 120104,
-        "X15_Y18_N0": 119967, "X15_Y19_N0": 120037, "X15_Y20_N0": 120107,
-        "X15_Y21_N0": 119970, "X15_Y22_N0": 120040, "X15_Y23_N0": 120110,
-        "X27_Y4_N0":  261142, "X27_Y11_N0": 261218, "X27_Y12_N0": 261081,
-        "X27_Y13_N0": 261151, "X27_Y14_N0": 261221, "X27_Y15_N0": 261084,
-        "X27_Y16_N0": 261154, "X27_Y17_N0": 261224, "X27_Y18_N0": 261087,
-        "X27_Y19_N0": 261157, "X27_Y20_N0": 261227, "X27_Y21_N0": 261090,
-        "X27_Y22_N0": 261160, "X27_Y23_N0": 261230,
-    }.items()
+    "X15_Y10_N0": 571,  # = (120028 - PREAMBLE - 86) // FRAME_SIZE
+}
+
+# Historical record of the broken extrapolations (do NOT use for codec
+# writes — kept for reproducibility of the 2026-04-28 finding and as a
+# starting point for future per-site mining).
+_SDP_4X2048_BROKEN_EXTRAPOLATIONS: dict[str, int] = {
+    "X15_Y5_N0":  120092, "X15_Y6_N0":  119955, "X15_Y8_N0":  120095,
+    "X15_Y9_N0":  119958,                       "X15_Y11_N0": 120098,
+    "X15_Y12_N0": 119961, "X15_Y13_N0": 120031, "X15_Y14_N0": 120101,
+    "X15_Y15_N0": 119964, "X15_Y16_N0": 120034, "X15_Y17_N0": 120104,
+    "X15_Y18_N0": 119967, "X15_Y19_N0": 120037, "X15_Y20_N0": 120107,
+    "X15_Y21_N0": 119970, "X15_Y22_N0": 120040, "X15_Y23_N0": 120110,
+    "X27_Y4_N0":  261142, "X27_Y11_N0": 261218, "X27_Y12_N0": 261081,
+    "X27_Y13_N0": 261151, "X27_Y14_N0": 261221, "X27_Y15_N0": 261084,
+    "X27_Y16_N0": 261154, "X27_Y17_N0": 261224, "X27_Y18_N0": 261087,
+    "X27_Y19_N0": 261157, "X27_Y20_N0": 261227, "X27_Y21_N0": 261090,
+    "X27_Y22_N0": 261160, "X27_Y23_N0": 261230,
 }
 
 
