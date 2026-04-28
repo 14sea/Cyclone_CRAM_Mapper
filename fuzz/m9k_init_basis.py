@@ -292,20 +292,27 @@ _SDP_4X2048_BP  = 4
 
 # SDP 4×2048 base_frame is silicon-validated ONLY at X15_Y10_N0.
 #
-# 2026-04-28 calibration finding: the `(sp_9x512_anchor - 118) // 210`
-# extrapolation formula does NOT hold at other sites. Diff of Quartus
-# gold blink vs allzero base at X15_Y16_N0 and X27_Y7_N0 produced TP=0
-# against the formula:
+# 2026-04-28 audit: the `(sp_9x512_anchor - 118) // 210` extrapolation
+# formula diverges from Quartus ground truth at non-Y10 sites.  Diff of
+# Quartus gold blink vs allzero base at X15_Y16_N0 and X27_Y7_N0 produced
+# TP=0 against the formula's predicted cells (no overlap at all between
+# what Quartus wrote and what the codec would write):
 #
-#   site         | extrapolated frame | actual SDP frame | bp
-#   X15_Y10_N0   | 571                | 571 ✓            | 4
-#   X15_Y16_N0   | 571 (codec wrote)  | 699 (real)       | 2 (not 4)
-#   X27_Y7_N0    | 1243 (codec wrote) | 1371 (real)      | 5 (not 4)
+#   site         | codec would write to | Quartus actually wrote at | bp
+#   X15_Y10_N0   | frame 571            | frame 571 ✓               | 4
+#   X15_Y16_N0   | frame 571            | frame 699 ✗               | 2 (not 4)
+#   X27_Y7_N0    | frame 1243           | frame 1371 ✗              | 5 (not 4)
 #
-# Real SDP cell counts at non-Y10 sites are also ~2300 (vs predicted
-# 4096) — physical layout differs in non-trivial ways. Cross-site SDP
-# requires per-site mining (8 single-word probes per site to remap
-# word→bif, plus characterization of the cell-count gap).
+# This is a software-level audit — no SDP silicon flash was performed at
+# non-Y10 sites.  Inference: flashing the codec emission at non-Y10 would
+# not produce the intended SDP behavior, since the cells the codec writes
+# to are not the cells the M9K reads from for its INIT data.
+#
+# Quartus-diff cell counts at non-Y10 sites are also ~2300 (vs ~4096
+# expected from a 4-bit × 1024-word write) — physical layout differs in
+# non-trivial ways. Cross-site SDP requires per-site mining (8
+# single-word probes per site to remap word→bif, plus characterization
+# of the cell-count gap).
 #
 # The dict below is therefore restricted to silicon-validated sites.
 # Callers will get a KeyError on non-Y10 sites — that's intentional.
@@ -313,9 +320,10 @@ SDP_4X2048_BASE_FRAMES: dict[str, int] = {
     "X15_Y10_N0": 571,  # = (120028 - PREAMBLE - 86) // FRAME_SIZE
 }
 
-# Historical record of the broken extrapolations (do NOT use for codec
-# writes — kept for reproducibility of the 2026-04-28 finding and as a
-# starting point for future per-site mining).
+# Historical record of the extrapolations that diverge from Quartus
+# ground truth (do NOT use for codec writes — kept for reproducibility
+# of the 2026-04-28 finding and as a starting point for future per-site
+# mining).
 _SDP_4X2048_BROKEN_EXTRAPOLATIONS: dict[str, int] = {
     "X15_Y5_N0":  120092, "X15_Y6_N0":  119955, "X15_Y8_N0":  120095,
     "X15_Y9_N0":  119958,                       "X15_Y11_N0": 120098,
