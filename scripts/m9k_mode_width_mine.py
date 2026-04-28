@@ -291,6 +291,34 @@ endmodule
 """
 
 
+class M9kInferredSpecimen(M9kSpecimen):
+    """M9kSpecimen variant that LOCs by the user reg name `mem_rtl_0`
+    rather than `"u"`.  M9kSpecimen.render_qsf emits
+    `set_location_assignment <m9k_loc> -to "u"` — but inferred-RAM
+    Verilog has NO instance named `u`, so Quartus silently ignores
+    the LOC and free-places the M9K (verified 2026-04-28 via
+    `tmp/loc_test/run_loc_variants.py`: only `mem_rtl_0` and
+    `altsyncram:mem_rtl_0` LOC targets are honored for inferred RAM
+    whose user reg is named `mem`).
+
+    This subclass overrides render_qsf to emit the working LOC.
+    Verilog naming convention: the user `(* ramstyle = "M9K" *) reg`
+    array MUST be named `mem` (matches verilog_inferred_ram /
+    verilog_inferred_sdp_ram in this file).
+    """
+
+    def render_qsf(self) -> str:
+        from specimen_base import Specimen
+        # Skip M9kSpecimen.render_qsf to avoid the broken `-to "u"` line.
+        qsf = Specimen.render_qsf(self)
+        if self._m9k_loc is not None:
+            qsf += (
+                f'set_location_assignment {self._m9k_loc} '
+                f'-to "altsyncram:mem_rtl_0"\n'
+            )
+        return qsf
+
+
 def _baseline_spec(width: int, depth: int, mode: str = "sp") -> M9kSpecimen:
     h = _make_harness(width, depth, mode=mode)
     if mode == "sp":
@@ -299,7 +327,9 @@ def _baseline_spec(width: int, depth: int, mode: str = "sp") -> M9kSpecimen:
         verilog = verilog_baseline_sdp(width, depth)
     else:
         raise ValueError(f"unsupported mode {mode!r}")
-    return M9kSpecimen(
+    # Baseline has no M9K, so M9kInferredSpecimen vs M9kSpecimen difference
+    # doesn't matter (m9k_loc=None either way).
+    return M9kInferredSpecimen(
         m9k_loc=None,
         init_mif=False,
         name=f"m9k_{mode}_w{width}d{depth}_baseline",
@@ -317,7 +347,7 @@ def _site_spec(x: int, y: int, width: int, depth: int, mode: str = "sp") -> M9kS
         verilog = verilog_inferred_sdp_ram(width, depth)
     else:
         raise ValueError(f"unsupported mode {mode!r}")
-    return M9kSpecimen(
+    return M9kInferredSpecimen(
         m9k_loc=f"M9K_X{x}_Y{y}_N0",
         init_mif=False,
         name=f"m9k_{mode}_w{width}d{depth}_X{x}_Y{y}",
@@ -452,18 +482,17 @@ def _smoke_qsf(width: int, depth: int, m9k_loc: str | None,
     for i in range(width):
         lines.append(f'set_location_assignment {SMOKE_DOUT_POOL[i]} -to DOUT[{i}]')
     if m9k_loc is not None:
-        # Quartus auto-generates an unstable hierarchical wrapper name
-        # for an inferred RAM:  `altsyncram:mem_rtl_0|altsyncram_<HASH>
-        # :auto_generated|ALTSYNCRAM`.  The middle <HASH> (e.g. iqf1
-        # for SP, f2p1 for SDP) is parameter-set-driven and changes
-        # build-to-build.  Pinning by full hierarchical path silently
-        # fails (Quartus places the M9K freely, smoke cells offset
-        # from mining cells, gi collapses).  Use a wildcard glob
-        # against the leaf instance name `ALTSYNCRAM` — matches both
-        # SP and SDP variants regardless of hash.
+        # Quartus's inferred-RAM LOC matches at the WRAPPER level only
+        # (`altsyncram:mem_rtl_0` or just `mem_rtl_0` — the user reg
+        # name `mem` becomes `mem_rtl_0` after Quartus's RAM
+        # inferencing).  Empirically verified 2026-04-28: hierarchical
+        # paths to the leaf ALTSYNCRAM (full or wildcard) ARE silently
+        # ignored — `set_location_assignment ... -to <leaf>` registers
+        # in QSF Assignments but the M9K still free-places.  See
+        # `tmp/loc_test/run_loc_variants.py` for the 10-variant sweep.
         lines.append(
             f'set_instance_assignment -name LOCATION {m9k_loc} '
-            f'-to "*|ALTSYNCRAM"'
+            f'-to "altsyncram:mem_rtl_0"'
         )
     return "\n".join(lines) + "\n"
 
