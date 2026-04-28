@@ -230,6 +230,195 @@ def _build_job(args):
         return (x, y, width, depth, None, repr(exc), time.time() - t0)
 
 
+# ---------------------------------------------------------------------------
+# Smoke-gold helpers (added 2026-04-28 after Step 1a silicon-fail).
+#
+# The cross-site ∩ alone is silicon-broken: at (w=8, d=64) it produces a
+# 58-cell bucket that loads but breaks the simple_led KEY2→LED0 fabric
+# path on AX301.  Same failure mode previously seen at (w=4, d=2048).
+# Diagnosis in memory `m9k_mode_width_mine_gi_definition_silicon_broken_2026_04_28.md`.
+#
+# Original silicon-validated gi (w=9 d=512, w=18 d=512) was
+# `inferred ∩ smoke_gold` — where smoke_gold is a separately-built
+# inferred-RAM RBF whose harness DIFFERS from the mining harness in
+# structural ways (no GLOBAL_SIGNAL clock assignment, no SEED, bus-style
+# RTL, flat QSF).  Cells in the cross-site ∩ but NOT in smoke_gold are
+# mining-harness drift (clock-net infra, IOB wrapper artifacts) — the
+# 2nd ∩ filters them.
+#
+# Mirror of `tmp/m9k_smoke/ram_9x512.v` + `ram_9x512.qsf` parametrised
+# over (width, depth).  Built by direct setup_project + compile_full +
+# generate_rbf, bypassing M9kSpecimen / Specimen.render_qsf.
+# ---------------------------------------------------------------------------
+
+# Anchor site for smoke gold — same site the original w=9 smoke_gold
+# (`tmp/m9k_smoke/ram_9x512.rbf`) used.  Must match a Y in M9K_SITES_X15.
+SMOKE_ANCHOR_SITE = (15, 10, 0)
+
+# Minimal pin pool, ordered to match the original ram_9x512.qsf.  Same
+# 29 base pins as WIDE_PIN_MAP[narrow w=9 subset]; smaller w/d use a
+# prefix; wider widths overflow into the next-9-pin extension.  This
+# overlap is intentional — IOB-pad placement is the SAME, so the only
+# structural divergence vs mining is the absence of GLOBAL_SIGNAL +
+# SEED + the bit-sliced→bus-style RTL change.
+SMOKE_PIN_POOL = [
+    "PIN_R1", "PIN_R5", "PIN_R9", "PIN_R13", "PIN_R16",
+    "PIN_P1", "PIN_P9", "PIN_P15", "PIN_T13",
+    # extension for w>9
+    "PIN_T3", "PIN_T7", "PIN_T12", "PIN_T15",
+    "PIN_P3", "PIN_P11", "PIN_P16", "PIN_N2", "PIN_N14",
+]
+SMOKE_DOUT_POOL = [
+    "PIN_G15", "PIN_F15", "PIN_B16", "PIN_G16", "PIN_K15",
+    "PIN_K16", "PIN_L15", "PIN_L16", "PIN_N16",
+    # extension for w>9
+    "PIN_D16", "PIN_D15", "PIN_C15", "PIN_C16", "PIN_F14",
+    "PIN_P2", "PIN_J14", "PIN_J15", "PIN_J16",
+]
+SMOKE_ADDR_POOL = [
+    "PIN_E15", "PIN_E16", "PIN_M16", "PIN_A8", "PIN_A11",
+    "PIN_A14", "PIN_B14", "PIN_T2", "PIN_T8",
+    # extension for d>512 (need addr_bits up to 12)
+    "PIN_J1", "PIN_J2", "PIN_F1",
+]
+
+
+def _smoke_qsf(width: int, depth: int, m9k_loc: str | None) -> str:
+    """Flat smoke-gold QSF — mirrors `tmp/m9k_smoke/ram_9x512.qsf` style.
+
+    Crucially differs from `Specimen.render_qsf()` in:
+      * NO `GLOBAL_SIGNAL "GLOBAL CLOCK"` assignment (mining forces this)
+      * NO `SEED` global assignment (mining sets seed=1)
+      * Bus-indexed pin assignments (`PIN_E15 -to ADDR[0]`) instead of
+        bit-sliced names — paired with bus-style Verilog ports
+
+    These structural differences are what makes the smoke ⊕ baseline diff
+    distinct from mining ⊕ baseline diffs, so their ∩ cancels harness
+    drift while preserving M9K-mode cells.
+    """
+    addr_bits = _addr_bits(depth)
+    if width > len(SMOKE_PIN_POOL):
+        raise ValueError(f"smoke pin pool too small for width={width}")
+    if width > len(SMOKE_DOUT_POOL):
+        raise ValueError(f"smoke dout pool too small for width={width}")
+    if addr_bits > len(SMOKE_ADDR_POOL):
+        raise ValueError(f"smoke addr pool too small for depth={depth}")
+
+    lines = [
+        'set_global_assignment -name FAMILY "Cyclone IV E"',
+        'set_global_assignment -name DEVICE EP4CE6F17C8',
+        'set_global_assignment -name TOP_LEVEL_ENTITY fuzz_top',
+        'set_global_assignment -name VERILOG_FILE fuzz_top.v',
+        'set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files',
+        'set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"',
+        'set_location_assignment PIN_E1  -to CLK',
+        'set_location_assignment PIN_M15 -to WE',
+    ]
+    for i in range(addr_bits):
+        lines.append(f'set_location_assignment {SMOKE_ADDR_POOL[i]} -to ADDR[{i}]')
+    for i in range(width):
+        lines.append(f'set_location_assignment {SMOKE_PIN_POOL[i]} -to DIN[{i}]')
+    for i in range(width):
+        lines.append(f'set_location_assignment {SMOKE_DOUT_POOL[i]} -to DOUT[{i}]')
+    if m9k_loc is not None:
+        # Mirror ram_9x512.qsf's ALTSYNCRAM hierarchical name.  Quartus
+        # auto-generates the wrapper as `mem_rtl_0|...|ram_block1a0`
+        # for an inferred (* ramstyle = "M9K" *) reg array.
+        lines.append(
+            f'set_instance_assignment -name LOCATION {m9k_loc} '
+            f'-to "mem_rtl_0|auto_generated|ram_block1a0"'
+        )
+    return "\n".join(lines) + "\n"
+
+
+def verilog_smoke_gold(width: int, depth: int) -> str:
+    """Bus-style inferred-RAM Verilog (mirror of ram_9x512.v).
+
+    Module name `fuzz_top` (so compile.py's hardcoded fuzz_top.v works)
+    but signals are flat busses, not bit-sliced.
+    """
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE,
+    input  wire [{addr_bits-1}:0]  ADDR,
+    input  wire [{width-1}:0]      DIN,
+    output reg  [{width-1}:0]      DOUT
+);
+    (* ramstyle = "M9K" *) reg [{width-1}:0] mem [0:{depth-1}];
+    integer i;
+    initial begin
+        for (i = 0; i < {depth}; i = i + 1)
+            mem[i] = i[{width-1}:0] ^ {width}'h1A5;
+    end
+    always @(posedge CLK) begin
+        if (WE) mem[ADDR] <= DIN;
+        DOUT <= mem[ADDR];
+    end
+endmodule
+"""
+
+
+def verilog_smoke_baseline(width: int, depth: int) -> str:
+    """Bus-style pass-through (no M9K) — paired baseline for smoke gold.
+
+    Same port shape as `verilog_smoke_gold` so the QSF is identical
+    and the diff isolates only the M9K block-band cells.
+    """
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE,
+    input  wire [{addr_bits-1}:0]  ADDR,
+    input  wire [{width-1}:0]      DIN,
+    output wire [{width-1}:0]      DOUT
+);
+    // CLK/WE/ADDR are intentionally unused — only DIN→DOUT routing.
+    assign DOUT = DIN;
+endmodule
+"""
+
+
+def _build_smoke(verilog: str, qsf: str, name: str, work: Path) -> Path:
+    """Direct Quartus build, bypassing M9kSpecimen / Specimen wrapper.
+
+    Used for both smoke_gold and smoke_baseline to keep their harness
+    structurally distinct from the mining specimens.
+    """
+    from compile import setup_project, compile_full, generate_rbf
+    work.mkdir(parents=True, exist_ok=True)
+    rbf_out = str(work / f"{name}.rbf")
+    if Path(rbf_out).exists():
+        return Path(rbf_out)
+    proj_dir = setup_project(name, verilog, qsf, str(work))
+    ok, _t, err = compile_full(name, proj_dir)
+    if not ok:
+        raise RuntimeError(f"smoke build failed for {name!r}: {err}")
+    rbf = generate_rbf(name, proj_dir, rbf_out)
+    if rbf is None:
+        raise RuntimeError(f"smoke RBF generation failed for {name!r}")
+    return Path(rbf)
+
+
+def _build_smoke_gold(width: int, depth: int) -> tuple[Path, Path]:
+    """Build (smoke_gold, smoke_baseline) for the given (w, d).  Returns
+    a path pair suitable for `_block_band_cells(smoke_gold, smoke_baseline)`.
+    """
+    sx, sy, sn = SMOKE_ANCHOR_SITE
+    m9k_loc = f"M9K_X{sx}_Y{sy}_N{sn}"
+    smoke_v = verilog_smoke_gold(width, depth)
+    base_v = verilog_smoke_baseline(width, depth)
+    smoke_q = _smoke_qsf(width, depth, m9k_loc=m9k_loc)
+    base_q = _smoke_qsf(width, depth, m9k_loc=None)
+    name_g = f"smoke_gold_w{width}d{depth}"
+    name_b = f"smoke_base_w{width}d{depth}"
+    rbf_g = _build_smoke(smoke_v, smoke_q, name_g, WORK_ROOT)
+    rbf_b = _build_smoke(base_v, base_q, name_b, WORK_ROOT)
+    return rbf_g, rbf_b
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Mine M9K_MODE for new widths")
     ap.add_argument("--width", type=int, help="Data width (4, 9, 36)")
@@ -340,6 +529,40 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     else:
         print(f"  site-specific cells exist: spread = {max(counts) - min(counts)}")
 
+    # Step 4b: build smoke-gold + smoke-baseline at the anchor site,
+    # compute smoke_cells = block_band(smoke_gold ⊕ smoke_baseline),
+    # gi = cross-site ∩ ∩ smoke_cells.  Filters mining-harness drift
+    # (clock-net infra, IOB wrapper artifacts) that survives cross-site
+    # ∩ alone.  Mirrors the original 2026-04-17 w=9 / 2026-04-24 w=18
+    # silicon-validated methodology.
+    if not only_analyze:
+        print(f"\n[mine] building smoke-gold + smoke-baseline ...", flush=True)
+        t0 = time.time()
+        smoke_gold_rbf, smoke_base_rbf = _build_smoke_gold(width, depth)
+        print(f"  smoke_gold      -> {smoke_gold_rbf.name}")
+        print(f"  smoke_baseline  -> {smoke_base_rbf.name}")
+        print(f"  ({time.time()-t0:.1f}s for both)", flush=True)
+    else:
+        sx, sy, sn = SMOKE_ANCHOR_SITE
+        smoke_gold_rbf = WORK_ROOT / f"smoke_gold_w{width}d{depth}.rbf"
+        smoke_base_rbf = WORK_ROOT / f"smoke_base_w{width}d{depth}.rbf"
+        if not smoke_gold_rbf.exists() or not smoke_base_rbf.exists():
+            print(f"ERROR: smoke RBFs not found for --only-analyze")
+            return 1
+
+    smoke_cells = _block_band_cells(
+        smoke_base_rbf.read_bytes(), smoke_gold_rbf.read_bytes(),
+    )
+    gi = universal & smoke_cells
+    print(f"\n[mine] smoke_gold cells (block_band(gold ⊕ baseline)): "
+          f"{len(smoke_cells)}")
+    print(f"[mine] inferred_goldintersect = cross-site ∩ ∩ smoke_cells = "
+          f"{len(gi)} cells")
+    if not gi:
+        print(f"  WARN: empty gi bucket — smoke gold may diverge too "
+              f"much from mining harness for {width}x{depth}.  Check "
+              f"smoke RBF builds and consider widening the smoke harness.")
+
     # Step 5: merge into m9k_mode_bits.json
     if RESULTS_PATH.exists():
         mode_bits = json.loads(RESULTS_PATH.read_text())
@@ -358,8 +581,17 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
         entry["cells"] = sorted(cells)
         cbt = entry.get("cells_by_template", {})
         cbt["inferred"] = sorted(cells)
-        cbt["inferred_goldintersect"] = sorted(universal)
+        cbt["inferred_goldintersect"] = sorted(gi)
         entry["cells_by_template"] = cbt
+        entry["inferred_goldintersect_source"] = {
+            "method": "cross-site ∩ ∩ smoke_gold(block_band)",
+            "smoke_gold_rbf": smoke_gold_rbf.name,
+            "smoke_baseline_rbf": smoke_base_rbf.name,
+            "smoke_anchor_site": f"X{SMOKE_ANCHOR_SITE[0]}_Y{SMOKE_ANCHOR_SITE[1]}_N{SMOKE_ANCHOR_SITE[2]}",
+            "cross_site_universal_count": len(universal),
+            "smoke_cells_count": len(smoke_cells),
+            "gi_count": len(gi),
+        }
         mode_bits[key] = entry
 
     tmp = str(RESULTS_PATH) + ".tmp"
@@ -371,10 +603,8 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     print(f"  total entries: {len(mode_bits)}")
 
     # Step 6: summary
-    print(f"\n[mine] {width}x{depth} DONE: {len(universal)} universal cells "
-          f"across {len(per_site)} sites")
-    print(f"  goldintersect = universal (no Quartus gold diff yet — "
-          f"use these cells as the initial candidate)")
+    print(f"\n[mine] {width}x{depth} DONE: cross-site ∩ = {len(universal)} "
+          f"cells; gi = {len(gi)} cells (after smoke ∩)")
     return 0
 
 
