@@ -807,6 +807,11 @@ def main() -> int:
     ap.add_argument("--sites", type=int, default=8,
                     help="Number of Y sites per X column to mine (default 8)")
     ap.add_argument("--only-analyze", action="store_true")
+    ap.add_argument("--skip-smoke", action="store_true",
+                    help="Skip smoke-gold + smoke-baseline build.  Post-LOC-fix "
+                         "(memo m9k_mining_loc_fix_silicon_validated_2026_04_28.md) "
+                         "the smoke ∩ is diagnostic-only; required for w>18 where "
+                         "the bus-style smoke harness exceeds the 18-pin DIN/DOUT pool.")
     args = ap.parse_args()
 
     if args.all:
@@ -819,14 +824,15 @@ def main() -> int:
 
     for width, depth in combos:
         rc = _mine_one(width, depth, args.workers, args.sites, args.only_analyze,
-                       mode=args.mode)
+                       mode=args.mode, skip_smoke=args.skip_smoke)
         if rc != 0:
             return rc
     return 0
 
 
 def _mine_one(width: int, depth: int, workers: int, n_sites: int,
-              only_analyze: bool, mode: str = "sp") -> int:
+              only_analyze: bool, mode: str = "sp",
+              skip_smoke: bool = False) -> int:
     print(f"\n{'='*60}")
     print(f"Mining M9K_MODE {mode.upper()} {width}x{depth}")
     print(f"{'='*60}")
@@ -911,33 +917,44 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
         print(f"  site-specific cells exist: spread = {max(counts) - min(counts)}")
 
     # Step 4b: build smoke-gold + smoke-baseline at the anchor site,
-    # compute smoke_cells = block_band(smoke_gold ⊕ smoke_baseline),
-    # gi = cross-site ∩ ∩ smoke_cells.  Filters mining-harness drift
-    # (clock-net infra, IOB wrapper artifacts) that survives cross-site
-    # ∩ alone.  Mirrors the original 2026-04-17 w=9 / 2026-04-24 w=18
-    # silicon-validated methodology.
-    if not only_analyze:
+    # compute smoke_cells = block_band(smoke_gold ⊕ smoke_baseline).
+    # Diagnostic-only post-LOC-fix (memo
+    # m9k_mining_loc_fix_silicon_validated_2026_04_28.md): the smoke ∩
+    # over-filters because the smoke harness omits GLOBAL_SIGNAL+SEED.
+    # Skipped when --skip-smoke or when smoke pin pool overflows (w>18).
+    smoke_cells: set[tuple[int, int]] = set()
+    smoke_filtered: set[tuple[int, int]] = set()
+    smoke_gold_rbf: Path | None = None
+    smoke_base_rbf: Path | None = None
+    if skip_smoke:
+        print(f"\n[mine] --skip-smoke: smoke build skipped (diagnostic only)")
+    elif not only_analyze:
         print(f"\n[mine] building smoke-gold + smoke-baseline ({mode.upper()}) ...", flush=True)
         t0 = time.time()
-        smoke_gold_rbf, smoke_base_rbf = _build_smoke_gold(width, depth, mode=mode)
-        print(f"  smoke_gold      -> {smoke_gold_rbf.name}")
-        print(f"  smoke_baseline  -> {smoke_base_rbf.name}")
-        print(f"  ({time.time()-t0:.1f}s for both)", flush=True)
+        try:
+            smoke_gold_rbf, smoke_base_rbf = _build_smoke_gold(width, depth, mode=mode)
+            print(f"  smoke_gold      -> {smoke_gold_rbf.name}")
+            print(f"  smoke_baseline  -> {smoke_base_rbf.name}")
+            print(f"  ({time.time()-t0:.1f}s for both)", flush=True)
+        except ValueError as exc:
+            print(f"  smoke skipped: {exc}")
+            smoke_gold_rbf = smoke_base_rbf = None
     else:
         smoke_gold_rbf = WORK_ROOT / f"smoke_gold_{mode}_w{width}d{depth}.rbf"
         smoke_base_rbf = WORK_ROOT / f"smoke_base_{mode}_w{width}d{depth}.rbf"
         if not smoke_gold_rbf.exists() or not smoke_base_rbf.exists():
-            print(f"ERROR: smoke RBFs not found for --only-analyze")
-            return 1
+            print(f"  smoke RBFs not found for --only-analyze; skipping smoke")
+            smoke_gold_rbf = smoke_base_rbf = None
 
-    smoke_cells = _block_band_cells(
-        smoke_base_rbf.read_bytes(), smoke_gold_rbf.read_bytes(),
-    )
-    smoke_filtered = universal & smoke_cells
-    print(f"\n[mine] smoke_gold cells (block_band(gold ⊕ baseline)): "
-          f"{len(smoke_cells)}")
-    print(f"[mine] cross-site ∩ ∩ smoke_cells (diagnostic): "
-          f"{len(smoke_filtered)} cells")
+    if smoke_gold_rbf is not None and smoke_base_rbf is not None:
+        smoke_cells = _block_band_cells(
+            smoke_base_rbf.read_bytes(), smoke_gold_rbf.read_bytes(),
+        )
+        smoke_filtered = universal & smoke_cells
+        print(f"\n[mine] smoke_gold cells (block_band(gold ⊕ baseline)): "
+              f"{len(smoke_cells)}")
+        print(f"[mine] cross-site ∩ ∩ smoke_cells (diagnostic): "
+              f"{len(smoke_filtered)} cells")
     # Post-LOC-fix methodology (memo m9k_mining_loc_fix_silicon_validated_2026_04_28.md):
     # cross-site ∩ alone IS the site-invariant bucket; smoke ∩ over-filters
     # because the smoke harness omits GLOBAL_SIGNAL+SEED so its diff is
@@ -987,8 +1004,8 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
         entry[f"{gi_key}_source"] = {
             "method": "cross-site ∩ (post-LOC-fix; smoke ∩ filter dropped per 2026-04-28 memo)",
             "mode": mode,
-            "smoke_gold_rbf": smoke_gold_rbf.name,
-            "smoke_baseline_rbf": smoke_base_rbf.name,
+            "smoke_gold_rbf": smoke_gold_rbf.name if smoke_gold_rbf else None,
+            "smoke_baseline_rbf": smoke_base_rbf.name if smoke_base_rbf else None,
             "smoke_anchor_site": f"X{SMOKE_ANCHOR_SITE[0]}_Y{SMOKE_ANCHOR_SITE[1]}_N{SMOKE_ANCHOR_SITE[2]}",
             "cross_site_universal_count": len(universal),
             "smoke_cells_count": len(smoke_cells),
