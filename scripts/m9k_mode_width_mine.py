@@ -768,15 +768,23 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     smoke_cells = _block_band_cells(
         smoke_base_rbf.read_bytes(), smoke_gold_rbf.read_bytes(),
     )
-    gi = universal & smoke_cells
+    smoke_filtered = universal & smoke_cells
     print(f"\n[mine] smoke_gold cells (block_band(gold ⊕ baseline)): "
           f"{len(smoke_cells)}")
-    print(f"[mine] inferred_goldintersect = cross-site ∩ ∩ smoke_cells = "
-          f"{len(gi)} cells")
+    print(f"[mine] cross-site ∩ ∩ smoke_cells (diagnostic): "
+          f"{len(smoke_filtered)} cells")
+    # Post-LOC-fix methodology (memo m9k_mining_loc_fix_silicon_validated_2026_04_28.md):
+    # cross-site ∩ alone IS the site-invariant bucket; smoke ∩ over-filters
+    # because the smoke harness omits GLOBAL_SIGNAL+SEED so its diff is
+    # structurally divergent from mining diffs.  Use cross-site ∩ as gi;
+    # keep smoke_cells_count in metadata for audit.
+    gi = universal
+    print(f"[mine] inferred_goldintersect = cross-site ∩ = {len(gi)} cells "
+          f"(post-LOC-fix: smoke ∩ filter dropped)")
     if not gi:
-        print(f"  WARN: empty gi bucket — smoke gold may diverge too "
-              f"much from mining harness for {width}x{depth}.  Check "
-              f"smoke RBF builds and consider widening the smoke harness.")
+        print(f"  WARN: empty cross-site ∩ — sites built byte-identically?  "
+              f"Check that M9kInferredSpecimen LOC is honored (per-site "
+              f"cell counts should vary).")
 
     # Step 5: merge into m9k_mode_bits.json
     if RESULTS_PATH.exists():
@@ -810,13 +818,14 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
         cbt[gi_key] = sorted(gi)
         entry["cells_by_template"] = cbt
         entry[f"{gi_key}_source"] = {
-            "method": "cross-site ∩ ∩ smoke_gold(block_band)",
+            "method": "cross-site ∩ (post-LOC-fix; smoke ∩ filter dropped per 2026-04-28 memo)",
             "mode": mode,
             "smoke_gold_rbf": smoke_gold_rbf.name,
             "smoke_baseline_rbf": smoke_base_rbf.name,
             "smoke_anchor_site": f"X{SMOKE_ANCHOR_SITE[0]}_Y{SMOKE_ANCHOR_SITE[1]}_N{SMOKE_ANCHOR_SITE[2]}",
             "cross_site_universal_count": len(universal),
             "smoke_cells_count": len(smoke_cells),
+            "smoke_filtered_count_diagnostic": len(smoke_filtered),
             "gi_count": len(gi),
         }
         mode_bits[key] = entry
