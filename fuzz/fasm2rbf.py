@@ -174,7 +174,7 @@ _M9K_MODE_RE = re.compile(
     r"^X(?P<x>\d+)Y(?P<y>\d+)N(?P<n>\d+)\.M9K_MODE_"
     r"(?P<width>\d+)x(?P<depth>\d+)"
     r"(?:_(?P<template>quartus_gold_sdp|quartus_gold_tdp|quartus_gold"
-    r"|inferred_goldintersect|altsyncram|inferred))?$"
+    r"|inferred_goldintersect|m9k_blink_diff_nv|altsyncram|inferred))?$"
 )
 _M9K_MODE_CACHE = None
 # Default template when the bare `M9K_MODE_{w}x{d}` form is emitted.
@@ -202,6 +202,19 @@ _M9K_MODE_VALID_TEMPLATES = (
     # Emission dispatch happens in np2fasm._emit_m9k_mode based on the
     # techmapped EP4CE6_M9K cell's MODE parameter.
     "quartus_gold_sdp", "quartus_gold_tdp",
+    # 2026-04-30 v5-derived bucket: per-site Quartus m9k_blink_full RBF
+    # XOR'd directly against nv_zero_global, restricted to block-band
+    # frames 1692-1738 (byte<208).  Mined by
+    # scripts/m9k_blink_diff_nv_mine.py.  Unlike the inferred /
+    # inferred_goldintersect / quartus_gold buckets — which all proved
+    # silicon-mode-incorrect under --base nv (memos
+    # m9k_mode_codec_silicon_broken_2026_04_25 +
+    # m9k_mode_v5_finding_gi_codec_unnecessary_2026_04_30) — this bucket
+    # captures the cells the M9K hardware actually reads as its mode
+    # encoding at each site.  Cell counts are tight (~12 per site,
+    # slot=1 sites such as X15_Y6 may produce ~6) because we diff the
+    # complete Quartus design against nv_zero_global directly.
+    "m9k_blink_diff_nv",
 )
 # Per-(width, depth) silicon-falsified masks. Applied at load time — cells
 # here are stripped from whichever template bucket the caller asked for.
