@@ -442,6 +442,16 @@ def _emit_m9k_mode(cell_name: str, cell: dict) -> tuple[str | None, str | None]:
     _M9K_MODE_FUNCTIONAL_VALIDATED = _M9K_MODE_FUNCTIONAL_VALIDATED_SP
     _M9K_MODE_HW_VALIDATED = {(9, 512), (9, 1024), (18, 512), (36, 256)}
 
+    # ⚠️ ALL three buckets below are silicon-broken for codec emission
+    # under `--base nv` (the production path).  See:
+    #   - m9k_mode_codec_silicon_broken_2026_04_25 (`_quartus_gold*`)
+    #   - m9k_mode_v5_finding_gi_codec_unnecessary_2026_04_30
+    #     (`_inferred_goldintersect` is also mode-incorrect — gi cells
+    #     target positions M9K mode hardware doesn't read)
+    # Replacement path under construction: per-site `m9k_blink_diff_nv`
+    # mining (task #7).  Until that lands, the only way to ship an
+    # M9K-using design to silicon is the ζ escape hatch
+    # (`scripts/bit_workaround/zeta_pipeline.py`).
     _MODE_TO_BUCKET = {
         "SP":  ("quartus_gold",     _M9K_MODE_FUNCTIONAL_VALIDATED_SP),
         "SDP": ("quartus_gold_sdp", _M9K_MODE_FUNCTIONAL_VALIDATED_SDP),
