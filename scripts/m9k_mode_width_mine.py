@@ -95,6 +95,10 @@ def _make_pin_map(width: int, depth: int, mode: str = "sp") -> dict[str, str]:
     mode="sp"  : CLK, WE, ADDR{i}, DIN{i}, DOUT{i}
     mode="sdp" : CLK, WE_W, ADDRW{i}, ADDRR{i}, DIN{i}, DOUT{i}
                  (write + read on separate addresses, single shared CLK)
+    mode="tdp" : CLK, WE_A, WE_B, ADDRA{i}, ADDRB{i}, DIN{i}, DOUT{i}
+                 (BIDIR_DUAL_PORT: both ports read+write; shared CLK; DIN
+                 shared between ports, DOUT = douta_r ^ doutb_r — same
+                 pin-saving pattern as scripts/m9k_mode_quartus_gold_mine.py)
     """
     addr_bits = _addr_bits(depth)
     if width <= 18:
@@ -113,6 +117,12 @@ def _make_pin_map(width: int, depth: int, mode: str = "sp") -> dict[str, str]:
         signals = ["CLK", "WE_W"]
         signals += [f"ADDRW{i}" for i in range(addr_bits)]
         signals += [f"ADDRR{i}" for i in range(addr_bits)]
+        signals += [f"DIN{i}" for i in range(ext_din)]
+        signals += [f"DOUT{i}" for i in range(ext_dout)]
+    elif mode == "tdp":
+        signals = ["CLK", "WE_A", "WE_B"]
+        signals += [f"ADDRA{i}" for i in range(addr_bits)]
+        signals += [f"ADDRB{i}" for i in range(addr_bits)]
         signals += [f"DIN{i}" for i in range(ext_din)]
         signals += [f"DOUT{i}" for i in range(ext_dout)]
     else:
@@ -158,6 +168,12 @@ def _port_decl(width: int, depth: int, mode: str = "sp") -> str:
         parts = ["input CLK", "input WE_W"]
         parts += [f"input ADDRW{i}" for i in range(addr_bits)]
         parts += [f"input ADDRR{i}" for i in range(addr_bits)]
+        parts += [f"input DIN{i}" for i in range(ext_din)]
+        parts += [f"output DOUT{i}" for i in range(ext_dout)]
+    elif mode == "tdp":
+        parts = ["input CLK", "input WE_A", "input WE_B"]
+        parts += [f"input ADDRA{i}" for i in range(addr_bits)]
+        parts += [f"input ADDRB{i}" for i in range(addr_bits)]
         parts += [f"input DIN{i}" for i in range(ext_din)]
         parts += [f"output DOUT{i}" for i in range(ext_dout)]
     else:
@@ -291,6 +307,78 @@ endmodule
 """
 
 
+def verilog_inferred_tdp_ram(width: int, depth: int) -> str:
+    """Inferred BIDIR_DUAL_PORT (true dual-port) RAM.
+
+    Both ports read AND write the shared `mem` array on the same CLK edge.
+    DIN is shared between port A and port B (saves 18 pins for w=18 d=32);
+    DOUT = douta_r ^ doutb_r drives a single shared output bus (saves
+    another 18 pins).  Same pin-folding pattern as
+    scripts/m9k_mode_quartus_gold_mine.py:_verilog_variant_tdp.
+
+    NEORV32 regfile is registered as TDP/Single-Clock per fit.rpt — this
+    matches.
+    """
+    addr_bits = _addr_bits(depth)
+    ext_din = width if width <= 18 else 4
+    ext_dout = width if width <= 18 else 4
+
+    addra_bus = ", ".join(f"ADDRA{i}" for i in range(addr_bits - 1, -1, -1))
+    addrb_bus = ", ".join(f"ADDRB{i}" for i in range(addr_bits - 1, -1, -1))
+
+    if width <= ext_din:
+        din_bus = ", ".join(f"DIN{i}" for i in range(width - 1, -1, -1))
+        din_expr = f"{{{din_bus}}}"
+        dout_assign = ", ".join(f"DOUT{i}" for i in range(width - 1, -1, -1))
+        dout_lines = (
+            f"    wire [{width-1}:0] dout_xor = douta_r ^ doutb_r;\n"
+            f"    assign {{{dout_assign}}} = dout_xor;"
+        )
+    else:
+        # Wide-data folding (not exercised at NEORV32 TDP shapes 18x32).
+        raise ValueError(
+            f"TDP wide-data folding not implemented (w={width}, ext_din={ext_din})"
+        )
+
+    return f"""\
+module fuzz_top(
+    {_port_decl(width, depth, "tdp")}
+);
+    wire [{addr_bits-1}:0] addra = {{{addra_bus}}};
+    wire [{addr_bits-1}:0] addrb = {{{addrb_bus}}};
+    wire [{width-1}:0]     din   = {din_expr};
+    reg  [{width-1}:0]     douta_r;
+    reg  [{width-1}:0]     doutb_r;
+{dout_lines}
+
+    (* ramstyle = "M9K" *) reg [{width-1}:0] mem [0:{depth-1}];
+    always @(posedge CLK) begin
+        if (WE_A) mem[addra] <= din;
+        douta_r <= mem[addra];
+    end
+    always @(posedge CLK) begin
+        if (WE_B) mem[addrb] <= din;
+        doutb_r <= mem[addrb];
+    end
+endmodule
+"""
+
+
+def verilog_baseline_tdp(width: int, depth: int) -> str:
+    """Bit-sliced pass-through baseline for TDP — no M9K, same pin set."""
+    ext_din = width if width <= 18 else 4
+    ext_dout = width if width <= 18 else 4
+    parts = [f"    assign DOUT{i} = DIN{i % ext_din};" for i in range(ext_dout)]
+    body = "\n".join(parts)
+    return f"""\
+module fuzz_top(
+    {_port_decl(width, depth, "tdp")}
+);
+{body}
+endmodule
+"""
+
+
 class M9kInferredSpecimen(M9kSpecimen):
     """M9kSpecimen variant that LOCs by the user reg name `mem_rtl_0`
     rather than `"u"`.  M9kSpecimen.render_qsf emits
@@ -325,6 +413,8 @@ def _baseline_spec(width: int, depth: int, mode: str = "sp") -> M9kSpecimen:
         verilog = verilog_baseline(width, depth)
     elif mode == "sdp":
         verilog = verilog_baseline_sdp(width, depth)
+    elif mode == "tdp":
+        verilog = verilog_baseline_tdp(width, depth)
     else:
         raise ValueError(f"unsupported mode {mode!r}")
     # Baseline has no M9K, so M9kInferredSpecimen vs M9kSpecimen difference
@@ -345,6 +435,8 @@ def _site_spec(x: int, y: int, width: int, depth: int, mode: str = "sp") -> M9kS
         verilog = verilog_inferred_ram(width, depth)
     elif mode == "sdp":
         verilog = verilog_inferred_sdp_ram(width, depth)
+    elif mode == "tdp":
+        verilog = verilog_inferred_tdp_ram(width, depth)
     else:
         raise ValueError(f"unsupported mode {mode!r}")
     return M9kInferredSpecimen(
@@ -449,7 +541,7 @@ def _smoke_qsf(width: int, depth: int, m9k_loc: str | None,
         raise ValueError(f"smoke pin pool too small for width={width}")
     if width > len(SMOKE_DOUT_POOL):
         raise ValueError(f"smoke dout pool too small for width={width}")
-    needed_addr = addr_bits * (2 if mode == "sdp" else 1)
+    needed_addr = addr_bits * (2 if mode in ("sdp", "tdp") else 1)
     if needed_addr > len(SMOKE_ADDR_POOL):
         raise ValueError(
             f"smoke addr pool too small for depth={depth} mode={mode} "
@@ -475,6 +567,18 @@ def _smoke_qsf(width: int, depth: int, m9k_loc: str | None,
             lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRW[{i}]')
         for i in range(addr_bits):
             lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRR[{i}]')
+    elif mode == "tdp":
+        # PIN_M15 ↔ WE_A (matches SP/SDP convention); WE_B borrows from
+        # the input-capable spare M16 (also in SMOKE_ADDR_POOL but pulled
+        # out here so addr_bits draw doesn't over-allocate).
+        lines.append('set_location_assignment PIN_M15 -to WE_A')
+        lines.append('set_location_assignment PIN_M16 -to WE_B')
+        # Skip M16 from the addr pool draw so we don't double-assign it.
+        addr_pool_iter = iter([p for p in SMOKE_ADDR_POOL if p != "PIN_M16"])
+        for i in range(addr_bits):
+            lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRA[{i}]')
+        for i in range(addr_bits):
+            lines.append(f'set_location_assignment {next(addr_pool_iter)} -to ADDRB[{i}]')
     else:
         raise ValueError(f"unsupported mode {mode!r}")
     for i in range(width):
@@ -586,6 +690,63 @@ endmodule
 """
 
 
+def verilog_smoke_gold_tdp(width: int, depth: int) -> str:
+    """Bus-style inferred-TDP-RAM Verilog — both ports read+write,
+    independent ADDR/WE, shared DIN, DOUT = douta_r ^ doutb_r.
+    Two-always idiom with same `mem` array forces Quartus inference of
+    BIDIR_DUAL_PORT.
+    """
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE_A,
+    input  wire                WE_B,
+    input  wire [{addr_bits-1}:0]  ADDRA,
+    input  wire [{addr_bits-1}:0]  ADDRB,
+    input  wire [{width-1}:0]      DIN,
+    output wire [{width-1}:0]      DOUT
+);
+    reg  [{width-1}:0] douta_r;
+    reg  [{width-1}:0] doutb_r;
+    assign DOUT = douta_r ^ doutb_r;
+
+    (* ramstyle = "M9K" *) reg [{width-1}:0] mem [0:{depth-1}];
+    integer i;
+    initial begin
+        for (i = 0; i < {depth}; i = i + 1)
+            mem[i] = i[{width-1}:0] ^ {width}'h1A5;
+    end
+    always @(posedge CLK) begin
+        if (WE_A) mem[ADDRA] <= DIN;
+        douta_r <= mem[ADDRA];
+    end
+    always @(posedge CLK) begin
+        if (WE_B) mem[ADDRB] <= DIN;
+        doutb_r <= mem[ADDRB];
+    end
+endmodule
+"""
+
+
+def verilog_smoke_baseline_tdp(width: int, depth: int) -> str:
+    """Bus-style pass-through (no M9K) — paired baseline for TDP smoke gold."""
+    addr_bits = _addr_bits(depth)
+    return f"""\
+module fuzz_top(
+    input  wire                CLK,
+    input  wire                WE_A,
+    input  wire                WE_B,
+    input  wire [{addr_bits-1}:0]  ADDRA,
+    input  wire [{addr_bits-1}:0]  ADDRB,
+    input  wire [{width-1}:0]      DIN,
+    output wire [{width-1}:0]      DOUT
+);
+    assign DOUT = DIN;
+endmodule
+"""
+
+
 def _build_smoke(verilog: str, qsf: str, name: str, work: Path) -> Path:
     """Direct Quartus build, bypassing M9kSpecimen / Specimen wrapper.
 
@@ -620,6 +781,9 @@ def _build_smoke_gold(width: int, depth: int, mode: str = "sp") -> tuple[Path, P
     elif mode == "sdp":
         smoke_v = verilog_smoke_gold_sdp(width, depth)
         base_v = verilog_smoke_baseline_sdp(width, depth)
+    elif mode == "tdp":
+        smoke_v = verilog_smoke_gold_tdp(width, depth)
+        base_v = verilog_smoke_baseline_tdp(width, depth)
     else:
         raise ValueError(f"unsupported mode {mode!r}")
     smoke_q = _smoke_qsf(width, depth, m9k_loc=m9k_loc, mode=mode)
@@ -635,7 +799,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Mine M9K_MODE for new widths")
     ap.add_argument("--width", type=int, help="Data width (4, 9, 36)")
     ap.add_argument("--depth", type=int, help="Address depth (256, 1024, 2048)")
-    ap.add_argument("--mode", type=str, default="sp", choices=["sp", "sdp"],
+    ap.add_argument("--mode", type=str, default="sp", choices=["sp", "sdp", "tdp"],
                     help="M9K operation mode (default sp)")
     ap.add_argument("--all", action="store_true",
                     help="Mine all three NEORV32-needed SP combos")
@@ -670,9 +834,10 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
     addr_bits = _addr_bits(depth)
     ext_din = width if width <= 18 else 4
     ext_dout = width if width <= 18 else 4
-    addr_pins = addr_bits * (2 if mode == "sdp" else 1)
+    addr_pins = addr_bits * (2 if mode in ("sdp", "tdp") else 1)
+    we_pins = 2 if mode == "tdp" else 1
     print(f"  addr_bits={addr_bits}, ext_din={ext_din}, ext_dout={ext_dout}")
-    print(f"  total pins = {2 + addr_pins + ext_din + ext_dout}")
+    print(f"  total pins = {1 + we_pins + addr_pins + ext_din + ext_dout}")
 
     sites_x15 = [(15, y) for y in M9K_SITES_X15[:n_sites]]
     sites_x27 = [(27, y) for y in M9K_SITES_X27[:n_sites]]
@@ -800,6 +965,8 @@ def _mine_one(width: int, depth: int, workers: int, n_sites: int,
         inf_key, gi_key = "inferred", "inferred_goldintersect"
     elif mode == "sdp":
         inf_key, gi_key = "inferred_sdp", "inferred_goldintersect_sdp"
+    elif mode == "tdp":
+        inf_key, gi_key = "inferred_tdp", "inferred_goldintersect_tdp"
     else:
         raise ValueError(f"unsupported mode {mode!r}")
 
