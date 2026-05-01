@@ -52,18 +52,21 @@ def parse_instances(spec: str) -> list[tuple[str, int, int, int, int, int]]:
     return out
 
 
-def render_sp_block(idx: int, w: int, d: int, addr_lo_bit: int) -> str:
-    """Verilog snippet for one SP 9×512-style M9K instance.
-
-    addr_lo_bit picks a different counter slice per instance so the
-    runtime addr buses don't merge logically (forcing Quartus to keep
-    independent altsyncram instances).
+def _addr_slice(idx: int, ab: int) -> tuple[int, int]:
+    """Return (hi, ab) so the addr expression is counter[hi -: ab].
+    Stagger by idx so each RAM picks a different slice (prevents merging).
     """
+    hi = max(ab - 1, 27 - idx)
+    return hi, ab
+
+
+def render_sp_block(idx: int, w: int, d: int) -> str:
+    """SP: 1 read+write port, address shared."""
     ab = _addr_bits(d)
-    din = _din_expr(w)
+    hi, _ = _addr_slice(idx, ab)
     return f"""\
     // ---- M9K instance {idx}: SP {w}×{d} ----
-    wire [{ab-1}:0] addr{idx} = counter[{addr_lo_bit + ab - 1} -: {ab}];
+    wire [{ab-1}:0] addr{idx} = counter[{hi} -: {ab}];
     (* ramstyle = "M9K" *) reg [{w-1}:0] mem{idx} [0:{d-1}];
     initial begin
         for (i = 0; i < {d}; i = i + 1)
@@ -77,18 +80,98 @@ def render_sp_block(idx: int, w: int, d: int, addr_lo_bit: int) -> str:
 """
 
 
+def render_sdp_block(idx: int, w: int, d: int) -> str:
+    """SDP: separate read/write addresses, single clock."""
+    ab = _addr_bits(d)
+    hi_w, _ = _addr_slice(idx, ab)
+    hi_r = max(ab - 1, hi_w - 1)
+    return f"""\
+    // ---- M9K instance {idx}: SDP {w}×{d} ----
+    wire [{ab-1}:0] waddr{idx} = counter[{hi_w} -: {ab}];
+    wire [{ab-1}:0] raddr{idx} = counter[{hi_r} -: {ab}];
+    (* ramstyle = "M9K" *) reg [{w-1}:0] mem{idx} [0:{d-1}];
+    initial begin
+        for (i = 0; i < {d}; i = i + 1)
+            mem{idx}[i] = (i < {d//2}) ? {{{w}{{1'b0}}}} : {{{w}{{1'b1}}}};
+    end
+    reg [{w-1}:0] dout{idx}_r;
+    always @(posedge CLK) begin
+        if (we) mem{idx}[waddr{idx}] <= din{idx};
+        dout{idx}_r <= mem{idx}[raddr{idx}];
+    end
+"""
+
+
+def render_tdp_block(idx: int, w: int, d: int) -> str:
+    """TDP: two independent read/write ports, single clock."""
+    ab = _addr_bits(d)
+    hi_a, _ = _addr_slice(idx, ab)
+    hi_b = max(ab - 1, hi_a - 1)
+    return f"""\
+    // ---- M9K instance {idx}: TDP {w}×{d} ----
+    wire [{ab-1}:0] addr{idx}_a = counter[{hi_a} -: {ab}];
+    wire [{ab-1}:0] addr{idx}_b = counter[{hi_b} -: {ab}];
+    wire we{idx}_b = ~we;
+    (* ramstyle = "M9K" *) reg [{w-1}:0] mem{idx} [0:{d-1}];
+    initial begin
+        for (i = 0; i < {d}; i = i + 1)
+            mem{idx}[i] = (i < {d//2}) ? {{{w}{{1'b0}}}} : {{{w}{{1'b1}}}};
+    end
+    reg [{w-1}:0] dout{idx}_a, dout{idx}_b;
+    always @(posedge CLK) begin
+        if (we)        mem{idx}[addr{idx}_a] <= din{idx};
+        dout{idx}_a <= mem{idx}[addr{idx}_a];
+    end
+    always @(posedge CLK) begin
+        if (we{idx}_b) mem{idx}[addr{idx}_b] <= ~din{idx};
+        dout{idx}_b <= mem{idx}[addr{idx}_b];
+    end
+"""
+
+
+def render_rom_block(idx: int, w: int, d: int) -> str:
+    """ROM: read-only with init data."""
+    ab = _addr_bits(d)
+    hi, _ = _addr_slice(idx, ab)
+    return f"""\
+    // ---- M9K instance {idx}: ROM {w}×{d} ----
+    wire [{ab-1}:0] addr{idx} = counter[{hi} -: {ab}] ^ {{{ab}{{KEY3}}}};
+    (* ramstyle = "M9K" *) reg [{w-1}:0] mem{idx} [0:{d-1}];
+    integer j{idx};
+    initial begin
+        for (j{idx} = 0; j{idx} < {d}; j{idx} = j{idx} + 1)
+            mem{idx}[j{idx}] = j{idx}[{w-1}:0] ^ {{{w}{{1'b1}}}};
+    end
+    reg [{w-1}:0] dout{idx}_r;
+    always @(posedge CLK) dout{idx}_r <= mem{idx}[addr{idx}];
+"""
+
+
+_BLOCK_RENDERERS = {
+    "sp":  (render_sp_block,  False),  # has dout{idx}_r
+    "sdp": (render_sdp_block, False),
+    "tdp": (render_tdp_block, True),   # has dout{idx}_a + dout{idx}_b
+    "rom": (render_rom_block, False),
+}
+
+
 def render_verilog(instances: list[tuple[str, int, int, int, int, int]]) -> str:
-    """Generate the multi-M9K Verilog module (Step A: SP-only)."""
+    """Generate the multi-M9K Verilog module (any mix of sp/sdp/tdp/rom)."""
     body_blocks: list[str] = []
     led_terms: list[str] = []
     din_decls: list[str] = []
     for idx, (mode, w, d, x, y, n) in enumerate(instances):
-        if mode != "sp":
-            raise SystemExit(f"Step A scope is sp-only; got {mode}")
-        # Stagger addr bits so each RAM picks distinct counter slices.
-        addr_lo = max(0, 27 - _addr_bits(d) - idx)
-        body_blocks.append(render_sp_block(idx, w, d, addr_lo))
-        led_terms.append(f"^dout{idx}_r")
+        if mode not in _BLOCK_RENDERERS:
+            raise SystemExit(f"unknown mode {mode!r}; "
+                             f"expected one of {list(_BLOCK_RENDERERS)}")
+        renderer, has_b_port = _BLOCK_RENDERERS[mode]
+        body_blocks.append(renderer(idx, w, d))
+        if mode == "rom":
+            led_terms.append(f"^dout{idx}_r")
+        elif has_b_port:
+            led_terms.append(f"^dout{idx}_a ^ ^dout{idx}_b")
+        else:
+            led_terms.append(f"^dout{idx}_r")
         din_decls.append(f"    wire [{w-1}:0] din{idx} = {_din_expr(w)};")
     return f"""\
 module m9k_multi(
