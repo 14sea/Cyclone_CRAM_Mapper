@@ -1,4 +1,58 @@
 {
+  "arbiter_2m9k": {
+    "cell_count": 11,
+    "cells": [
+      [
+        362707,
+        3
+      ],
+      [
+        362708,
+        3
+      ],
+      [
+        362723,
+        3
+      ],
+      [
+        362724,
+        3
+      ],
+      [
+        362879,
+        4
+      ],
+      [
+        362893,
+        4
+      ],
+      [
+        363024,
+        2
+      ],
+      [
+        363039,
+        2
+      ],
+      [
+        363459,
+        2
+      ],
+      [
+        363672,
+        2
+      ],
+      [
+        363883,
+        2
+      ]
+    ],
+    "iob_range_count_frames_1692_1719": 0,
+    "m9k_range_count_frames_1720_1738": 11,
+    "scope": "block_band_full_frames_1692_1738_data_bytes_only",
+    "source_rbf": "/home/test/EP4CE6/tmp/m9k_arbiter_X15Y4_X15Y10/m9k_arbiter_X15Y4_X15Y10.rbf",
+    "source_sha256": "805607aabef837f15bfc6efb1f39291a07592948a2d992c052b28ed53c35d090"
+  },
   "m9k_23_clone": {
     "cell_count": 16,
     "cells": [
@@ -1750,5 +1804,63 @@
     "scope": "block_band_full_frames_1692_1738_data_bytes_only",
     "source_rbf": "/home/test/see_neorv32_run_linux/output/neorv32_demo.rbf",
     "source_sha256": "54adace2510b9228cc33c239c65179f636a385830fa18b569e119f2da782df70"
+  },
+  "visible_2m9k": {
+    "cell_count": 12,
+    "cells": [
+      [
+        361363,
+        2
+      ],
+      [
+        361783,
+        2
+      ],
+      [
+        361879,
+        1
+      ],
+      [
+        362510,
+        1
+      ],
+      [
+        362724,
+        3
+      ],
+      [
+        362879,
+        4
+      ],
+      [
+        362893,
+        4
+      ],
+      [
+        363039,
+        2
+      ],
+      [
+        363459,
+        2
+      ],
+      [
+        363883,
+        2
+      ],
+      [
+        364303,
+        2
+      ],
+      [
+        365142,
+        2
+      ]
+    ],
+    "iob_range_count_frames_1692_1719": 0,
+    "m9k_range_count_frames_1720_1738": 12,
+    "scope": "block_band_full_frames_1692_1738_data_bytes_only",
+    "source_rbf": "/home/test/EP4CE6/tmp/m9k_visible_X15Y4_X15Y10/m9k_visible_X15Y4_X15Y10.rbf",
+    "source_sha256": "d40ac08a36fc9f1799fb6f8cdaf8ac2c321faa7de043a9f7d6f42aaaa42eda15"
   }
 }
