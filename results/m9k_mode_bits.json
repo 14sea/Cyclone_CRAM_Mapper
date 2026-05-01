@@ -9994,6 +9994,64 @@
     "source": "m9k_calib18b_X15_Y11_N0_base.rbf",
     "width": 18
   },
+  "X15_Y11_N0_32x256": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362641,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          365143,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_rom_32x256_X15_Y11_N0/m9k_blink_rom_32x256_X15_Y11_N0.rbf"
+    }
+  },
   "X15_Y11_N0_36x256": {
     "cells": [
       [
@@ -16093,6 +16151,64 @@
     "source": "m9k_calib18b_X15_Y12_N0_base.rbf",
     "width": 18
   },
+  "X15_Y12_N0_32x256": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362641,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          365143,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_rom_32x256_X15_Y12_N0/m9k_blink_rom_32x256_X15_Y12_N0.rbf"
+    }
+  },
   "X15_Y12_N0_36x256": {
     "cells": [
       [
@@ -21257,6 +21373,64 @@
     "site": "X15_Y13_N0",
     "source": "m9k_calib18b_X15_Y13_N0_base.rbf",
     "width": 18
+  },
+  "X15_Y13_N0_32x256": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362641,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          365143,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_rom_32x256_X15_Y13_N0/m9k_blink_rom_32x256_X15_Y13_N0.rbf"
+    }
   },
   "X15_Y13_N0_36x256": {
     "cells": [
@@ -39913,6 +40087,64 @@
     "source": "m9k_as_X15_Y19_N0_9x512_base.rbf",
     "width": 9
   },
+  "X15_Y1_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363288,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363499,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364723,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y1_N0/m9k_blink_sdp_8x1024_X15_Y1_N0.rbf"
+    }
+  },
   "X15_Y20_N0_9x512": {
     "cells": [
       [
@@ -44414,6 +44646,40 @@
     "site": "X15_Y2_N0",
     "width": 4
   },
+  "X15_Y2_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y2_N0/m9k_blink_sdp_8x1024_X15_Y2_N0.rbf"
+    }
+  },
   "X15_Y2_N0_9x1024": {
     "cells": [
       [
@@ -48112,6 +48378,64 @@
     },
     "site": "X15_Y3_N0",
     "width": 4
+  },
+  "X15_Y3_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363276,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363487,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364512,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y3_N0/m9k_blink_sdp_8x1024_X15_Y3_N0.rbf"
+    }
   },
   "X15_Y3_N0_9x1024": {
     "cells": [
@@ -52701,6 +53025,68 @@
     "site": "X15_Y4_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X15_Y4_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          361572,
+          2
+        ],
+        [
+          362547,
+          3
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364303,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y4_N0/m9k_blink_sdp_8x1024_X15_Y4_N0.rbf"
+    }
   },
   "X15_Y4_N0_8x64": {
     "cells": [
@@ -58155,6 +58541,64 @@
     "site": "X15_Y5_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X15_Y5_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362712,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363043,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363463,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364092,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y5_N0/m9k_blink_sdp_8x1024_X15_Y5_N0.rbf"
+    }
   },
   "X15_Y5_N0_8x64": {
     "cells": [
@@ -63640,6 +64084,40 @@
     "site": "X15_Y6_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X15_Y6_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362723,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y6_N0/m9k_blink_sdp_8x1024_X15_Y6_N0.rbf"
+    }
   },
   "X15_Y6_N0_8x64": {
     "cells": [
@@ -69617,6 +70095,56 @@
           363471,
           2
         ]
+      ],
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362712,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363066,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363486,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364512,
+          2
+        ]
       ]
     },
     "depth": 64,
@@ -69633,6 +70161,9 @@
     },
     "site": "X15_Y7_N0",
     "source": "scripts/m9k_mode_width_mine.py 8x64",
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sp_8x64_X15_Y7_N0/m9k_blink_sp_8x64_X15_Y7_N0.rbf"
+    },
     "width": 8
   },
   "X15_Y7_N0_9x1024": {
@@ -74695,6 +75226,64 @@
     "site": "X15_Y8_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X15_Y8_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362712,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362728,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363258,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364932,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y8_N0/m9k_blink_sdp_8x1024_X15_Y8_N0.rbf"
+    }
   },
   "X15_Y8_N0_8x64": {
     "cells": [
@@ -80233,6 +80822,64 @@
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
   },
+  "X15_Y9_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362712,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362728,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363288,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363499,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364723,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X15_Y9_N0/m9k_blink_sdp_8x1024_X15_Y9_N0.rbf"
+    }
+  },
   "X15_Y9_N0_8x64": {
     "cells": [
       [
@@ -83301,6 +83948,84 @@
   },
   "X27_Y10_N0_16x32": {
     "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          360644,
+          4
+        ],
+        [
+          361065,
+          4
+        ],
+        [
+          361395,
+          2
+        ],
+        [
+          361870,
+          3
+        ],
+        [
+          361949,
+          4
+        ],
+        [
+          362022,
+          3
+        ],
+        [
+          362079,
+          3
+        ],
+        [
+          362159,
+          4
+        ],
+        [
+          362652,
+          3
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364722,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ],
       "quartus_gold_tdp": [
         [
           355433,
@@ -83617,6 +84342,9 @@
       ]
     },
     "site": "X27_Y10_N0",
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_tdp_16x32_X27_Y10_N0/m9k_blink_tdp_16x32_X27_Y10_N0.rbf"
+    },
     "width": 16
   },
   "X27_Y10_N0_18x32": {
@@ -88720,6 +89448,68 @@
   },
   "X27_Y11_N0_16x32": {
     "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          360625,
+          3
+        ],
+        [
+          360928,
+          4
+        ],
+        [
+          361045,
+          3
+        ],
+        [
+          361870,
+          3
+        ],
+        [
+          362079,
+          3
+        ],
+        [
+          362641,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          365143,
+          2
+        ]
+      ],
       "quartus_gold_tdp": [
         [
           355433,
@@ -89048,6 +89838,9 @@
       ]
     },
     "site": "X27_Y11_N0",
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_tdp_16x32_X27_Y11_N0/m9k_blink_tdp_16x32_X27_Y11_N0.rbf"
+    },
     "width": 16
   },
   "X27_Y11_N0_36x256": {
@@ -107579,6 +108372,68 @@
     "source": "m9k_as_X27_Y19_N0_9x512_base.rbf",
     "width": 9
   },
+  "X27_Y1_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          361354,
+          2
+        ],
+        [
+          361775,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364302,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y1_N0/m9k_blink_sdp_8x1024_X27_Y1_N0.rbf"
+    }
+  },
   "X27_Y20_N0_4x2048": {
     "cells": [
       [
@@ -112714,6 +113569,60 @@
     "site": "X27_Y2_N0",
     "width": 4
   },
+  "X27_Y2_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363245,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y2_N0/m9k_blink_sdp_8x1024_X27_Y2_N0.rbf"
+    }
+  },
   "X27_Y2_N0_9x1024": {
     "cells": [
       [
@@ -117363,6 +118272,64 @@
     "site": "X27_Y3_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X27_Y3_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          361612,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364722,
+          2
+        ],
+        [
+          365143,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y3_N0/m9k_blink_sdp_8x1024_X27_Y3_N0.rbf"
+    }
   },
   "X27_Y3_N0_8x64": {
     "cells": [
@@ -122913,6 +123880,64 @@
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
   },
+  "X27_Y4_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          362707,
+          3
+        ],
+        [
+          362708,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363240,
+          2
+        ],
+        [
+          363451,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363673,
+          2
+        ],
+        [
+          363883,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y4_N0/m9k_blink_sdp_8x1024_X27_Y4_N0.rbf"
+    }
+  },
   "X27_Y4_N0_8x64": {
     "cells": [
       [
@@ -128373,6 +129398,104 @@
     "site": "X27_Y5_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X27_Y5_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          360517,
+          6
+        ],
+        [
+          360740,
+          6
+        ],
+        [
+          360951,
+          6
+        ],
+        [
+          361152,
+          6
+        ],
+        [
+          361870,
+          3
+        ],
+        [
+          361961,
+          2
+        ],
+        [
+          362002,
+          2
+        ],
+        [
+          362003,
+          5
+        ],
+        [
+          362079,
+          3
+        ],
+        [
+          362424,
+          5
+        ],
+        [
+          362590,
+          2
+        ],
+        [
+          362632,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363882,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y5_N0/m9k_blink_sdp_8x1024_X27_Y5_N0.rbf"
+    }
   },
   "X27_Y5_N0_8x64": {
     "cells": [
@@ -133894,6 +135017,68 @@
     "site": "X27_Y6_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X27_Y6_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          361395,
+          2
+        ],
+        [
+          361814,
+          2
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362727,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364722,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y6_N0/m9k_blink_sdp_8x1024_X27_Y6_N0.rbf"
+    }
   },
   "X27_Y6_N0_8x64": {
     "cells": [
@@ -139464,6 +140649,84 @@
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
   },
+  "X27_Y7_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          360855,
+          5
+        ],
+        [
+          361870,
+          3
+        ],
+        [
+          362003,
+          5
+        ],
+        [
+          362079,
+          3
+        ],
+        [
+          362424,
+          5
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362711,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363049,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363468,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364932,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y7_N0/m9k_blink_sdp_8x1024_X27_Y7_N0.rbf"
+    }
+  },
   "X27_Y7_N0_8x64": {
     "cells": [
       [
@@ -145008,6 +146271,92 @@
     "site": "X27_Y8_N0",
     "source": "scripts/m9k_mode_width_mine.py 4x2048",
     "width": 4
+  },
+  "X27_Y8_N0_8x1024": {
+    "_origin": "m9k_diff_nv_neorv32_mine_verify.py",
+    "cells_by_template": {
+      "m9k_blink_diff_nv": [
+        [
+          360613,
+          3
+        ],
+        [
+          360953,
+          5
+        ],
+        [
+          361033,
+          3
+        ],
+        [
+          361572,
+          2
+        ],
+        [
+          361870,
+          3
+        ],
+        [
+          361918,
+          3
+        ],
+        [
+          362051,
+          5
+        ],
+        [
+          362079,
+          3
+        ],
+        [
+          362472,
+          5
+        ],
+        [
+          362547,
+          3
+        ],
+        [
+          362707,
+          3
+        ],
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ],
+        [
+          363039,
+          2
+        ],
+        [
+          363459,
+          2
+        ],
+        [
+          363883,
+          2
+        ],
+        [
+          364303,
+          2
+        ],
+        [
+          365142,
+          2
+        ]
+      ]
+    },
+    "template_probe_source": {
+      "m9k_blink_diff_nv": "tmp/m9k_blink_sdp_8x1024_X27_Y8_N0/m9k_blink_sdp_8x1024_X27_Y8_N0.rbf"
+    }
   },
   "X27_Y8_N0_8x64": {
     "cells": [
