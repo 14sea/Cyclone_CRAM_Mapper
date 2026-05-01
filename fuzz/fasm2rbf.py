@@ -249,6 +249,24 @@ _M9K_MODE_SILICON_FALSIFIED = {
 # `universal_cells`. See dspmult_global_on_clean_remine.md memory.
 _DSPMULT_GLOBAL_ON_RE = re.compile(r"^DSPMULT_GLOBAL_ON$")
 _DSPMULT_GLOBAL_ON_CACHE = None
+# Design-specific block-band pack: DESIGN_BLOCK_BAND_PACK <tag>
+# XOR-applies the full block-band cell set (frames 1692-1738 data bytes)
+# mined from a per-design Quartus reference RBF via
+# scripts/mine_design_block_band.py.  Each design tag is a one-time
+# Quartus codec build; runtime emission is fully Quartus-free.  See
+# memory m9k_multi_infra_step_b_c_findings_2026_05_01.md for why this
+# directive replaces the silicon-broken `quartus_gold + --base nv` path
+# and the structurally-insufficient per-site `m9k_blink_diff_nv` path
+# for multi-M9K NEORV32-class designs.
+#
+# Storage: results/design_block_band.json (tag → cells list + metadata).
+# Emission semantic: XOR-parity composition with other directives, so
+# emitting twice cancels.  Applied AFTER per-site M9K_MODE so design-
+# specific cells override per-site emissions where they conflict.
+_DESIGN_BLOCK_BAND_PACK_RE = re.compile(
+    r"^DESIGN_BLOCK_BAND_PACK\s+(?P<tag>[a-zA-Z0-9_-]+)$"
+)
+_DESIGN_BLOCK_BAND_PACK_CACHE = None
 _GCLK_RE = re.compile(r"^GCLK$")
 # Per-pin GCLK source-activate: GCLK_PIN PIN_E1
 # XOR-delta semantic (diff from AUTO-mode baseline → forced-GCLK).  Cell
@@ -540,6 +558,32 @@ def _load_m9k_mode_cells(site, width, depth, template=None):
     if mask:
         raw = [c for c in raw if c not in mask]
     return raw
+
+
+def _load_design_block_band_pack(tag):
+    """Return the (off, bp) cells for a design block-band pack.
+
+    Reads results/design_block_band.json; raises FasmError if the file
+    or the tag is missing.  Mining: scripts/mine_design_block_band.py.
+    """
+    global _DESIGN_BLOCK_BAND_PACK_CACHE
+    if _DESIGN_BLOCK_BAND_PACK_CACHE is None:
+        import json
+        path = ROOT / "results" / "design_block_band.json"
+        if not path.exists():
+            raise FasmError(
+                "DESIGN_BLOCK_BAND_PACK used but "
+                "results/design_block_band.json missing; mine via "
+                "scripts/mine_design_block_band.py --tag <tag> --rbf <path>"
+            )
+        _DESIGN_BLOCK_BAND_PACK_CACHE = json.loads(path.read_text())
+    if tag not in _DESIGN_BLOCK_BAND_PACK_CACHE:
+        raise FasmError(
+            f"DESIGN_BLOCK_BAND_PACK tag {tag!r} not in "
+            f"design_block_band.json; have: "
+            f"{sorted(_DESIGN_BLOCK_BAND_PACK_CACHE)}"
+        )
+    return [tuple(c) for c in _DESIGN_BLOCK_BAND_PACK_CACHE[tag]["cells"]]
 
 
 def _load_dspmult_global_on_cells():
@@ -1277,6 +1321,7 @@ def parse_fasm(text):
     dff_les = []  # list[(x, y, n)] per-LE DFF enable
     m9k_inits = []  # list[(x, y, n, width, depth, target_words)]
     m9k_modes = []  # list[(x, y, n, width, depth)] — per-site enable
+    design_packs = []  # list[str] — DESIGN_BLOCK_BAND_PACK tags
     dspmult_global_on = False  # DSPMULT_GLOBAL_ON directive seen
     iobs = []  # list[(role, pin)] where role in {'IN','OUT'}
     iob_routes = []  # list[(pin, dx, dy, dn, port)] — nv_zero_global-frame
@@ -1455,6 +1500,10 @@ def parse_fasm(text):
         if m:
             dspmult_global_on = not dspmult_global_on  # XOR parity
             continue
+        m = _DESIGN_BLOCK_BAND_PACK_RE.match(line)
+        if m:
+            design_packs.append(m["tag"])
+            continue
         m = _M9K_INIT_RE.match(line)
         if m:
             x = int(m["x"]); y = int(m["y"]); n = int(m["n"])
@@ -1478,7 +1527,7 @@ def parse_fasm(text):
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
             iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
             dspmult_global_on, iob_oes, lut_arith_multi_labs,
-            iob_pad_nv, outroute_g15s)
+            iob_pad_nv, outroute_g15s, design_packs)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None,
@@ -1587,7 +1636,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
      iob_clk_inputs, nv_buckets, m9k_modes,
      dspmult_global_on, iob_oes,
      lut_arith_multi_labs,
-     iob_pad_nv, outroute_g15s) = parse_fasm(fasm_text)
+     iob_pad_nv, outroute_g15s, design_packs) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -1942,6 +1991,23 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             for off, bp in _load_m9k_mode_cells(
                 site, width, depth, template
             ):
+                parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), p in parity.items():
+            if p:
+                buf[off] ^= (1 << bp)
+        work = bytes(buf)
+
+    if design_packs:
+        # Design-specific block-band pack from results/design_block_band.json.
+        # XOR-parity composition with M9K_MODE: any cell toggled an odd
+        # number of times across (per-site M9K_MODE + DESIGN_BLOCK_BAND_PACK)
+        # is flipped exactly once.  Applied AFTER M9K_MODE and BEFORE
+        # M9K_INIT so the M9K block-band reaches its design-correct state
+        # before init data is laid down.
+        parity = {}
+        for tag in design_packs:
+            for off, bp in _load_design_block_band_pack(tag):
                 parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
         buf = bytearray(work)
         for (off, bp), p in parity.items():
