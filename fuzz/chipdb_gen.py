@@ -870,7 +870,11 @@ print("[chipdb_ep4ce6] loaded:",
 
 # --run replaces the default flow, so we must drive pack/place/route
 # ourselves.  sys.argv inside --run only has the binary path, so read
-# the real command line from /proc/self/cmdline.
+# the real command line from /proc/self/cmdline.  When invoked via
+# --pre-pack instead, nextpnr runs its own pack/place/route flow and
+# the hooks below would re-exec this script, double-adding wires and
+# tripping the assertion in nextpnr-generic 0.10+.  Detect the
+# invocation mode and skip the flow-driver block in --pre-pack mode.
 def _run_hook(flag):
     """Execute a --flag script if the user passed one."""
     try:
@@ -883,13 +887,35 @@ def _run_hook(flag):
             exec(compile(open(path).read(), path, "exec"), globals())
             return
 
-_run_hook("--pre-pack")
-ctx.pack()
-_run_hook("--pre-place")
-ctx.place()
-_run_hook("--pre-route")
-ctx.route()
-_run_hook("--post-route")
+
+def _invoked_as(flag):
+    """True if /proc/self/cmdline contains `flag <this-file>`."""
+    try:
+        args = open("/proc/self/cmdline").read().split(chr(0))
+    except OSError:
+        return False
+    me = str(Path(__file__).resolve())
+    for i, a in enumerate(args):
+        if a == flag and i + 1 < len(args):
+            try:
+                if str(Path(args[i + 1]).resolve()) == me:
+                    return True
+            except (OSError, ValueError):
+                pass
+    return False
+
+
+# Only drive the flow when invoked as --run (this script is the
+# entry point).  In --pre-pack mode, nextpnr drives the default flow
+# and the hooks below would cause recursion.
+if _invoked_as("--run"):
+    _run_hook("--pre-pack")
+    ctx.pack()
+    _run_hook("--pre-place")
+    ctx.place()
+    _run_hook("--pre-route")
+    ctx.route()
+    _run_hook("--post-route")
 '''
 
 
