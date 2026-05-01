@@ -1,4 +1,78 @@
 {
+  "m9k_23_clone": {
+    "cell_count": 16,
+    "cells": [
+      [
+        361395,
+        2
+      ],
+      [
+        361949,
+        4
+      ],
+      [
+        362022,
+        3
+      ],
+      [
+        362159,
+        4
+      ],
+      [
+        362652,
+        3
+      ],
+      [
+        362707,
+        3
+      ],
+      [
+        362723,
+        3
+      ],
+      [
+        362724,
+        3
+      ],
+      [
+        362728,
+        3
+      ],
+      [
+        362879,
+        4
+      ],
+      [
+        362893,
+        4
+      ],
+      [
+        363039,
+        2
+      ],
+      [
+        363459,
+        2
+      ],
+      [
+        363883,
+        2
+      ],
+      [
+        364722,
+        2
+      ],
+      [
+        365142,
+        2
+      ]
+    ],
+    "iob_range_count_frames_1692_1719": 0,
+    "m9k_range_count_frames_1720_1738": 16,
+    "scope": "block_band_full_frames_1692_1738_data_bytes_only",
+    "source_rbf": "/home/test/EP4CE6/tmp/m9k_multi_23m9k_neorv32_clone/m9k_multi_23m9k_neorv32_clone.rbf",
+    "source_sha256": "5ba3f10f19ec943c4c1c369c6db8450a20c4399516f9b44b915a61798ca24216"
+  },
   "neorv32": {
     "cell_count": 417,
     "cells": [
