@@ -108,11 +108,19 @@ def _horizontal_step(remaining_dx: int) -> int:
     return sign * min(4, abs(remaining_dx))
 
 
+# Combined LAB X list including jailbreak (X={5,9,14,30,32,33}).  nextpnr
+# places into jailbreak columns whenever the chipdb exposes them, so the
+# planner must be able to index them — pre-fix, plan_hops raised
+# "ValueError: 5 is not in list" for any route touching a jailbreak X.
+# Memory hero_edge_x5_fasm_silicon: X=5 is silicon-validated jailbreak.
+LAB_X_FULL = tuple(sorted(set(LAB_X) | set(JAILBREAK_LAB_X)))
+
+
 def _lab_step_to_x(start_x: int, n_lab_steps: int) -> int:
-    """Move n_lab_steps along LAB_X starting at start_x. Returns new X."""
-    idx = LAB_X.index(start_x)
-    new_idx = max(0, min(len(LAB_X) - 1, idx + n_lab_steps))
-    return LAB_X[new_idx]
+    """Move n_lab_steps along LAB_X_FULL starting at start_x.  Returns new X."""
+    idx = LAB_X_FULL.index(start_x)
+    new_idx = max(0, min(len(LAB_X_FULL) - 1, idx + n_lab_steps))
+    return LAB_X_FULL[new_idx]
 
 
 def _y_step(start_y: int, n_steps: int) -> int:
@@ -153,7 +161,7 @@ def plan_hops(need: Need) -> list[Hop]:
     # actual choice for medium/long horizontal moves. R4 is the fallback
     # for the final 1-LAB step.
     while cur_x != need.dx:
-        remaining = LAB_X.index(need.dx) - LAB_X.index(cur_x)
+        remaining = LAB_X_FULL.index(need.dx) - LAB_X_FULL.index(cur_x)
         if abs(remaining) >= 3:
             step = remaining if abs(remaining) <= 6 else (6 if remaining > 0 else -6)
             new_x = _lab_step_to_x(cur_x, step)
@@ -292,7 +300,7 @@ def _hop_landing_coords(hop: Hop) -> tuple[int, int]:
         new_y = LAB_Y[LAB_Y.index(hop.anchor_y) + hop.span]
         return hop.anchor_x, new_y
     elif hop.type in ("R4", "R24"):
-        new_x = LAB_X[LAB_X.index(hop.anchor_x) + hop.span]
+        new_x = LAB_X_FULL[LAB_X_FULL.index(hop.anchor_x) + hop.span]
         return new_x, hop.anchor_y
     raise ValueError(f"unknown hop type {hop.type}")
 

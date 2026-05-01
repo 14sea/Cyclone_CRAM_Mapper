@@ -891,13 +891,20 @@ class RouteCodec:
     LI_MODE_BY_X = {
         3:  "alternating",   # ✓
         4:  "paired",        # ✓
+        # Jailbreak edge column (memory hero_edge_x5_fasm_silicon).
+        # LI mode UNMINED — default "alternating" lets plan_hops continue
+        # without raising; resulting cells go through safety validator
+        # before any flash, so a wrong default fails closed.
+        5:  "alternating",   # ⚠ UNMINED jailbreak
         6:  "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
         7:  "alternating",   # ✓
         8:  "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
+        9:  "alternating",   # ⚠ UNMINED jailbreak
         10: "paired",        # ✓
         11: "paired",        # △ AMBIGUOUS — majority 2/3 (src(25,15)→alternating)
         12: "paired",        # ✓
         13: "alternating",   # ✓
+        14: "alternating",   # ⚠ UNMINED jailbreak
         16: "paired",        # ✓
         17: "alternating",   # ✓
         18: "paired",        # ✓
@@ -910,7 +917,10 @@ class RouteCodec:
         26: "paired",        # △ AMBIGUOUS — majority 2/3 (src(3,5)→alternating)
         28: "alternating",   # △ AMBIGUOUS — majority 2/3 (src(25,15)→paired)
         29: "alternating",   # ✓
+        30: "alternating",   # ⚠ UNMINED jailbreak
         31: "paired",        # ✓
+        32: "alternating",   # ⚠ UNMINED jailbreak
+        33: "alternating",   # ⚠ UNMINED jailbreak
     }
     LI_MODE_AMBIGUOUS_X = {6, 8, 11, 22, 26, 28}
 
