@@ -516,6 +516,7 @@ def convert(
     routed_json: dict,
     baseline: str = "nv",
     legacy_iob_route: bool = False,
+    design_pack: str | None = None,
 ) -> tuple[list[str], list[str]]:
     """Convert routed JSON to (fasm_lines, warnings).
 
@@ -554,6 +555,16 @@ def convert(
         # LAB_CLK_SEL_LE) continues to assume the nv_zero_global frame,
         # which NV_BASELINE_PACK provides byte-exact.
         fasm.append("NV_BASELINE_PACK")
+    if design_pack is not None:
+        # DESIGN_BLOCK_BAND_PACK <tag> XOR-applies the full block-band
+        # cell set mined from the design's own Quartus reference (one-
+        # time codec build via scripts/mine_design_block_band.py).
+        # Replaces the silicon-broken `quartus_gold + --base nv` path
+        # AND the structurally-insufficient per-site `m9k_blink_diff_nv`
+        # path for multi-M9K NEORV32-class designs.  When set, per-site
+        # M9K_MODE emission is suppressed below (the pack already
+        # contains all M9K block-band cells in design-correct form).
+        fasm.append(f"DESIGN_BLOCK_BAND_PACK {design_pack}")
 
     modules = routed_json.get("modules", {})
     if not modules:
@@ -779,11 +790,17 @@ def convert(
                 fasm.append(line)
             if warn is not None:
                 warnings.append(warn)
-            mode_line, mode_warn = _emit_m9k_mode(cell_name, cell)
-            if mode_line is not None:
-                fasm.append(mode_line)
-            if mode_warn is not None:
-                warnings.append(mode_warn)
+            if design_pack is None:
+                # Per-site M9K_MODE only when no design pack — the pack
+                # already encodes the full multi-M9K block-band state
+                # in design-correct form, so per-site emission would
+                # introduce false-positive cells (XOR-cancelable but
+                # noisy; better to skip).
+                mode_line, mode_warn = _emit_m9k_mode(cell_name, cell)
+                if mode_line is not None:
+                    fasm.append(mode_line)
+                if mode_warn is not None:
+                    warnings.append(mode_warn)
 
     # --- Carry chain analysis ---
     # Walk every CE6_CARRY whose CI is a Verilog constant — that's a
@@ -1179,10 +1196,12 @@ def convert(
 
 
 def main() -> None:
-    # Small CLI: [--base nv|pure] [--legacy-iob-route] <routed.json> [output.fasm]
+    # CLI: [--base nv|pure] [--legacy-iob-route] [--design-pack TAG]
+    #      <routed.json> [output.fasm]
     argv = list(sys.argv[1:])
     baseline = "nv"
     legacy_iob_route = False
+    design_pack: str | None = None
     while argv and argv[0].startswith("--"):
         if argv[0] == "--base":
             if len(argv) < 2 or argv[1] not in ("nv", "pure"):
@@ -1193,6 +1212,12 @@ def main() -> None:
         elif argv[0] == "--legacy-iob-route":
             legacy_iob_route = True
             argv = argv[1:]
+        elif argv[0] == "--design-pack":
+            if len(argv) < 2:
+                print("--design-pack expects a tag", file=sys.stderr)
+                sys.exit(1)
+            design_pack = argv[1]
+            argv = argv[2:]
         else:
             print(f"unknown flag: {argv[0]}", file=sys.stderr)
             sys.exit(1)
@@ -1200,20 +1225,27 @@ def main() -> None:
     if len(argv) < 1:
         print(
             f"Usage: {sys.argv[0]} [--base nv|pure] "
-            f"[--legacy-iob-route] <routed.json> [output.fasm]\n"
+            f"[--legacy-iob-route] [--design-pack TAG] "
+            f"<routed.json> [output.fasm]\n"
             f"  --base pure            emit NV_BASELINE_PACK header so caller\n"
             f"                         can pass make_pure_zero_rbf() as base_rbf;\n"
             f"                         default nv assumes nv_zero_global.rbf base.\n"
             f"  --legacy-iob-route     emit `# fasm2rbf: legacy_iob_route=1`\n"
             f"                         pragma; callers forward to bitgen via\n"
-            f"                         fasm2rbf.parse_pragmas(fasm_text).",
+            f"                         fasm2rbf.parse_pragmas(fasm_text).\n"
+            f"  --design-pack TAG      emit DESIGN_BLOCK_BAND_PACK <tag>;\n"
+            f"                         suppresses per-site M9K_MODE emission.\n"
+            f"                         Tag must exist in results/design_block_band.json\n"
+            f"                         (mine via scripts/mine_design_block_band.py).",
             file=sys.stderr,
         )
         sys.exit(1)
 
     routed = json.loads(Path(argv[0]).read_text())
     fasm_lines, warnings = convert(
-        routed, baseline=baseline, legacy_iob_route=legacy_iob_route,
+        routed, baseline=baseline,
+        legacy_iob_route=legacy_iob_route,
+        design_pack=design_pack,
     )
 
     out = sys.stdout
