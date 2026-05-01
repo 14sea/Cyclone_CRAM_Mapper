@@ -62,18 +62,44 @@ def block_band_diff_cells(a: bytes, b: bytes) -> list[tuple[int, int]]:
     return cells
 
 
-def find_blink_rbf(x: int, y: int, n: int) -> Path | None:
-    # Primary: scripts/m9k_blink_full_build.py output
-    p = ROOT / f"tmp/m9k_blink_full_X{x}_Y{y}_N{n}/m9k_blink_full_X{x}_Y{y}_N{n}.rbf"
-    if p.exists():
-        return p
-    # X15_Y10_N0 special case: the v5-validated reference is m9k_blink_diag.
-    if (x, y, n) == (15, 10, 0):
-        p = ROOT / "tmp/m9k_blink_diag/m9k_blink_diag.rbf"
-        if p.exists():
-            return p
-        # Alternative full-9x512 build
-        p = ROOT / "tmp/m9k_blink_9x512_full/m9k_blink_9x512_full.rbf"
+def find_blink_rbf(x: int, y: int, n: int,
+                   width: int = 9, depth: int = 512,
+                   mode: str | None = None) -> Path | None:
+    """Locate the Quartus reference RBF for a (mode, w, d, site) tuple.
+
+    Search order:
+      1. Per-mode parameterized build dir
+         (tmp/m9k_blink_<mode>_<w>x<d>_X{x}_Y{y}_N{n}/...)
+      2. Legacy SP 9×512 fixed-name build dir (mode=sp w=9 d=512 only)
+      3. X15_Y10_N0 9×512 well-known references
+    """
+    candidates: list[Path] = []
+    if mode is not None:
+        candidates.append(
+            ROOT
+            / f"tmp/m9k_blink_{mode}_{width}x{depth}_X{x}_Y{y}_N{n}"
+            / f"m9k_blink_{mode}_{width}x{depth}_X{x}_Y{y}_N{n}.rbf"
+        )
+    else:
+        # Try every known mode in a deterministic order so the answer is
+        # repeatable when more than one mode happens to be present.
+        for m in ("sp", "sdp", "tdp", "rom"):
+            candidates.append(
+                ROOT
+                / f"tmp/m9k_blink_{m}_{width}x{depth}_X{x}_Y{y}_N{n}"
+                / f"m9k_blink_{m}_{width}x{depth}_X{x}_Y{y}_N{n}.rbf"
+            )
+    if (width, depth) == (9, 512):
+        # Legacy fixed-name path for the SP 9x512 case.
+        candidates.append(
+            ROOT
+            / f"tmp/m9k_blink_full_X{x}_Y{y}_N{n}"
+            / f"m9k_blink_full_X{x}_Y{y}_N{n}.rbf"
+        )
+        if (x, y, n) == (15, 10, 0):
+            candidates.append(ROOT / "tmp/m9k_blink_diag/m9k_blink_diag.rbf")
+            candidates.append(ROOT / "tmp/m9k_blink_9x512_full/m9k_blink_9x512_full.rbf")
+    for p in candidates:
         if p.exists():
             return p
     return None
@@ -98,6 +124,15 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="don't write JSON")
     ap.add_argument("--width", type=int, default=9, help="filter by width")
     ap.add_argument("--depth", type=int, default=512, help="filter by depth")
+    ap.add_argument("--mode", default=None,
+                    help="restrict to a single Quartus build mode "
+                         "(sp/sdp/tdp/rom); default = first match")
+    ap.add_argument("--sites", default=None,
+                    help="optional comma/semicolon-separated X,Y filter, "
+                         "e.g. '15,10' or '15,4;15,10'")
+    ap.add_argument("--add-missing", action="store_true",
+                    help="create JSON entries for (x,y,n,w,d) tuples that "
+                         "have an RBF on disk but no key in m9k_mode_bits.json")
     args = ap.parse_args()
 
     nv = NV.read_bytes()
@@ -105,17 +140,55 @@ def main() -> int:
 
     db = json.loads(MODE_BITS.read_text())
 
+    site_filter: set[tuple[int, int]] | None = None
+    if args.sites:
+        site_filter = set()
+        for chunk in args.sites.split(";"):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            x_s, y_s = chunk.split(",")
+            site_filter.add((int(x_s), int(y_s)))
+
     mined: dict[str, int] = {}  # site_key -> cell count
     skipped: list[str] = []
 
-    for key in sorted(db.keys()):
+    keys_to_check = list(db.keys())
+    if args.add_missing:
+        # Augment with any (x, y, n, w, d) inferred from RBFs on disk.
+        import re
+        pat = re.compile(r"^m9k_blink_(?P<mode>sp|sdp|tdp|rom)_"
+                         r"(?P<w>\d+)x(?P<d>\d+)_"
+                         r"X(?P<x>\d+)_Y(?P<y>\d+)_N(?P<n>\d+)$")
+        for d in (ROOT / "tmp").glob("m9k_blink_*"):
+            if not d.is_dir():
+                continue
+            m = pat.match(d.name)
+            if not m:
+                continue
+            w_d, d_d = int(m["w"]), int(m["d"])
+            if w_d != args.width or d_d != args.depth:
+                continue
+            x_d, y_d, n_d = int(m["x"]), int(m["y"]), int(m["n"])
+            key = f"X{x_d}_Y{y_d}_N{n_d}_{w_d}x{d_d}"
+            if key not in db:
+                db[key] = {
+                    "cells_by_template": {},
+                    "template_probe_source": {},
+                    "_origin": "m9k_blink_diff_nv_mine.py --add-missing",
+                }
+                keys_to_check.append(key)
+
+    for key in sorted(set(keys_to_check)):
         parsed = parse_site_key(key)
         if not parsed:
             continue
         x, y, n, w, d = parsed
         if w != args.width or d != args.depth:
             continue
-        rbf_path = find_blink_rbf(x, y, n)
+        if site_filter is not None and (x, y) not in site_filter:
+            continue
+        rbf_path = find_blink_rbf(x, y, n, width=w, depth=d, mode=args.mode)
         if rbf_path is None:
             skipped.append(key)
             continue
