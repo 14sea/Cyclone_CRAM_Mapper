@@ -159,7 +159,15 @@ endmodule
 
 
 def render_rom(w: int, d: int) -> str:
-    """ROM: read-only, initial data, no writes."""
+    """ROM: read-only, initial data, no writes.
+
+    Variable name MUST be `mem` so Quartus auto-generates the inferred
+    altsyncram instance as `altsyncram:mem_rtl_0` — matching the QSF
+    LOC target.  Using any other name (e.g. `rom`) silently breaks the
+    LOC binding (Quartus places the M9K wherever it likes; LOC is
+    parsed but doesn't bind to any matching node) and yields byte-
+    identical RBFs across all Y assignments.
+    """
     ab = _addr_bits(d)
     return f"""\
 module m9k_blink(
@@ -173,15 +181,15 @@ module m9k_blink(
 
     wire [{ab-1}:0] addr = counter[27 -: {ab}] ^ {{{ab}{{KEY3}}}};
 
-    (* ramstyle = "M9K" *) reg [{w-1}:0] rom [0:{d-1}];
+    (* ramstyle = "M9K" *) reg [{w-1}:0] mem [0:{d-1}];
     integer i;
     initial begin
         for (i = 0; i < {d}; i = i + 1)
-            rom[i] = i[{w-1}:0] ^ {{{w}{{1'b1}}}};
+            mem[i] = i[{w-1}:0] ^ {{{w}{{1'b1}}}};
     end
 
     reg [{w-1}:0] dout_r;
-    always @(posedge CLK) dout_r <= rom[addr];
+    always @(posedge CLK) dout_r <= mem[addr];
 
     assign LED0 = ^dout_r ^ KEY2;
 endmodule
