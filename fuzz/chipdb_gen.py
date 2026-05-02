@@ -125,6 +125,26 @@ def _wire_slice_in(x: int, y: int, n: int, port: str) -> str:
     return f"slice_X{x}_Y{y}_N{n}_{port}"
 
 
+def _wire_carry_in(x: int, y: int, n: int, port: str) -> str:
+    """CE6_CARRY's dedicated A/B input wires.
+
+    Distinct from `slice_X{x}_Y{y}_N{n}_{dataa,datab}` so CE6_CARRY and
+    GENERIC_SLICE can co-exist at the same LE position without two
+    different nets (e.g. PACKER_GND on CE6_CARRY.A and a real D-net on
+    SLICE.I[0]) ending up on the same physical wire.
+
+    Silicon truth: A/B inputs to the carry primitive enter through the
+    same LAB local interconnect as the LUT inputs, but carry has its
+    own selection MUX inside the LE.  We model that as a separate wire
+    fed by the same drivers (LOCAL tracks, intra-LAB Q/F/carry_S).
+
+    See `path_alpha_progress_2026_05_03_night.md` and the X4_Y21_N28
+    collision diagnosis in the 2026-05-04 session log for the bug this
+    fixes.
+    """
+    return f"carry_X{x}_Y{y}_N{n}_{port}"
+
+
 def _wire_m9k_port(x: int, y: int, port: str) -> str:
     return f"m9k_X{x}_Y{y}_N0_{port}"
 
@@ -264,16 +284,33 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                     "bel": carry_name, "pin": "CI", "wire": ciw,
                     "output": False,
                 })
-                # A, B — reuse I[0] / I[1] wires
+                # A, B — dedicated carry-input wires distinct from
+                # GENERIC_SLICE's I[0]/I[1] (= dataa/datab).  Sharing
+                # the wires causes router2 to fail with
+                #
+                #   attempting to reserve sink input path wire
+                #   'slice_X{x}_Y{y}_N{n}_dataa' for nets '...' and
+                #   '$PACKER_GND_NET'
+                #
+                # whenever a CE6_CARRY and a co-located GENERIC_SLICE
+                # both place at the same LE — the packer ties one's
+                # unused input to PACKER_GND while the other carries a
+                # real net.  Driver pips below feed the new wires from
+                # the same sources as I[0..3] so routing capacity is
+                # preserved.
+                aw = _wire_carry_in(x, y, n, "A")
+                bw = _wire_carry_in(x, y, n, "B")
+                wires.append({"name": aw, "type": "CARRY_IN",
+                              "x": x, "y": y})
+                wires.append({"name": bw, "type": "CARRY_IN",
+                              "x": x, "y": y})
                 belpins.append({
                     "bel": carry_name, "pin": "A",
-                    "wire": _wire_slice_in(x, y, n, "dataa"),
-                    "output": False,
+                    "wire": aw, "output": False,
                 })
                 belpins.append({
                     "bel": carry_name, "pin": "B",
-                    "wire": _wire_slice_in(x, y, n, "datab"),
-                    "output": False,
+                    "wire": bw, "output": False,
                 })
 
     # ---------- M9K bels ----------
@@ -400,10 +437,13 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
         xi = LAB_X_FULL.index(x)
         yi = LAB_Y_FULL.index(y)
 
-        # ----- Intra-LAB direct pips (Q/F → I[0..3]) -----
+        # ----- Intra-LAB direct pips (Q/F → I[0..3] + carry_A/B) -----
         # Within the same LAB, slices connect via the LOCAL bus
         # hardware, but we model it as direct pips to avoid track
-        # contention. 16×16×4 = 1024 pips per LAB.
+        # contention. 16×16×6 = 1536 pips per LAB.  carry_A/B are now
+        # their own wires (see _wire_carry_in) so the same Q/F driver
+        # can independently feed both a SLICE input and a co-located
+        # CE6_CARRY input.
         for n_src in LE_N:
             for out_pin in ("Q", "F"):
                 src = (_wire_slice_out(x, y, n_src) if out_pin == "Q"
@@ -419,8 +459,18 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                             "x": x, "y": y,
                         })
                         n_local_pips += 1
+                    for cport in ("A", "B"):
+                        dst = _wire_carry_in(x, y, n_dst, cport)
+                        pips.append({
+                            "name": f"pip_{src}__{dst}",
+                            "type": "INTRA_LAB",
+                            "src": src, "dst": dst,
+                            "delay": INTRA_DELAY,
+                            "x": x, "y": y,
+                        })
+                        n_local_pips += 1
 
-        # ----- CE6_CARRY S → intra-LAB + LOCAL -----
+        # ----- CE6_CARRY S → intra-LAB SLICE + co-located CARRY -----
         for n_src in LE_N:
             carry_s = f"carry_X{x}_Y{y}_N{n_src}_S"
             for n_dst in LE_N:
@@ -434,6 +484,38 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
+                for cport in ("A", "B"):
+                    dst = _wire_carry_in(x, y, n_dst, cport)
+                    pips.append({
+                        "name": f"pip_{carry_s}__{dst}",
+                        "type": "INTRA_LAB",
+                        "src": carry_s, "dst": dst,
+                        "delay": INTRA_DELAY,
+                        "x": x, "y": y,
+                    })
+                    n_local_pips += 1
+
+        # ----- LE-internal feedback: SLICE.Q → co-located CARRY.B -----
+        # On Cyclone IV silicon, the DFF.Q at one LE drives the same
+        # LE's CE6_CARRY.B input directly through an internal MUX, no
+        # external routing.  Quartus carry counters emit ZERO route
+        # cells for this feedback (memory `phase54_first_flash_lab418`).
+        # Model it as a zero-delay pip so nextpnr-generic's router can
+        # legalise a placed-CARRY-and-DFF-at-same-N pattern; np2fasm's
+        # carry-chain walker recognises the same-LE pair and emits a
+        # single LUT_ARITH directive without a sig-cache ROUTE.
+        for n in LE_N:
+            qw = _wire_slice_out(x, y, n)
+            for cport in ("A", "B"):
+                dst = _wire_carry_in(x, y, n, cport)
+                pips.append({
+                    "name": f"pip_{qw}__{dst}_internal",
+                    "type": "LE_INTERNAL",
+                    "src": qw, "dst": dst,
+                    "delay": 0,
+                    "x": x, "y": y,
+                })
+                n_local_pips += 1
 
         # ----- LOCAL tracks for inter-LAB routing -----
         for t in range(num_local_tracks):
@@ -451,13 +533,15 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                         "x": x, "y": y,
                     })
                     n_local_pips += 1
-            # LOCAL track -> slice data inputs (I[0..3] only).
+            # LOCAL track -> slice data inputs (I[0..3]) and carry A/B.
             # slice_CLK is reachable ONLY via the GCLK_BUS/LAB_CLK tree
             # (see "Dedicated global clock network" section below) so
             # the router can't waste LOCAL bandwidth on clock nets.
             for n in LE_N:
                 dsts = [_wire_slice_in(x, y, n, port)
                         for port in SLICE_INPUTS]
+                dsts += [_wire_carry_in(x, y, n, cport)
+                         for cport in ("A", "B")]
                 for dw in dsts:
                     pips.append({
                         "name": f"pip_{lw}__{dw}",
@@ -685,6 +769,27 @@ def build_chipdb(*, num_local_tracks: int = NUM_LOCAL_TRACKS,
                     "delay": DEDICATED_DELAY, "x": gx, "y": gy,
                 })
                 n_pips_gnd += 1
+
+    # Chain-start CIN tie-off.  CE6_CARRY[0].CI is a Verilog constant
+    # (1'b0 for $add, 1'b1 for $sub) and Yosys / nextpnr-generic
+    # routes it through $PACKER_GND_NET / $PACKER_VCC_NET.  On silicon
+    # the chain-start CRAM bit (LUT_ARITH blob) handles the constant,
+    # not external routing — but the router still wants a pip from
+    # whichever cell holds $PACKER_GND to the CIN of the chain-start
+    # LE.  Restrict the GND→CIN pip set to N=0 of every valid LAB,
+    # since prepack_carry pins chain bit 0 to N=0.  Adding pips for
+    # every N=0..30 explodes router2 search space (24-bit chain
+    # exceeds 10 minutes wallclock).
+    for (x, y) in valid_labs:
+        ciw = _wire_slice_cin(x, y, 0)
+        for i in range(len(GND_BUS_LOCS)):
+            pips.append({
+                "name": f"pip_GND_BUS_{i}__{ciw}",
+                "type": "GND_TO_CIN",
+                "src": f"GND_BUS_{i}", "dst": ciw,
+                "delay": DEDICATED_DELAY, "x": x, "y": y,
+            })
+            n_pips_gnd += 1
 
     # ---------- M9K <-> LOCAL bridge + GCLK -> CLK ----------
     # Mirrors the IOB gateway-LAB pattern above. For each M9K site,

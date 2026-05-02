@@ -59,12 +59,18 @@ def main():
 
     print("\n=== Step 1: Yosys synthesis ===", flush=True)
     yosys_json = WORK / "led_blink.json"
+    # `alumacc` BEFORE the first techmap is required for $alu →
+    # CE6_CARRY chain mapping; without it, $add falls through to
+    # LUT4-ripple via simplemap+abc and the silicon-validated carry
+    # codec doesn't fire.  See path_alpha_progress_2026_05_03_night.md.
     yosys_script = f"""
 read_verilog -lib {prims}
 read_verilog {verilog}
 hierarchy -check -top led_blink
 proc
 async2sync
+opt -full
+alumacc
 opt -full
 flatten
 opt -full
@@ -93,16 +99,30 @@ write_json {yosys_json}
     r = run(["yosys", "-s", str(yosys_ys)], cwd=WORK, env=env)
     print(r.stdout[-1200:])
 
-    # --- Step 1b: Generate pin & placement constraint script ---
+    # --- Step 1b: Generate combined pre-place hook ---
+    # Pre-place hook combines (a) carry-chain BEL pinning produced by
+    # prepack_carry.compute_bel_map (avoids the chipdb/CE6_CARRY-vs-
+    # GENERIC_SLICE wire-aliasing collision by selecting non-overlapping
+    # N for DFFs; multi-LAB column descent for chains > 16 bits) with
+    # (b) the existing IOB pin + LED-driver bindings.  We emit a single
+    # --pre-place script because nextpnr-generic 0.10 resolves
+    # NEXTPNR_BEL attributes during JSON read — before --pre-pack runs
+    # — so the carry pins must be deferred to --pre-place.
+    sys.path.insert(0, str(REPO / "fuzz"))
+    from prepack_carry import compute_bel_map, emit_pre_place_hook  # type: ignore
+    import json as _json
+    yj_for_map = _json.loads(yosys_json.read_text())
+    bel_map, prepack_warns = compute_bel_map(yj_for_map, mode="nextpnr")
+    for w in prepack_warns:
+        print(f"  prepack: {w}")
+    print(f"  carry/DFF bel map: {len(bel_map)} entries")
+
     PIN_MAP = {
         "CLOCK$iob": "IOB_CLK_PIN_E1",
         "LED$iob":   "IOB_Q_PIN_G15",
     }
-    pin_script = WORK / "pin_constraints.py"
-    pin_script.write_text(
-        "# Auto-generated pin + LED-driver placement constraints (AX301)\n"
-        "import nextpnrpy_generic as npnr\n"
-        f"PIN_MAP = {PIN_MAP!r}\n"
+    extra_pin_lines = (
+        f"\nPIN_MAP = {PIN_MAP!r}\n"
         f"LED_DRIVER_BEL = {LED_DRIVER_BEL!r}\n"
         "bound_io = 0\n"
         "for kv in ctx.cells:\n"
@@ -111,10 +131,14 @@ write_json {yosys_json}
         "        ctx.bindBel(PIN_MAP[name], kv.second, npnr.STRENGTH_LOCKED)\n"
         "        bound_io += 1\n"
         "        print(f'  pin {name} -> {PIN_MAP[name]}')\n"
-        "# Pin the LED-driving LE to one of the 33 OUTROUTE_G15-capable slices\n"
+        "# Pin the LED-driving LE to a free OUTROUTE_G15-capable slice.\n"
+        "# Only fires if the carry-chain pre-pack didn't already claim\n"
+        "# every slot at the LED driver position.\n"
         "for kv in ctx.cells:\n"
         "    name = str(kv.first)\n"
         "    cell = kv.second\n"
+        "    if cell.bel:\n"
+        "        continue\n"
         "    ctype = str(cell.type)\n"
         "    if ctype == 'GENERIC_SLICE' and ('LED' in name and '$iob' not in name):\n"
         "        try:\n"
@@ -125,43 +149,19 @@ write_json {yosys_json}
         "        break\n"
         "print(f'[pin_constraints] bound {bound_io}/{len(PIN_MAP)} IO cells')\n"
     )
-    print(f"  Generated pin constraint script ({len(PIN_MAP)} pins + LED driver pin)")
+    pin_script = WORK / "pin_constraints.py"
+    pin_script.write_text(emit_pre_place_hook(bel_map,
+                                              extra_pin_lines=extra_pin_lines))
+    print(f"  Generated combined pre-place hook "
+          f"({len(bel_map)} carry/DFF + {len(PIN_MAP)} pin + LED driver)")
 
-    # --- Step 1c: Patch Yosys JSON to pin LED-driving cell to G15 slice ---
-    # Find the cell whose output net is the LED port; set its BEL
-    # attribute so nextpnr places it at LED_DRIVER_BEL.  abc renames
-    # cells (e.g. `$abc$544$..._LC`) so name-based heuristics fail —
-    # tracing the net is the robust path.
-    import json as _json
-    yj = _json.loads(yosys_json.read_text())
-    # Pick the user module (may be co-located with techmap stubs).
-    top_mod = None
-    for mname, m in yj["modules"].items():
-        if "LED" in m.get("ports", {}):
-            top_mod = m
-            break
-    if top_mod is None:
-        top_mod = yj["modules"].get("led_blink") or next(iter(yj["modules"].values()))
-    led_bit = top_mod["ports"]["LED"]["bits"][0]
-    pinned = None
-    # Pre-pack JSON contains LUT and DFF cells (not yet GENERIC_SLICE
-    # — the packer combines them later).  The LED-driving cell is
-    # whichever has its output port (Q for DFF, Y for LUT) carrying
-    # the LED net.  Setting BEL on it propagates through the packer.
-    for cname, cell in top_mod["cells"].items():
-        ctype = cell.get("type")
-        out_ports = {"DFF": "Q", "LUT": "Y"}
-        if ctype not in out_ports:
-            continue
-        out = cell.get("connections", {}).get(out_ports[ctype], [])
-        if led_bit in out:
-            cell.setdefault("attributes", {})["BEL"] = LED_DRIVER_BEL
-            pinned = (cname, ctype)
-            break
-    if pinned is None:
-        raise RuntimeError("could not locate LED driver cell in Yosys JSON")
-    print(f"  pinned LED driver {pinned} -> {LED_DRIVER_BEL}")
-    yosys_json.write_text(_json.dumps(yj))
+    # --- Step 1c: removed.  LED-driver placement is handled by the
+    # prepack-emitted --pre-place hook (looks for a free GENERIC_SLICE
+    # whose cell name contains "LED" after the carry chain has been
+    # bound).  Pinning via JSON ``BEL`` attributes was retired because
+    # nextpnr-generic 0.10 resolves NEXTPNR_BEL during JSON read —
+    # before --pre-pack adds the chipdb bels — which crashes with
+    # ``no bel named …``.
 
     print("\n=== Step 2: nextpnr placement + routing ===", flush=True)
     if not chipdb_json.exists():

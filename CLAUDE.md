@@ -137,9 +137,11 @@ Current harness score: **731/731 bit-perfect across all 24 islands** (CE6 standa
 
 Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → openFPGALoader`
 
-**Completed**: `chipdb_gen.py` (15,331 bels, 96,929 wires, 3.44M pips after 2026-05-01 sig-cache rebuild), techmap (LUT4+DFF), `np2fasm.py` (emits IOB_PAD_NV / IOB_ROUTE / OUTROUTE_G15 / GCLK_PIN / LAB_CLK_SEL / LAB_CLK_SEL_LE / IOB_CLK_INPUT / M9K.INIT / M9K_MODE / DESIGN_BLOCK_BAND_PACK), `fasm2rbf` all directives.
+**Completed**: `chipdb_gen.py` (12,131 bels, 90,261 wires, 3.66M pips after 2026-05-04 carry_A/B / LE_INTERNAL / GND→CIN extension), techmap (LUT4+DFF+`$alu`→CE6_CARRY chain via `alumacc`), `np2fasm.py` (emits IOB_PAD_NV / IOB_ROUTE / OUTROUTE_G15 / GCLK_PIN / LAB_CLK_SEL / LAB_CLK_SEL_LE / IOB_CLK_INPUT / M9K.INIT / M9K_MODE / DESIGN_BLOCK_BAND_PACK / LUT_ARITH per-LE), `fasm2rbf` all directives.
 
 **HW-validated end-to-end designs**: registered AND gate at X16Y4N0 (0 fabric diffs vs Quartus gold), 5-bit carry chain counter at LAB(16,4), two-LAB cross-LAB AND→DFF (BIT reconstruction), 2-M9K visible-blink @ X15_Y4+X15_Y10 via `DESIGN_BLOCK_BAND_PACK visible_2m9k` (silicon-validated 2026-05-01).  Details in memory `pipeline_test_e2e_status.md`, `two_lab_gold_validated.md`, `option_3_residual_silicon_validated_2026_05_01.md`.
+
+**Pipeline-validated (RBF-SAFE, silicon flash blocked on sig-cache mining)**: 8-bit and 24-bit `led_blink.v` (`scripts/led_blink/build_open.py` + `build_open8.py`) build through alumacc-powered Yosys → `nextpnr-generic --router router2` → `np2fasm` → `fasm2rbf`.  Memory `path_alpha_arith_routing_unblocked_2026_05_04.md`.
 
 **nextpnr invocation**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` works (chipdb_ep4ce6.py guards the flow-driver block via `_invoked_as("--run")` since 2026-05-01 commit d52d5d6).
 
