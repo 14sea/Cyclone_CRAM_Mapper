@@ -66,7 +66,7 @@ bp = (6 - group) if slot == 2 else (7 - group)
 
 **CRC spec**: CRC-16/IBM, poly 0x8005 (reflected 0xA001), init 0xFE54, frames 25..1751 (208 data + 2 CRC per frame). Frames 0..24 = header, do NOT touch.
 
-**SAFETY**: `validate_safe_for_hardware(rbf, zero)` checks LI MUX envelopes. Always call before flashing.
+**SAFETY**: `validate_safe_for_hardware(rbf, zero)` checks LI MUX envelopes (P0 anchor / P8 tail / mode = paired/alternating/driver*/edge_*).  Recognized modes include `driver_single` (`{8: [single_base]}`) silicon-validated against Quartus gold (memory `step_3_substantially_closed_2026_05_02`).  Always call before flashing — but validator scope is LI MUX class only; it does NOT check header band consistency, non-LAB-column writes, GCLK distribution completeness, or output-buffer drive contention (memory `path_alpha_led_blink_silicon_failed_2026_05_02`).  For silicon-functional validation, also cross-check vs Quartus gold cell set or use ζ pipeline.
 
 ## FASM Directives (`fuzz/fasm2rbf.py`)
 
@@ -143,7 +143,9 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **nextpnr invocation**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` works (chipdb_ep4ce6.py guards the flow-driver block via `_invoked_as("--run")` since 2026-05-01 commit d52d5d6).
 
-**Open-toolchain Step 2 status (routing recon)**: chipdb has 12,105 SIG pips (sig-cache R4/R24/C4 cells) + 3.16M LOCAL_HOP placeholder pips.  Sig-cache covers 2.5% of LAB-pairs.  pipeline_test (200 LE) had 1/574 sig-cache hits, BUT the formula path (`route_synth.py:parse_need→plan_hops→pick_li_envelope→emit_ops`) handles 95%+ of misses.  The blocker for current open-toolchain runs is `bitgen(lenient=True)` which skips routes that miss sig-cache.  Step 3 fix path: handle wx=3 left-edge R24 in plan_hops + flip lenient=False — see memory `step_3_formula_path_root_cause_2026_05_01.md`.
+**Open-toolchain Step 3 SAFETY status (2026-05-02)**: pipeline_test 22→0 LI MUX UNSAFE.  6 commits c218e24..731a424 landed: wx=3 boundary fix, lenient=False on 4 build_open scripts, chipdb `--no-jailbreak --out-tag nojb` sidecar (22-col-only at `results/chipdb_ep4ce6_nojb.{py,_data.json.gz}`), li-op union merge, Path X src_driver suppression, **LI MUX snapshot-restore lockdown** (defeats σ⁻¹ over-claim of ~160 TT cells per dense multi-LE design), `driver_single` validator mode.  build_open scripts use the nojb sidecar.  Memory `step_3_substantially_closed_2026_05_02.md`.
+
+**Open-toolchain functional gap (Step 4 pending)**: pipeline_test_open.rbf and led_blink_open.rbf flash clean but LED stuck — three deeper gaps validator can't see: 494 OPEN-only OTHER region cells (NV_BASELINE_PACK over-emission suspect), 64 GOLD-only HEADER_FRAMES cells (config-controller-reset trigger), 270 GOLD-only BLOCK_BAND cells (GCLK column distribution, never mined).  Memory `path_alpha_led_blink_silicon_failed_2026_05_02.md` + `next_session_entry_2026_05_03.md`.
 
 ## Phase 5.4 — Carry Chain (HW-verified)
 
