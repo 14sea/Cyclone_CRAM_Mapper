@@ -57,8 +57,11 @@ def main():
     verilog = SCRIPT_DIR / "test_top.v"
     techmap = REPO / "synth" / "ep4ce6_map.v"
     prims   = REPO / "synth" / "prims.v"
-    chipdb_py   = REPO / "results" / "chipdb_ep4ce6.py"
-    chipdb_json = REPO / "results" / "chipdb_ep4ce6_data.json"
+    # Use the no-jailbreak sidecar so nextpnr is restricted to the 22
+    # mined CE6 columns — write_c4 / _LAB_CRAM_END only cover those.
+    # Generate via:  python3 fuzz/chipdb_gen.py --no-jailbreak --out-tag nojb
+    chipdb_py   = REPO / "results" / "chipdb_ep4ce6_nojb.py"
+    chipdb_json = REPO / "results" / "chipdb_ep4ce6_data_nojb.json.gz"
 
     # --- Step 1: Yosys synthesis ---
     print("\n=== Step 1: Yosys synthesis ===", flush=True)

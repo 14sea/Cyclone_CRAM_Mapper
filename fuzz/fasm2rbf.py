@@ -1707,6 +1707,33 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         for op in ops:
             if op.get("type") == "raw":
                 _iob_route_dedup.add((op["offset"], op["bp"]))
+        # Multi-route LI envelope merge: when several routes target (or
+        # originate at) the same LAB, build_route_ops emits one li op per
+        # route.  apply_routing applies each via XOR, which double-flips
+        # shared cells (P8 source-driver collides with P8 dst-tail; two
+        # routes terminating at the same LAB cancel their shared envelope
+        # cells).  Coalesce all li ops by (lx, ly) into a single op whose
+        # pair_bases is the *union* of every contributing route's cells —
+        # written once with XOR-from-zero semantics gives the intended
+        # final state.  validate_safe_for_hardware enforces "exactly one
+        # P8 base + one base per active pair", so union (not parity) is
+        # the correct merge.
+        if any(op.get("type") == "li" for op in ops):
+            merged_li = {}
+            non_li_ops = []
+            for op in ops:
+                if op.get("type") == "li":
+                    key = (op["lx"], op["ly"])
+                    bag = merged_li.setdefault(key, set())
+                    for pb in op.get("pair_bases", op.get("pairs", [])):
+                        bag.add(tuple(pb))
+                else:
+                    non_li_ops.append(op)
+            ops = non_li_ops + [
+                {"type": "li", "lx": lx, "ly": ly,
+                 "pair_bases": sorted(bag)}
+                for (lx, ly), bag in merged_li.items()
+            ]
         work = codec.apply_routing(work, ops)
 
     if gclk:

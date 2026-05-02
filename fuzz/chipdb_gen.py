@@ -831,8 +831,10 @@ import gzip, json
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
-_DATA = json.loads(gzip.decompress(
-    (_HERE / "chipdb_ep4ce6_data.json.gz").read_bytes()))
+# Match data file to script stem so sidecar variants
+# (chipdb_ep4ce6_nojb.py / _data_nojb.json.gz) auto-pair.
+_STEM = Path(__file__).stem.replace("chipdb_ep4ce6", "chipdb_ep4ce6_data")
+_DATA = json.loads(gzip.decompress((_HERE / f"{_STEM}.json.gz").read_bytes()))
 
 try:
     from nextpnrpy_generic import Loc  # type: ignore
@@ -935,7 +937,16 @@ def main() -> None:
                     help=f"Max hop distance per direction (default {MAX_HOP_DIST})")
     ap.add_argument("--sig-routing-only", action="store_true",
                     help="Inter-LAB routing via SIG pips only (no LOCAL_HOP)")
+    ap.add_argument("--out-tag", metavar="TAG",
+                    help="Suffix output paths with `_TAG` to produce a "
+                         "sidecar variant (e.g. --out-tag nojb writes "
+                         "chipdb_ep4ce6_nojb.py / _data_nojb.json.gz)")
     args = ap.parse_args()
+
+    global DATA_PATH, SCRIPT_PATH
+    if args.out_tag:
+        DATA_PATH = RESULTS / f"chipdb_ep4ce6_data_{args.out_tag}.json.gz"
+        SCRIPT_PATH = RESULTS / f"chipdb_ep4ce6_{args.out_tag}.py"
 
     global LAB_X_FULL, LAB_Y_FULL
 
