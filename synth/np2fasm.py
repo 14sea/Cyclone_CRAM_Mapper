@@ -705,6 +705,22 @@ def convert(
             dff_les.add((x, y, n))
         elif kind == "SLICE":
             # Plain LUT (packed GENERIC_SLICE with INIT + FF_USED).
+            #
+            # Skip GENERIC_SLICEs co-located with a CE6_CARRY at the
+            # same LE — those are nextpnr-generic's "passthrough-DFF"
+            # packings (K=4, INIT=0xAAAA, FF_USED=1) for a bare DFF
+            # whose D net is the carry's S output.  On silicon the
+            # DFF.D-from-S path is LE-internal (no LUT, no routing
+            # cells); the carry-chain walker below emits LUT_ARITH +
+            # DFF directly for the same LE, so emitting LUT here would
+            # double-flip the LUT SRAM cells via XOR against the
+            # arith blob.
+            if (x, y, n) in carry_le_pos:
+                ff_bin = params.get("FF_USED", "0")
+                if int(ff_bin, 2):
+                    has_dff = True
+                    dff_les.add((x, y, n))
+                continue
             init_bin = params.get("INIT", "")
             if init_bin:
                 mask = int(init_bin, 2)
