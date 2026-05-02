@@ -77,16 +77,21 @@ ALL_NS = (0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30)
 # 21]; longest run = 11..2 = 10 LABs (160 LE).  X=10: valid Y =
 # [2..14, 17, 18, 19, 21]; longest run = 14..2 = 13 LABs.
 #
-# Default chain root: X=4 / Y=21 — the only LAB with both full
-# LAB_CLK_SEL_LE N=0..30 mining AND OUTROUTE_G15-capable N=0 (matches
-# scripts/led_blink/build_open.py's LED_DRIVER_BEL).  Chains > 16
-# bits fall back to X=3 / Y=11 (longest fully-mined contiguous run).
+# Single-LAB default: X=4 / Y=21 — only LAB with both full
+# LAB_CLK_SEL_LE N=0..30 mining AND OUTROUTE_G15-mined N=0 (matches
+# scripts/led_blink/build_open.py's LED_DRIVER_BEL).
 NEXTPNR_LAB_X = 4
 NEXTPNR_LAB_Y_TOP = 21
-# Chains > LAB_CAPACITY (16) bits use this column instead since
-# Y=21 is isolated (no Y=20 LAB, so no carry chain hop possible).
-NEXTPNR_LAB_X_LONG = 3
-NEXTPNR_LAB_Y_TOP_LONG = 11
+
+# Multi-LAB default: X=4 / Y=18 → Y=17 — the silicon-validated
+# W=17/W=23 hand-FASM column (memory `multi_lab_carry_silicon_
+# validated_2026_05_03`).  Both LABs have full LAB_CLK_SEL_LE
+# coverage, the multi_lab arith blob is mined here, and
+# OUTROUTE_G15 is mined for X4Y17N0 + X4Y17N12 — meaning a 17-bit
+# chain (chain[16]@X4Y17N0) and a 23-bit chain (chain[22]@X4Y17N12)
+# both naturally place chain[high] on a mined output position.
+NEXTPNR_LAB_X_LONG = 4
+NEXTPNR_LAB_Y_TOP_LONG = 18
 
 
 def _build_valid_set() -> set[tuple[int, int]]:

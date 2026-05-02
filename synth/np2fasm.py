@@ -721,6 +721,19 @@ def convert(
                     has_dff = True
                     dff_les.add((x, y, n))
                 continue
+            # Suppress GENERIC_SLICEs that exist solely to source
+            # $PACKER_GND_NET or $PACKER_VCC_NET when the const-driver
+            # routing-skip path (above) has consumed every sink.  The
+            # nextpnr packer always materialises one PACKER_GND and
+            # one PACKER_VCC GENERIC_SLICE (INIT=0x0000 / 0xFFFF) and
+            # binds them to fabric LE positions, even if their nets
+            # have no remaining routed sinks — emitting their LUT
+            # would write 16 LUT-SRAM cells per pad to a randomly-
+            # placed LE that silicon Quartus doesn't touch.  Detect by
+            # the canonical Yosys/nextpnr cell names.
+            if cell_name.startswith("$PACKER_GND") or \
+                    cell_name.startswith("$PACKER_VCC"):
+                continue
             init_bin = params.get("INIT", "")
             if init_bin:
                 mask = int(init_bin, 2)
@@ -893,6 +906,28 @@ def convert(
                     fasm.append(
                         f"X{cx}Y{cy}N{cn}.LUT_ARITH = 0x{lut_init:04x}")
                     fasm.append(f"X{cx}Y{cy}N{cn}.DFF")
+
+            # Multi-LAB activation directive.
+            #
+            # When the chain spans LAB(4,18) → LAB(4,17) (the only
+            # mined multi_lab arith column, per CLAUDE.md and
+            # `results/arith_blockband_by_width.json` `multi_lab[16+N]`),
+            # emit `LUT_ARITH_MULTI_LAB WIDTH=N` so the carry-input LI
+            # MUX cells at LAB(4,17) and the v4-blob OR-overflow
+            # AND-clear cells get applied.  Silicon-validated for
+            # W=17/W=23 (memory `multi_lab_carry_silicon_validated_
+            # 2026_05_03`).  prepack_carry's nextpnr-mode default
+            # places long chains in this column for exactly this
+            # reason.
+            if len(chain) > 16 and {(4, 18), (4, 17)}.issubset(chain_labs):
+                fasm.append(f"LUT_ARITH_MULTI_LAB WIDTH={len(chain)}")
+            elif len(chain) > 16:
+                warnings.append(
+                    f"carry chain length {len(chain)} > 16 but not "
+                    f"placed at LAB(4,18)+LAB(4,17) — "
+                    f"LUT_ARITH_MULTI_LAB blob unavailable (chain LABs: "
+                    f"{sorted(chain_labs)})"
+                )
             # Verify N-contiguity
             for i in range(len(placed) - 1):
                 if not (placed[i] and placed[i + 1]):
@@ -985,9 +1020,20 @@ def convert(
                 if (sx, sy) not in seen_labs:
                     seen_labs.add((sx, sy))
                     lab_clk_sels.append((sx, sy))
-                # Per-LE layer. HW verified 2026-04-14: the N-invariant
+                # Per-LE layer.  For non-arith DFFs the N-invariant
                 # LAB_CLK_SEL alone is insufficient — per-LE clock
-                # routing cells (N-specific) must also flip.
+                # routing cells (N-specific) must flip.  For arith-mode
+                # (CE6_CARRY) LEs, however, the per-LE arith blob
+                # already carries the clock-routing cells; emitting
+                # LAB_CLK_SEL_LE on top double-flips 20-35 cells per
+                # LE and at chain widths ≥ 18 poisons chain control
+                # bits → chain saturates.  Silicon-validated W=23
+                # hand-FASM has ZERO LAB_CLK_SEL_LE.  See memory
+                # `multi_lab_carry_silicon_validated_2026_05_03` and
+                # commit ac32b19 (gen_visible_blink_fasm: drop ALL
+                # LAB_CLK_SEL_LE).
+                if (sx, sy, sn) in carry_le_pos:
+                    continue
                 if (sx, sy, sn) not in seen_les:
                     seen_les.add((sx, sy, sn))
                     lab_clk_sel_les.append((sx, sy, sn))
@@ -1048,6 +1094,34 @@ def convert(
         if drv_bel is None:
             continue
 
+        # Constant drivers ($PACKER_GND, $PACKER_VCC) feeding CE6_CARRY
+        # A or B inputs need no ROUTE: the silicon LUT_ARITH blob (per-LE
+        # arith-mode CRAM) encodes the per-bit constant-A/B selection
+        # internally — proven by the W=23 silicon-validated hand-FASM
+        # which has zero ROUTE entries for the carry chain.  Routing
+        # them externally would burn LI MUX cells AND duplicate the
+        # constant the arith blob already provides, so we detect and
+        # skip them here.  (Same constants feeding a non-CARRY SLICE
+        # — e.g. an unused dataa input on a passthrough DFF — still
+        # need their ROUTE so PACKER_GND_NET stays well-defined.)
+        is_packer_const = drv_cell.startswith("$PACKER_GND") or \
+                          drv_cell.startswith("$PACKER_VCC")
+        if is_packer_const:
+            filtered_sinks = []
+            for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
+                sink_ctype = cells.get(sink_cell, {}).get("type", "")
+                if sink_ctype == "CE6_CARRY" and sink_port in ("A", "B"):
+                    continue  # absorbed by LUT_ARITH blob
+                filtered_sinks.append((sink_cell, sink_port, sink_idx))
+            if not filtered_sinks:
+                continue
+            # Substitute the filtered list for the rest of this bit's
+            # sink walk by stashing it.  The loop below reads from
+            # bit_sinks via .get(bit_id, []) so we shadow that lookup.
+            _bit_sinks_local = filtered_sinks
+        else:
+            _bit_sinks_local = bit_sinks.get(bit_id, [])
+
         # IOB driver — candidate for IOB_ROUTE.  The net's "O" output
         # of a GENERIC_IOB becomes a direct pad → SLICE.port drive.
         # Skip CLK-only IOBs: those are handled by GCLK_PIN +
@@ -1064,7 +1138,7 @@ def convert(
             if not bel_str.startswith("IOB_") or pin_idx < 0:
                 continue
             pin_loc = bel_str[pin_idx + 1:]
-            for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
+            for sink_cell, sink_port, sink_idx in _bit_sinks_local:
                 sink_bel = cell_bel.get(sink_cell)
                 if sink_bel is None or sink_bel[0] != "SLICE":
                     continue
@@ -1091,7 +1165,7 @@ def convert(
             continue
         _, sx, sy, sn = drv_bel
 
-        for sink_cell, sink_port, sink_idx in bit_sinks.get(bit_id, []):
+        for sink_cell, sink_port, sink_idx in _bit_sinks_local:
             sink_bel = cell_bel.get(sink_cell)
             if sink_bel is None:
                 n_skip += 1
