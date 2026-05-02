@@ -47,7 +47,7 @@ def gen_pair(base_dir, name, lx, ly, n_start_ff, w, *, identity=False):
         f.write(vtxt)
     qsf = QSF_HEADER
     for i, n in enumerate(n_slots):
-        qsf += f'set_location_assignment FF_X{lx}_Y{ly}_N{n}  -to "Q[{i}]~reg0"\n'
+        qsf += f'set_location_assignment FF_X{lx}_Y{ly}_N{n}  -to "Q[{i}]"\n'
     with open(os.path.join(d, "top.qsf"), "w") as f:
         f.write(qsf)
     with open(os.path.join(d, "top.qpf"), "w") as f:

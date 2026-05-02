@@ -54,7 +54,7 @@ def gen_multilab_pair(base_dir, name, w, *, identity=False):
 
     qsf = QSF_HEADER
     for i, (ly, n) in enumerate(all_slots):
-        qsf += f'set_location_assignment FF_X{LX}_Y{ly}_N{n}  -to "Q[{i}]~reg0"\n'
+        qsf += f'set_location_assignment FF_X{LX}_Y{ly}_N{n}  -to "Q[{i}]"\n'
     with open(os.path.join(d, "top.qsf"), "w") as f:
         f.write(qsf)
     with open(os.path.join(d, "top.qpf"), "w") as f:
