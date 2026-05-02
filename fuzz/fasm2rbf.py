@@ -1701,10 +1701,12 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         if strip:
             ops = [
                 op for op in ops
-                if (op["offset"], op["bp"]) not in strip
+                if op.get("type") != "raw"
+                or (op["offset"], op["bp"]) not in strip
             ]
         for op in ops:
-            _iob_route_dedup.add((op["offset"], op["bp"]))
+            if op.get("type") == "raw":
+                _iob_route_dedup.add((op["offset"], op["bp"]))
         work = codec.apply_routing(work, ops)
 
     if gclk:

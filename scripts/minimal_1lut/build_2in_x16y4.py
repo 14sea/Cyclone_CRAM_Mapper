@@ -148,7 +148,7 @@ write_json {yosys_json}
     from fasm2rbf import bitgen
     from bitstream import patch_rbf_crc
     base = make_pure_zero_rbf()
-    open_rbf = bitgen(fasm_text, base, lenient=True)
+    open_rbf = bitgen(fasm_text, base, lenient=False)
     open_rbf = patch_rbf_crc(open_rbf)
     out_rbf = WORK / "design.rbf"
     Path(out_rbf).write_bytes(open_rbf)

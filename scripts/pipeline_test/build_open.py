@@ -172,7 +172,7 @@ write_json {yosys_json}
     from fasm2rbf import bitgen
 
     base_rbf = make_pure_zero_rbf()
-    result_rbf = bitgen(fasm_text, base_rbf, lenient=True)
+    result_rbf = bitgen(fasm_text, base_rbf, lenient=False)
     OUT_RBF.write_bytes(result_rbf)
     print(f"  RBF: {len(result_rbf)} bytes → {OUT_RBF}")
 

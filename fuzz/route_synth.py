@@ -160,11 +160,30 @@ def plan_hops(need: Need) -> list[Hop]:
     # R24 covers up to 24 LABs in a single wire and matches Quartus's
     # actual choice for medium/long horizontal moves. R4 is the fallback
     # for the final 1-LAB step.
+    #
+    # Leftmost-column boundary: LAB_X_FULL[0] (X=3) has no prev LAB column,
+    # so write_r4 / get_r24_offset both raise (col_start uses COLUMN_BASE[
+    # prev_x]).  Sig-cache covers mined X=3 routes; the formula fallback
+    # terminates one LAB short at LAB_X_FULL[1] (X=4) and lets the LI
+    # envelope at need.dx==X=3 engage from the wire that already extends
+    # into X=4.  validate_safe_for_hardware will catch any LI MUX short.
+    leftmost_x = LAB_X_FULL[0]
     while cur_x != need.dx:
         remaining = LAB_X_FULL.index(need.dx) - LAB_X_FULL.index(cur_x)
         if abs(remaining) >= 3:
             step = remaining if abs(remaining) <= 6 else (6 if remaining > 0 else -6)
             new_x = _lab_step_to_x(cur_x, step)
+            if new_x == leftmost_x:
+                new_x = LAB_X_FULL[1]
+                step = LAB_X_FULL.index(new_x) - LAB_X_FULL.index(cur_x)
+                if step == 0:
+                    break
+                kind = "R24" if abs(step) >= 3 else "R4"
+                i_idx = 0 if kind == "R24" else SAFE_R4_I
+                hops.append(Hop(kind, anchor_x=cur_x, anchor_y=cur_y,
+                                i_index=i_idx, span=step))
+                cur_x = new_x
+                continue
             hops.append(Hop("R24", anchor_x=cur_x, anchor_y=cur_y,
                             i_index=0, span=step))
             cur_x = new_x
@@ -173,6 +192,8 @@ def plan_hops(need: Need) -> list[Hop]:
         if step == 0:
             break
         new_x = _lab_step_to_x(cur_x, step)
+        if new_x == leftmost_x:
+            break  # LI envelope handles the final boundary hop into X=3
         hops.append(Hop("R4", anchor_x=cur_x, anchor_y=cur_y,
                         i_index=SAFE_R4_I, span=step))
         cur_x = new_x
