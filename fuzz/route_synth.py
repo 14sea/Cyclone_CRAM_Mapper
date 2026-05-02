@@ -391,6 +391,7 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
         "lx": need.dx,
         "ly": need.dy,
         "pair_bases": cells,
+        "role": "dst_tail",
     })
 
     # Source-side LE driver MUX: P8B0 + P8B1 at the source LAB.
@@ -398,6 +399,15 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
     # but NOT for adjacent +1/-1 horizontal hops, which appear to use a
     # direct LE→LE link bypassing the source-side LI MUX entirely.
     # Confirmed via L2 mining (2026-04-07).
+    #
+    # The src-driver P8 cells live in the same LAB's LI MUX as the
+    # dst-tail.  When a LAB is BOTH a source and a destination
+    # (typical of multi-stage pipelined logic), the src-driver
+    # `[(8,0),(8,1)]` collides with the dst-tail's single P8 base in
+    # apply_routing's XOR / union semantics — validate_safe_for_hardware
+    # rejects "P8 has both bases" (memory step_3_jailbreak_x_cram_gap).
+    # The "role" tag lets bitgen drop the src-driver when a dst_tail
+    # exists at the same LAB.
     needs_driver = (
         not need.same_lab and
         not (need.ddy == 0 and abs(need.ddx) <= 1)
@@ -408,6 +418,7 @@ def emit_ops(plan: list[Hop], li, need: Need) -> list[dict]:
             "lx": need.sx,
             "ly": need.sy,
             "pair_bases": [(8, 0), (8, 1)],
+            "role": "src_driver",
         })
 
     # (Removed 2026-04-08) The former "universal source-column R24 broadcast

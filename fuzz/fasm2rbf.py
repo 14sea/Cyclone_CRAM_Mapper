@@ -1710,20 +1710,33 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # Multi-route LI envelope merge: when several routes target (or
         # originate at) the same LAB, build_route_ops emits one li op per
         # route.  apply_routing applies each via XOR, which double-flips
-        # shared cells (P8 source-driver collides with P8 dst-tail; two
-        # routes terminating at the same LAB cancel their shared envelope
-        # cells).  Coalesce all li ops by (lx, ly) into a single op whose
-        # pair_bases is the *union* of every contributing route's cells —
-        # written once with XOR-from-zero semantics gives the intended
-        # final state.  validate_safe_for_hardware enforces "exactly one
-        # P8 base + one base per active pair", so union (not parity) is
-        # the correct merge.
+        # shared cells (two routes terminating at the same LAB cancel
+        # their shared envelope cells).  Coalesce all li ops by (lx, ly)
+        # into a single op whose pair_bases is the *union* of every
+        # contributing route's cells — written once with XOR-from-zero
+        # semantics gives the intended final state.
+        #
+        # Path X (2026-05-02): the src-driver `[(8,0),(8,1)]` lives in
+        # the same LAB's LI MUX as the dst-tail's single P8 base.  When
+        # a LAB is BOTH a source and a destination, the src-driver's
+        # second P8 base collides with the dst-tail.  Quartus's gold
+        # for pipeline_test has empty LI cells at the affected LABs
+        # (different placement; no ground truth to compare against).
+        # Resolution: if a LAB has both src_driver and dst_tail roles,
+        # drop the src_driver (the dst_tail's P8 cells are sufficient
+        # for the LE-input-MUX engagement).  See memory
+        # step_3_jailbreak_x_cram_gap_2026_05_02.
         if any(op.get("type") == "li" for op in ops):
+            dst_labs = {(op["lx"], op["ly"]) for op in ops
+                        if op.get("type") == "li"
+                        and op.get("role") != "src_driver"}
             merged_li = {}
             non_li_ops = []
             for op in ops:
                 if op.get("type") == "li":
                     key = (op["lx"], op["ly"])
+                    if op.get("role") == "src_driver" and key in dst_labs:
+                        continue  # Path X: dst_tail handles P8 here
                     bag = merged_li.setdefault(key, set())
                     for pb in op.get("pair_bases", op.get("pairs", [])):
                         bag.add(tuple(pb))
