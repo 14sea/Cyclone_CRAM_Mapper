@@ -1041,6 +1041,29 @@ class RouteCodec:
             if valid_groups and non_p8:
                 return "edge_pair_groups_b0", None
 
+        # paired_carry_input: EP4CE6 multi-LAB carry-chain LI MUX pattern.
+        # Discovered 2026-05-03 night via Quartus c17_ml gold (17-bit counter
+        # spanning LAB(4,18)+LAB(4,17)). Quartus emits e.g.
+        # {0:[0,1], 1:[0,1], 4:[0,1], 5:[0,1]} at the carry-receiver LAB —
+        # all-paired bases, pairs come in consecutive sibling groups
+        # {(0,1),(2,3),(4,5),(6,7)}, NO P8 tail anchor. This is the carry
+        # chain's input-MUX configuration: distinct from normal LUT routing
+        # because arithmetic mode bypasses the P8 driver and uses dedicated
+        # paired-pair channels for the carry-in path. Silicon-safe by
+        # construction (it's literally what Quartus emits).
+        # See memory `multi_lab_codec_fixed_2026_05_03.md` for context.
+        if (8 not in pair_map and
+            all(bs == {0, 1} for bs in pair_map.values()) and
+            pair_map):
+            valid_groups = True
+            for p in pair_map:
+                sibling = p + 1 if p % 2 == 0 else p - 1
+                if sibling not in pair_map:
+                    valid_groups = False
+                    break
+            if valid_groups:
+                return "paired_carry_input", None
+
         # P8 anchor: must be present with exactly one base
         if 8 not in pair_map:
             return "invalid", "missing P8 tail anchor"

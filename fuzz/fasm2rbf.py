@@ -2062,14 +2062,24 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # position-independence is NOT yet proven for multi-LAB blobs
         # (the single-LAB v4 triangle test only covers 2..16).  Callers
         # who place the chain elsewhere may see residual diffs.
+        #
+        # Dedup against _iob_route_dedup: the multi_lab JSON includes the
+        # carry-chain LI MUX input cells at LAB(4,17) (pairs 0/1) which
+        # also appear in OUTROUTE_G15 X4Y17N* sigcache (the chain MSB's
+        # output route shares those LI MUX cells with the carry-input
+        # path). Without dedup, the OUTROUTE-then-MULTI_LAB XOR sequence
+        # cancels them — see memory `multi_lab_codec_fixed_2026_05_03.md`.
         parity = {}
         for width in lut_arith_multi_labs:
             for off, bp in _arith_multi_lab_cells(width):
+                if (off, bp) in _iob_route_dedup:
+                    continue
                 parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
         buf = bytearray(work)
         for (off, bp), p in parity.items():
             if p:
                 buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if m9k_modes:
