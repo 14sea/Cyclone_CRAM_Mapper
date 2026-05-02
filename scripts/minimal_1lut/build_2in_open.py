@@ -158,7 +158,7 @@ write_json {yosys_json}
     from pure_zero_rbf import make_pure_zero_rbf
     from fasm2rbf import bitgen
     base = make_pure_zero_rbf()
-    open_rbf = bitgen(fasm_text, base, lenient=True)
+    open_rbf = bitgen(fasm_text, base, lenient=False)
     out_rbf = WORK / "design.rbf"
     out_rbf.write_bytes(open_rbf)
     print(f"  RBF: {len(open_rbf)} bytes -> {out_rbf}")
