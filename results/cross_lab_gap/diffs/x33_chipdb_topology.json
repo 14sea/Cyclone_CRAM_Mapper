@@ -1,0 +1,473 @@
+{
+  "description": "chipdb routing topology from X=33 LEs to G15 IOB and from E16/M16 IOBs to X=33 LEs",
+  "method": "BFS over chipdb wire graph (full chipdb_ep4ce6_data.json.gz, all 3.4M pips)",
+  "finding_summary": "X=33Y* -> G15 reachable via LOCAL_HOP chain (6 hops typical); E16 -> X=33Y*.dataa reachable too. chipdb topology is sufficient for routing \u2014 bottleneck is sig-cache cells.",
+  "x33_to_G15": {
+    "X33Y2N4": {
+      "hops": 7,
+      "path": [
+        [
+          "slice_X33_Y2_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y2_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y2_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y2_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y2_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y3_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y4N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y4_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y4_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y6N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y6_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y6_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y6_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y6_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y6_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y8N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y8_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y8_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y8_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y8_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y8_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y10N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y10_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y10_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y10_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y10_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y10_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y12N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y12_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y12_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y12_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y12_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y14N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y14_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y14_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y14_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y14_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y16N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y16_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y16_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y16_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y16_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y18N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y18_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y18_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y18_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y18_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y18_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    },
+    "X33Y21N4": {
+      "hops": 6,
+      "path": [
+        [
+          "slice_X33_Y21_N4_Q",
+          null
+        ],
+        [
+          "LOCAL_X33_Y21_T0",
+          "LOCAL_IN"
+        ],
+        [
+          "LOCAL_X24_Y21_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X14_Y21_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y21_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "iob_Q_I",
+          "LOCAL_TO_IOB"
+        ]
+      ]
+    }
+  },
+  "E16_to_x33": {
+    "E16->X33Y2N4.dataa": {
+      "hops": 7,
+      "path": [
+        [
+          "iob_A_O",
+          null
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "IOB_TO_LOCAL"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X24_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y10_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y2_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "slice_X33_Y2_N4_dataa",
+          "LOCAL_OUT"
+        ]
+      ]
+    },
+    "E16->X33Y4N4.dataa": {
+      "hops": 6,
+      "path": [
+        [
+          "iob_A_O",
+          null
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "IOB_TO_LOCAL"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X24_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "slice_X33_Y4_N4_dataa",
+          "LOCAL_OUT"
+        ]
+      ]
+    },
+    "E16->X33Y10N4.dataa": {
+      "hops": 6,
+      "path": [
+        [
+          "iob_A_O",
+          null
+        ],
+        [
+          "LOCAL_X6_Y11_T0",
+          "IOB_TO_LOCAL"
+        ],
+        [
+          "LOCAL_X14_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X24_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y11_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y10_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "slice_X33_Y10_N4_dataa",
+          "LOCAL_OUT"
+        ]
+      ]
+    }
+  },
+  "M16_to_x33": {
+    "M16->X33Y4N4.datab": {
+      "hops": 4,
+      "path": [
+        [
+          "iob_B_O",
+          null
+        ],
+        [
+          "LOCAL_X17_Y4_T0",
+          "IOB_TO_LOCAL"
+        ],
+        [
+          "LOCAL_X24_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "LOCAL_X33_Y4_T0",
+          "LOCAL_HOP"
+        ],
+        [
+          "slice_X33_Y4_N4_datab",
+          "LOCAL_OUT"
+        ]
+      ]
+    }
+  }
+}
