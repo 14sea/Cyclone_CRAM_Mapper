@@ -143,6 +143,8 @@ Target: `Verilog → Yosys → nextpnr-generic → np2fasm → fasm2rbf → open
 
 **Pipeline-validated (RBF-SAFE, silicon flash blocked on sig-cache mining)**: 8-bit and 24-bit `led_blink.v` (`scripts/led_blink/build_open.py` + `build_open8.py`) build through alumacc-powered Yosys → `nextpnr-generic --router router2` → `np2fasm` → `fasm2rbf`.  Memory `path_alpha_arith_routing_unblocked_2026_05_04.md`.
 
+**Silicon-validated zero-Quartus open toolchain (2026-05-04)**: `scripts/led_blink/build_open23.py` produces an RBF byte-identical (md5 905dfc85ad37c44da9966dfbd9cf3a16) to the silicon-validated W=23 hand-FASM.  AX301-flashed 5.96 Hz visible blink confirmed.  Verilog → CRAM zero-Quartus path is silicon-correct for arith-mode LUT+DFF chains widths 17..32 at LAB(4,18)+(4,17).  Memory `zero_quartus_arith_byte_identity_2026_05_04.md`.
+
 **nextpnr invocation**: `source $HOME/opt/oss-cad-suite/environment` first; `--router router2` (router1 can't multi-hop); `--pre-pack` works (chipdb_ep4ce6.py guards the flow-driver block via `_invoked_as("--run")` since 2026-05-01 commit d52d5d6).
 
 **Open-toolchain Step 3 SAFETY status (2026-05-02)**: pipeline_test 22→0 LI MUX UNSAFE.  6 commits c218e24..731a424 landed: wx=3 boundary fix, lenient=False on 4 build_open scripts, chipdb `--no-jailbreak --out-tag nojb` sidecar (22-col-only at `results/chipdb_ep4ce6_nojb.{py,_data.json.gz}`), li-op union merge, Path X src_driver suppression, **LI MUX snapshot-restore lockdown** (defeats σ⁻¹ over-claim of ~160 TT cells per dense multi-LE design), `driver_single` validator mode.  build_open scripts use the nojb sidecar.  Memory `step_3_substantially_closed_2026_05_02.md`.
