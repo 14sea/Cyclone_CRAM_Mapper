@@ -17,8 +17,8 @@ import os, subprocess, sys
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = Path(__file__).resolve().parent
-WORK = REPO / "tmp" / "led_blink"
-OUT_RBF = REPO / "tmp" / "led_blink_open.rbf"
+WORK = REPO / "tmp" / "led_blink8"
+OUT_RBF = REPO / "tmp" / "led_blink_open8.rbf"
 LED_DRIVER_BEL = "SLICE_X4_Y21_N0"  # OUTROUTE_G15 slice; X4Y21 has full
                                     # N=0..30 LAB_CLK_SEL_LE mining, and
                                     # adjacent X4Y17/18/19/21 likewise —

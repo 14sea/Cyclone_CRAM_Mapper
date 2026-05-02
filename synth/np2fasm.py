@@ -609,6 +609,23 @@ def convert(
         if cb and cb[0] == "SLICE":
             carry_le_pos.add((cb[1], cb[2], cb[3]))
 
+    # PACKER_GND / PACKER_VCC GENERIC_SLICEs whose every sink is
+    # absorbed by the const-driver routing-skip path (only CE6_CARRY.A
+    # / .B sinks remain) — for these we suppress the LUT emission too,
+    # since the silicon arith blob already carries the constant.
+    # When the packer-const drives a real non-arith sink (e.g., a
+    # DFF I[2] tied to GND, packed with INIT=0xAAAA so I[0] is the D
+    # net), the LUT MUST be emitted so silicon LE outputs 0/1 to
+    # drive the LOCAL track.  Compute the set lazily after bit_sinks
+    # is built (further below); for now collect the candidate names
+    # so the GENERIC_SLICE emission branch can consult it.
+    packer_const_cells = {
+        cn for cn in cells
+        if cn.startswith("$PACKER_GND") or cn.startswith("$PACKER_VCC")
+    }
+    # filled in after bit_driver / bit_sinks are populated
+    packer_const_unused: set[str] = set()
+
     # --- Build net driver/sink index up-front ---
     # Needed BEFORE the cell iteration so the IOB emission pass can
     # identify clock-driving IOBs (whose only sinks are DFF.CLK) and
@@ -646,6 +663,31 @@ def convert(
                 elif _d == "input":
                     bit_sinks.setdefault(_bit_id, []).append(
                         (_cn, _port, _idx))
+
+    # Compute which $PACKER_GND/VCC GENERIC_SLICEs have all their
+    # sinks absorbed by the const-driver routing-skip (only CE6_CARRY
+    # A / B sinks).  These are safe to suppress at LUT emission time
+    # because the silicon arith blob carries the constant; non-arith
+    # sinks would still need the LUT INIT to drive 0 / 1 onto the
+    # LOCAL track.
+    for pname in packer_const_cells:
+        # Find the bit_id this cell drives (via Q output port).
+        cell_obj = cells.get(pname, {})
+        q_bits = cell_obj.get("connections", {}).get("Q", [])
+        if not q_bits or isinstance(q_bits[0], str):
+            packer_const_unused.add(pname)  # no driven net
+            continue
+        net_bit = q_bits[0]
+        sinks = bit_sinks.get(net_bit, [])
+        # Any sink that's NOT a CE6_CARRY.A/B disqualifies suppression.
+        non_arith_sink = False
+        for sc, sp, _ in sinks:
+            sc_type = cells.get(sc, {}).get("type", "")
+            if sc_type != "CE6_CARRY" or sp not in ("A", "B"):
+                non_arith_sink = True
+                break
+        if not non_arith_sink:
+            packer_const_unused.add(pname)
 
     _CLK_PORT_NAMES = {"CLK", "CLK_A", "CLK_B"}
     clock_only_iobs: set[str] = set()
@@ -729,10 +771,15 @@ def convert(
             # binds them to fabric LE positions, even if their nets
             # have no remaining routed sinks — emitting their LUT
             # would write 16 LUT-SRAM cells per pad to a randomly-
-            # placed LE that silicon Quartus doesn't touch.  Detect by
-            # the canonical Yosys/nextpnr cell names.
-            if cell_name.startswith("$PACKER_GND") or \
-                    cell_name.startswith("$PACKER_VCC"):
+            # placed LE that silicon Quartus doesn't touch.
+            #
+            # Conditional: only suppress when packer_const_unused
+            # confirms every sink is a CE6_CARRY.A/B (absorbed by
+            # const-driver routing-skip + LUT_ARITH blob).  When a
+            # non-arith sink remains (e.g. a DFF I[2] tied to GND
+            # via LOCAL routing), the LUT INIT is still needed so
+            # the silicon LE drives the LOCAL track correctly.
+            if cell_name in packer_const_unused:
                 continue
             init_bin = params.get("INIT", "")
             if init_bin:
