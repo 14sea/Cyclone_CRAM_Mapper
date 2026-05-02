@@ -1034,6 +1034,10 @@ def main() -> None:
                          "(e.g. --region 13,6,18,14)")
     ap.add_argument("--no-jailbreak", action="store_true",
                     help="Exclude jailbreak columns/rows (CE6 whitelist only)")
+    ap.add_argument("--add-jailbreak-x", metavar="X[,X...]",
+                    help="Add specific jailbreak X columns to a --no-jailbreak "
+                         "build (e.g. --add-jailbreak-x 33 to enable X=33 only). "
+                         "Ignored when --no-jailbreak is not set.")
     ap.add_argument("--local-tracks", type=int, default=NUM_LOCAL_TRACKS,
                     metavar="N",
                     help=f"LOCAL bus tracks per LAB (default {NUM_LOCAL_TRACKS})")
@@ -1059,6 +1063,14 @@ def main() -> None:
         LAB_X_FULL = sorted(config.LAB_X)
         LAB_Y_FULL = sorted(config.LAB_Y)
         print(f"[no-jailbreak] CE6 whitelist only: {len(LAB_X_FULL)} cols × {len(LAB_Y_FULL)} rows")
+        if args.add_jailbreak_x:
+            extra = sorted({int(v) for v in args.add_jailbreak_x.split(",")})
+            for x in extra:
+                if x not in config.JAILBREAK_LAB_X:
+                    raise SystemExit(f"--add-jailbreak-x: X={x} is not a known "
+                                     f"jailbreak column {config.JAILBREAK_LAB_X}")
+            LAB_X_FULL = sorted(set(LAB_X_FULL) | set(extra))
+            print(f"[add-jailbreak-x] +{extra} → {len(LAB_X_FULL)} cols total")
 
     if args.region:
         x0, y0, x1, y1 = (int(v) for v in args.region.split(","))
