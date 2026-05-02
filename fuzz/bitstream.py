@@ -990,6 +990,15 @@ class RouteCodec:
         if set(pair_map.keys()) == {8} and pair_map[8] == {0, 1}:
             return "driver", None
 
+        # Single-P8 driver mode: exactly {(8, single_base)} — the
+        # post-Path-X residual after collision suppression, AND the
+        # ground-truth Quartus pattern at certain green-zone fingerprint
+        # source LABs (e.g. pipeline_test (10,10) / (10,11) reached via
+        # snapshot mode). Confirmed silicon-safe by byte-identity vs
+        # Quartus gold. Memory step_3_jailbreak_x_cram_gap_2026_05_02.
+        if set(pair_map.keys()) == {8} and len(pair_map[8]) == 1:
+            return "driver_single", None
+
         if n_cells > RouteCodec.LI_MAX_CELLS_PER_LAB:
             return "invalid", f"{n_cells} cells > {RouteCodec.LI_MAX_CELLS_PER_LAB}"
 

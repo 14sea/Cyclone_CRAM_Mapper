@@ -1687,6 +1687,14 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             for off, bp in overhead[key]:
                 src_cells.add((off, bp))
 
+    # LI MUX lockdown bookkeeping (the LUT phase below uses σ⁻¹ TT
+    # predictions that have ~160 false-positive collisions with LI
+    # MUX bytes per pipeline_test-class build — Phase 1 clears them,
+    # Phase 2 sometimes XOR-sets non-canonical ones, producing
+    # invalid envelopes).  We snapshot the full LI MUX state after
+    # apply_routing and restore it byte-for-byte after the LUT phase.
+    # Default empty sets keep this a no-op when there's no routing.
+    li_locked_state = {}  # (off, bp) -> 0/1 expected after LUT
     if routes or src_cells:
         cells_table = route_signatures.load_cells_full() if routes else None
         ops = build_route_ops(routes, cells_table=cells_table,
@@ -1727,6 +1735,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # for the LE-input-MUX engagement).  See memory
         # step_3_jailbreak_x_cram_gap_2026_05_02.
         if any(op.get("type") == "li" for op in ops):
+            from bitstream import RouteCodec as _RC
             dst_labs = {(op["lx"], op["ly"]) for op in ops
                         if op.get("type") == "li"
                         and op.get("role") != "src_driver"}
@@ -1742,12 +1751,46 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                         bag.add(tuple(pb))
                 else:
                     non_li_ops.append(op)
+            # Path Y' (2026-05-02): when a LAB is a dst, REPLACE the
+            # unioned cells with the canonical typical envelope for
+            # that LAB's column mode.  Different routes can pick
+            # alternating-vs-paired variants at the same LAB; their
+            # union produces an invalid hybrid (>9 cells, mixed modes)
+            # that validate_safe_for_hardware rejects.  Clamping to a
+            # single canonical envelope gives the LE-input MUX a
+            # well-defined mode while still selecting the lanes the
+            # routes need.  src_driver-only LABs keep their union.
+            for key in list(merged_li.keys()):
+                if key in dst_labs:
+                    lx, _ly = key
+                    try:
+                        mode = _RC.select_li_mode(lx)
+                        merged_li[key] = set(_RC.LI_TYPICAL_ENVELOPE[mode])
+                    except KeyError:
+                        pass  # non-LAB X — leave union as-is
             ops = non_li_ops + [
                 {"type": "li", "lx": lx, "ly": ly,
                  "pair_bases": sorted(bag)}
                 for (lx, ly), bag in merged_li.items()
             ]
         work = codec.apply_routing(work, ops)
+        # Snapshot LI MUX state for every valid LAB (lx ∈ LAB_X,
+        # ly ∈ LAB_Y) so we can restore it post-LUT and overwrite
+        # σ⁻¹'s collateral writes.
+        from config import COLUMN_BASE as _CB, PAIR_SPACING as _PS, LAB_X as _LX, LAB_Y as _LY
+        from bitstream import (_LI_SLOT_OFFSET as _LSO,
+                               _cram_group_bit as _cgb)
+        for lx in _LX:
+            if lx not in _CB:
+                continue
+            cs = _CB[lx] - 136
+            for ly in _LY:
+                grp, slt, bp = _cgb(ly)
+                so = _LSO[slt]
+                for pair in range(9):
+                    for base_idx in (0, 1):
+                        off = cs + 70 + base_idx + pair * _PS + so + 3 * grp
+                        li_locked_state[(off, bp)] = (work[off] >> bp) & 1
 
     if gclk:
         buf = bytearray(work)
@@ -1974,6 +2017,20 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             tt_only = tt_cells_cache[(x, y, n)]
             for addr, bitpos in lut.predict_sram(mask) & tt_only:
                 buf[addr] ^= (1 << bitpos)
+
+        # Phase 3 (2026-05-02): restore LI MUX state from the
+        # post-apply_routing snapshot.  σ⁻¹'s `from_cram_model`
+        # mis-classifies ~160 LI MUX bytes as "true TT cells" per
+        # pipeline_test-class build — Phase 1 clears them, Phase 2
+        # sometimes XOR-sets non-canonical ones.  Stamping the
+        # snapshot verbatim cancels both effects: the LI MUX ends
+        # up exactly where apply_routing left it (canonical envelope
+        # for dst LABs; nothing for unrelated LABs).
+        for (off, bp), v in li_locked_state.items():
+            if v:
+                buf[off] |= (1 << bp)
+            else:
+                buf[off] &= ~(1 << bp)
         work = bytes(buf)
 
     if lut_arith:
