@@ -1,0 +1,25 @@
+{
+  "description": "M16-specific subset of IOB_PAD_NV (241-cell directive). Cells that Quartus flips ONLY when M16 input is actually used. Suppressing these for E16+G15-only designs avoids floating-input invalid config (probe2 reset trigger 2026-05-04).",
+  "method": "IOB_PAD_NV cell list \u2229 {cell flips in cross_lab_orig (uses M16) but not in probe2 (no M16)}, both at X=32+X=33",
+  "cell_count": 3,
+  "m16_specific_cells": [
+    [
+      52,
+      0
+    ],
+    [
+      74,
+      1
+    ],
+    [
+      74,
+      5
+    ]
+  ],
+  "e16_g15_common_count": 126,
+  "note_e16_g15_common": "Cells flipped by both probe2 (E16+G15) and cross_lab orig (E16+M16+G15). These should always be emitted.",
+  "neither_count": 102,
+  "note_neither": "IOB_PAD_NV cells that NEITHER probe2 nor cross_lab orig flipped (vs nv). Either over-emit by codec OR cells specific to designs we haven't covered.",
+  "probe2_only_count": 10,
+  "session": "2026-05-04-cross-lab-x33-step2"
+}
