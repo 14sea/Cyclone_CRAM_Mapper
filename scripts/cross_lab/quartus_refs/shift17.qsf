@@ -1,0 +1,14 @@
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE6F17C8
+set_global_assignment -name TOP_LEVEL_ENTITY shift17
+set_global_assignment -name VERILOG_FILE shift17.v
+set_global_assignment -name GENERATE_RBF_FILE ON
+set_location_assignment PIN_E1  -to clk
+set_location_assignment PIN_E16 -to key2
+set_location_assignment PIN_M16 -to key3
+set_location_assignment PIN_G15 -to led0
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "As input tri-stated with weak pull-up"
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name SEED 1
+
+set_global_assignment -name LAST_QUARTUS_VERSION "21.1.0 Lite Edition"
