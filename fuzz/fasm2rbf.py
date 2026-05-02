@@ -1209,15 +1209,18 @@ def _load_arith_multi_lab_blob():
 
 
 def _arith_multi_lab_cells(width):
-    """Return cell list for a `width`-bit multi-LAB carry chain (17..32).
+    """Return (set_cells, clear_cells) for a `width`-bit multi-LAB carry chain.
 
-    Returns a single list of (offset, bp) pairs combining the SET and
-    CLEAR cells from multi_lab["16+{width-16}"].  XOR-parity semantics:
-    the caller applies each cell as an XOR toggle, so SET and CLEAR are
-    indistinguishable at apply time.  That's fine because the mining
-    invariant guarantees SET and CLEAR cells are disjoint and the blob
-    is always applied against an nv_zero-style baseline (SET cells are
-    0→1, CLEAR cells are 1→0 — both XOR-toggle to the target state).
+    SET cells: gold has bit=1, baseline (zero+v4_blob) has bit=0 → toggle on.
+    CLEAR cells: gold has bit=0, baseline has bit=1 → must force to 0.
+
+    The two sets are applied with different semantics by the consumer:
+    - SET via XOR (with optional dedup against IOB-class single-flip cells).
+    - CLEAR via AND-clear (force 0), bypassing dedup so v4-blob overflow
+      cells that LAB_CLK_SEL or other phases pre-set get correctly cleared.
+      See `multi_lab_carry_silicon_validated_2026_05_03` for the W=23
+      cell (365143, 2) case where dedup-skipped XOR-clear left the cell
+      poisoning the chain.
     """
     if width < 17 or width > 32:
         raise FasmError(
@@ -1238,12 +1241,9 @@ def _arith_multi_lab_cells(width):
             f"entry in arith_blockband_by_width.json"
         )
     entry = ml[key]
-    cells = []
-    for off, bp in entry.get("set", []):
-        cells.append((int(off), int(bp)))
-    for off, bp in entry.get("clear", []):
-        cells.append((int(off), int(bp)))
-    return cells
+    set_cells = [(int(o), int(b)) for o, b in entry.get("set", [])]
+    clear_cells = [(int(o), int(b)) for o, b in entry.get("clear", [])]
+    return set_cells, clear_cells
 
 
 def _dff_le_cells(x, y, n):
@@ -2070,16 +2070,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # path). Without dedup, the OUTROUTE-then-MULTI_LAB XOR sequence
         # cancels them — see memory `multi_lab_codec_fixed_2026_05_03.md`.
         parity = {}
+        clear_force = set()
         for width in lut_arith_multi_labs:
-            for off, bp in _arith_multi_lab_cells(width):
+            sc_set, sc_clear = _arith_multi_lab_cells(width)
+            for off, bp in sc_set:
                 if (off, bp) in _iob_route_dedup:
                     continue
                 parity[(off, bp)] = parity.get((off, bp), 0) ^ 1
+            # CLEAR cells are AND-clear: force 0 regardless of dedup, since
+            # they target v4-blob OR-in overflow that other phases (LAB_CLK_SEL
+            # etc.) may also have set + dedup-locked.  XOR semantics fail when
+            # the cell is dedup-locked at 1; AND-clear unconditionally fixes it.
+            for off, bp in sc_clear:
+                clear_force.add((off, bp))
         buf = bytearray(work)
         for (off, bp), p in parity.items():
             if p:
                 buf[off] ^= (1 << bp)
                 _iob_route_dedup.add((off, bp))
+        for off, bp in clear_force:
+            buf[off] &= ~(1 << bp) & 0xFF
+            _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if m9k_modes:

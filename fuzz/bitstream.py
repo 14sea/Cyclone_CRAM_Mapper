@@ -999,6 +999,29 @@ class RouteCodec:
         if set(pair_map.keys()) == {8} and len(pair_map[8]) == 1:
             return "driver_single", None
 
+        # paired_carry_input: EP4CE6 multi-LAB carry-chain LI MUX pattern.
+        # Checked BEFORE the global LI_MAX_CELLS_PER_LAB cap because
+        # Quartus emits up to 11 cells in this topology (W=19..28 even
+        # widths) — strictly above the 9-cell cap that bounds standard
+        # LUT-routing modes. Discovered 2026-05-03 night via Quartus
+        # c{W}_ml gold mining (W∈[17,32] counters at LAB(4,18)+(4,17)).
+        # Two observed Quartus sub-shapes:
+        #   * narrow (W∈{17,31,32}):  no P8, e.g. {0:[0,1], 1:[0,1], 4:[0,1], 5:[0,1]}
+        #   * with P8 tail:           P8=[0] single, e.g. {1:[0,1], 2:[0,1], 5:[0,1], 6:[0,1], 7:[0,1], 8:[0]}
+        # P8 bases up to {0,1} also accepted: hand-FASM at LAB(4,17)
+        # picks up an extra P8[1] cell from `LAB_CLK_SEL_LE X4Y17N0`'s
+        # codec (per-LE clock-select cell that aliases onto LI MUX P8
+        # base 1 in the LI codec's interpretation, but isn't a routing
+        # short-circuit). W=17 silicon flash 2026-05-02 with this exact
+        # extra cell → LED solid-on, no hazard. Silicon-safe by both
+        # Quartus emission AND HW validation. See memory
+        # `multi_lab_carry_silicon_validated_2026_05_03.md`.
+        non_p8_pairs = {p: bs for p, bs in pair_map.items() if p != 8}
+        if (non_p8_pairs and
+            all(bs == {0, 1} for bs in non_p8_pairs.values()) and
+            (8 not in pair_map or pair_map[8] <= {0, 1})):
+            return "paired_carry_input", None
+
         if n_cells > RouteCodec.LI_MAX_CELLS_PER_LAB:
             return "invalid", f"{n_cells} cells > {RouteCodec.LI_MAX_CELLS_PER_LAB}"
 
@@ -1040,29 +1063,6 @@ class RouteCodec:
                     break
             if valid_groups and non_p8:
                 return "edge_pair_groups_b0", None
-
-        # paired_carry_input: EP4CE6 multi-LAB carry-chain LI MUX pattern.
-        # Discovered 2026-05-03 night via Quartus c17_ml gold (17-bit counter
-        # spanning LAB(4,18)+LAB(4,17)). Quartus emits e.g.
-        # {0:[0,1], 1:[0,1], 4:[0,1], 5:[0,1]} at the carry-receiver LAB —
-        # all-paired bases, pairs come in consecutive sibling groups
-        # {(0,1),(2,3),(4,5),(6,7)}, NO P8 tail anchor. This is the carry
-        # chain's input-MUX configuration: distinct from normal LUT routing
-        # because arithmetic mode bypasses the P8 driver and uses dedicated
-        # paired-pair channels for the carry-in path. Silicon-safe by
-        # construction (it's literally what Quartus emits).
-        # See memory `multi_lab_codec_fixed_2026_05_03.md` for context.
-        if (8 not in pair_map and
-            all(bs == {0, 1} for bs in pair_map.values()) and
-            pair_map):
-            valid_groups = True
-            for p in pair_map:
-                sibling = p + 1 if p % 2 == 0 else p - 1
-                if sibling not in pair_map:
-                    valid_groups = False
-                    break
-            if valid_groups:
-                return "paired_carry_input", None
 
         # P8 anchor: must be present with exactly one base
         if 8 not in pair_map:

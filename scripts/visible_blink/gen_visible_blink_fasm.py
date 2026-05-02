@@ -2,16 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Generate hand-FASM for an N-bit visible-blink at LAB(4,18)+LAB(4,17).
 
-⚠️ BLOCKED ON BROKEN CODEC ⚠️
-The `LUT_ARITH_MULTI_LAB WIDTH=N` directive this script emits depends on
-`results/arith_blockband_by_width.json` `multi_lab["16+N"]` data, which is
-silicon-broken: mining QSF was rejected by Quartus, cells target wrong
-LABs.  See memory `multi_lab_codec_broken_2026_05_03.md`.  Generated FASM
-parses + assembles + validate_safe-cleans, but flashes to LED-OFF on real
-silicon at LAB(4,18)+(4,17) until the multi_lab data is re-mined.
+Silicon-validated 2026-05-03 night:
+  * W=17 LED solid-on at 763 Hz (above flicker fusion).
+  * W=23 LED 6 Hz visible blink.
 
-Width-bisect tool for diagnosing the visible_blink_23bit silicon failure
-(see memory `visible_blink_attempt_failed_2026_05_03`).
+Both validated via the codec stack: arith_blockband_by_width.json's
+multi_lab[16+N] entries, paired_carry_input validator mode, fasm2rbf's
+LUT_ARITH_MULTI_LAB AND-clear semantics for v4-blob overflow cells.
 
 Constraints (per CLAUDE.md + arith_blockband_by_width.json):
   - Multi-LAB carry chain blob mined ONLY at LAB(4,18) (full 16 LEs)
@@ -83,11 +80,13 @@ def gen(width: int) -> str:
     lines.append("LAB_CLK_SEL X4Y18")
     lines.append("LAB_CLK_SEL X4Y17")
     lines.append("")
-    lines.append("# Per-LE clock activation")
+    lines.append("# Per-LE clock activation (LAB(4,18) only — LAB(4,17) chain LEs")
+    lines.append("# don't need per-LE selection: arith mode inherits LAB-level CLK_SEL.")
+    lines.append("# Adding LAB_CLK_SEL_LE X4Y17N* breaks the chain at W>=18 due to")
+    lines.append("# codec over-emit poisoning chain control bits — see memory")
+    lines.append("# `multi_lab_carry_silicon_validated_2026_05_03`.")
     for n in range(0, 32, 2):
         lines.append(f"LAB_CLK_SEL_LE X4Y18N{n}")
-    for n in range(0, msb_n + 1, 2):
-        lines.append(f"LAB_CLK_SEL_LE X4Y17N{n}")
     lines.append("")
     lines.append(f"# MSB → G15 output")
     lines.append(f"OUTROUTE_G15 X4Y17N{msb_n}")
