@@ -2,6 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Generate hand-FASM for an N-bit visible-blink at LAB(4,18)+LAB(4,17).
 
+⚠️ BLOCKED ON BROKEN CODEC ⚠️
+The `LUT_ARITH_MULTI_LAB WIDTH=N` directive this script emits depends on
+`results/arith_blockband_by_width.json` `multi_lab["16+N"]` data, which is
+silicon-broken: mining QSF was rejected by Quartus, cells target wrong
+LABs.  See memory `multi_lab_codec_broken_2026_05_03.md`.  Generated FASM
+parses + assembles + validate_safe-cleans, but flashes to LED-OFF on real
+silicon at LAB(4,18)+(4,17) until the multi_lab data is re-mined.
+
 Width-bisect tool for diagnosing the visible_blink_23bit silicon failure
 (see memory `visible_blink_attempt_failed_2026_05_03`).
 
