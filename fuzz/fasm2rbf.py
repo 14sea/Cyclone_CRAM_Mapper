@@ -371,6 +371,13 @@ _IOB_BASELINE_HDR_CACHE = None
 _IOB_PAD_NV_RE = re.compile(r"^IOB_PAD_NV$")
 _IOB_PAD_NV_CACHE = None
 
+# X=33 jailbreak column LUT TT codec — per-nibble (b%4) cell sets.  Mined
+# 2026-05-04 from 6-variant cross_lab Quartus builds at the natural X=33
+# placement.  Pair stride at X=33 is 420 bytes (2 frames), 4 nibble classes
+# encode all 16 TT bits collectively, NOT 1:1 per-bit like CE6 columns.
+# Data: results/x33_lut_codec.json.
+_X33_NIB_CACHE = None
+
 # OUTROUTE_G15 — position-specific output routing from SLICE to PIN_G15.
 # Looks up results/output_route_sigcache.json by source SLICE position.
 _OUTROUTE_G15_RE = re.compile(
@@ -718,6 +725,34 @@ def _load_iob_baseline_hdr_cells():
     data = json.loads(path.read_text())
     _IOB_BASELINE_HDR_CACHE = [tuple(c) for c in data["cells"]]
     return _IOB_BASELINE_HDR_CACHE
+
+
+def _x33_nibble_cells():
+    """Return {nibble_class (0..3): set of (off, bp)} for X=33 LUT TT.
+
+    Mined from 6-variant cross_lab.v Quartus builds (cl_and/or/xor/andn/
+    nor/xnor) — see scripts/cross_lab/x33_lut_mining/.  Each nibble class
+    `k` covers TT bits {k, k+4, k+8, k+12} and emits 14-16 cells in a
+    pair of consecutive CRAM frames.  Activation semantics are
+    nibble-OR (NOT per-bit XOR): the cell set fires when ANY bit in the
+    nibble is set in the LUT mask.
+    """
+    global _X33_NIB_CACHE
+    if _X33_NIB_CACHE is not None:
+        return _X33_NIB_CACHE
+    import json
+    path = ROOT / "results" / "x33_lut_codec.json"
+    if not path.exists():
+        raise FasmError(
+            "X=33 LUT used but results/x33_lut_codec.json missing — "
+            "regenerate from scripts/cross_lab/x33_lut_mining mining diffs"
+        )
+    data = json.loads(path.read_text())
+    out = {}
+    for k_str, cells in data["nibble_classes"].items():
+        out[int(k_str)] = set((int(off), int(bp)) for off, bp in cells)
+    _X33_NIB_CACHE = out
+    return out
 
 
 def _load_iob_pad_nv_cells():
@@ -1990,10 +2025,18 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     if all_luts:
         buf = bytearray(work)
 
+        # X=33 jailbreak column uses per-NIBBLE (b%4) encoding with pair stride
+        # 420 (2 frames) — completely incompatible with the CE6 σ⁻¹ XOR-linear
+        # model.  Mined 2026-05-04 from 6-variant cross_lab Quartus builds; see
+        # results/x33_lut_codec.json + memory note `x33_lut_per_nibble_codec`.
+        # Partition out X=33 LUTs and apply nibble-OR semantics directly.
+        x33_luts = [t for t in all_luts if t[0] == 33]
+        std_luts = [t for t in all_luts if t[0] != 33]
+
         lut_cache = {}
         tt_cells_cache = {}
         arith_keys = {(x, y, n) for x, y, n, _ in lut_arith}
-        for x, y, n, mask in all_luts:
+        for x, y, n, mask in std_luts:
             key = (x, y, n)
             if key in lut_cache:
                 continue
@@ -2005,17 +2048,48 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # predict_sram(0xFFFF) yields exactly the 16 true TT cells
         # (from_cram_model has 1 cell per minterm, no shared LAB noise).
         # SKIP for arith-mode LEs — arith has no normal-mode presence.
-        for x, y, n, mask in all_luts:
+        for x, y, n, mask in std_luts:
             if (x, y, n) in arith_keys:
                 continue
             for addr, bitpos in tt_cells_cache[(x, y, n)]:
                 buf[addr] &= ~(1 << bitpos)
 
         # Phase 2: XOR-flip true TT cells for each LUT mask.
-        for x, y, n, mask in all_luts:
+        for x, y, n, mask in std_luts:
             lut = lut_cache[(x, y, n)]
             tt_only = tt_cells_cache[(x, y, n)]
             for addr, bitpos in lut.predict_sram(mask) & tt_only:
+                buf[addr] ^= (1 << bitpos)
+
+        # X=33 nibble-OR phase.  Per-nibble cell table is mined from
+        # Stage-A position SLICE_X33_Y4_N4 only (cross_lab_open_x33's
+        # forced placement); other (Y, N) within X=33 require their
+        # own per-position mining.  For LEs not covered by the table,
+        # skip emission rather than emit at wrong offsets.
+        #
+        # Each covered LE: determine which of the 4 nibble classes
+        # (b%4) have any TT bit set; XOR-flip the union of those
+        # nibbles' cell sets against the working buffer (which is at
+        # the nv_zero_global baseline by virtue of the prior
+        # NV_BASELINE_PACK directive).  Cells emitted ONCE regardless
+        # of how many bits in a nibble are set (per-nibble OR
+        # semantics, not per-bit XOR).
+        X33_NIB_PLACEMENTS = {(4, 4)}  # (Y, N) → nibble table applies
+        if x33_luts:
+            nib_cells = _x33_nibble_cells()
+            x33_flip_cells = set()
+            for x, y, n, mask in x33_luts:
+                if (x, y, n) in arith_keys:
+                    continue
+                if (y, n) not in X33_NIB_PLACEMENTS:
+                    # No per-position table → leave LUT TT bits alone
+                    # (better than emitting at wrong offsets and
+                    # silently corrupting other (Y, N) cells).
+                    continue
+                for k in range(4):
+                    if (mask >> k) & 0x1111:
+                        x33_flip_cells |= nib_cells[k]
+            for addr, bitpos in x33_flip_cells:
                 buf[addr] ^= (1 << bitpos)
 
         # Phase 3 (2026-05-02): restore LI MUX state from the
