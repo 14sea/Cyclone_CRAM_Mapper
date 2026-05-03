@@ -56,5 +56,22 @@
     "2. Add auto-emit logic in synth/np2fasm.py: emit when M16 not in design top-level IOBs",
     "3. Optionally generalize to IOB_RESERVE_PIN <PIN> with per-pin tables — needs mining for E16/M15/etc.",
     "4. Mine X=33 1-LE discriminator (1-LE@X=33Y4N4 vs 1-LE@X=10Y10N0 with same E1+E16+G15) to attack the 4 frame-8 bp=2 cells"
-  ]
+  ],
+  "deeper_finding_2026_05_03": {
+    "title": "IOB_CLK_INPUT vs IOB_PAD_NV data calibration mismatch",
+    "description": "The 4 'probe2-specific' cells (1918-1921, bp=2) and 4 OVERs (1914-1917, bp=3) are NOT actually missing — they are emitted by BOTH `IOB_CLK_INPUT PIN_E1` AND `IOB_PAD_NV` and double-flip-cancel.  However, simply skipping IOB_CLK_INPUT when IOB_PAD_NV is present introduces NEW gaps because IOB_CLK_INPUT also covers cells NOT in IOB_PAD_NV (e.g. (45,0), (50,0), (73,1)).  This is not a pure codec dedup bug — it is a data calibration mismatch.",
+    "evidence": {
+      "iob_clk_input_pin_e1_size": 16,
+      "iob_pad_nv_size": 139,
+      "intersection": 11,
+      "shared_cells": [[52,0],[73,3],[74,0],[1914,3],[1915,3],[1916,3],[1917,3],[1918,2],[1919,2],[1920,2],[1921,2]],
+      "cells_correctly_cancelling_in_current_codec": [[52,0],[74,0]],
+      "cells_wrongly_cancelling_in_current_codec": [[73,3],[1914,3],[1915,3],[1916,3],[1917,3],[1918,2],[1919,2],[1920,2],[1921,2]]
+    },
+    "root_cause": "IOB_CLK_INPUT was mined assuming IOB_BASELINE_NV (129-cell) baseline (per data file note). When applied on top of IOB_PAD_NV (139-cell, partial overlap), some cells have correct XOR semantics, others have incorrect double-flip. Per-cell decision needed.",
+    "clean_fix_options": [
+      "(a) Re-mine IOB_CLK_INPUT against IOB_PAD_NV baseline. Build Quartus refs at SLICE_X10_Y10_N0 with E16+G15+clkE1 vs E16+G15+clkE15, both placed under IOB_PAD_NV-equivalent topology. Diff = pure E1-vs-E15 delta uncontaminated by IOB_PAD_NV cells. ~2hr Quartus work.",
+      "(b) Add a static 'IOB_CLK_INPUT_when_IOB_PAD_NV_present' override list: explicitly list which IOB_CLK_INPUT cells to skip when IOB_PAD_NV is also emitted. Build the list via per-cell analysis (which cells are correctly cancelling vs which are wrongly cancelling). Pure software, no Quartus."
+    ]
+  }
 }
