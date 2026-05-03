@@ -378,6 +378,12 @@ _IOB_PAD_NV_CACHE = None
 # Data: results/x33_lut_codec.json.
 _X33_NIB_CACHE = None
 
+# X=33Y4 LE infra override cells — calibrated 2026-05-03 from cl_and gold
+# (cross_lab.v 2-LE at SLICE_X33_Y4_N4 + N=6).  Acts as a shim while proper
+# per-directive mining (LAB_CLK_SEL_LE, same-LAB ROUTE) is pending.
+# Data: results/x33y4_infra_override.json.
+_X33Y4_INFRA_CACHE = None
+
 # OUTROUTE_G15 — position-specific output routing from SLICE to PIN_G15.
 # Looks up results/output_route_sigcache.json by source SLICE position.
 _OUTROUTE_G15_RE = re.compile(
@@ -769,6 +775,28 @@ def _x33_nibble_cells():
     return out
 
 
+def _x33y4_infra_cells():
+    """Return X=33Y4 LE infrastructure cells (LAB_CLK_SEL_LE + same-LAB
+    ROUTE + SRC overhead) as a single override set.
+
+    Calibrated from cl_and gold residual analysis 2026-05-03.  Auto-applied
+    by fasm2rbf whenever any X=33 LUT directive is at Y=4.  Design-specific
+    shim until proper per-directive mining is done.
+    """
+    global _X33Y4_INFRA_CACHE
+    if _X33Y4_INFRA_CACHE is not None:
+        return _X33Y4_INFRA_CACHE
+    import json
+    path = ROOT / "results" / "x33y4_infra_override.json"
+    if not path.exists():
+        # Not an error if missing — just no shim, gap stays open
+        _X33Y4_INFRA_CACHE = []
+        return _X33Y4_INFRA_CACHE
+    data = json.loads(path.read_text())
+    _X33Y4_INFRA_CACHE = [tuple(c) for c in data["cells"]]
+    return _X33Y4_INFRA_CACHE
+
+
 def _load_iob_pad_nv_cells():
     """Load the 241 IOB pad cells (nop_vs_nv delta) from
     results/output_route_nv_mining.json."""
@@ -1142,6 +1170,14 @@ def _load_lab_clk_sel_le_cells(x, y, n, *, lenient=False):
                 f"Run: python3 fuzz/clk_lab_sel_probe.py --lab {x},{y}"
                 f" then python3 fuzz/clk_lab_sel_per_le.py"
             )
+        return []
+    # X=33 entries in clk_lab_sel_per_le.json are mining garbage —
+    # the X=33 mining sweep used LCFF LOC overrides which Quartus Lite
+    # rejects, so the recorded "X=33" cells are from misplaced builds
+    # at other columns.  Audited 2026-05-03 vs cl_and gold: 1/30 cells
+    # match at X33Y4 N=4+N=6.  Skip the lookup to avoid emitting wrong
+    # cells; X=33 LE infra is provided by X33Y4_INFRA override instead.
+    if x == 33:
         return []
     entry = _LAB_CLK_SEL_LE_CACHE[key]
     bucket = f"n{n}_specific"
@@ -2113,6 +2149,19 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                         x33_flip_cells |= pos_nibs[k]
             for addr, bitpos in x33_flip_cells:
                 buf[addr] ^= (1 << bitpos)
+
+            # X=33Y4 LE infrastructure override.  When ANY X=33Y4 LE
+            # is present, apply the residual cell set calibrated from
+            # cl_and gold (cross_lab.v 2-LE topology at SLICE_X33_Y4_N4
+            # + N=6).  These cells aren't covered by any other
+            # directive (LAB_CLK_SEL_LE X=33 was mining-garbage and
+            # is now skipped; same-LAB ROUTE at X=33 is also skipped
+            # for lack of sig-cache).  Design-specific shim until
+            # proper per-directive mining is done.
+            if any(y == 4 for _, y, _, _ in x33_luts):
+                infra_cells = _x33y4_infra_cells()
+                for addr, bitpos in infra_cells:
+                    buf[addr] ^= (1 << bitpos)
 
         # Phase 3 (2026-05-02): restore LI MUX state from the
         # post-apply_routing snapshot.  σ⁻¹'s `from_cram_model`
