@@ -795,13 +795,53 @@ def _x33_nibble_cells():
     return out
 
 
+_X33Y4_SHIM_VICTIM_COLS = frozenset({5, 9, 10, 17, 22, 24, 32})
+
+
+def _x33y4_cross_lab_shim_should_apply(x33_luts, all_luts, routes, iobs,
+                                        lab_clk_sels):
+    """Return True only when FASM matches the exact cross_lab.v topology
+    that the X33Y4 shim was calibrated for.  Refuses otherwise so the
+    161-cell override doesn't clobber legitimate state in unrelated
+    designs that happen to also place an X=33Y4 LE.
+
+    Calibration topology (cl_and / cross_lab.v):
+      * BOTH SLICE_X33_Y4_N4 and SLICE_X33_Y4_N6 occupied by an LE
+      * IOB pin set = {IN E16, IN M16, OUT G15}
+      * LAB_CLK_SEL X33Y4 present
+      * Design uses NO LE in any X ∈ {5,9,10,17,22,24,32} (the shim
+        XOR-flips cells in those columns; flipping legitimate cells
+        of another design at those columns silently corrupts it)
+    """
+    yn_set = {(y, n) for x_, y, n, _ in x33_luts}
+    if (4, 4) not in yn_set or (4, 6) not in yn_set:
+        return False
+    pin_set = {(role, pin) for role, pin in iobs}
+    required_pins = {('IN', 'E16'), ('IN', 'M16'), ('OUT', 'G15')}
+    if not required_pins.issubset(pin_set):
+        return False
+    if (33, 4) not in {(x, y) for x, y in lab_clk_sels}:
+        return False
+    used_cols = {x for x, y, n, _ in all_luts}
+    for r in routes:
+        if len(r) == 7:
+            sx, sy, sn, dx, dy, dn, port = r
+        else:
+            sx, sy, dx, dy, dn, port = r
+        used_cols.add(sx); used_cols.add(dx)
+    if used_cols & _X33Y4_SHIM_VICTIM_COLS:
+        return False
+    return True
+
+
 def _x33y4_infra_cells():
     """Return X=33Y4 LE infrastructure cells (LAB_CLK_SEL_LE + same-LAB
     ROUTE + SRC overhead) as a single override set.
 
     Calibrated from cl_and gold residual analysis 2026-05-03.  Auto-applied
-    by fasm2rbf whenever any X=33 LUT directive is at Y=4.  Design-specific
-    shim until proper per-directive mining is done.
+    by fasm2rbf whenever the cross_lab.v topology preconditions are met
+    (see `_x33y4_cross_lab_shim_should_apply`).  Design-specific shim
+    until proper per-directive mining is done.
     """
     global _X33Y4_INFRA_CACHE
     if _X33Y4_INFRA_CACHE is not None:
@@ -2200,12 +2240,19 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             else:
                 buf[off] &= ~(1 << bp)
 
-        # X33Y4_INFRA override applied AFTER Phase 3 — some override
+        # X33Y4_CROSS_LAB_SHIM applied AFTER Phase 3 — some override
         # cells land on LI MUX positions of OTHER LABs (e.g. (83503,4)
         # is X=10 LAB Y=10 P8 base) which the snapshot/restore
         # mechanism would otherwise clobber.  Override needs the last
         # word for these cell positions.
-        if x33_luts and any(y == 4 for _, y, _, _ in x33_luts):
+        #
+        # SAFETY: shim is design-specific (cross_lab.v topology) and
+        # touches 8 columns (X=5,9,10,17,22,24,32,33 + header).  Apply
+        # only when ALL preconditions match cross_lab's exact shape;
+        # refuse otherwise to avoid clobbering legitimate state in
+        # unrelated designs that happen to also use X=33Y4.
+        if _x33y4_cross_lab_shim_should_apply(
+                x33_luts, all_luts, routes, iobs, lab_clk_sels):
             infra_cells = _x33y4_infra_cells()
             for addr, bitpos in infra_cells:
                 buf[addr] ^= (1 << bitpos)

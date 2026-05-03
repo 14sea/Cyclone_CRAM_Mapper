@@ -217,14 +217,28 @@ write_json {yosys_json}
     print(f"  md5: {hashlib.md5(result_rbf).hexdigest()}")
 
     print("\n=== Step 5: SAFETY ===", flush=True)
-    from bitstream import RouteCodec
+    from bitstream import RouteCodec, validate_no_header_miss, FlashGateError
     NV = (REPO / "results" / "rbf" / "nv_zero_global.rbf").read_bytes()
     try:
         RouteCodec().validate_safe_for_hardware(result_rbf, NV)
-        print("  SAFE")
+        print("  SAFE (LI MUX envelope)")
     except Exception as e:
         print(f"  UNSAFE: {e}")
         sys.exit(1)
+
+    # Header-band MISS gate (encoded discipline 2026-05-03 after silicon
+    # test #1 RESET — header MISS cells are config-controller words, not
+    # silent).  Compare against cl_and gold if available.
+    gold_path = REPO / "tmp" / "x33_lut_mining" / "cl_and" / "cl_and.rbf"
+    if gold_path.exists():
+        try:
+            validate_no_header_miss(result_rbf, gold_path.read_bytes())
+            print("  SAFE (header MISS == 0 vs cl_and gold)")
+        except FlashGateError as e:
+            print(f"  FLASH GATE FAIL: {e}")
+            sys.exit(1)
+    else:
+        print(f"  (skipped header gate — no gold at {gold_path})")
 
 
 if __name__ == "__main__":

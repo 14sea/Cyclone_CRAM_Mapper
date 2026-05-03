@@ -246,6 +246,46 @@ def patch_rbf_crc(rbf: bytes) -> bytes:
     return bytes(buf)
 
 
+class FlashGateError(RuntimeError):
+    """Raised by validate_no_header_miss when header MISS cells exist."""
+
+
+def validate_no_header_miss(rbf: bytes, gold_rbf: bytes,
+                            *, header_end: int = 5282) -> None:
+    """Raise FlashGateError if `rbf` is MISSING any cell that `gold_rbf`
+    has set in the header band (off < header_end, default 5282).
+
+    Header-band cells encode config-controller words (IO bank standards,
+    weak pull-up control, CONF_DONE handshake hints).  Empirical
+    discovery 2026-05-03: silicon flash test #1 of cross_lab_open_x33
+    RESET because 29 header MISS cells were treated as "silent" under
+    a MISS-only direction policy.  They were NOT silent — FPGA refused
+    to enter user mode.
+
+    Encodes the discipline: even at TOTAL <100 MISS-only, header MISS
+    must be 0 before flash.
+
+    Raises FlashGateError if any header bit is 1 in `gold_rbf` but 0 in
+    `rbf` (the MISSING-from-rbf direction).  Excess bits in rbf vs gold
+    are not flagged here (that's the OVER direction, which is silicon-
+    safe to set extra in header band — usually).
+    """
+    miss_offsets = []
+    for off in range(header_end):
+        diff = (~rbf[off]) & gold_rbf[off]
+        if diff:
+            for bp in range(8):
+                if diff & (1 << bp):
+                    miss_offsets.append((off, bp))
+    if miss_offsets:
+        raise FlashGateError(
+            f"Header-band MISS gate FAIL: {len(miss_offsets)} cells set "
+            f"in gold but missing in rbf (header band off<{header_end}). "
+            f"Silicon will RESET on flash (config-controller bits). "
+            f"First 5: {miss_offsets[:5]}"
+        )
+
+
 def mask_rbf_crc_bytes(rbf: bytes, ref: bytes) -> bytes:
     """Return a copy of `rbf` with every CRAM-frame CRC byte overwritten by
     `ref`'s value at the same position.
