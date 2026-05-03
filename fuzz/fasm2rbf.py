@@ -388,11 +388,20 @@ _IOB_OE_CACHE = None
 _IOB_BASELINE_NV_RE = re.compile(r"^IOB_BASELINE_NV$")
 _IOB_BASELINE_HDR_CACHE = None
 
-# IOB_PAD_NV — 方案B IOB pad infrastructure (241 cells).  Direct delta
-# from nv_zero_global for E16+M16 input + G15 output pin configuration.
-# Replaces IOB_BASELINE_NV + IOB_IN + IOB_OUT for designs using the
-# standard AX301 pin set.  XOR-idempotent (double-emit cancels).
+# IOB_PAD_NV — 方案B IOB pad infrastructure (139 cells, was 241 before
+# the 2026-05-04 a5e4a0e cleanup).  Direct delta from nv_zero_global
+# for E16+M16 input + G15 output pin configuration.  Replaces
+# IOB_BASELINE_NV + IOB_IN + IOB_OUT for designs using the standard
+# AX301 pin set.  XOR-idempotent (double-emit cancels).
 # Data: results/output_route_nv_mining.json → iob_pad_cells.
+#
+# Carry-chain extension: when an IOB_PAD_NV-emitting design also uses
+# any LUT_ARITH/LUT_ARITH_MULTI_LAB directive, an additional 74 cells
+# are XOR-applied from `iob_pad_arith_ext_cells` in the same data file.
+# Those 74 are silicon-required for multi-LE carry-chain G15 designs
+# (silicon-validated via W=17 and W=23 references) but absent from
+# all 20 simple-G15 mined designs.  Restored 2026-05-03 commit c430c4f
+# after audit found yesterday's a5e4a0e cleanup over-stripped them.
 _IOB_PAD_NV_RE = re.compile(r"^IOB_PAD_NV$")
 _IOB_PAD_NV_CACHE = None
 
