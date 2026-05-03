@@ -24,6 +24,27 @@
     [1918,6],[1919,6],[1920,6],[1921,6],
     [1918,7],[1919,7],[1920,7],[1921,7]
   ],
+  "xor_cells_33_unified_with_iob_pad_nv_recalibration": [
+    "Group A — M16-reserved-idle bank delta (24 cells, fires whenever M16 reserved):",
+    [1178,4],[1179,4],[1180,4],[1181,4],[1182,4],[1183,4],[1184,4],[1185,4],
+    [1194,4],[1195,4],[1196,4],[1197,4],
+    [1914,6],[1915,6],[1916,6],[1917,6],
+    [1918,6],[1919,6],[1920,6],[1921,6],
+    [1918,7],[1919,7],[1920,7],[1921,7],
+    "Group B — IOB_CLK_INPUT_E1 cells double-flipped by IOB_PAD_NV (9 cells, fires when M16 reserved AND IOB_PAD_NV+IOB_CLK_INPUT_E1 both emitted; corrects calibration mismatch where IOB_PAD_NV embeds M16-active assumption):",
+    [73,3],
+    [1914,3],[1915,3],[1916,3],[1917,3],
+    [1918,2],[1919,2],[1920,2],[1921,2]
+  ],
+  "validation_33_cell_unified": {
+    "applied_to_probe2_open.rbf": {
+      "before_xor_md5": "50977fd3532746d1b840d9ede6e3ef67",
+      "header_diffs_before": 42,
+      "header_diffs_after_24cell": 18,
+      "header_diffs_after_33cell": 9,
+      "remaining_hdr": "3 MISS + 6 OVER, all in offsets 41-74 (frame 0) — likely from OTHER reserved pins (A14/B14/M15/M2/M1/R4/R8/T4)"
+    }
+  },
   "discriminator_designs": {
     "M16_active_clkM16": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM16.rbf — 0/24 cells fire (M16 used as clock)",
     "M16_reserved_other_clk": [

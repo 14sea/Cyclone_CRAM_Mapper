@@ -1321,6 +1321,23 @@ def convert(
             insert_at = 1 if (fasm and fasm[0] == "NV_BASELINE_PACK") else 0
             fasm.insert(insert_at, "IOB_BASELINE_NV")
 
+    # IOB_RESERVE_PIN_M16: Quartus default RESERVE_ALL_UNUSED_PINS produces
+    # a 33-cell hdr-band delta when M16 is unused.  Emit only when:
+    #   (a) the design uses IOB_PAD_NV (which embeds an M16-active baseline
+    #       — calibration mismatch needs correction), AND
+    #   (b) M16 is NOT one of the design's pinned IOBs.
+    # Group A (24 cells) handles M16-bank-default; Group B (9 cells)
+    # corrects IOB_PAD_NV ∩ IOB_CLK_INPUT_E1 double-flip.
+    if use_pad_nv:
+        m16_used = any(
+            (line.split()[-1] == "PIN_M16")
+            for line in iob_pending
+            if line.startswith(("IOB_IN", "IOB_OUT", "IOB_ROUTE"))
+        )
+        if not m16_used:
+            insert_at = fasm.index("IOB_PAD_NV") + 1
+            fasm.insert(insert_at, "IOB_RESERVE_PIN_M16")
+
     n_miss_cross = n_miss - n_miss_same_lab
     warnings.insert(0,
         f"# {n_sig} ROUTE (FASM-backed), "

@@ -434,6 +434,17 @@ _OUTROUTE_SIGCACHE = None
 _IOB_CLK_INPUT_RE = re.compile(r"^IOB_CLK_INPUT\s+PIN_(?P<pin>[A-Z]\d+)$")
 _IOB_CLK_INPUT_CACHE = None
 
+# IOB_RESERVE_PIN_M16 — Quartus default RESERVE_ALL_UNUSED_PINS="As input
+# tri-stated with weak pull-up" produces a 33-cell hdr-band XOR delta when
+# M16 is unused. Group A (24 cells): M16-reserved-idle bank-default delta,
+# fires whenever M16 is reserved regardless of clock pin. Group B (9 cells):
+# IOB_CLK_INPUT_E1 cells double-flipped by IOB_PAD_NV (calibration mismatch
+# correction; IOB_PAD_NV embeds M16-active baseline).  Mined 2026-05-03 from
+# probe2 silicon-validated reference + 9 simple_led_E16_to_G15_clk{PIN} discriminators.
+# See results/iob_reserve_pin_m16_cells.json + memory/probe2_open_software_bisect_2026_05_03.md.
+_IOB_RESERVE_PIN_M16_RE = re.compile(r"^IOB_RESERVE_PIN_M16$")
+_IOB_RESERVE_PIN_M16_CACHE = None
+
 # NV_BASELINE_PACK — Phase 3 of nv_zero_global retirement.  Expresses the
 # byte delta nv_zero_global.rbf ^ pure_zero_rbf() as layered XOR directives
 # so a caller can start from PURE_ZERO and rebuild nv_zero_global (or any
@@ -512,6 +523,32 @@ def _load_iob_clk_input_cells(pin):
             f"scripts/iob_slice_mining/compute_clk_pin_hdr.py"
         )
     return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
+
+
+def _load_iob_reserve_pin_m16_cells():
+    """Return the 33-cell XOR delta for M16-reserved-idle IOB bank state.
+
+    Group A (24 cells): M16-bank-default delta — fires whenever M16 is reserved.
+    Group B (9 cells): IOB_CLK_INPUT_E1 ∩ IOB_PAD_NV calibration correction —
+    only well-defined when IOB_PAD_NV + IOB_CLK_INPUT_E1 both emitted.  Caller
+    is responsible for emission gating; this loader returns the full 33-cell set.
+    """
+    global _IOB_RESERVE_PIN_M16_CACHE
+    if _IOB_RESERVE_PIN_M16_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_reserve_pin_m16_cells.json"
+        if not path.exists():
+            raise FasmError(
+                "IOB_RESERVE_PIN_M16 used but "
+                "results/iob_reserve_pin_m16_cells.json missing"
+            )
+        data = json.loads(path.read_text())
+        # Filter out string section markers, keep only [off, bp] pairs.
+        raw = data["xor_cells_33_unified_with_iob_pad_nv_recalibration"]
+        _IOB_RESERVE_PIN_M16_CACHE = [
+            tuple(c) for c in raw if isinstance(c, list) and len(c) == 2
+        ]
+    return _IOB_RESERVE_PIN_M16_CACHE
 
 
 def _load_m9k_mode_cells(site, width, depth, template=None):
@@ -1534,6 +1571,7 @@ def parse_fasm(text):
     iob_pad_nv = False  # IOB_PAD_NV directive seen (方案B)
     outroute_g15s = []  # list[(sx, sy, sn)] — OUTROUTE_G15 positions
     iob_clk_inputs = []  # list[pin] — IOB_CLK_INPUT PIN_X
+    iob_reserve_pin_m16 = False  # IOB_RESERVE_PIN_M16 directive seen (XOR parity)
     # NV_BASELINE_PACK family — each entry is a bucket name consumed by
     # _nv_bucket_cells().  All are XOR-applied with parity, so emitting
     # both the meta NV_BASELINE_PACK and a sub-directive for the same
@@ -1643,6 +1681,10 @@ def parse_fasm(text):
         if m:
             iob_clk_inputs.append(m["pin"])
             continue
+        m = _IOB_RESERVE_PIN_M16_RE.match(line)
+        if m:
+            iob_reserve_pin_m16 = not iob_reserve_pin_m16  # XOR parity
+            continue
         m = _NV_BASELINE_PACK_RE.match(line)
         if m:
             nv_buckets.append("nv_all")
@@ -1731,7 +1773,7 @@ def parse_fasm(text):
             iobs, iob_routes, gclk, gclk_pins, lab_clk_sels, lab_clk_sel_les,
             iob_baseline_nv, iob_clk_inputs, nv_buckets, m9k_modes,
             dspmult_global_on, iob_oes, lut_arith_multi_labs,
-            iob_pad_nv, outroute_g15s, design_packs)
+            iob_pad_nv, outroute_g15s, design_packs, iob_reserve_pin_m16)
 
 
 def build_route_ops(routes, cells_table=None, extra_cells=None,
@@ -1857,7 +1899,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
      iob_clk_inputs, nv_buckets, m9k_modes,
      dspmult_global_on, iob_oes,
      lut_arith_multi_labs,
-     iob_pad_nv, outroute_g15s, design_packs) = parse_fasm(fasm_text)
+     iob_pad_nv, outroute_g15s, design_packs,
+     iob_reserve_pin_m16) = parse_fasm(fasm_text)
 
     codec = RouteCodec()
     work = bytes(base_rbf)
@@ -2106,6 +2149,18 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             if v:
                 buf[off] ^= (1 << bp)
                 _iob_route_dedup.add((off, bp))
+        work = bytes(buf)
+
+    if iob_reserve_pin_m16:
+        # M16-reserved-idle bank delta + IOB_PAD_NV/IOB_CLK_INPUT_E1
+        # calibration correction (33 cells total).  Auto-emitted by
+        # np2fasm when M16 is not in design IOBs.  See
+        # results/iob_reserve_pin_m16_cells.json + memory note
+        # probe2_open_software_bisect_2026_05_03.md for derivation.
+        buf = bytearray(work)
+        for off, bp in _load_iob_reserve_pin_m16_cells():
+            buf[off] ^= (1 << bp)
+            _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if iobs:
