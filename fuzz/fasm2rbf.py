@@ -912,6 +912,58 @@ def _x33y4_infra_cells():
     return _X33Y4_INFRA_CACHE
 
 
+_X33Y4_PROBE2_INFRA_CACHE = None
+
+
+def _x33y4_probe2_shim_should_apply(x33_luts, all_luts, iobs,
+                                      lab_clk_sels, iob_pad_nv=False):
+    """Return True only when FASM matches probe2.v topology (1-LE at
+    SLICE_X33_Y4_N4 — distinct from cl_and which uses both N=4 and N=6).
+
+    Calibration topology (probe2.v):
+      * EXACTLY ONE X=33 LE, at (4, 4) (no N=6)
+      * Design uses E16 input + G15 output via IOB_PAD_NV (no IOB_IN/IOB_OUT
+        triplet for cl_and; M16 reserved, not used)
+      * LAB_CLK_SEL X33Y4 present
+      * No other X=33 LEs anywhere
+    """
+    if not iob_pad_nv:
+        return False
+    yn_set = {(y, n) for x_, y, n, _ in x33_luts}
+    # Probe2 has exactly one X33Y4 LE at (4, 4); cl_and has both (4, 4) and (4, 6)
+    if yn_set != {(4, 4)}:
+        return False
+    if (33, 4) not in {(x, y) for x, y in lab_clk_sels}:
+        return False
+    # M16 must NOT be in IOBs (probe2-class has M16 reserved)
+    pin_set = {pin for role, pin in iobs}
+    if 'M16' in pin_set:
+        return False
+    return True
+
+
+def _x33y4_probe2_infra_cells():
+    """Return X=33Y4 LE infrastructure cells for probe2.v topology
+    (1-LE class, distinct from cl_and 2-LE shim).
+
+    Calibrated from probe2 silicon-validated reference (md5 d4073d2e..) vs
+    probe2_open codec gap analysis, 2026-05-03 night session.  Covers
+    IOB_E16 → X33Y4N4.dataa routing + per-LE infra unique to 1-LE 33Y4
+    placement.
+    """
+    global _X33Y4_PROBE2_INFRA_CACHE
+    if _X33Y4_PROBE2_INFRA_CACHE is not None:
+        return _X33Y4_PROBE2_INFRA_CACHE
+    import json
+    path = ROOT / "results" / "x33y4_probe2_infra.json"
+    if not path.exists():
+        _X33Y4_PROBE2_INFRA_CACHE = []
+        return _X33Y4_PROBE2_INFRA_CACHE
+    data = json.loads(path.read_text())
+    _X33Y4_PROBE2_INFRA_CACHE = [tuple(c) for c in data["cells"]]
+    return _X33Y4_PROBE2_INFRA_CACHE
+
+
 def _load_iob_pad_nv_cells():
     """Load IOB pad cells (nop_vs_nv delta) from
     results/output_route_nv_mining.json.  Currently 139 cells after
@@ -2391,6 +2443,14 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 x33_luts, all_luts, routes, iobs, lab_clk_sels,
                 iob_pad_nv=iob_pad_nv):
             infra_cells = _x33y4_infra_cells()
+            for addr, bitpos in infra_cells:
+                buf[addr] ^= (1 << bitpos)
+        elif _x33y4_probe2_shim_should_apply(
+                x33_luts, all_luts, iobs, lab_clk_sels,
+                iob_pad_nv=iob_pad_nv):
+            # 1-LE probe2 class — disjoint from cl_and 2-LE shim, applies
+            # 37-cell override calibrated from probe2 gold reference.
+            infra_cells = _x33y4_probe2_infra_cells()
             for addr, bitpos in infra_cells:
                 buf[addr] ^= (1 << bitpos)
         work = bytes(buf)
