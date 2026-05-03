@@ -1,5 +1,5 @@
 {
-  "description": "X=33Y4 LE infrastructure override for cross_lab.v topology under the NEW IOB_PAD_NV path (np2fasm switches to it when OUTROUTE_G15 X33Y4N6 is in the sigcache).  This is calibrated against cl_and gold and covers only non-CRC cells (CRC slots are recomputed by patch_rbf_crc).",
+  "description": "X=33Y4 LE infrastructure override for cross_lab.v topology under the IOB_PAD_NV path.  Activates only when `_x33y4_cross_lab_shim_should_apply` returns True (BOTH N=4+N=6 LEs + E16+M16 inputs + G15 output via either legacy IOB_IN/OUT triplet OR new IOB_PAD_NV directive + LAB_CLK_SEL X33Y4 + no LE in victim columns {5,9,10,17,22,24,32}).  Calibrated against cl_and gold (md5 47ad9ed9...).",
   "mining_source": "tmp/x33_lut_mining/cl_and/cl_and.rbf vs tmp/cross_lab_open_x33.rbf gap analysis 2026-05-03",
   "topology": "cross_lab.v: q1<=key2&key3 (Stage A SLICE_X33_Y4_N4); led0<=q1 (Stage B SLICE_X33_Y4_N6); E16+M16 inputs; G15 output",
   "cells": [
@@ -233,8 +233,6 @@
     ]
   ],
   "cell_count": 57,
-  "note_over_cancel": "Includes 13 cells that XOR-cancel spurious IOB_IN PIN_E16/PIN_M16 input_delta emissions at X=33 (Quartus IOB_IN cell mining had X=33 noise \u2014 those cells appear in input_delta but are NOT in cl_and gold). Extended 2026-05-03 with all 41 OVER cells (37 header + 4 fabric) to XOR-cancel cross_lab-spurious IOB pad-delta + IOB_BASELINE_NV + IOB_CLK_INPUT noise that targets columns unused by cross_lab topology. Result: MISS-only direction.",
-  "note_full_byte_identity": "Extended 2026-05-03 with all 106 MISS cells (29 header + 77 fabric) after silicon flash test #1 reset on AX301 \u2014 header MISS cells (off 41-1081, frames 0-5) are config-controller bits (IO bank standards), not silent. Override now provides byte-identical-to-cl_and-gold path; functionally \u03b6-class copy for those cells. Codec value retained for X=33 LUT TT (Stage A + Stage B nibble tables).",
   "history": [
     {
       "date": "2026-05-03",
@@ -266,5 +264,11 @@
       "cells_before": 62,
       "cells_after": 57
     }
-  ]
+  ],
+  "buckets": {
+    "tt_invariant_le_infra": 40,
+    "cl_and_specific_tt_dependent": 13,
+    "over_cancel_pin_tt_context": 4,
+    "theoretical_floor_cells": 13
+  }
 }
