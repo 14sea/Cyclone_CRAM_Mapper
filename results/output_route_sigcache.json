@@ -1,5 +1,5 @@
 {
-  "description": "SLICE\u2192G15 output route sig-cache",
+  "description": "SLICE\u2192G15 output route sig-cache [2026-05-03] Removed sole entry (366203,2) \u2014 universally absent from 18 Quartus G15 mined designs incl. probe2 silicon-validated. Was mining-noise.",
   "mining_date": "2026-04-21",
   "pins": {
     "in": [
@@ -8,13 +8,8 @@
     ],
     "out": "G15"
   },
-  "g15_invariant_cells": [
-    [
-      366203,
-      2
-    ]
-  ],
-  "g15_invariant_count": 1,
+  "g15_invariant_cells": [],
+  "g15_invariant_count": 0,
   "routes": {
     "X4Y2N0": {
       "total_cells": 53,

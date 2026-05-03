@@ -100,18 +100,6 @@
       4
     ],
     [
-      191163,
-      6
-    ],
-    [
-      191169,
-      6
-    ],
-    [
-      191170,
-      6
-    ],
-    [
       191320,
       4
     ],
@@ -138,10 +126,6 @@
     [
       354341,
       3
-    ],
-    [
-      354362,
-      6
     ],
     [
       354509,
@@ -246,13 +230,9 @@
     [
       365142,
       2
-    ],
-    [
-      366203,
-      2
     ]
   ],
-  "cell_count": 62,
+  "cell_count": 57,
   "note_over_cancel": "Includes 13 cells that XOR-cancel spurious IOB_IN PIN_E16/PIN_M16 input_delta emissions at X=33 (Quartus IOB_IN cell mining had X=33 noise \u2014 those cells appear in input_delta but are NOT in cl_and gold). Extended 2026-05-03 with all 41 OVER cells (37 header + 4 fabric) to XOR-cancel cross_lab-spurious IOB pad-delta + IOB_BASELINE_NV + IOB_CLK_INPUT noise that targets columns unused by cross_lab topology. Result: MISS-only direction.",
   "note_full_byte_identity": "Extended 2026-05-03 with all 106 MISS cells (29 header + 77 fabric) after silicon flash test #1 reset on AX301 \u2014 header MISS cells (off 41-1081, frames 0-5) are config-controller bits (IO bank standards), not silent. Override now provides byte-identical-to-cl_and-gold path; functionally \u03b6-class copy for those cells. Codec value retained for X=33 LUT TT (Stage A + Stage B nibble tables).",
   "history": [
@@ -279,6 +259,12 @@
       "event": "after IOB_CLK_INPUT PIN_E1 hdr cells stripped of 24 mining-noise cells (universally absent from 18 G15 Quartus designs).  Shim no longer needs to compensate for those XOR over-emissions.",
       "cells_before": 86,
       "cells_after": 62
+    },
+    {
+      "date": "2026-05-03",
+      "event": "after stripping 5 universally-absent cells: 4 from clk_lab_sel_probe_X33Y4.lab_clk_sel + 1 from output_route_sigcache.g15_invariant_cells.  All confirmed absent in 18/18 Quartus G15 designs.",
+      "cells_before": 62,
+      "cells_after": 57
     }
   ]
 }

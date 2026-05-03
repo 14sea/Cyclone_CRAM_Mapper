@@ -1617,28 +1617,12 @@
       4
     ],
     [
-      191163,
-      6
-    ],
-    [
-      191169,
-      6
-    ],
-    [
-      191170,
-      6
-    ],
-    [
       247550,
       2
     ],
     [
       248189,
       2
-    ],
-    [
-      354362,
-      6
     ],
     [
       363039,
@@ -1652,5 +1636,13 @@
       363883,
       2
     ]
+  ],
+  "history": [
+    {
+      "date": "2026-05-03",
+      "event": "stripped 4 mining-noise cells absent from all 18 Quartus G15 designs.  Cells at (191163,6)/(191169,6)/(191170,6) X=17 col + (354362,6) X=32 col \u2014 likely cross-column noise from mining baseline.  17 remaining cells exactly match cl_*/rcl_* X=33Y4 LAB_CLK_SEL emission set (legit).",
+      "cells_before": 21,
+      "cells_after": 17
+    }
   ]
 }
