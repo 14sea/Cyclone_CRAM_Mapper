@@ -7038,6 +7038,25 @@
       "_provisional": true,
       "_source": "3-way diff (probe2 \u2229 cross_lab_orig - cross_lab_alt) cells_vs_nv; needs silicon validation; may be incomplete (29 vs typical 50-70)",
       "_session": "2026-05-04-cross-lab-x33-step2"
+    },
+    "X33Y4N6": {
+      "total_cells": 3,
+      "position_specific": [
+        [
+          362724,
+          3
+        ],
+        [
+          362879,
+          4
+        ],
+        [
+          362893,
+          4
+        ]
+      ],
+      "invariant_count": 0,
+      "provenance": "Provisional 3-cell seed for OUTROUTE_G15 X33Y4N6.  Cells derived 2026-05-03 by differential analysis: present in (a) all 13 cl_*/rcl_* Quartus mined RBFs (X33Y4 placement driving G15) AND (b) the 1le_g15 Quartus probe (single LE at non-X=33 column driving G15) AND (c) and2/or2/xor2/andn2 1-LE variants \u2014 18/18 G15-driving Quartus designs.  All 3 are non-CRC (block_band frame 1727 bytes 22, 177, 191).  These appear column-independent.  Kept here (not promoted to global g15_invariant_cells) until additional non-cross_lab flash test confirms safety for the 36 existing OUTROUTE_G15 entries.  Mining tool: scripts/cross_lab/x33_outroute_n6_seed.py."
     }
   }
 }

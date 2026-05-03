@@ -804,15 +804,16 @@ _X33Y4_SHIM_VICTIM_COLS = frozenset({5, 9, 10, 17, 22, 24, 32})
 
 
 def _x33y4_cross_lab_shim_should_apply(x33_luts, all_luts, routes, iobs,
-                                        lab_clk_sels):
+                                        lab_clk_sels, iob_pad_nv=False):
     """Return True only when FASM matches the exact cross_lab.v topology
     that the X33Y4 shim was calibrated for.  Refuses otherwise so the
-    161-cell override doesn't clobber legitimate state in unrelated
-    designs that happen to also place an X=33Y4 LE.
+    override doesn't clobber legitimate state in unrelated designs that
+    happen to also place an X=33Y4 LE.
 
     Calibration topology (cl_and / cross_lab.v):
       * BOTH SLICE_X33_Y4_N4 and SLICE_X33_Y4_N6 occupied by an LE
-      * IOB pin set = {IN E16, IN M16, OUT G15}
+      * Design uses E16+M16 input + G15 output (either via the legacy
+        IOB_IN/IOB_OUT triplet OR the unified IOB_PAD_NV directive)
       * LAB_CLK_SEL X33Y4 present
       * Design uses NO LE in any X ∈ {5,9,10,17,22,24,32} (the shim
         XOR-flips cells in those columns; flipping legitimate cells
@@ -821,9 +822,12 @@ def _x33y4_cross_lab_shim_should_apply(x33_luts, all_luts, routes, iobs,
     yn_set = {(y, n) for x_, y, n, _ in x33_luts}
     if (4, 4) not in yn_set or (4, 6) not in yn_set:
         return False
+    # IOB pin set: accept legacy (IOB_IN/OUT triplet) OR new (IOB_PAD_NV
+    # which folds in E16/M16/G15 atomically).  np2fasm switches to the
+    # IOB_PAD_NV path when OUTROUTE_G15 X33Y4N6 is in the sigcache.
     pin_set = {(role, pin) for role, pin in iobs}
-    required_pins = {('IN', 'E16'), ('IN', 'M16'), ('OUT', 'G15')}
-    if not required_pins.issubset(pin_set):
+    legacy_pins = {('IN', 'E16'), ('IN', 'M16'), ('OUT', 'G15')}
+    if not (legacy_pins.issubset(pin_set) or iob_pad_nv):
         return False
     if (33, 4) not in {(x, y) for x, y in lab_clk_sels}:
         return False
@@ -2283,7 +2287,8 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # refuse otherwise to avoid clobbering legitimate state in
         # unrelated designs that happen to also use X=33Y4.
         if _x33y4_cross_lab_shim_should_apply(
-                x33_luts, all_luts, routes, iobs, lab_clk_sels):
+                x33_luts, all_luts, routes, iobs, lab_clk_sels,
+                iob_pad_nv=iob_pad_nv):
             infra_cells = _x33y4_infra_cells()
             for addr, bitpos in infra_cells:
                 buf[addr] ^= (1 << bitpos)
