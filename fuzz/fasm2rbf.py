@@ -867,8 +867,10 @@ def _x33y4_infra_cells():
 
 
 def _load_iob_pad_nv_cells():
-    """Load the 241 IOB pad cells (nop_vs_nv delta) from
-    results/output_route_nv_mining.json."""
+    """Load IOB pad cells (nop_vs_nv delta) from
+    results/output_route_nv_mining.json.  Currently 139 cells after
+    the 2026-05-04 cleanup (commit a5e4a0e) that removed 102 over-emit
+    cells from the original 241-cell mining baseline."""
     global _IOB_PAD_NV_CACHE
     if _IOB_PAD_NV_CACHE is not None:
         return _IOB_PAD_NV_CACHE
@@ -882,6 +884,29 @@ def _load_iob_pad_nv_cells():
     data = json.loads(path.read_text())
     _IOB_PAD_NV_CACHE = [tuple(c) for c in data["iob_pad_cells"]]
     return _IOB_PAD_NV_CACHE
+
+
+_IOB_PAD_ARITH_EXT_CACHE = None
+
+
+def _load_iob_pad_arith_ext_cells():
+    """Carry-chain IOB pad extension cells.  Of the 102 cells removed by
+    commit a5e4a0e (IOB_PAD_NV cleanup), 74 are present in silicon-
+    validated W=23 RBF (md5 905dfc85ad37c44da9966dfbd9cf3a16) but
+    absent from all 20 simple-G15 mined designs (and2/or2/cl_*/rcl_*/
+    1le_g15/probe2/baseline).  These are specific to designs with
+    multi-LE carry chains driving G15.  Emitted only when both
+    IOB_PAD_NV and any LUT_ARITH (or LUT_ARITH_MULTI_LAB) directive
+    are present in the FASM."""
+    global _IOB_PAD_ARITH_EXT_CACHE
+    if _IOB_PAD_ARITH_EXT_CACHE is not None:
+        return _IOB_PAD_ARITH_EXT_CACHE
+    import json
+    path = ROOT / "results" / "output_route_nv_mining.json"
+    data = json.loads(path.read_text())
+    _IOB_PAD_ARITH_EXT_CACHE = [tuple(c)
+                                 for c in data.get("iob_pad_arith_ext_cells", [])]
+    return _IOB_PAD_ARITH_EXT_CACHE
 
 
 def _load_outroute_g15_cells(sx, sy, sn):
@@ -2036,6 +2061,18 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         for off, bp in _load_iob_pad_nv_cells():
             buf[off] ^= (1 << bp)
             _iob_route_dedup.add((off, bp))
+        # Carry-chain extension: when IOB_PAD_NV is requested AND the
+        # design has any LUT_ARITH or LUT_ARITH_MULTI_LAB directive,
+        # additionally emit the 74 cells that silicon-validated W=23
+        # (905dfc85) requires but simple-G15 designs do not.  These
+        # cells were originally part of the 241-cell IOB_PAD_NV
+        # baseline but were correctly stripped by a5e4a0e for simple
+        # designs; they're restored conditionally here for carry-chain
+        # designs only.
+        if lut_arith or lut_arith_multi_labs:
+            for off, bp in _load_iob_pad_arith_ext_cells():
+                buf[off] ^= (1 << bp)
+                _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
     if outroute_g15s:
