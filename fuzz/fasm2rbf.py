@@ -328,6 +328,26 @@ _IOB_BIDIR_FALSIFIED: dict[tuple[str, str], frozenset[tuple[int, int]]] = {
     # mining-template LED-route artifacts, not IOB pad-config cells).
     ("OUT", "R5"): frozenset({(84275, 3), (84868, 4)}),
 }
+
+
+# IOB_IN/OUT cross-column noise filter — cells in input_delta / output_delta
+# that fall on column ranges physically distant from the pin's natural CRAM
+# region.  These are mining-template artifacts (cells captured during the
+# pair-diff sweep that came from neighboring fabric, not the pin's own pad
+# config).  Audited 2026-05-03 against cl_and gold (which uses E16+M16+G15
+# at X=33Y4 LAB): 0/27 X=33-region cells across E16+M16 input_delta
+# matched gold — pure noise.
+#
+# Format: (role, pin) -> frozenset of column indices to STRIP from the
+# pin's delta cell set (cells whose offset falls within COLUMN_BASE[x] ..
+# COLUMN_BASE[x] + 7350 are dropped).
+_IOB_DELTA_COLUMN_STRIP: dict[tuple[str, str], frozenset[int]] = {
+    # Right-edge input pins: X=33 cells in input_delta are noise.
+    # Confirmed against cl_and gold which uses these pins at X=33Y4 LAB
+    # — none of the X=33 cells appeared in gold.
+    ("IN", "E16"): frozenset({33}),
+    ("IN", "M16"): frozenset({33}),
+}
 # IOB→SLICE route directive (XOR-delta, nv_zero_global frame).  Applies
 # absolute cells from results/iob_to_slice_sigcache.json — the
 # bridge-translated R(IOB→target LE) footprint for pins mined under
@@ -898,6 +918,14 @@ def _iob_delta_cells(role, pin, iob_map, *, lenient=False):
         mask = _IOB_BIDIR_FALSIFIED.get((base_role, pin))
         if mask:
             cells = [c for c in cells if c not in mask]
+    # Cross-column noise strip: drop cells from columns physically distant
+    # from this pin's pad region (mining template artifacts).
+    strip_cols = _IOB_DELTA_COLUMN_STRIP.get((base_role, pin))
+    if strip_cols:
+        from config import COLUMN_BASE as _CB
+        ranges = [(_CB[x], _CB[x] + 7350) for x in strip_cols if x in _CB]
+        cells = [c for c in cells
+                 if not any(lo <= c[0] < hi for lo, hi in ranges)]
     return cells
 
 _IOB_ROUTE_CACHE = None

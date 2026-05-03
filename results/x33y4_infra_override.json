@@ -616,52 +616,8 @@
       3
     ],
     [
-      361605,
-      2
-    ],
-    [
-      361887,
-      3
-    ],
-    [
-      361893,
-      3
-    ],
-    [
-      361960,
-      2
-    ],
-    [
-      361966,
-      2
-    ],
-    [
-      362002,
-      2
-    ],
-    [
-      362098,
-      3
-    ],
-    [
-      362103,
-      3
-    ],
-    [
       362532,
       3
-    ],
-    [
-      362590,
-      2
-    ],
-    [
-      362597,
-      2
-    ],
-    [
-      362632,
-      2
     ],
     [
       362707,
@@ -688,19 +644,19 @@
       2
     ],
     [
-      363882,
-      2
-    ],
-    [
-      364722,
-      2
-    ],
-    [
       365142,
       2
     ]
   ],
-  "cell_count": 174,
+  "cell_count": 161,
   "note_over_cancel": "Includes 13 cells that XOR-cancel spurious IOB_IN PIN_E16/PIN_M16 input_delta emissions at X=33 (Quartus IOB_IN cell mining had X=33 noise \u2014 those cells appear in input_delta but are NOT in cl_and gold). Extended 2026-05-03 with all 41 OVER cells (37 header + 4 fabric) to XOR-cancel cross_lab-spurious IOB pad-delta + IOB_BASELINE_NV + IOB_CLK_INPUT noise that targets columns unused by cross_lab topology. Result: MISS-only direction.",
-  "note_full_byte_identity": "Extended 2026-05-03 with all 106 MISS cells (29 header + 77 fabric) after silicon flash test #1 reset on AX301 \u2014 header MISS cells (off 41-1081, frames 0-5) are config-controller bits (IO bank standards), not silent. Override now provides byte-identical-to-cl_and-gold path; functionally \u03b6-class copy for those cells. Codec value retained for X=33 LUT TT (Stage A + Stage B nibble tables)."
+  "note_full_byte_identity": "Extended 2026-05-03 with all 106 MISS cells (29 header + 77 fabric) after silicon flash test #1 reset on AX301 \u2014 header MISS cells (off 41-1081, frames 0-5) are config-controller bits (IO bank standards), not silent. Override now provides byte-identical-to-cl_and-gold path; functionally \u03b6-class copy for those cells. Codec value retained for X=33 LUT TT (Stage A + Stage B nibble tables).",
+  "history": [
+    {
+      "date": "2026-05-03",
+      "event": "shrunk via IOB_IN E16/M16 X=33 column strip filter (cells now removed at source)",
+      "cells_before": 174,
+      "cells_after": 161
+    }
+  ]
 }
