@@ -1,0 +1,162 @@
+{
+  "description": "probe2_open vs Quartus probe2 (md5 d4073d2e..) header-MISS bisect, 2026-05-03",
+  "context": {
+    "open_md5": "50977fd3532746d1b840d9ede6e3ef67",
+    "quartus_md5": "d4073d2e655be480d521bf208d3f9ee1",
+    "design": "1-LE: E16 -> DFF (X33Y4 LE N=4) -> G15, clk=E1",
+    "open_placement": "SLICE_X33_Y4_N4 (LUT) + LCFF_X33_Y4_N5 (FF, same LE)",
+    "quartus_placement": "LCFF_X33_Y4_N5 (== same LE)",
+    "quartus_qsf_extras": "RESERVE_ALL_UNUSED_PINS=As input tri-stated with weak pull-up; FAST_OUTPUT_REGISTER OFF"
+  },
+  "gap_total": {
+    "header": 42,
+    "fabric": 61,
+    "crc_recomputed_ignore": 313
+  },
+  "header_miss_count": 24,
+  "buckets": {
+    "in_cl_and_override": {
+      "count": 1,
+      "cells": [
+        [
+          73,
+          2
+        ]
+      ],
+      "fix": "already in x33y4_infra_override.json"
+    },
+    "universal_m16_reserved_idle_9_of_9": {
+      "count": 8,
+      "cells": [
+        [
+          1178,
+          4
+        ],
+        [
+          1179,
+          4
+        ],
+        [
+          1180,
+          4
+        ],
+        [
+          1181,
+          4
+        ],
+        [
+          1182,
+          4
+        ],
+        [
+          1183,
+          4
+        ],
+        [
+          1184,
+          4
+        ],
+        [
+          1185,
+          4
+        ]
+      ],
+      "evidence": "fires in all 9 simple_led_E16_to_G15_clkPIN.rbf where M16 is reserved (clkM1/M2/M15/A14/B14/E15/R4/R8/T4); does NOT fire in clkM16",
+      "fix": "new directive IOB_RESERVE_PIN_M16 (or auto-emit by np2fasm when M16 not in design)"
+    },
+    "majority_m16_reserved_idle_8_of_9": {
+      "count": 8,
+      "cells": [
+        [
+          1914,
+          6
+        ],
+        [
+          1915,
+          6
+        ],
+        [
+          1916,
+          6
+        ],
+        [
+          1917,
+          6
+        ],
+        [
+          1918,
+          6
+        ],
+        [
+          1919,
+          6
+        ],
+        [
+          1920,
+          6
+        ],
+        [
+          1921,
+          6
+        ]
+      ],
+      "evidence": "fires 8/9 reserved designs (one outlier among the 9); structurally adjacent to universal block",
+      "fix": "include in IOB_RESERVE_PIN_M16 directive; verify via 1 more discriminator"
+    },
+    "frame0_mixed_reserve_4_to_5_of_9": {
+      "count": 3,
+      "cells": [
+        [
+          73,
+          3
+        ],
+        [
+          73,
+          4
+        ],
+        [
+          74,
+          5
+        ]
+      ],
+      "evidence": "fires partially across reserved-pin designs (5/9, 5/9, 4/9)",
+      "fix": "TBD \u2014 likely depends on which OTHER pins are reserved; may need bank-7-idle model"
+    },
+    "probe2_specific_0_of_9": {
+      "count": 4,
+      "cells": [
+        [
+          1918,
+          2
+        ],
+        [
+          1919,
+          2
+        ],
+        [
+          1920,
+          2
+        ],
+        [
+          1921,
+          2
+        ]
+      ],
+      "evidence": "fires in NONE of the 9 simple_led_clkPIN.rbf, including clkM15 which has same reserved-pin set as probe2",
+      "hypotheses_to_test": [
+        "(a) E1-clock-specific cells that simple_led_clkE15.rbf DID emit but at different N-slot",
+        "(b) FAST_OUTPUT_REGISTER OFF triggers extra IOB-FF-bypass cells",
+        "(c) RESERVE_ALL_UNUSED_PINS pull-up-mode-specific cells (simple_led mining may have used different mode)"
+      ],
+      "next_discriminator": "Quartus build of identical probe2 with FAST_OUTPUT_REGISTER ON, RESERVE_ALL_UNUSED_PINS=AS_INPUT_TRI_STATED (no pull-up)"
+    }
+  },
+  "fix_priority": [
+    "1. Implement IOB_RESERVE_PIN_M16 directive: 16 cells (universal+majority bundles)",
+    "2. Wire np2fasm to auto-emit when M16 not in design top-level ports",
+    "3. Re-measure gap: should drop 16 header MISSes => leaves 7-8 cells",
+    "4. Mine 4 probe2-specific cells via Quartus pin-mode discriminator",
+    "5. Re-measure; if MISS_in_header == 0 and total < 100, flash gate is open"
+  ],
+  "session_milestone": "0 flashes; 100% software bisect; gap structurally decomposed"
+}

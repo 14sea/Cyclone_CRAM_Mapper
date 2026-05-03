@@ -1,0 +1,60 @@
+{
+  "description": "M16-reserved-idle IOB bank XOR delta cells.  Apply when M16 is NOT used in design (Quartus default RESERVE_ALL_UNUSED_PINS=As input tri-stated with weak pull-up).  Verified 2026-05-03 against probe2 silicon-validated reference (md5 d4073d2e..) and 9 simple_led_E16_to_G15_clk{PIN}.rbf discriminators.",
+  "scope": "header_band",
+  "frame": "nv_zero_global",
+  "semantic": "XOR — flips bits regardless of base state.  When M16 unused: applies; when M16 used (cl_and, simple_led_clkM16): MUST NOT apply.",
+  "evidence": {
+    "universal_set_8of8_in_9_reserved_designs": {
+      "cells": [[1178,4],[1179,4],[1180,4],[1181,4],[1182,4],[1183,4],[1184,4],[1185,4]]
+    },
+    "universal_clear_8of8_in_9_reserved_designs": {
+      "cells": [[1194,4],[1195,4],[1196,4],[1197,4]]
+    },
+    "majority_set_8of9_reserved_designs": {
+      "cells": [[1914,6],[1915,6],[1916,6],[1917,6],[1918,6],[1919,6],[1920,6],[1921,6]]
+    },
+    "majority_clear_8of9_reserved_designs": {
+      "cells": [[1918,7],[1919,7],[1920,7],[1921,7]]
+    }
+  },
+  "xor_cells_24": [
+    [1178,4],[1179,4],[1180,4],[1181,4],[1182,4],[1183,4],[1184,4],[1185,4],
+    [1194,4],[1195,4],[1196,4],[1197,4],
+    [1914,6],[1915,6],[1916,6],[1917,6],
+    [1918,6],[1919,6],[1920,6],[1921,6],
+    [1918,7],[1919,7],[1920,7],[1921,7]
+  ],
+  "discriminator_designs": {
+    "M16_active_clkM16": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM16.rbf — 0/24 cells fire (M16 used as clock)",
+    "M16_reserved_other_clk": [
+      "clkM15", "clkE15", "clkR8", "clkA14", "clkB14",
+      "clkM1",  "clkM2",  "clkR4", "clkT4"
+    ]
+  },
+  "validation": {
+    "applied_to_probe2_open.rbf": {
+      "before_xor_md5": "50977fd3532746d1b840d9ede6e3ef67",
+      "after_xor_md5":  "188a128fbdb5cf2de49dc2c4be61080c",
+      "header_diffs_before": 42,
+      "header_diffs_after":  18,
+      "header_diffs_closed": 24
+    }
+  },
+  "residual_after_application": {
+    "header_miss_8": [
+      [73,2], [73,3], [73,4], [74,5],
+      [1918,2], [1919,2], [1920,2], [1921,2]
+    ],
+    "header_over_10": [
+      [41,0], [48,0], [51,0], [73,7], [74,1], [74,6],
+      [1914,3], [1915,3], [1916,3], [1917,3]
+    ],
+    "interpretation": "Frame-0 mixed-reserve cells (depend on clk pin or other reserved pins; not M16-specific). Frame-8 bp=2 are probe2-only (X=33 1-LE + E1 clock + N=4 placement specific) — needs X=33 1-LE Quartus discriminator to mine."
+  },
+  "next_session_implementation": [
+    "1. Add `IOB_RESERVE_PIN_M16` directive to fuzz/fasm2rbf.py emitting these 24 XOR cells",
+    "2. Add auto-emit logic in synth/np2fasm.py: emit when M16 not in design top-level IOBs",
+    "3. Optionally generalize to IOB_RESERVE_PIN <PIN> with per-pin tables — needs mining for E16/M15/etc.",
+    "4. Mine X=33 1-LE discriminator (1-LE@X=33Y4N4 vs 1-LE@X=10Y10N0 with same E1+E16+G15) to attack the 4 frame-8 bp=2 cells"
+  ]
+}
