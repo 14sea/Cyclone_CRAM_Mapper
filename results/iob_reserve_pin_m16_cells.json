@@ -34,7 +34,10 @@
     "Group B — IOB_CLK_INPUT_E1 cells double-flipped by IOB_PAD_NV (9 cells, fires when M16 reserved AND IOB_PAD_NV+IOB_CLK_INPUT_E1 both emitted; corrects calibration mismatch where IOB_PAD_NV embeds M16-active assumption):",
     [73,3],
     [1914,3],[1915,3],[1916,3],[1917,3],
-    [1918,2],[1919,2],[1920,2],[1921,2]
+    [1918,2],[1919,2],[1920,2],[1921,2],
+    "Group C — frame-0 + frame-8/9 residual cells closing the last 9 probe2 hdr diffs (2026-05-03; verified open ^ 1 == quartus_probe2 for all; cl_and unaffected since directive gated on M16 reserved). 3 MISS-closers + 6 OVER-closers:",
+    [73,2],[73,4],[74,5],
+    [41,0],[48,0],[51,0],[73,7],[74,1],[74,6]
   ],
   "validation_33_cell_unified": {
     "applied_to_probe2_open.rbf": {

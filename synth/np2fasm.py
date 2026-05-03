@@ -1322,13 +1322,20 @@ def convert(
             fasm.insert(insert_at, "IOB_BASELINE_NV")
 
     # IOB_RESERVE_PIN_M16: Quartus default RESERVE_ALL_UNUSED_PINS produces
-    # a 33-cell hdr-band delta when M16 is unused.  Emit only when:
-    #   (a) the design uses IOB_PAD_NV (which embeds an M16-active baseline
-    #       — calibration mismatch needs correction), AND
-    #   (b) M16 is NOT one of the design's pinned IOBs.
-    # Group A (24 cells) handles M16-bank-default; Group B (9 cells)
-    # corrects IOB_PAD_NV ∩ IOB_CLK_INPUT_E1 double-flip.
-    if use_pad_nv:
+    # a 42-cell hdr-band XOR delta when M16 is unused. Required for byte-
+    # identity to Quartus-built references (probe2-class) but NOT to hand-
+    # FASM references (W=23 silicon-validated 905dfc85 has no M16-reserve
+    # bits set; silicon tolerates absence). Auto-emit gated on:
+    #   (a) IOB_PAD_NV present (Quartus-class IOB topology)
+    #   (b) M16 not in design IOBs
+    #   (c) no LUT_ARITH or LUT_ARITH_MULTI_LAB (excludes carry-chain
+    #       designs that target hand-FASM byte-identity)
+    has_carry = any(
+        line.startswith(("LUT_ARITH_MULTI_LAB", ))
+        or ".LUT_ARITH" in line
+        for line in fasm
+    )
+    if use_pad_nv and not has_carry:
         m16_used = any(
             (line.split()[-1] == "PIN_M16")
             for line in iob_pending
