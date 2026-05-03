@@ -37,7 +37,13 @@
     [1918,2],[1919,2],[1920,2],[1921,2],
     "Group C — frame-0 + frame-8/9 residual cells closing the last 9 probe2 hdr diffs (2026-05-03; verified open ^ 1 == quartus_probe2 for all; cl_and unaffected since directive gated on M16 reserved). 3 MISS-closers + 6 OVER-closers:",
     [73,2],[73,4],[74,5],
-    [41,0],[48,0],[51,0],[73,7],[74,1],[74,6]
+    [41,0],[48,0],[51,0],[73,7],[74,1],[74,6],
+    "Group D — fabric LAB-column-default + GCLK_PIN_E1 calibration + X=33-area cells, closing 24 of 61 fabric cells. All verified open^1==quartus_probe2 + cl_and uses M16 so directive doesn't fire (byte-identity preserved). 12 LAB-col-default at X<10 (universal across all 10 simple_led discriminators); 7 M16-active-only (cl_and flips via GCLK_PIN_E1/X33Y4_INFRA, probe2 needs un-flip); 5 partial-pattern cells:",
+    [11746,4],[12167,4],[13191,4],[13401,4],[13613,4],
+    [15292,4],[15923,4],[18001,4],[18218,2],[18869,2],[19678,4],[20099,4],
+    [7312,4],[7519,4],[7520,4],
+    [358072,4],[358073,4],[358282,4],[358283,4],
+    [247550,2],[248189,2],[363039,2],[363459,2],[363883,2]
   ],
   "validation_33_cell_unified": {
     "applied_to_probe2_open.rbf": {
