@@ -728,14 +728,16 @@ def _load_iob_baseline_hdr_cells():
 
 
 def _x33_nibble_cells():
-    """Return {nibble_class (0..3): set of (off, bp)} for X=33 LUT TT.
+    """Return {(y, n): {nibble_class (0..3): set of (off, bp)}} for X=33 LUT TT.
 
-    Mined from 6-variant cross_lab.v Quartus builds (cl_and/or/xor/andn/
-    nor/xnor) — see scripts/cross_lab/x33_lut_mining/.  Each nibble class
-    `k` covers TT bits {k, k+4, k+8, k+12} and emits 14-16 cells in a
-    pair of consecutive CRAM frames.  Activation semantics are
-    nibble-OR (NOT per-bit XOR): the cell set fires when ANY bit in the
-    nibble is set in the LUT mask.
+    Per-position per-nibble cell tables mined from cross_lab.v variants:
+    - (4, 4) → Stage A position, from cl_*.v (Stage A varies, Stage B buf)
+    - (4, 6) → Stage B position, from rcl_*.v (Stage A buf, Stage B varies)
+
+    Each nibble class `k` covers TT bits {k, k+4, k+8, k+12} and emits
+    12-16 cells across a pair of consecutive CRAM frames.  Activation
+    semantics are nibble-OR (NOT per-bit XOR): the cell set fires when
+    ANY bit in the nibble is set in the LUT mask.
     """
     global _X33_NIB_CACHE
     if _X33_NIB_CACHE is not None:
@@ -749,8 +751,20 @@ def _x33_nibble_cells():
         )
     data = json.loads(path.read_text())
     out = {}
-    for k_str, cells in data["nibble_classes"].items():
-        out[int(k_str)] = set((int(off), int(bp)) for off, bp in cells)
+    if "positions" in data:
+        for pos_str, pos_data in data["positions"].items():
+            # pos_str like "(4, 4)" → (y, n)
+            yn = tuple(int(x.strip()) for x in pos_str.strip("()").split(","))
+            out[yn] = {
+                int(k): set((int(off), int(bp)) for off, bp in cells)
+                for k, cells in pos_data["nibble_classes"].items()
+            }
+    else:
+        # Legacy single-position format (Stage A only, deprecated)
+        out[(4, 4)] = {
+            int(k): set((int(off), int(bp)) for off, bp in cells)
+            for k, cells in data["nibble_classes"].items()
+        }
     _X33_NIB_CACHE = out
     return out
 
@@ -1619,6 +1633,15 @@ def build_route_ops(routes, cells_table=None, extra_cells=None,
             continue
         if lenient:
             continue
+        # X=33 jailbreak column has no calibrated route formula — the
+        # CE6-derived parse_need + plan_hops + emit_ops fallback emits
+        # cells at structurally wrong offsets (proven 0/9 hit on
+        # cl_and gold for ROUTE 33,4,4 → 33,4,6.dataa).  Skip emission
+        # rather than corrupt the bitstream; the route still needs a
+        # real sig-cache entry mined from a working Quartus reference
+        # before silicon will function.
+        if sx == 33 or dx == 33:
+            continue
         need = parse_need((sx, sy), (dx, dy, dn, port))
         plan = plan_hops(need)
         li = pick_li_envelope(need)
@@ -2061,11 +2084,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             for addr, bitpos in lut.predict_sram(mask) & tt_only:
                 buf[addr] ^= (1 << bitpos)
 
-        # X=33 nibble-OR phase.  Per-nibble cell table is mined from
-        # Stage-A position SLICE_X33_Y4_N4 only (cross_lab_open_x33's
-        # forced placement); other (Y, N) within X=33 require their
-        # own per-position mining.  For LEs not covered by the table,
-        # skip emission rather than emit at wrong offsets.
+        # X=33 nibble-OR phase.  Per-position per-nibble cell tables
+        # mined from cross_lab.v variants: (Y=4, N=4) is Stage A,
+        # (Y=4, N=6) is Stage B.  For LEs at uncovered (Y, N), skip
+        # emission rather than emit at wrong offsets.
         #
         # Each covered LE: determine which of the 4 nibble classes
         # (b%4) have any TT bit set; XOR-flip the union of those
@@ -2074,21 +2096,21 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # NV_BASELINE_PACK directive).  Cells emitted ONCE regardless
         # of how many bits in a nibble are set (per-nibble OR
         # semantics, not per-bit XOR).
-        X33_NIB_PLACEMENTS = {(4, 4)}  # (Y, N) → nibble table applies
         if x33_luts:
-            nib_cells = _x33_nibble_cells()
+            nib_table = _x33_nibble_cells()  # {(y,n): {0..3: cell_set}}
             x33_flip_cells = set()
             for x, y, n, mask in x33_luts:
                 if (x, y, n) in arith_keys:
                     continue
-                if (y, n) not in X33_NIB_PLACEMENTS:
+                pos_nibs = nib_table.get((y, n))
+                if pos_nibs is None:
                     # No per-position table → leave LUT TT bits alone
                     # (better than emitting at wrong offsets and
                     # silently corrupting other (Y, N) cells).
                     continue
                 for k in range(4):
                     if (mask >> k) & 0x1111:
-                        x33_flip_cells |= nib_cells[k]
+                        x33_flip_cells |= pos_nibs[k]
             for addr, bitpos in x33_flip_cells:
                 buf[addr] ^= (1 << bitpos)
 

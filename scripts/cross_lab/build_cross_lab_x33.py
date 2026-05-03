@@ -195,7 +195,11 @@ write_json {yosys_json}
     sys.path.insert(0, str(REPO / "fuzz"))
     from np2fasm import convert
     routed_data = _json.loads(placed_json.read_text())
-    fasm_lines, warnings = convert(routed_data, baseline="pure")
+    # baseline="nv" — X=33 LUT codec assumes the working buffer is at
+    # nv_zero_global state when phase 2 runs.  NV_BASELINE_PACK has
+    # 3350 missing cells (incomplete coverage of pure→nv delta) which
+    # break the XOR-flip semantics for X=33's per-nibble cells.
+    fasm_lines, warnings = convert(routed_data, baseline="nv")
     fasm_text = "\n".join(fasm_lines) + "\n"
     fasm_path = WORK / "cross_lab.fasm"
     fasm_path.write_text(fasm_text)
@@ -204,9 +208,8 @@ write_json {yosys_json}
         print(f"  W: {w}")
 
     print("\n=== Step 4: fasm2rbf ===", flush=True)
-    from pure_zero_rbf import make_pure_zero_rbf
     from fasm2rbf import bitgen
-    base_rbf = make_pure_zero_rbf()
+    base_rbf = (REPO / "results" / "rbf" / "nv_zero_global.rbf").read_bytes()
     result_rbf = bitgen(fasm_text, base_rbf, lenient=False)
     OUT_RBF.write_bytes(result_rbf)
     import hashlib
