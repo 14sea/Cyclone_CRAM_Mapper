@@ -87,7 +87,7 @@
         "fabric_crc": 128,
         "postamble": 0
       },
-      "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation). HW config-chain validated on AX301 2026-04-24 (ζ pipeline flash gate OK)."
+      "notes": "Sibling of y11_dataa; differs only in destination port (tests port isolation). HW config-chain validated on AX301 2026-04-24 (\u03b6 pipeline flash gate OK)."
     },
     {
       "name": "neorv32_demo",
@@ -122,7 +122,7 @@
       "sha256": "650ac11fa4eb9738f8f8281a4750cc40658ef02ed1a86598b6368d77cc35aa1f",
       "size": 368011,
       "kind": "quartus_gold",
-      "design": "NEORV32 bootloader, v2 drill variant — identical to neorv32_demo except IO_UART0_TX_FIFO=5 (32-entry) instead of 4 (16-entry). Quartus 21.1 re-fit touches 1419/1752 fabric frames; pair with neorv32_demo for manifest/rbf drift diffing.",
+      "design": "NEORV32 bootloader, v2 drill variant \u2014 identical to neorv32_demo except IO_UART0_TX_FIFO=5 (32-entry) instead of 4 (16-entry). Quartus 21.1 re-fit touches 1419/1752 fabric frames; pair with neorv32_demo for manifest/rbf drift diffing.",
       "hw_validated": "2026-04-24",
       "zeta_bits_total": 128370,
       "region_bits": {
@@ -141,7 +141,34 @@
         "fabric_crc": 2843,
         "postamble": 0
       },
-      "notes": "Rebuilt by zeta_pipeline on 2026-04-24 from tmp/neorv32_v2/v2/quartus; Quartus 21.1 is deterministic for this project (v1 rebuild matches the shipped neorv32_demo fixture byte-for-byte). HW-validated on AX301 2026-04-24: all 5 ζ pipeline gates passed (flash + UART match 'CMD:>' prompt at 19200-8N1 — bootloader reaches interactive mode after the expected SPI-flash ERROR_DEVICE fallback). Fixture gitignored alongside v1; see tmp/neorv32_v2/DIFF_REPORT.md for the drift analysis."
+      "notes": "Rebuilt by zeta_pipeline on 2026-04-24 from tmp/neorv32_v2/v2/quartus; Quartus 21.1 is deterministic for this project (v1 rebuild matches the shipped neorv32_demo fixture byte-for-byte). HW-validated on AX301 2026-04-24: all 5 \u03b6 pipeline gates passed (flash + UART match 'CMD:>' prompt at 19200-8N1 \u2014 bootloader reaches interactive mode after the expected SPI-flash ERROR_DEVICE fallback). Fixture gitignored alongside v1; see tmp/neorv32_v2/DIFF_REPORT.md for the drift analysis."
+    },
+    {
+      "name": "cross_lab_x33",
+      "path": "tmp/zeta_fixtures/cross_lab_x33.rbf",
+      "sha256": "37551091dc4447041311cb5d8862d7f4c49d71981d009ac7cd3c67139f4167cb",
+      "size": 368011,
+      "kind": "quartus_gold",
+      "design": "cross_lab.v at X=33 jailbreak column \u2014 q1<=key2&key3 (SLICE_X33_Y4_N4) -> led0<=q1 (SLICE_X33_Y4_N6); E16+M16+G15+E1; first AX301 silicon-validated zero-Quartus open-toolchain run for an X=33 design",
+      "hw_validated": "2026-05-03",
+      "zeta_bits_total": 720,
+      "region_bits": {
+        "preamble": 0,
+        "header_data": 48,
+        "header_crc": 4,
+        "fabric_data": 121,
+        "fabric_crc": 547,
+        "postamble": 0
+      },
+      "region_bytes": {
+        "preamble": 0,
+        "header_data": 38,
+        "header_crc": 2,
+        "fabric_data": 121,
+        "fabric_crc": 149,
+        "postamble": 0
+      },
+      "notes": "Reference build: tmp/x33_lut_mining/cl_and/cl_and.rbf (Quartus). HW-validated on AX301 2026-05-03 (LED0 = key2 & key3, both keys released -> on, either pressed -> off). Catches regressions in: X=33 per-nibble LUT codec, X33Y4_CROSS_LAB_SHIM activation guard, Phase-3 LI restore + post-restore override application order, LAB_CLK_SEL_LE X=33 skip + ROUTE X=33 skip + IOB_IN E16/M16 X=33 column-strip filter."
     },
     {
       "name": "nv_zero_global_self",

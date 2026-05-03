@@ -29,10 +29,16 @@ if [[ ! -f "$SELFTEST" ]]; then
 fi
 
 # Fixture is gitignored and may not exist locally; skip gracefully in that case.
+# Make this VERY visible so devs notice the gate is bypassed (audit fix
+# 2026-05-03: previous silent-skip caused gate to evaporate on fresh clones).
 FIXTURE="$REPO_ROOT/tmp/chipdb_test/quartus_two_lab/output_files/two_lab.rbf"
 if [[ ! -f "$FIXTURE" ]]; then
-    echo "[pre-commit] ζ fixture missing ($FIXTURE); skipping"
-    echo "            rebuild via: cd tmp/chipdb_test/quartus_two_lab && quartus_sh --flow compile two_lab"
+    echo "" >&2
+    echo "[pre-commit] ⚠️  WARNING: ζ regression gate BYPASSED" >&2
+    echo "[pre-commit] ⚠️  fixture missing: $FIXTURE" >&2
+    echo "[pre-commit] ⚠️  this commit is NOT gated against ζ codec drift." >&2
+    echo "[pre-commit] ⚠️  rebuild fixture: cd tmp/chipdb_test/quartus_two_lab && quartus_sh --flow compile two_lab" >&2
+    echo "" >&2
     exit 0
 fi
 

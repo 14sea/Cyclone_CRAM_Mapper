@@ -345,6 +345,11 @@ _IOB_DELTA_COLUMN_STRIP: dict[tuple[str, str], frozenset[int]] = {
     # Right-edge input pins: X=33 cells in input_delta are noise.
     # Confirmed against cl_and gold which uses these pins at X=33Y4 LAB
     # — none of the X=33 cells appeared in gold.
+    #
+    # AUDIT SCOPE (2026-05-03): single design — cl_and (cross_lab.v at
+    # SLICE_X33_Y4_N4 + N=6).  If a future X=33Y? design at a different
+    # (Y, N) needs E16/M16 pad cells in the X=33 column, this filter
+    # would over-strip.  Re-audit before adding new X=33 design classes.
     ("IN", "E16"): frozenset({33}),
     ("IN", "M16"): frozenset({33}),
 }
@@ -1246,6 +1251,14 @@ def _load_lab_clk_sel_le_cells(x, y, n, *, lenient=False):
     # match at X33Y4 N=4+N=6.  Skip the lookup to avoid emitting wrong
     # cells; X=33 LE infra is provided by X33Y4_INFRA override instead.
     if x == 33:
+        import sys as _sys
+        print(
+            f"WARN: LAB_CLK_SEL_LE X33Y{y}N{n} silently dropped "
+            f"(clk_lab_sel_per_le.json X33 entries are LOC-rejected "
+            f"mining garbage; X=33 LE clock infra is supplied by the "
+            f"X33Y4_CROSS_LAB_SHIM override when topology matches).",
+            file=_sys.stderr,
+        )
         return []
     entry = _LAB_CLK_SEL_LE_CACHE[key]
     bucket = f"n{n}_specific"
@@ -1745,6 +1758,14 @@ def build_route_ops(routes, cells_table=None, extra_cells=None,
         # real sig-cache entry mined from a working Quartus reference
         # before silicon will function.
         if sx == 33 or dx == 33:
+            import sys as _sys
+            print(
+                f"WARN: ROUTE X{sx}Y{sy}N{sn}->X{dx}Y{dy}N{dn}.{port} "
+                f"silently dropped (X=33 has no formula path; needs "
+                f"sig-cache entry).  Same-LAB X=33 routes are covered "
+                f"by X33Y4_CROSS_LAB_SHIM when topology matches.",
+                file=_sys.stderr,
+            )
             continue
         need = parse_need((sx, sy), (dx, dy, dn, port))
         plan = plan_hops(need)
@@ -2211,6 +2232,16 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                     # No per-position table → leave LUT TT bits alone
                     # (better than emitting at wrong offsets and
                     # silently corrupting other (Y, N) cells).
+                    import sys as _sys
+                    print(
+                        f"WARN: X=33 LE at (Y={y}, N={n}) has no "
+                        f"nibble codec table; LUT TT bits unset.  "
+                        f"Mine this position via "
+                        f"scripts/cross_lab/x33_lut_mining/ before "
+                        f"flashing.  Available positions: "
+                        f"{sorted(nib_table.keys())}",
+                        file=_sys.stderr,
+                    )
                     continue
                 for k in range(4):
                     if (mask >> k) & 0x1111:
