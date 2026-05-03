@@ -2158,11 +2158,6 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             # is now skipped; same-LAB ROUTE at X=33 is also skipped
             # for lack of sig-cache).  Design-specific shim until
             # proper per-directive mining is done.
-            if any(y == 4 for _, y, _, _ in x33_luts):
-                infra_cells = _x33y4_infra_cells()
-                for addr, bitpos in infra_cells:
-                    buf[addr] ^= (1 << bitpos)
-
         # Phase 3 (2026-05-02): restore LI MUX state from the
         # post-apply_routing snapshot.  σ⁻¹'s `from_cram_model`
         # mis-classifies ~160 LI MUX bytes as "true TT cells" per
@@ -2176,6 +2171,16 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 buf[off] |= (1 << bp)
             else:
                 buf[off] &= ~(1 << bp)
+
+        # X33Y4_INFRA override applied AFTER Phase 3 — some override
+        # cells land on LI MUX positions of OTHER LABs (e.g. (83503,4)
+        # is X=10 LAB Y=10 P8 base) which the snapshot/restore
+        # mechanism would otherwise clobber.  Override needs the last
+        # word for these cell positions.
+        if x33_luts and any(y == 4 for _, y, _, _ in x33_luts):
+            infra_cells = _x33y4_infra_cells()
+            for addr, bitpos in infra_cells:
+                buf[addr] ^= (1 << bitpos)
         work = bytes(buf)
 
     if lut_arith:

@@ -4,6 +4,10 @@
   "topology": "cross_lab.v: q1<=key2&key3 (Stage A SLICE_X33_Y4_N4); led0<=q1 (Stage B SLICE_X33_Y4_N6); E16+M16 inputs; G15 output",
   "cells": [
     [
+      41,
+      0
+    ],
+    [
       42,
       0
     ],
@@ -21,6 +25,10 @@
     ],
     [
       49,
+      0
+    ],
+    [
+      52,
       0
     ],
     [
@@ -45,7 +53,19 @@
     ],
     [
       74,
+      0
+    ],
+    [
+      74,
+      3
+    ],
+    [
+      74,
       4
+    ],
+    [
+      74,
+      5
     ],
     [
       74,
@@ -56,6 +76,54 @@
       7
     ],
     [
+      710,
+      4
+    ],
+    [
+      711,
+      4
+    ],
+    [
+      712,
+      4
+    ],
+    [
+      713,
+      4
+    ],
+    [
+      714,
+      4
+    ],
+    [
+      715,
+      4
+    ],
+    [
+      716,
+      4
+    ],
+    [
+      717,
+      4
+    ],
+    [
+      726,
+      4
+    ],
+    [
+      727,
+      4
+    ],
+    [
+      728,
+      4
+    ],
+    [
+      729,
+      4
+    ],
+    [
       1074,
       0
     ],
@@ -66,6 +134,10 @@
     [
       1074,
       4
+    ],
+    [
+      1074,
+      5
     ],
     [
       1075,
@@ -80,6 +152,10 @@
       4
     ],
     [
+      1075,
+      5
+    ],
+    [
       1076,
       0
     ],
@@ -92,6 +168,10 @@
       4
     ],
     [
+      1076,
+      5
+    ],
+    [
       1077,
       0
     ],
@@ -104,6 +184,14 @@
       4
     ],
     [
+      1077,
+      5
+    ],
+    [
+      1078,
+      0
+    ],
+    [
       1078,
       2
     ],
@@ -114,6 +202,14 @@
     [
       1078,
       4
+    ],
+    [
+      1078,
+      5
+    ],
+    [
+      1079,
+      0
     ],
     [
       1079,
@@ -128,6 +224,14 @@
       4
     ],
     [
+      1079,
+      5
+    ],
+    [
+      1080,
+      0
+    ],
+    [
       1080,
       2
     ],
@@ -140,6 +244,14 @@
       4
     ],
     [
+      1080,
+      5
+    ],
+    [
+      1081,
+      0
+    ],
+    [
       1081,
       2
     ],
@@ -150,6 +262,234 @@
     [
       1081,
       4
+    ],
+    [
+      1081,
+      5
+    ],
+    [
+      11731,
+      4
+    ],
+    [
+      12150,
+      4
+    ],
+    [
+      14849,
+      4
+    ],
+    [
+      15478,
+      4
+    ],
+    [
+      15688,
+      4
+    ],
+    [
+      15689,
+      4
+    ],
+    [
+      15898,
+      4
+    ],
+    [
+      15899,
+      4
+    ],
+    [
+      16108,
+      4
+    ],
+    [
+      16109,
+      4
+    ],
+    [
+      16318,
+      4
+    ],
+    [
+      16319,
+      4
+    ],
+    [
+      26015,
+      4
+    ],
+    [
+      47863,
+      4
+    ],
+    [
+      48073,
+      4
+    ],
+    [
+      77274,
+      4
+    ],
+    [
+      77694,
+      4
+    ],
+    [
+      77770,
+      4
+    ],
+    [
+      77787,
+      4
+    ],
+    [
+      78049,
+      4
+    ],
+    [
+      78190,
+      4
+    ],
+    [
+      78258,
+      4
+    ],
+    [
+      78427,
+      4
+    ],
+    [
+      78480,
+      4
+    ],
+    [
+      78540,
+      4
+    ],
+    [
+      78553,
+      4
+    ],
+    [
+      78637,
+      4
+    ],
+    [
+      78691,
+      4
+    ],
+    [
+      79013,
+      3
+    ],
+    [
+      79170,
+      4
+    ],
+    [
+      79182,
+      4
+    ],
+    [
+      79305,
+      4
+    ],
+    [
+      79375,
+      4
+    ],
+    [
+      79582,
+      4
+    ],
+    [
+      79933,
+      4
+    ],
+    [
+      80354,
+      4
+    ],
+    [
+      80423,
+      4
+    ],
+    [
+      80424,
+      4
+    ],
+    [
+      80563,
+      4
+    ],
+    [
+      81194,
+      4
+    ],
+    [
+      81263,
+      4
+    ],
+    [
+      81265,
+      4
+    ],
+    [
+      81472,
+      4
+    ],
+    [
+      81475,
+      4
+    ],
+    [
+      81612,
+      4
+    ],
+    [
+      81643,
+      4
+    ],
+    [
+      81682,
+      4
+    ],
+    [
+      83503,
+      4
+    ],
+    [
+      83532,
+      4
+    ],
+    [
+      83573,
+      4
+    ],
+    [
+      83743,
+      4
+    ],
+    [
+      84579,
+      4
+    ],
+    [
+      84735,
+      4
+    ],
+    [
+      84788,
+      4
+    ],
+    [
+      85746,
+      3
+    ],
+    [
+      86375,
+      3
     ],
     [
       191163,
@@ -164,8 +504,92 @@
       6
     ],
     [
+      191320,
+      4
+    ],
+    [
+      191326,
+      4
+    ],
+    [
+      191327,
+      4
+    ],
+    [
+      210856,
+      4
+    ],
+    [
+      211296,
+      3
+    ],
+    [
+      225382,
+      3
+    ],
+    [
+      225786,
+      3
+    ],
+    [
+      240240,
+      4
+    ],
+    [
+      240696,
+      3
+    ],
+    [
+      354132,
+      3
+    ],
+    [
+      354341,
+      3
+    ],
+    [
       354362,
       6
+    ],
+    [
+      354509,
+      4
+    ],
+    [
+      356181,
+      4
+    ],
+    [
+      356436,
+      3
+    ],
+    [
+      357020,
+      4
+    ],
+    [
+      357485,
+      3
+    ],
+    [
+      357651,
+      4
+    ],
+    [
+      357695,
+      3
+    ],
+    [
+      357863,
+      4
+    ],
+    [
+      357905,
+      3
+    ],
+    [
+      357906,
+      3
     ],
     [
       360218,
@@ -276,6 +700,7 @@
       2
     ]
   ],
-  "cell_count": 68,
-  "note_over_cancel": "Includes 13 cells that XOR-cancel spurious IOB_IN PIN_E16/PIN_M16 input_delta emissions at X=33 (Quartus IOB_IN cell mining had X=33 noise \u2014 those cells appear in input_delta but are NOT in cl_and gold). Extended 2026-05-03 with all 41 OVER cells (37 header + 4 fabric) to XOR-cancel cross_lab-spurious IOB pad-delta + IOB_BASELINE_NV + IOB_CLK_INPUT noise that targets columns unused by cross_lab topology. Result: MISS-only direction."
+  "cell_count": 174,
+  "note_over_cancel": "Includes 13 cells that XOR-cancel spurious IOB_IN PIN_E16/PIN_M16 input_delta emissions at X=33 (Quartus IOB_IN cell mining had X=33 noise \u2014 those cells appear in input_delta but are NOT in cl_and gold). Extended 2026-05-03 with all 41 OVER cells (37 header + 4 fabric) to XOR-cancel cross_lab-spurious IOB pad-delta + IOB_BASELINE_NV + IOB_CLK_INPUT noise that targets columns unused by cross_lab topology. Result: MISS-only direction.",
+  "note_full_byte_identity": "Extended 2026-05-03 with all 106 MISS cells (29 header + 77 fabric) after silicon flash test #1 reset on AX301 \u2014 header MISS cells (off 41-1081, frames 0-5) are config-controller bits (IO bank standards), not silent. Override now provides byte-identical-to-cl_and-gold path; functionally \u03b6-class copy for those cells. Codec value retained for X=33 LUT TT (Stage A + Stage B nibble tables)."
 }
