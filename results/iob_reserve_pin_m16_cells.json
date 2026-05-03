@@ -24,7 +24,7 @@
     [1918,6],[1919,6],[1920,6],[1921,6],
     [1918,7],[1919,7],[1920,7],[1921,7]
   ],
-  "xor_cells_33_unified_with_iob_pad_nv_recalibration": [
+  "xor_cells_unified_with_iob_pad_nv_recalibration": [
     "Group A — M16-reserved-idle bank delta (24 cells, fires whenever M16 reserved):",
     [1178,4],[1179,4],[1180,4],[1181,4],[1182,4],[1183,4],[1184,4],[1185,4],
     [1194,4],[1195,4],[1196,4],[1197,4],

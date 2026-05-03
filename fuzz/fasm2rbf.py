@@ -435,12 +435,14 @@ _IOB_CLK_INPUT_RE = re.compile(r"^IOB_CLK_INPUT\s+PIN_(?P<pin>[A-Z]\d+)$")
 _IOB_CLK_INPUT_CACHE = None
 
 # IOB_RESERVE_PIN_M16 — Quartus default RESERVE_ALL_UNUSED_PINS="As input
-# tri-stated with weak pull-up" produces a 33-cell hdr-band XOR delta when
-# M16 is unused. Group A (24 cells): M16-reserved-idle bank-default delta,
-# fires whenever M16 is reserved regardless of clock pin. Group B (9 cells):
-# IOB_CLK_INPUT_E1 cells double-flipped by IOB_PAD_NV (calibration mismatch
-# correction; IOB_PAD_NV embeds M16-active baseline).  Mined 2026-05-03 from
-# probe2 silicon-validated reference + 9 simple_led_E16_to_G15_clk{PIN} discriminators.
+# tri-stated with weak pull-up" produces a 66-cell XOR delta when M16 is
+# unused.  Group A (24 cells, hdr): M16-reserved-idle IOB-bank-default
+# delta. Group B (9 cells, hdr): IOB_CLK_INPUT_E1 cells double-flipped by
+# IOB_PAD_NV (calibration mismatch correction; IOB_PAD_NV embeds M16-active
+# baseline). Group C (9 cells, hdr): frame-0 residual + 33Y4-area shim cells.
+# Group D (24 cells, fabric): LAB-column-default + GCLK_PIN_E1 calibration
+# correction at X<10. Mined 2026-05-03 from probe2 silicon-validated reference
+# (md5 d4073d2e..) + 9 simple_led_E16_to_G15_clk{PIN} discriminators + cl_and gold.
 # See results/iob_reserve_pin_m16_cells.json + memory/probe2_open_software_bisect_2026_05_03.md.
 _IOB_RESERVE_PIN_M16_RE = re.compile(r"^IOB_RESERVE_PIN_M16$")
 _IOB_RESERVE_PIN_M16_CACHE = None
@@ -526,12 +528,18 @@ def _load_iob_clk_input_cells(pin):
 
 
 def _load_iob_reserve_pin_m16_cells():
-    """Return the 33-cell XOR delta for M16-reserved-idle IOB bank state.
+    """Return the 66-cell XOR delta for M16-reserved-idle IOB bank state.
 
-    Group A (24 cells): M16-bank-default delta — fires whenever M16 is reserved.
-    Group B (9 cells): IOB_CLK_INPUT_E1 ∩ IOB_PAD_NV calibration correction —
-    only well-defined when IOB_PAD_NV + IOB_CLK_INPUT_E1 both emitted.  Caller
-    is responsible for emission gating; this loader returns the full 33-cell set.
+    Group A (24 cells, hdr): M16-bank-default delta — fires whenever M16 is reserved.
+    Group B (9 cells, hdr): IOB_CLK_INPUT_E1 ∩ IOB_PAD_NV calibration correction —
+        only well-defined when IOB_PAD_NV + IOB_CLK_INPUT_E1 both emitted.
+    Group C (9 cells, hdr): frame-0 residual + 33Y4-area shim cells.
+    Group D (24 cells, fabric): LAB-column-default + GCLK_PIN_E1 calibration
+        correction at X<10 (12 universal LAB-col cells, 7 M16-active-only
+        cells incl. 3 GCLK_PIN_E1 + 4 X33Y4_INFRA region, 5 partial cells).
+
+    Caller is responsible for emission gating (auto-emit in np2fasm gates on
+    `use_pad_nv AND M16 not in IOBs AND not has_carry`).
     """
     global _IOB_RESERVE_PIN_M16_CACHE
     if _IOB_RESERVE_PIN_M16_CACHE is None:
@@ -544,7 +552,7 @@ def _load_iob_reserve_pin_m16_cells():
             )
         data = json.loads(path.read_text())
         # Filter out string section markers, keep only [off, bp] pairs.
-        raw = data["xor_cells_33_unified_with_iob_pad_nv_recalibration"]
+        raw = data["xor_cells_unified_with_iob_pad_nv_recalibration"]
         _IOB_RESERVE_PIN_M16_CACHE = [
             tuple(c) for c in raw if isinstance(c, list) and len(c) == 2
         ]
