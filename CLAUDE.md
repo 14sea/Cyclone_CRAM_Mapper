@@ -28,6 +28,18 @@ python3 scripts/bit_workaround/zeta_manifest_diff.py A.manifest.json B.manifest.
 python3 scripts/bit_workaround/quartus_gold_to_bit_fasm.py gold.rbf design.bit.fasm
 python3 fuzz/fasm2rbf.py design.bit.fasm results/rbf/nv_zero_global.rbf rebuilt.rbf
 python3 scripts/uart_observe.py --baud 19200 --seconds 30  # --baud required, no default
+# Sig-cache + audit / decomposition tooling (2026-05-04 session):
+python3 scripts/sigcache_remine/mine_x4_cross_lab_route.py --src 4,17,14 --dst 4,4,0 --port dataa
+    # Single-edge sig-cache miner (Plan D' factory pipeline); writes
+    # nv_route_cells.json + route_cells_full.json.  --dry-run to preview.
+python3 scripts/iob_slice_mining/audit_clk_pin_pad_nv_overlap.py --save
+    # Per-pin IOB_CLK_INPUT × IOB_PAD_NV overlap audit (12 pins).
+python3 scripts/cross_lab/probe2_shim_decompose.py --save --verify
+    # Decompose 37-cell X33Y4_PROBE2_INFRA shim into ADD/OVER buckets.
+python3 scripts/cross_lab/analyze_pl_corpus.py --save
+    # 7-variant 1-LE TT corpus intersection vs probe2 shim ADDITIVE.
+python3 fuzz/nv_sig_cache_merge.py
+    # Merge nv_route_cells.json + legacy → route_cells_full.json.
 ```
 
 ## Directory Layout
@@ -37,7 +49,7 @@ python3 scripts/uart_observe.py --baud 19200 --seconds 30  # --baud required, no
 - `scripts/` — one-off investigation scripts kept for reproducibility
 - `tmp/` — **local scratch only, gitignored**. Do NOT use `/tmp/`; use this dir instead. Promote scripts out of `tmp/` to `scripts/` the moment they're cited from docs or memory.
 - `jailbreak/` — CE10 fitter probes (CE6≡CE10 same die, +65% fabric unlocked)
-- `results/` — `rbf/` (~2500 files), `route_cells_full.json` (sig-cache; gitignored, regenerate via `route_signatures.build()`; legacy fallback `route_cells.json` = 1,725 entries), `r4_iindex_table.json`, `ep4ce6_bitdb.sqlite`, `fingerprint_*.json`, `sigma_inv_fb8_groups.json` (2,112-entry σ⁻¹ 3-key table), `nv_baseline_pack.json`, `m9k_mode_bits.json`
+- `results/` — `rbf/` (~2500 files), `route_cells_full.json` (sig-cache; gitignored, regenerate via `route_signatures.build()`; legacy fallback `route_cells.json` = 1,725 entries), `nv_route_cells.json` (canonical Plan D' source for the merger; survives `nv_sig_cache_merge.py` re-runs), `r4_iindex_table.json`, `ep4ce6_bitdb.sqlite`, `fingerprint_*.json`, `sigma_inv_fb8_groups.json` (2,112-entry σ⁻¹ 3-key table), `nv_baseline_pack.json`, `m9k_mode_bits.json`, `iob_clk_input_pad_nv_audit.json` (per-pin overlap risk for IOB_CLK_INPUT × IOB_PAD_NV combination), `x33y4_probe2_shim_decomposition.json` (sidecar for the 37-cell 1-LE shim), `x33y4_pl_corpus_analysis.json` (7-variant 1-LE TT corpus analysis)
 
 ## Chip Constants
 
@@ -213,3 +225,6 @@ Code: **GPL-3.0-or-later** (all .py/.v/.tcl must have SPDX header). Docs: **CC B
 9. **Self-loop sig-cache entries are unmineable with the two-LUT pair template.** The 61 self-loop entries in `route_cells_full.json` are bloated noise (90-754 cells vs corpus median 135). Avoid self-loops at synthesis level, or wait for a single-LE differential mining strategy.
 10. **DFF has no per-LE CRAM enable cell.** Cyclone IV's flip-flop is intrinsic. `dff_cells_mined.json` is bogus. The FASM `DFF` directive is a parsed no-op.
 11. **Preamble-offset bug in CRC detection**: RBF has a 32-byte preamble before CRAM data. CRC position detection must use `(off - 32) % 210 >= 208`, NOT `off % 210 >= 208`. Header CRC cells (frames 0-24) are mandatory in directive sets — excluding them causes board reset on flash.
+12. **Cross-LAB ROUTE without sig-cache is silicon-hostile** (silicon-validated 2026-05-04). When np2fasm warns `no sig-cache (cross-LAB): ...`, the formula path emits cells at structurally wrong CRAM offsets → corrupts config-controller-validated cells → FPGA reset on flash (NOT just functional incorrectness). `validate_safe_for_hardware` does NOT detect this class. `scripts/led_blink/build_open.py` has a REFUSE-TO-BUILD guard scanning np2fasm warnings; future build_open scripts should follow the same pattern. Mining tool: `scripts/sigcache_remine/mine_x4_cross_lab_route.py` (single-edge sig-cache miner via Plan D' factory pipeline). Memory: `d_i_silicon_failed_2026_05_04.md`.
+13. **Phase 3 LI MUX restoration in fasm2rbf line 2487 corrupts std_lut LUT TT for ~half of LAB_Y values** (silicon-validated 2026-05-04). Phase 3 unconditionally restores 18 LI MUX cells per LAB at a `(group, slot)`-derived bp via `_cram_group_bit(y)`. For Y where Phase 3 bp == LE's LUT TT bp at the same byte offsets (Y ∈ {2,4,5,7,10,14,17} hit; Y ∈ {3,6,18,21} safe), the restoration overwrites Phase 1+2's LUT TT clear+XOR with the post-apply_routing snapshot — so `X4Y4N0.LUT = 0xaaaa` decodes as 0xF0F0 ("pass datac" instead of "pass dataa") if any ROUTE targets the same LAB. LUT_ARITH LEs unaffected (Phase 1 skips arith). Detect via `LutCodec.from_cram_model(x,y,n).read_tt(rbf, nv)` — if decoded TT differs from FASM directive, suspect Phase 3 collision. Workaround: pick Y where Phase 3 bp ≠ LUT TT bp. Proper fix (deferred): exclude std_lut TT cells from Phase 3 restoration set + ζ regression. Memory: `phase3_li_mux_lut_tt_collision_2026_05_04.md`.
+14. **Mined cross-LAB R4 sig-cache entries are context-dependent** (silicon-validated 2026-05-04). Mining diff-vs-nv_zero captures the CRAM cells for a specific Quartus router decision in the bare 2-LUT mining design. When applied in dense runtime context (e.g., 24-LE carry chain in same column), the chain consumes routing resources the mined route assumed free → silicon route doesn't form → input floats / output stuck. Codec-level evidence (RBF passes validate, LUT TT decodes correctly) does NOT prove silicon function. For arbitrary chain widths in open-toolchain builds, prefer placing LE driver at a chain-end slice with mined OUTROUTE_G15 (intra-LAB) rather than buffer LE + cross-LAB R4. Memory: `d_i_silicon_two_failures_2026_05_04.md`.
