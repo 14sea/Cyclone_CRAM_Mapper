@@ -19,15 +19,16 @@ REPO = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORK = REPO / "tmp" / "led_blink"
 OUT_RBF = REPO / "tmp" / "led_blink_open.rbf"
-LED_DRIVER_BEL = "SLICE_X4_Y4_N16"  # OUTROUTE_G15-mined slice OUTSIDE the
-                                    # carry-chain region (LAB(4,18)+(4,17))
-                                    # so prepack_carry never claims it.
-                                    # The Verilog led_q buffer is bound here
-                                    # by the pre-place hook (matches "led_q"
-                                    # in cell name).  Without this, the LED
-                                    # signal was driven by the chain-end DFF
-                                    # cnt[23] at X4Y17N14 (UNMINED) → 0
-                                    # OUTROUTE_G15 emitted → silicon stuck.
+LED_DRIVER_BEL = "SLICE_X4_Y4_N0"   # OUTROUTE_G15-mined AND LAB_CLK_SEL_LE
+                                    # mined (5 of 7 X=4 OUTROUTE_G15 slices
+                                    # have LAB_CLK_SEL_LE coverage; N0 is
+                                    # the safest choice — well outside the
+                                    # carry-chain LABs Y=17/18).  Earlier
+                                    # X4Y4N16 selection failed at fasm2rbf
+                                    # because LAB_CLK_SEL_LE X4Y4N16 isn't
+                                    # mined (only n0/n2/n26 buckets exist).
+                                    # Cross-LAB route X4Y17N14 → this slice
+                                    # is sigcache-mined (2026-05-04).
 
 
 def run(cmd, **kw):
