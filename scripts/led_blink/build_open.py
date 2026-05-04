@@ -19,11 +19,15 @@ REPO = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORK = REPO / "tmp" / "led_blink"
 OUT_RBF = REPO / "tmp" / "led_blink_open.rbf"
-LED_DRIVER_BEL = "SLICE_X4_Y21_N0"  # OUTROUTE_G15 slice; X4Y21 has full
-                                    # N=0..30 LAB_CLK_SEL_LE mining, and
-                                    # adjacent X4Y17/18/19/21 likewise —
-                                    # gives the 24-DFF counter room to
-                                    # place without hitting unmined N.
+LED_DRIVER_BEL = "SLICE_X4_Y4_N16"  # OUTROUTE_G15-mined slice OUTSIDE the
+                                    # carry-chain region (LAB(4,18)+(4,17))
+                                    # so prepack_carry never claims it.
+                                    # The Verilog led_q buffer is bound here
+                                    # by the pre-place hook (matches "led_q"
+                                    # in cell name).  Without this, the LED
+                                    # signal was driven by the chain-end DFF
+                                    # cnt[23] at X4Y17N14 (UNMINED) → 0
+                                    # OUTROUTE_G15 emitted → silicon stuck.
 
 
 def run(cmd, **kw):
@@ -117,6 +121,43 @@ write_json {yosys_json}
         print(f"  prepack: {w}")
     print(f"  carry/DFF bel map: {len(bel_map)} entries")
 
+    # Find the cell whose output drives the LED IOB input (a separate
+    # registered buffer in the Verilog).  Yosys obliterates the user-
+    # given `led_q` name during synthesis; we recover it by chasing the
+    # LED$iob.I net back to its driving cell port.  Embedding the
+    # resolved name into the pre-place hook lets us pin the buffer to a
+    # known-mined OUTROUTE_G15 slice without depending on Yosys-preserved
+    # names.
+    led_driver_cell = None
+    # In Yosys JSON the LED IOB isn't a cell yet — it's a top-module port.
+    # Find the cell whose port (Q for DFF) drives the LED port net.  The
+    # cell name in nextpnr after pack gets a `_DFFLC` suffix appended, so
+    # we save both forms.
+    top_mod = yj_for_map["modules"].get("led_blink") or next(
+        m for m in yj_for_map["modules"].values() if m.get("cells"))
+    led_port = top_mod.get("ports", {}).get("LED")
+    cells = top_mod.get("cells", {})
+    if led_port and led_port.get("bits"):
+        led_bit = led_port["bits"][0]
+        for name, c in cells.items():
+            for port, conn in c.get("connections", {}).items():
+                if isinstance(conn, list) and conn == [led_bit]:
+                    if c.get("type") == "DFF" and port == "Q":
+                        led_driver_cell = name
+                        break
+            if led_driver_cell:
+                break
+    # nextpnr-generic appends "_DFFLC" to DFF cells during pack; match
+    # both raw and suffixed in the hook.
+    led_driver_candidates = []
+    if led_driver_cell:
+        led_driver_candidates = [led_driver_cell, led_driver_cell + "_DFFLC"]
+        print(f"  LED-driver cell (from JSON): {led_driver_cell!r} "
+              f"(also try {led_driver_cell + '_DFFLC'!r})")
+    else:
+        print(f"  WARN: could not resolve LED driver cell — pre-place hook "
+              f"will not bind LED_DRIVER_BEL")
+
     PIN_MAP = {
         "CLOCK$iob": "IOB_CLK_PIN_E1",
         "LED$iob":   "IOB_Q_PIN_G15",
@@ -124,6 +165,7 @@ write_json {yosys_json}
     extra_pin_lines = (
         f"\nPIN_MAP = {PIN_MAP!r}\n"
         f"LED_DRIVER_BEL = {LED_DRIVER_BEL!r}\n"
+        f"LED_DRIVER_CANDIDATES = {led_driver_candidates!r}\n"
         "bound_io = 0\n"
         "for kv in ctx.cells:\n"
         "    name = str(kv.first)\n"
@@ -131,22 +173,35 @@ write_json {yosys_json}
         "        ctx.bindBel(PIN_MAP[name], kv.second, npnr.STRENGTH_LOCKED)\n"
         "        bound_io += 1\n"
         "        print(f'  pin {name} -> {PIN_MAP[name]}')\n"
-        "# Pin the LED-driving LE to a free OUTROUTE_G15-capable slice.\n"
-        "# Only fires if the carry-chain pre-pack didn't already claim\n"
-        "# every slot at the LED driver position.\n"
-        "for kv in ctx.cells:\n"
-        "    name = str(kv.first)\n"
-        "    cell = kv.second\n"
-        "    if cell.bel:\n"
-        "        continue\n"
-        "    ctype = str(cell.type)\n"
-        "    if ctype == 'GENERIC_SLICE' and ('LED' in name and '$iob' not in name):\n"
+        "# Pin the LED-buffer LE (resolved from JSON in build_open.py — its\n"
+        "# user-given `led_q` name is obliterated by Yosys, so we look up\n"
+        "# the cell that drives LED$iob.I directly).  Pinning to a known-\n"
+        "# mined OUTROUTE_G15 slice OUTSIDE the carry chain region\n"
+        "# (X4Y4N16 by default) ensures np2fasm emits the OUTROUTE_G15\n"
+        "# directive, fixing the silicon-stuck failure root cause.\n"
+        "if LED_DRIVER_CANDIDATES:\n"
+        "    bound_led = False\n"
+        "    name_to_cell = {str(kv.first): kv.second for kv in ctx.cells}\n"
+        "    for cand in LED_DRIVER_CANDIDATES:\n"
+        "        cell = name_to_cell.get(cand)\n"
+        "        if cell is None:\n"
+        "            continue\n"
+        "        if cell.bel:\n"
+        "            print(f'  LED driver {cand} already bound to '\n"
+        "                  f'{cell.bel} — skipping')\n"
+        "            bound_led = True\n"
+        "            break\n"
         "        try:\n"
         "            ctx.bindBel(LED_DRIVER_BEL, cell, npnr.STRENGTH_LOCKED)\n"
-        "            print(f'  LED driver {name} -> {LED_DRIVER_BEL}')\n"
+        "            print(f'  LED driver {cand} -> {LED_DRIVER_BEL}')\n"
+        "            bound_led = True\n"
         "        except Exception as e:\n"
-        "            print(f'  WARN: bind {name} -> {LED_DRIVER_BEL}: {e}')\n"
+        "            print(f'  WARN: bind {cand} -> {LED_DRIVER_BEL}: {e}')\n"
         "        break\n"
+        "    if not bound_led:\n"
+        "        print(f'  WARN: none of {LED_DRIVER_CANDIDATES!r} found '\n"
+        "              f'in ctx.cells — open RBF will likely have no '\n"
+        "              f'OUTROUTE_G15 emitted')\n"
         "print(f'[pin_constraints] bound {bound_io}/{len(PIN_MAP)} IO cells')\n"
     )
     pin_script = WORK / "pin_constraints.py"
