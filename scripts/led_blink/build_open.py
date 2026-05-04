@@ -258,6 +258,27 @@ write_json {yosys_json}
         for w in warnings[:30]:
             print(f"    {w}")
 
+    # Silicon-hostile pattern guard (memory `d_i_silicon_failed_2026_05_04`):
+    # cross-LAB ROUTE without sig-cache falls through to the formula path,
+    # which emits cells at structurally wrong CRAM offsets (analogous to
+    # the documented X=33 ROUTE formula failure).  These wrong cells
+    # corrupt config-controller-validated cells → FPGA reset on flash
+    # (NOT just functional incorrectness — the bitstream is rejected).
+    # validate_safe_for_hardware does NOT detect this class.
+    crosslab_misses = [w for w in warnings
+                       if "no sig-cache (cross-LAB)" in w]
+    if crosslab_misses:
+        print(f"  REFUSE TO BUILD: {len(crosslab_misses)} cross-LAB ROUTE "
+              f"sig-cache miss(es) — formula fallback is silicon-hostile "
+              f"(causes FPGA config-controller reset on flash, "
+              f"validated 2026-05-04).")
+        for w in crosslab_misses:
+            print(f"    {w}")
+        print(f"  Mine the missing sig-cache entries via Quartus before "
+              f"flashing, OR change placement so the route stays "
+              f"intra-LAB (e.g., tap LED from a different chain bit).")
+        sys.exit(1)
+
     print("\n=== Step 4: fasm2rbf ===", flush=True)
     from pure_zero_rbf import make_pure_zero_rbf
     from fasm2rbf import bitgen
