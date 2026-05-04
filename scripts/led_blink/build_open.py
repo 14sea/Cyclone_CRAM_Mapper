@@ -19,16 +19,19 @@ REPO = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = Path(__file__).resolve().parent
 WORK = REPO / "tmp" / "led_blink"
 OUT_RBF = REPO / "tmp" / "led_blink_open.rbf"
-LED_DRIVER_BEL = "SLICE_X4_Y4_N0"   # OUTROUTE_G15-mined AND LAB_CLK_SEL_LE
-                                    # mined (5 of 7 X=4 OUTROUTE_G15 slices
-                                    # have LAB_CLK_SEL_LE coverage; N0 is
-                                    # the safest choice — well outside the
-                                    # carry-chain LABs Y=17/18).  Earlier
-                                    # X4Y4N16 selection failed at fasm2rbf
-                                    # because LAB_CLK_SEL_LE X4Y4N16 isn't
-                                    # mined (only n0/n2/n26 buckets exist).
-                                    # Cross-LAB route X4Y17N14 → this slice
-                                    # is sigcache-mined (2026-05-04).
+LED_DRIVER_BEL = "SLICE_X4_Y21_N0"  # OUTROUTE_G15-mined + LAB_CLK_SEL_LE
+                                    # mined + Y=21 sidesteps the Phase 3
+                                    # LI MUX restoration bug in fasm2rbf
+                                    # (line 2487).  Phase 3 computes LI MUX
+                                    # cells per LAB at a (group, slot)-
+                                    # determined bp; for Y=4/5/7/10/14/17
+                                    # the bp coincides with the LE's LUT
+                                    # TT bp at the same byte offsets,
+                                    # corrupting the LUT TT.  Y=21 has
+                                    # Phase 3 bp=1, LUT TT bp=0 — no
+                                    # overlap → LUT TT preserved.  See
+                                    # memory `phase3_li_mux_lut_tt_collision
+                                    # _2026_05_04`.
 
 
 def run(cmd, **kw):
