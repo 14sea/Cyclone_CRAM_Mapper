@@ -1,0 +1,56 @@
+{
+  "description": "Analysis sidecar for the 7-variant 1-LE TT corpus (pl_and/or/xor/xnor/andn/orn/nor) at M16-active topology.  Key finding: pl_* land at X=9 not X=33 (IO-bank topology requires 2-LE pairing OR explicit LOC for X=33 placement), so the corpus does not directly validate or promote X33Y4_PROBE2_INFRA's 33 ADDITIVE cells.  What it DID confirm: 4 OVER cells are 2-LE-X33Y4-class only, fire in 0/7 1-LE variants.",
+  "variants": {
+    "pl_and": {
+      "tt": "0x8888",
+      "rbf_path": "tmp/x33_lut_mining/pl_and/pl_and.rbf"
+    },
+    "pl_or": {
+      "tt": "0xeeee",
+      "rbf_path": "tmp/x33_lut_mining/pl_or/pl_or.rbf"
+    },
+    "pl_xor": {
+      "tt": "0x6666",
+      "rbf_path": "tmp/x33_lut_mining/pl_xor/pl_xor.rbf"
+    },
+    "pl_xnor": {
+      "tt": "0x9999",
+      "rbf_path": "tmp/x33_lut_mining/pl_xnor/pl_xnor.rbf"
+    },
+    "pl_andn": {
+      "tt": "0x2222",
+      "rbf_path": "tmp/x33_lut_mining/pl_andn/pl_andn.rbf"
+    },
+    "pl_orn": {
+      "tt": "0xbbbb",
+      "rbf_path": "tmp/x33_lut_mining/pl_orn/pl_orn.rbf"
+    },
+    "pl_nor": {
+      "tt": "0x1111",
+      "rbf_path": "tmp/x33_lut_mining/pl_nor/pl_nor.rbf"
+    }
+  },
+  "intersection_count": 111,
+  "intersection_by_region": {
+    "header": 36,
+    "X=5": 6,
+    "X=9": 36,
+    "X=33": 4,
+    "X=22": 2,
+    "inter_col": 12,
+    "X=10": 9,
+    "X=24": 4,
+    "X=18": 2
+  },
+  "probe2_intersect_inter": 90,
+  "shim_promotion_summary": {
+    "inter_cap_additive": 0,
+    "inter_cap_over_cancel": 0,
+    "interpretation": "0 \u2229 ADDITIVE means the M16-active 1-LE intersection doesn't cover any of probe2's 33 ADDITIVE cells \u2014 those remain pure X33Y4N4-M16-reserved-1-LE-specific."
+  },
+  "next_session_targets": [
+    "Force X33Y4N4 placement via Quartus LOC: requires predicting Quartus's internal signal name post-pack (e.g., `led0~reg0` or `led0` itself).  Try `set_location_assignment LCFF_X33_Y4_N5 -to led0` for one variant; if it works, re-run all 7.",
+    "Build a probe2-class corpus instead (1-LE 1-input M16-reserved): use only key2=E16 as input, vary the design via constant-folding tricks like `key2 ^ 1'b0` vs `key2 ^ 1'b1`.  Only 2 distinct TTs achievable (0xAAAA and 0x5555) \u2014 limited intersection power but matches probe2 topology exactly.",
+    "Defer A: the 33 ADDITIVE cells were already labelled 'pure 1-LE-only, NOT migratable to a shared directive' in the original decomposition.  Confirming this with more corpus data has diminishing returns; the cells remain in the X33Y4_PROBE2_INFRA shim where they belong.  Real next-session value is in further directive promotion campaigns for OTHER 1-LE topologies (different N at X=33) where new shims will need similar decomposition work."
+  ]
+}
