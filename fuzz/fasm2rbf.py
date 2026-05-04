@@ -527,6 +527,50 @@ def _load_iob_clk_input_cells(pin):
     return [tuple(c) for c in _IOB_CLK_INPUT_CACHE[pin]]
 
 
+_IOB_CLK_PAD_NV_AUDIT_CACHE = None
+_IOB_CLK_PAD_NV_WARNED_PINS = set()
+
+
+def _warn_iob_clk_input_pad_nv_calibration(iob_clk_pins):
+    """Emit a one-shot warning when IOB_PAD_NV + IOB_CLK_INPUT_PIN_X are
+    both emitted for a pin X that has a known but unmined IOB_PAD_NV
+    overlap.  PIN_E1 has a landed correction and is silent.  Other pins
+    print a warning naming the silently-miscalibrated cell count, the
+    fix path (mining), and the audit sidecar to consult.
+
+    Per-pin calibration risk data: results/iob_clk_input_pad_nv_audit.json.
+    """
+    global _IOB_CLK_PAD_NV_AUDIT_CACHE
+    if _IOB_CLK_PAD_NV_AUDIT_CACHE is None:
+        import json
+        path = ROOT / "results" / "iob_clk_input_pad_nv_audit.json"
+        if not path.exists():
+            _IOB_CLK_PAD_NV_AUDIT_CACHE = {}
+            return
+        _IOB_CLK_PAD_NV_AUDIT_CACHE = json.loads(path.read_text())
+    audit = _IOB_CLK_PAD_NV_AUDIT_CACHE.get("per_pin", {})
+    landed = _IOB_CLK_PAD_NV_AUDIT_CACHE.get("landed_corrections", {})
+    import sys as _sys
+    for pin in iob_clk_pins:
+        if pin in landed or pin in _IOB_CLK_PAD_NV_WARNED_PINS:
+            continue
+        info = audit.get(pin)
+        if not info or not info.get("needs_correction_count"):
+            continue
+        nc = info["needs_correction_count"]
+        print(
+            f"WARN: IOB_PAD_NV + IOB_CLK_INPUT PIN_{pin} both emitted, "
+            f"but PIN_{pin} calibration vs IOB_PAD_NV is unmined "
+            f"({nc} cells will silently miscalibrate to nv state).  "
+            f"Only PIN_E1 has a landed correction "
+            f"(IOB_RESERVE_PIN_M16 Group B).  See "
+            f"results/iob_clk_input_pad_nv_audit.json + "
+            f"scripts/iob_slice_mining/audit_clk_pin_pad_nv_overlap.py.",
+            file=_sys.stderr,
+        )
+        _IOB_CLK_PAD_NV_WARNED_PINS.add(pin)
+
+
 def _load_iob_reserve_pin_m16_cells():
     """Return the 66-cell XOR delta for M16-reserved-idle IOB bank state.
 
@@ -2199,6 +2243,16 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # Clock-bank pin activate (hdr band only).  Uses XOR parity so
         # duplicate lines cancel.  Runs alongside IOB_IN / IOB_OUT; both
         # touch the hdr band but scoped to different bytes.
+        #
+        # CALIBRATION WARNING: IOB_CLK_INPUT data was mined against
+        # IOB_BASELINE_NV (129-cell) baseline.  When emitted alongside
+        # IOB_PAD_NV (139-cell, partial overlap), some pins have cells
+        # that double-flip-cancel against IOB_PAD_NV — silently
+        # miscalibrating to nv state instead of the gold state.  PIN_E1
+        # has a landed correction (IOB_RESERVE_PIN_M16 Group B).  Other
+        # pins are LATENT — see results/iob_clk_input_pad_nv_audit.json.
+        if iob_pad_nv:
+            _warn_iob_clk_input_pad_nv_calibration(iob_clk_inputs)
         parity = {}
         for pin in iob_clk_inputs:
             for off, bp in _load_iob_clk_input_cells(pin):

@@ -1,0 +1,250 @@
+{
+  "description": "Per-pin IOB_CLK_INPUT \u00d7 IOB_PAD_NV overlap audit.  Identifies which IOB_CLK_INPUT pin data files have calibration mismatch with IOB_PAD_NV (data was mined against IOB_BASELINE_NV).  Cells in `needs_correction_cells` would silently miscalibrate (XOR double-flip-to-nv instead of the gold state) if both directives were emitted without an explicit correction.  PIN_E1 has a landed correction; other pins are LATENT \u2014 fasm2rbf warns when at-risk combinations detected.",
+  "data_baseline_for_iob_clk_input": "IOB_BASELINE_NV (129 cells) \u2014 see results/iob_baseline_hdr_cells.json",
+  "audited_against": "results/output_route_nv_mining.json \u2192 iob_pad_cells (139 cells).  Discriminator: scripts/iob_slice_mining/work/simple_led_E16_to_G15_clk{PIN}/output_files/*.rbf \u2014 1-LE@X10Y10N0 with E16+G15+clk{PIN}, M16 reserved, IOB_BASELINE_NV-class infra.",
+  "per_pin": {
+    "A14": {
+      "overlap_count": 7,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkA14/output_files/simple_led_E16_to_G15_clkA14.rbf",
+      "already_correct_count": 6,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ]
+      ]
+    },
+    "B14": {
+      "overlap_count": 2,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkB14/output_files/simple_led_E16_to_G15_clkB14.rbf",
+      "already_correct_count": 1,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "E1": {
+      "overlap_count": 11,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkE1/output_files/simple_led_E16_to_G15_clkE1.rbf",
+      "already_correct_count": 2,
+      "needs_correction_count": 9,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ],
+        [
+          1914,
+          3
+        ],
+        [
+          1915,
+          3
+        ],
+        [
+          1916,
+          3
+        ],
+        [
+          1917,
+          3
+        ],
+        [
+          1918,
+          2
+        ],
+        [
+          1919,
+          2
+        ],
+        [
+          1920,
+          2
+        ],
+        [
+          1921,
+          2
+        ]
+      ]
+    },
+    "E15": {
+      "overlap_count": 27,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkE15/output_files/simple_led_E16_to_G15_clkE15.rbf",
+      "already_correct_count": 26,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "M1": {
+      "overlap_count": 18,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM1/output_files/simple_led_E16_to_G15_clkM1.rbf",
+      "already_correct_count": 17,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ]
+      ]
+    },
+    "M15": {
+      "overlap_count": 22,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM15/output_files/simple_led_E16_to_G15_clkM15.rbf",
+      "already_correct_count": 20,
+      "needs_correction_count": 2,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ],
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "M16": {
+      "overlap_count": 14,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM16/output_files/simple_led_E16_to_G15_clkM16.rbf",
+      "already_correct_count": 6,
+      "needs_correction_count": 8,
+      "needs_correction_cells": [
+        [
+          1914,
+          3
+        ],
+        [
+          1915,
+          3
+        ],
+        [
+          1916,
+          3
+        ],
+        [
+          1917,
+          3
+        ],
+        [
+          1918,
+          2
+        ],
+        [
+          1919,
+          2
+        ],
+        [
+          1920,
+          2
+        ],
+        [
+          1921,
+          2
+        ]
+      ]
+    },
+    "M2": {
+      "overlap_count": 10,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkM2/output_files/simple_led_E16_to_G15_clkM2.rbf",
+      "already_correct_count": 9,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "N1": {
+      "overlap_count": 4,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkN1/output_files/simple_led_E16_to_G15_clkN1.rbf",
+      "already_correct_count": 3,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "R4": {
+      "overlap_count": 4,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkR4/output_files/simple_led_E16_to_G15_clkR4.rbf",
+      "already_correct_count": 3,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          74,
+          1
+        ]
+      ]
+    },
+    "R8": {
+      "overlap_count": 9,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkR8/output_files/simple_led_E16_to_G15_clkR8.rbf",
+      "already_correct_count": 4,
+      "needs_correction_count": 5,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ],
+        [
+          1914,
+          3
+        ],
+        [
+          1915,
+          3
+        ],
+        [
+          1916,
+          3
+        ],
+        [
+          1917,
+          3
+        ]
+      ]
+    },
+    "T4": {
+      "overlap_count": 4,
+      "discriminator_present": true,
+      "discriminator_path": "scripts/iob_slice_mining/work/simple_led_E16_to_G15_clkT4/output_files/simple_led_E16_to_G15_clkT4.rbf",
+      "already_correct_count": 3,
+      "needs_correction_count": 1,
+      "needs_correction_cells": [
+        [
+          73,
+          3
+        ]
+      ]
+    }
+  },
+  "landed_corrections": {
+    "E1": "IOB_RESERVE_PIN_M16 Group B (9 cells; gated on M16 not in IOBs).  See iob_reserve_pin_m16_cells.json \u2192 xor_cells_unified_with_iob_pad_nv_recalibration \u2192 Group B."
+  },
+  "next_session_targets": [
+    "Mine IOB_PAD_NV + IOB_CLK_INPUT_pin combination for the 5 highest-risk pins (M16=8, R8=5, M15=2, plus others with >=1 needed corrections).  ~30min Quartus per pin, generates Group-B-style override list.",
+    "Refactor: split IOB_RESERVE_PIN_M16 Group B out into a dedicated `IOB_CLK_INPUT_PAD_NV_RECALIB` directive table keyed by pin.  Currently Group B fires gated on M16-reserve (correlates with E1-clock 1-LE class in our test set).  Decoupling would let other pins land their corrections without artificial M16 gating."
+  ]
+}
