@@ -2476,31 +2476,49 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             # is now skipped; same-LAB ROUTE at X=33 is also skipped
             # for lack of sig-cache).  Design-specific shim until
             # proper per-directive mining is done.
-        # Phase 3 (2026-05-02): restore LI MUX state from the
-        # post-apply_routing snapshot.  σ⁻¹'s `from_cram_model`
-        # mis-classifies ~160 LI MUX bytes as "true TT cells" per
-        # pipeline_test-class build — Phase 1 clears them, Phase 2
-        # sometimes XOR-sets non-canonical ones.  Stamping the
-        # snapshot verbatim cancels both effects: the LI MUX ends
-        # up exactly where apply_routing left it (canonical envelope
-        # for dst LABs; nothing for unrelated LABs).
+        # Phase 3: restore LI MUX state from the post-apply_routing
+        # snapshot.  Originally added 2026-05-02 with the assumption
+        # that σ⁻¹'s `from_cram_model` mis-classifies ~160 LI MUX
+        # bytes as "true TT cells" — that assumption was FALSIFIED
+        # by 2026-05-05 mining (`scripts/sigma_inv_real_tt_mining/`,
+        # data: `results/real_tt_classification.json`).  Across 8
+        # mined LEs covering colliding Y ∈ {4,10,17} and safe Y ∈
+        # {3,6,14}, σ⁻¹'s 16 claimed TT cells are 100% real TT cells
+        # (correct=16, misclassified=0) — they DO flip when the LUT
+        # mask changes between XOR4 (0x6996) and XNOR4 (0x9669).
         #
-        # 2026-05-05 update: a "skip cells in std_lut TT set" attempt
-        # (commit 92c9528) was REVERTED after silicon falsification
-        # via cross_lab_open flash → AX301 self-protection reset.
-        # Lesson: at colliding Y values (Y∈{2,4,5,7,10,14,17}) the
-        # σ⁻¹ TT-cell set at bp=6/etc. is dominated by mis-classified
-        # LI MUX bytes — excluding them from Phase 3 corrupts the LI
-        # MUX state and causes output drive contention.  Phase 3 must
-        # therefore stay UNCONDITIONAL until σ⁻¹'s TT cell set can be
-        # split cleanly into "real TT" vs "misclassified LI MUX"
-        # subsets (data not currently available).  See memory note
-        # `phase3_fix_silicon_falsified_2026_05_05.md`.  Side-effect
-        # accepted: std_lut LEs at colliding Y (W=24 led_blink class)
-        # still see corrupted LUT TT — workaround is to place such
-        # LEs at non-colliding Y (e.g., the cnt[22] tap landing at
-        # Y=17 N=12 in arith mode for W=23, or Y=21 N=0 std_lut).
+        # The actual issue: `apply_routing` writes LI MUX bits at
+        # positions that include σ⁻¹'s real TT cells (the 18-cell
+        # per-LAB formula at bp=`_cgb(y)` overestimates — only 2 of
+        # the 18 are actually LI MUX, the other 16 are LE TT cells).
+        # Pre-fix Phase 3 unconditionally restored all 18 → corrupted
+        # the 16 TT cells with apply_routing's wrong LI MUX writes.
+        #
+        # Fix: Phase 3 skips cells that σ⁻¹ identifies as TT cells
+        # for any non-arith std_lut LE in the design.  Phase 1+2
+        # owns those cells (correct TT mask).  The remaining 2 cells
+        # per LAB at bp=`_cgb(y)` (true LI MUX bits) are still
+        # restored from snapshot.  LUT_ARITH LEs are unaffected
+        # (Phase 1 skips arith; arith snapshot IS the desired state).
+        #
+        # The earlier 2026-05-05 silicon falsification of this same
+        # logic (commit 92c9528 → revert 4f22a22) was caused by
+        # cross_lab_open's THREE pre-existing silicon-hostile gaps
+        # (missing config-controller cells, NV_BASELINE_PACK over-
+        # emit, missing GCLK column tap — see memory
+        # `cross_lab_cascade_silicon_failed_2026_05_04.md`), not by
+        # this Phase 3 logic.  The 12-bit fabric diff between pre/post
+        # was entirely σ⁻¹ TT cells of X16Y4N0 + X16Y14N0 — flipping
+        # those bits doesn't affect config controller validation, but
+        # cross_lab_open is silicon-broken regardless of TT.
+        std_lut_tt_cells = set()
+        for x, y, n, _mask in std_luts:
+            if (x, y, n) in arith_keys:
+                continue
+            std_lut_tt_cells |= tt_cells_cache[(x, y, n)]
         for (off, bp), v in li_locked_state.items():
+            if (off, bp) in std_lut_tt_cells:
+                continue
             if v:
                 buf[off] |= (1 << bp)
             else:
