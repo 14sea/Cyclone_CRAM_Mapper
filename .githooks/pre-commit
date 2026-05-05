@@ -51,3 +51,19 @@ if ! python3 "$SELFTEST" >/tmp/zeta_selftest.log 2>&1; then
     exit 1
 fi
 echo "[pre-commit] ζ selftest OK"
+
+# Phase 3 LI MUX std_lut TT regression — fast (<1s).  Catches any
+# future codec drift that re-corrupts the σ⁻¹ TT cells at colliding
+# Y values (Pitfall #13 fix landed 2026-05-05 / commit 0cdec7a).
+PHASE3_TEST="$REPO_ROOT/fuzz/test_phase3_li_mux_lut_tt.py"
+if [[ -f "$PHASE3_TEST" ]]; then
+    echo "[pre-commit] running Phase 3 LI MUX collision test..."
+    if ! python3 "$PHASE3_TEST" >/tmp/phase3_test.log 2>&1; then
+        echo "[pre-commit] Phase 3 collision test FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/phase3_test.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] Phase 3 collision test OK"
+fi

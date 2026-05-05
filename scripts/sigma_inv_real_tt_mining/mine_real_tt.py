@@ -65,10 +65,24 @@ def build_one(name: str, x: int, y: int, n: int, lut_mask: int) -> bytes | None:
     """Build a single Quartus design with a 1-LE LUT at (x, y, n).
 
     Returns the RBF bytes or None on build failure.
+
+    Note: our_n // 2 maps to Quartus's LCCOMB N.  Quartus rejects
+    standalone LCCOMB placement at N=7 and N=15 (chain-terminator
+    LE positions) — see CLAUDE.md / memory note on Path B blocker.
+    Our_n values 14 and 30 will hit those rejection cases; those
+    positions can only be populated via a chain primitive cascading
+    from N=0.  This script's 1-LE template doesn't apply there.
     """
+    quartus_n = n // 2
+    if quartus_n in (7, 15):
+        print(
+            f"  SKIP (chain-only LE): our_n={n} → LCCOMB_X{x}_Y{y}_N{quartus_n} "
+            f"is rejected by Quartus fitter for standalone placement. "
+            f"Use a chain-based mining template instead."
+        )
+        return None
     bdir = WORK / name
     bdir.mkdir(parents=True, exist_ok=True)
-    quartus_n = n // 2
 
     # Use cycloneive_lcell_comb primitive directly to keep the LE alive
     # even when lut_mask=0 (which would otherwise constant-fold to gnd).
