@@ -2484,7 +2484,26 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # snapshot verbatim cancels both effects: the LI MUX ends
         # up exactly where apply_routing left it (canonical envelope
         # for dst LABs; nothing for unrelated LABs).
+        #
+        # Phase 3 std_lut TT exclusion (2026-05-05): the snapshot loop
+        # walks 18 cells per (lx, ly) at a (group, slot)-derived bp.
+        # For roughly half of CE6 LAB_Y values (Y∈{2,4,5,7,10,14,17})
+        # that bp coincides with the LE LUT TT bp at the same byte
+        # offsets, so without exclusion Phase 3 clobbers Phase 1+2's
+        # work — std_lut LE ends up encoding the post-apply_routing
+        # snapshot (often pass-datac) instead of the FASM directive.
+        # See CLAUDE.md Known Pitfall #13 + memory note
+        # phase3_li_mux_lut_tt_collision_2026_05_04.md.  Arith LEs are
+        # not affected (Phase 1 skips them and the snapshot is the
+        # arith-blob state, which is the desired runtime state).
+        std_lut_tt_cells = set()
+        for x, y, n, _mask in std_luts:
+            if (x, y, n) in arith_keys:
+                continue
+            std_lut_tt_cells |= tt_cells_cache[(x, y, n)]
         for (off, bp), v in li_locked_state.items():
+            if (off, bp) in std_lut_tt_cells:
+                continue
             if v:
                 buf[off] |= (1 << bp)
             else:
