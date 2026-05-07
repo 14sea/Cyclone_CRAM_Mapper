@@ -1,30 +1,30 @@
 {
   "description": "Path B chain-template mining for OUTROUTE_G15 X4Y17N14",
-  "method": "v1 swap: full=cnt[7]\u2192G15, nop=cnt[7]\u2192F15. F15 contamination present but bounded; data-band cells match structural pattern of existing X4Y17N12 entry.",
+  "method": "8-LE counter chain at LAB(4,17) Q_N=0..7; full - nop pair-delta isolates cnt[7] \u2192 G15 routing",
   "design": "full: cnt[7]\u2192G15, LED_SEC=0; nop: cnt[7]\u2192F15, LED0=0",
   "lab": [
     4,
     17
   ],
   "le_n": 14,
-  "full_vs_nv_count": 432,
-  "nop_vs_nv_count": 440,
-  "full_vs_nop_count": 42,
+  "full_vs_nv_count": 483,
+  "nop_vs_nv_count": 466,
+  "full_vs_nop_count": 31,
   "outroute_cells": [
-    [
-      41,
-      0
-    ],
     [
       42,
       0
     ],
     [
-      47,
+      44,
       0
     ],
     [
-      49,
+      45,
+      0
+    ],
+    [
+      47,
       0
     ],
     [
@@ -36,28 +36,16 @@
       0
     ],
     [
-      52,
-      0
-    ],
-    [
-      53,
-      0
-    ],
-    [
-      54,
-      0
-    ],
-    [
-      55,
-      0
-    ],
-    [
-      56,
+      73,
       0
     ],
     [
       73,
-      3
+      1
+    ],
+    [
+      73,
+      2
     ],
     [
       73,
@@ -66,6 +54,10 @@
     [
       73,
       5
+    ],
+    [
+      73,
+      7
     ],
     [
       74,
@@ -77,6 +69,14 @@
     ],
     [
       74,
+      3
+    ],
+    [
+      74,
+      5
+    ],
+    [
+      74,
       6
     ],
     [
@@ -84,31 +84,23 @@
       7
     ],
     [
+      41135,
+      2
+    ],
+    [
+      41554,
+      2
+    ],
+    [
+      63399,
+      2
+    ],
+    [
       85223,
       2
     ],
     [
-      85479,
-      2
-    ],
-    [
-      85689,
-      2
-    ],
-    [
-      86481,
-      2
-    ],
-    [
       107474,
-      2
-    ],
-    [
-      114665,
-      2
-    ],
-    [
-      115085,
       2
     ],
     [
@@ -120,22 +112,6 @@
       2
     ],
     [
-      199096,
-      2
-    ],
-    [
-      199516,
-      2
-    ],
-    [
-      210858,
-      2
-    ],
-    [
-      211302,
-      1
-    ],
-    [
       218163,
       2
     ],
@@ -144,43 +120,22 @@
       2
     ],
     [
-      362928,
-      1
-    ],
-    [
-      363035,
+      363031,
       2
     ],
     [
-      363348,
-      1
-    ],
-    [
-      363455,
+      363451,
       2
     ],
     [
-      363882,
+      363673,
       2
-    ],
-    [
-      365002,
-      2
-    ],
-    [
-      365213,
-      2
-    ],
-    [
-      366066,
-      1
     ],
     [
       366203,
       2
     ]
   ],
-  "overlap_with_x4y17n12": 10,
-  "overlap_with_x4y17n0": 9,
-  "cell_count": 42
+  "overlap_with_x4y17n12": 11,
+  "overlap_with_x4y17n0": 14
 }

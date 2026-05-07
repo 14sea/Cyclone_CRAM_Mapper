@@ -1,16 +1,26 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Open-toolchain build: 24-bit LED heartbeat for AX301 — exercises the
-newly-mined OUTROUTE_G15 X4Y17N14 sigcache entry.
+"""Open-toolchain build: 24-bit LED heartbeat for AX301 — BLOCKED on
+OUTROUTE_G15 X4Y17N14 mining (Path B not yet silicon-closed).
 
-Companion to build_open23.py (W=23 silicon-validated).  The only
-difference is a 24-bit chain whose end (cnt[23]) lands at the chain-only
-LE position X4Y17N14 — previously unsigned, now mined via Path B chain
-template (`scripts/path_b_chain_mining/mine_outroute_x4y17n14.py`).
+Two mining attempts (v1 swap + v6 buf_reg) silicon-FAILED 2026-05-07:
+both produced bounded cell sets that passed validate_safe_for_hardware
+but the resulting RBF flashed clean to AX301 with LED stuck ON (cnt[23]
+→ G15 connection didn't form).  See memo
+`path_b_v1_v6_silicon_failed_2026_05_07`.
 
-This is a deliberate stress test of the new OUTROUTE entry: silicon
-flash success ⇒ Path B chain-template mining produced a silicon-correct
-sigcache entry ⇒ method generalizes to other chain-only LE positions.
+Hypothesis: the chain-end LE (LCCOMB_X4_Y17_N14) has a structurally
+different output topology than middle-chain LEs (the chain terminator
+may use the cout pin or a special output mux that diff-based mining
+doesn't isolate cleanly).  Future investigation needs domain knowledge
+about Cyclone IV E chain-terminator output muxing or differential
+silicon probing.
+
+This script is kept (with led_blink24.v + the mining tool at
+scripts/path_b_chain_mining/) so future sessions can iterate without
+rebuilding the scaffolding.  Currently np2fasm warns
+"no output route: SLICE X4Y17N14 -> PIN_G15" and the resulting RBF
+will silicon-fail at G15.
 """
 from pathlib import Path
 import os, subprocess, sys

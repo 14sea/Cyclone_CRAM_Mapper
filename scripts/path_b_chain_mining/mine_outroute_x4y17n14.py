@@ -129,29 +129,39 @@ def diff_cells(a: bytes, b: bytes) -> list[tuple[int, int]]:
 def main():
     WORK.mkdir(parents=True, exist_ok=True)
 
-    # v4: route cnt[7] to F15 in BOTH builds (so F15 IOB + cnt[7]→F15
-    # routing cells cancel in the diff).  Only `full` adds an EXTRA fanout
-    # to G15.  Diff = G15 IOB source switch + cnt[7]→G15 routing only.
+    # v6: BOTH builds route cnt[7] → buf_reg → F15.  Only `full` adds an
+    # extra fanout cnt[7] → G15 (the route under test).  Diff isolates
+    # G15 IOB source switch + cnt[7]→G15 routing.  F15 cells, buf_reg LE
+    # + routing, chain LEs all cancel because they're identical in both.
+    # v1 (swap) failed silicon (LED stuck ON, 2026-05-07): contamination
+    # from cnt[7]→F15 in nop didn't cancel cleanly.
     v_full = """\
 module full (input CLK, output LED0, output LED_SEC);
     (* keep = "true" *) reg [7:0] cnt = 8'h00;
-    always @(posedge CLK) cnt <= cnt + 8'd1;
-    assign LED0    = cnt[7];   // G15 — the routing under test
-    assign LED_SEC = cnt[7];   // F15 — same source in both builds
+    (* keep = "true" *) reg buf_reg = 1'b0;
+    always @(posedge CLK) cnt     <= cnt + 8'd1;
+    always @(posedge CLK) buf_reg <= cnt[7];
+    assign LED0    = cnt[7];     // G15 — the routing under test
+    assign LED_SEC = buf_reg;    // F15 — far register (same in both)
 endmodule
 """
     v_nop = """\
 module nop (input CLK, output LED0, output LED_SEC);
     (* keep = "true" *) reg [7:0] cnt = 8'h00;
-    always @(posedge CLK) cnt <= cnt + 8'd1;
-    assign LED0    = 1'b0;     // G15 — constant (NOT cnt[7])
-    assign LED_SEC = cnt[7];   // F15 — same source as full
+    (* keep = "true" *) reg buf_reg = 1'b0;
+    always @(posedge CLK) cnt     <= cnt + 8'd1;
+    always @(posedge CLK) buf_reg <= cnt[7];
+    assign LED0    = 1'b0;       // G15 — constant
+    assign LED_SEC = buf_reg;    // F15 — same source as full
 endmodule
 """
     # Quartus Cyclone IV E LE addressing in back-annotate has stride 2:
     # LCCOMB at even N, FF at odd N+1.  `our_n` (sigcache convention) =
     # Quartus LCCOMB N.  cnt[k] register pin = FF_X{x}_Y{y}_N{2k+1}.
     # Pin cnt[0..6] → leave cnt[7] (FF_X4_Y17_N15) for chain auto-cascade.
+    # Pin buf_reg far from LAB(4,17) so its routing cells don't perturb
+    # X4Y17 region.  X=10 Y=10 is well-mined territory with stable
+    # placement behavior across builds.
     qsf_common = """\
 set_location_assignment PIN_E1  -to CLK
 set_location_assignment PIN_G15 -to LED0
@@ -163,6 +173,7 @@ set_location_assignment FF_X4_Y17_N7  -to "cnt[3]"
 set_location_assignment FF_X4_Y17_N9  -to "cnt[4]"
 set_location_assignment FF_X4_Y17_N11 -to "cnt[5]"
 set_location_assignment FF_X4_Y17_N13 -to "cnt[6]"
+set_location_assignment FF_X10_Y10_N1 -to buf_reg
 """
 
     nv = (REPO / "results" / "rbf" / "nv_zero_global.rbf").read_bytes()
