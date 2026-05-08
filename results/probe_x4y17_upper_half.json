@@ -78,5 +78,6 @@
       "placement_actual": null,
       "fit_messages": []
     }
-  ]
+  ],
+  "_audit_note_2026_05_08": "placement_match was unreliable in this script: it grepped for literal \"LCCOMB_X4_Y17_N{q_n}\" string in fit.rpt, which Quartus 21.1 Lite does not emit. fit_ok=True is the meaningful signal: all 8 upper-half Q_N positions (16,18,20,22,24,26,28,30) accepted by Quartus fitter for standalone LCCOMB placement. To verify actual placement, use RBF byte-diff between LCCOMB_N{a} and LCCOMB_N{b} builds (see conv_verify_x4y17.py methodology). Cross-checked via post-audit: my conv_verify probe at LCCOMB_N12/N16 produced distinct md5s vs LCCOMB_N0 (90/105 byte diffs), proving LCCOMB constraint IS honored."
 }

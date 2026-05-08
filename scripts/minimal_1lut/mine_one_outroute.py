@@ -81,8 +81,13 @@ def main():
         print("Usage: mine_one_outroute.py X Y our_N")
         sys.exit(1)
     x, y, our_n = int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
-    quartus_n = our_n // 2
-    loc = f"LCCOMB_X{x}_Y{y}_N{quartus_n}"
+    # Convention (FIXED 2026-05-08; see memo conv_bug_discovery_2026_05_08):
+    # tag `our_n` = chipdb SLICE_N = Quartus LCCOMB_N = 2 × LE_index.
+    # Place LCCOMB at LCCOMB_X{x}_Y{y}_N{our_n} directly.  Old version
+    # used `our_n // 2` which placed at the wrong LE — verified via
+    # conv_verify_x4y17.py probe (cells_n0 100% match sc_N0; cells_n12/n16
+    # produce distinct RBFs from cells_n0).
+    loc = f"LCCOMB_X{x}_Y{y}_N{our_n}"
     tag = f"X{x}Y{y}N{our_n}"
     print(f"Mining OUTROUTE_G15 at {tag} (Quartus loc: {loc})")
 

@@ -103,8 +103,17 @@ def build_design(name, verilog, qsf_text, work_dir):
 
 
 def mine_position(x, y, n):
-    """Mine output route cells at one position. Returns (cells, error_msg)."""
-    loc = f"LCCOMB_X{x}_Y{y}_N{n // 2}"
+    """Mine output route cells at one position. Returns (cells, error_msg).
+
+    Convention (FIXED 2026-05-08; see scripts/path_b_chain_mining/conv_verify_x4y17.py
+    + memo conv_bug_discovery_2026_05_08): tag `n` = chipdb SLICE_N =
+    Quartus LCCOMB N = 2 × LE_index, all in {0,2,...,30}.  Place LCCOMB
+    at LCCOMB_X{x}_Y{y}_N{n} directly — no //2.  Old version used `n // 2`
+    which placed at the wrong LE (e.g., tag X4Y17N16 at LCCOMB_N8 = LE_4
+    instead of LE_8).  Existing X4Y17N0 entry happens to be correct (tag
+    n=0 → //2 = 0), but X4Y17N16 was wrong and was re-mined at LE_8.
+    """
+    loc = f"LCCOMB_X{x}_Y{y}_N{n}"
     our_n = n
 
     qsf_common = f"""\
