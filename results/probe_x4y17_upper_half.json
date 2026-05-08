@@ -1,0 +1,82 @@
+{
+  "lab": [
+    4,
+    17
+  ],
+  "tested": [
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30
+  ],
+  "results": [
+    {
+      "q_n": 16,
+      "our_n": 32,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 18,
+      "our_n": 36,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 20,
+      "our_n": 40,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 22,
+      "our_n": 44,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 24,
+      "our_n": 48,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 26,
+      "our_n": 52,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 28,
+      "our_n": 56,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    },
+    {
+      "q_n": 30,
+      "our_n": 60,
+      "fit_ok": true,
+      "placement_match": false,
+      "placement_actual": null,
+      "fit_messages": []
+    }
+  ]
+}
