@@ -66,15 +66,18 @@ def build_one(name: str, x: int, y: int, n: int, lut_mask: int) -> bytes | None:
 
     Returns the RBF bytes or None on build failure.
 
-    Note: our_n // 2 maps to Quartus's LCCOMB N.  Quartus rejects
-    standalone LCCOMB placement at N=7 and N=15 (chain-terminator
-    LE positions) — see CLAUDE.md / memory note on Path B blocker.
-    Our_n values 14 and 30 will hit those rejection cases; those
-    positions can only be populated via a chain primitive cascading
-    from N=0.  This script's 1-LE template doesn't apply there.
+    Note: per CLAUDE.md Pitfall #15, runtime convention is
+    LCCOMB_N = chipdb SLICE_N = our_n directly (NOT halved).  Earlier
+    versions used `quartus_n = n // 2` — that was the same conv bug
+    fixed in sweep_outroute_nv.py / mine_one_outroute.py.  It was
+    silicon-tolerated here only because the entire DEFAULT_BATCH used
+    n=0 (where 0//2=0 is accidentally correct → LCCOMB_N=0=LE_0).
+    Quartus rejects standalone LCCOMB placement at N=14 and N=30
+    (chain-terminator LE_7 / LE_15); n in (14, 30) is skipped below.
+    For chain-only LE positions, use a chain-based mining template.
     """
-    quartus_n = n // 2
-    if quartus_n in (7, 15):
+    quartus_n = n
+    if quartus_n in (14, 30):
         print(
             f"  SKIP (chain-only LE): our_n={n} → LCCOMB_X{x}_Y{y}_N{quartus_n} "
             f"is rejected by Quartus fitter for standalone placement. "
@@ -169,7 +172,7 @@ def diff_cells(a: bytes, b: bytes) -> set[tuple[int, int]]:
 
 def mine_le(x: int, y: int, n: int) -> dict:
     """Mine real TT cells for std_lut at (x, y, n)."""
-    print(f"\n=== Mining X{x}Y{y}N{n} (LCCOMB_X{x}_Y{y}_N{n//2}) ===", flush=True)
+    print(f"\n=== Mining X{x}Y{y}N{n} (LCCOMB_X{x}_Y{y}_N{n}) ===", flush=True)
 
     full_name = f"xor_X{x}Y{y}N{n}"
     zero_name = f"xnor_X{x}Y{y}N{n}"
