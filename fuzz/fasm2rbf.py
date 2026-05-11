@@ -2339,7 +2339,16 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 continue
             needs_dedup = _iob_route_needs_dedup(pin, dx, dy, dn, port)
             for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
-                if off < 5282:
+                # Header-band skip applies to `absolute_cells` (which
+                # include IOB pad / baseline content that IOB_PAD_NV is
+                # expected to own).  `padnv_cells` entries are derived
+                # against a base that already includes IOB_PAD_NV +
+                # OUTROUTE + CLK directives, so any header cells they
+                # contain are genuinely IOB_ROUTE's responsibility —
+                # skipping them produces unowned-cell gaps in designs
+                # like build_test (4,4,0 src LAB).  Gate hdr-skip on
+                # `needs_dedup` (= absolute path) only.
+                if needs_dedup and off < 5282:
                     skipped += 1
                     continue
                 key = (off, bp)
