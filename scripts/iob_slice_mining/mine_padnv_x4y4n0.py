@@ -2,6 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Derive padnv-bucket IOB_ROUTE entries for X4Y4N0 (2-pin AND gate).
 
+⚠️  STATUS 2026-05-11: Step 5 VERIFICATION FAILS today (99 byte
+diffs vs gold).  Root cause: σ⁻¹ permutation at X4Y4N0 LE_0
+mis-encodes both 0x8888 (read=0xC0C0) and 0xAAAA (read=0xF0F0) —
+the mining diff is contaminated with σ⁻¹ TT-misencoding cells.
+Verification will pass once σ⁻¹ permutation re-mining lands for
+the X=4 column (Pitfall #16, memo `iob_route_hdr_skip_pivot_2026_05_11`).
+Script committed in this state so the algebra is preserved and
+re-runnable; rollback is automatic on failure so the sigcache
+isn't corrupted.
+
 Bug #2 closure per memo `gamma_bug1_strip_fix_landed_2026_05_11`: the
 sigcache for `4,4,0->4,21,0,dataa` (and `4,4,0->4,7,0,dataa`) contains
 NO header cells, leaving IOB_E16/M16 → X4Y4N0 routing unowned in the
