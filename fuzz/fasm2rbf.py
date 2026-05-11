@@ -2074,6 +2074,16 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         strip = set()
         if gclk:
             strip.update(_GCLK_CELLS)
+        # Pitfall #16 blocker #2 — ROUTE × OUTROUTE_G15 XOR-cancel.
+        # Plan D' mining templates drive G15 from the dst LE, baking
+        # OUTROUTE_G15 cells into cross-LAB sigcache entries.  When
+        # the runtime build also emits OUTROUTE_G15 X{dx}Y{dy}N{dn},
+        # the dedicated directive XORs the same cells → cancels to 0
+        # when gold expects parity=1.  Strip them here so OUTROUTE_G15
+        # owns them with a single XOR.
+        if outroute_g15s:
+            for (sx, sy, sn) in outroute_g15s:
+                strip.update(_load_outroute_g15_cells(sx, sy, sn))
         if strip:
             ops = [
                 op for op in ops
@@ -2516,8 +2526,43 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             if (x, y, n) in arith_keys:
                 continue
             std_lut_tt_cells |= tt_cells_cache[(x, y, n)]
+        # Pitfall #16 blocker #3 — Phase 3 restore otherwise undoes
+        # IOB_PAD_NV / OUTROUTE_G15 cells that land on LI MUX byte
+        # positions of OTHER LABs (e.g. (83503,4)/(83573,4) are X=10
+        # LAB Y=10/Y=11 P8 base when IOB_PAD_NV flips the M16 pad).
+        # Those directives ran AFTER snapshot, so li_locked_state's
+        # value is pre-flip — restoring to it cancels the directive.
+        # Mirror of X33Y4_CROSS_LAB_SHIM's post-Phase-3 override but
+        # via skip instead of re-XOR.
+        post_snapshot_skip = set()
+        if iob_pad_nv:
+            post_snapshot_skip.update(_load_iob_pad_nv_cells())
+            if lut_arith or lut_arith_multi_labs:
+                post_snapshot_skip.update(_load_iob_pad_arith_ext_cells())
+        if outroute_g15s:
+            for (sx, sy, sn) in outroute_g15s:
+                post_snapshot_skip.update(
+                    _load_outroute_g15_cells(sx, sy, sn))
+        # X33Y4 shims are calibrated assuming Phase 3 restores their
+        # overlapping IOB_PAD_NV cells (then the shim's XOR corrects).
+        # If we skip restore for those cells, the shim's XOR inverts
+        # the wrong bit.  Exempt shim cells from post_snapshot_skip so
+        # the legacy shim-calibrated path is preserved byte-identical.
+        shim_cells = set()
+        if x33_luts:
+            if _x33y4_cross_lab_shim_should_apply(
+                    x33_luts, all_luts, routes, iobs, lab_clk_sels,
+                    iob_pad_nv=iob_pad_nv):
+                shim_cells = set(_x33y4_infra_cells())
+            elif _x33y4_probe2_shim_should_apply(
+                    x33_luts, all_luts, iobs, lab_clk_sels,
+                    iob_pad_nv=iob_pad_nv):
+                shim_cells = set(_x33y4_probe2_infra_cells())
+        post_snapshot_skip -= shim_cells
         for (off, bp), v in li_locked_state.items():
             if (off, bp) in std_lut_tt_cells:
+                continue
+            if (off, bp) in post_snapshot_skip:
                 continue
             if v:
                 buf[off] |= (1 << bp)
