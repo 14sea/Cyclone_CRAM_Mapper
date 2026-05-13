@@ -1,6 +1,32 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Extract per-label ABSOLUTE 2-input canonicalization cells across mined
+"""⚠️ EXPLORATORY — superseded by build_canon_2input_codec_table.py.
+
+This script (P2 session 2026-05-13) was an early attempt at the position-
+invariance verdict for the 2-input absolute canon-layer cells.  It
+filters to shared-config-only (header + block_band), strips lab_cram,
+and reports per-label H_abs across mined positions.
+
+Verdict at the 5 mined positions (X4Y4, X10Y17, X16Y2, X22Y17, X28Y2,
+N=0): NOT globally position-invariant (10-22 shared-config cells per
+label, near-zero cross-position intersection).  The 2-input canon layer
+is genuinely per-position; a single global table does NOT close the
+gap.
+
+What this script doesn't do: it filters the pair-diff data (which has
+already cancelled position-overhead) by region, but the resulting cell
+sets are still per-position-specific in their absolute (off, bp) coords.
+For the production codec we mine ABSOLUTE per-(label, position) deltas
+via build_canon_2input_codec_table.py — which is what
+results/canon_2input_codec_table.json + CANON_2INPUT_ABSOLUTE consume.
+
+Kept in-tree as documentation of the dead-end exploration that informed
+the per-position absolute-table design.
+
+Original docstring follows.
+----
+
+Extract per-label ABSOLUTE 2-input canonicalization cells across mined
 positions and decide position-invariance per label.
 
 Rationale (P2.2 design refinement):

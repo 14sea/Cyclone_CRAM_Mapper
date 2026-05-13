@@ -94,3 +94,32 @@ elif [[ -f "$BYPASS_TEST" ]]; then
     echo "[pre-commit] ⚠️  fixture missing: $BYPASS_FIXTURE" >&2
     echo "[pre-commit] ⚠️  rebuild via: scripts/sigma_inv_real_tt_mining/probe_canonicalization_cells.py 4 4 0" >&2
 fi
+
+# P2 canon-2input byte-identity gate — ~1s.  Locks 24 canonical 2-input
+# mask labels (18 perm + 6 neg) at X4Y4N0 against Quartus
+# canon_{label}_X4Y4N0.rbf via both LutCodec.write_tt(canon_2input=) and
+# bitgen(canon_2input_aware=True).  Catches any future codec drift that
+# re-breaks the σ⁻¹ predict_sram-gap closure (Pitfall #16 main axis,
+# P2 of plan imperative-crafting-pumpkin, silicon-validated 2026-05-13
+# via mask=0x4444 !KEY1&KEY2 flash; memo
+# p2_canon_2input_silicon_validated_2026_05_13).
+#
+# Skips gracefully if Quartus canon_{aandb,...}_X4Y4N0.rbf cache is missing
+# (tmp/real_tt_mining/ is gitignored).
+CANON_2INPUT_TEST="$REPO_ROOT/fuzz/test_canon_2input_codec.py"
+CANON_2INPUT_FIXTURE="$REPO_ROOT/tmp/real_tt_mining/canon_aandb_X4Y4N0/canon_aandb_X4Y4N0.rbf"
+if [[ -f "$CANON_2INPUT_TEST" && -f "$CANON_2INPUT_FIXTURE" ]]; then
+    echo "[pre-commit] running canon-2input byte-identity test..."
+    if ! python3 "$CANON_2INPUT_TEST" >/tmp/canon_2input.log 2>&1; then
+        echo "[pre-commit] canon-2input byte-identity FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/canon_2input.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] canon-2input byte-identity OK"
+elif [[ -f "$CANON_2INPUT_TEST" ]]; then
+    echo "[pre-commit] ⚠️  canon-2input byte-identity gate BYPASSED" >&2
+    echo "[pre-commit] ⚠️  fixture missing: $CANON_2INPUT_FIXTURE" >&2
+    echo "[pre-commit] ⚠️  rebuild via: scripts/sigma_inv_real_tt_mining/probe_canonicalization_cells.py 4 4 0 --2input --save  AND  --2input-negation --save" >&2
+fi
