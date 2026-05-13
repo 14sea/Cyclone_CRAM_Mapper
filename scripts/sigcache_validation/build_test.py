@@ -2,12 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Open-toolchain build for sigcache silicon validation.
 
-Pins LE_A to SLICE_X4_Y4_N0 and LE_B to SLICE_X4_Y2_N0, forcing the
-test to traverse sigcache entry `4,4,0->4,2,0,dataa`.  np2fasm should
+Pins LE_A to SLICE_X4_Y4_N0 and LE_B to SLICE_X4_Y21_N0, forcing the
+test to traverse sigcache entry `4,4,0->4,21,0,dataa`.  np2fasm should
 emit a ROUTE directive matching that key.
 
+LE_A uses symmetric LUT mask 0x6996 (XOR4) so the σ⁻¹ input-axis
+canonicalization ambiguity at X4Y4N0 (Pitfall #16) does not interfere
+with γ Bug #1 strip-fix validation.  Y=21 is σ⁻¹-clean for LE_B.
+
 Usage:  python3 scripts/sigcache_validation/build_test.py
-Output: tmp/sigcache_test/test_4_4_0_to_4_2_0_dataa.rbf
+Output: tmp/sigcache_test/test_4_4_0_to_4_21_0_dataa.rbf
 """
 from pathlib import Path
 import os, subprocess, sys

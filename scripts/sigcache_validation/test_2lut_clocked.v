@@ -10,16 +10,22 @@
 // Topology:
 //   KEY2 (PIN_E16) -> A   -> LE_A.dataa
 //   KEY3 (PIN_M16) -> B   -> LE_A.datab
-//   le_a: LUT mask 0x8888 = AND(I[0], I[1]) = AND(A, B)
+//   le_a: LUT mask 0x6996 = XOR4 (symmetric mask)
+//         With I[3:2]=00, effective TT M[3:0]=0x6 → XOR(A,B)
+//         0x6996 is fully input-axis-permutation invariant (all
+//         popcount classes uniform) — bypasses σ⁻¹ canonicalization
+//         ambiguity at X4Y4N0 (Pitfall #16; memo
+//         sigma_inv_x4y4n0_not_a_4perm_2026_05_12).
 //   le_a.combout -> LE_B.dataa
 //   le_b: LUT mask 0xAAAA = I[0] = passthrough of LE_A.combout
 //   le_b -> DFF -> Q -> LED (PIN_G15)
 //   CLK = PIN_E1
 //
 // Expected silicon (when codec is correct):
-//   LED follows registered NOT(KEY2_pressed) AND NOT(KEY3_pressed)
-//   (AX301 keys are active-LOW).  LED solid ON when neither key
-//   pressed; OFF when KEY2 or KEY3 pressed.
+//   LED follows registered XOR(NOT(KEY2_pressed), NOT(KEY3_pressed))
+//   = XOR(KEY2_pressed, KEY3_pressed) (AX301 keys are active-LOW;
+//   inversion cancels in XOR).  LED ON when exactly one of KEY2/KEY3
+//   pressed; OFF when both pressed or both unpressed.
 
 module fuzz_top(
     input  wire CLK,
@@ -30,8 +36,10 @@ module fuzz_top(
     wire le_a_out;
     wire le_b_out;
 
-    // LE_A: AND of A,B (mask 0x8888).  I[3:0] = {datad, datac, datab, dataa}
-    LUT #(.K(4), .INIT(16'h8888)) le_a (
+    // LE_A: XOR(A,B) via symmetric mask 0x6996 (XOR4 with I[3:2]=00).
+    // I[3:0] = {datad, datac, datab, dataa}.  Symmetric mask bypasses
+    // the σ⁻¹ input-axis canonicalization ambiguity at X4Y4N0.
+    LUT #(.K(4), .INIT(16'h6996)) le_a (
         .I({1'b0, 1'b0, B, A}),
         .Q(le_a_out)
     );
