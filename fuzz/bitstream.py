@@ -1473,6 +1473,51 @@ def canon_classify_transition(rbf_a, rbf_b):
     return (None, None, False)
 
 
+def lut_input_dependence(mask):
+    """Return the set of LUT input axes (subset of {'a','b','c','d'}) that
+    the 16-bit truth-table `mask` functionally depends on.
+
+    Used by the bypass-mode TT model (Phase 4, Pitfall #16): a mask whose
+    function depends on at most 1 axis is `bypass-eligible` — Quartus
+    routes the lone input directly to combout and emits 0 LUT-SRAM TT
+    cells in the lab_cram TT-frame region.  Higher-arity masks use the
+    real LUT SRAM (codec's predict_sram path stays correct).
+
+    Encoding convention (4-input LUT): bit position `v` = `d*8 + c*4 +
+    b*2 + a`.  Mask bit `v` = function value at (a, b, c, d).
+    """
+    bits = [(mask >> v) & 1 for v in range(16)]
+    deps = set()
+    for axis, name in enumerate(("a", "b", "c", "d")):
+        for v in range(16):
+            if (v >> axis) & 1:
+                continue
+            v1 = v | (1 << axis)
+            if bits[v] != bits[v1]:
+                deps.add(name)
+                break
+    return deps
+
+
+def is_bypass_mask(mask):
+    """True iff `mask` is bypass-eligible (function depends on ≤1 input).
+
+    Captures the 8 single-input passthrough/negation masks plus the two
+    constant masks 0x0000 / 0xFFFF.  See Phase 4 mining 2026-05-13:
+    `codec.predict_sram` cells stay 0 across all 8 Quartus single-input
+    builds at X4Y4N0.
+    """
+    return len(lut_input_dependence(mask)) <= 1
+
+
+# Canonical 1-input passthrough / negation masks (subset of is_bypass_mask).
+# Kept as an explicit set so callers can pattern-match cheaply.
+BYPASS_1INPUT_MASKS = frozenset((
+    0xAAAA, 0xCCCC, 0xF0F0, 0xFF00,  # pass-{a,b,c,d}
+    0x5555, 0x3333, 0x0F0F, 0x00FF,  # neg-{a,b,c,d}
+))
+
+
 class LutCodec:
     """XOR-linear LUT truth table codec for one LE position."""
 
@@ -1654,7 +1699,8 @@ class LutCodec:
 
     def write_tt(self, zero_data, mask, *,
                  canon_from="a", canon_to=None,
-                 neg_from=False, neg_to=None):
+                 neg_from=False, neg_to=None,
+                 bypass=False):
         """Write a truth table mask into an RBF, starting from zero baseline.
 
         Args:
@@ -1667,6 +1713,12 @@ class LutCodec:
                 a/b/c/d ('d' ≡ 'c'); see canon_apply_transition.
             neg_from, neg_to: optional output-negation transition.  When
                 neg_to is None it defaults to neg_from (no neg flip).
+            bypass: when True, skip per-minterm SRAM emission entirely —
+                use this for `is_bypass_mask(mask)` masks (≤1-input
+                dependence; LUT-bypass routing).  Phase 4 mining
+                2026-05-13 confirmed Quartus emits 0 lab_cram TT-frame
+                cells for all 8 single-input passthrough/negation masks
+                at X4Y4N0.  Default False = legacy byte-identical.
 
         Returns:
             Modified RBF as bytes.
@@ -1676,9 +1728,10 @@ class LutCodec:
         columns.  2-input masks (Phase 4) and N>0 (Phase 5) are open.
         """
         result = bytearray(zero_data)
-        sram_cells = self.predict_sram(mask)
-        for addr, bitpos in sram_cells:
-            result[addr] ^= (1 << bitpos)
+        if not bypass:
+            sram_cells = self.predict_sram(mask)
+            for addr, bitpos in sram_cells:
+                result[addr] ^= (1 << bitpos)
         if canon_to is not None:
             _neg_to = neg_from if neg_to is None else neg_to
             result = bytearray(canon_apply_transition(

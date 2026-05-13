@@ -30,12 +30,15 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO, "fuzz"))
 
 from bitstream import (  # noqa: E402
+    BYPASS_1INPUT_MASKS,
     CANON_AXIS_PAIR_DIFFS,
     CANON_NEG_DIFF,
     LutCodec,
     canon_apply_transition,
     canon_axis_diff,
     canon_classify_transition,
+    is_bypass_mask,
+    lut_input_dependence,
 )
 
 
@@ -218,6 +221,104 @@ def t_lutcodec_tt_decoding_canon_orthogonal():
                      f"got 0x{m_back2:04X}")
 
 
+def t_lut_input_dependence():
+    """Phase 4: lut_input_dependence enumerates axis dependence correctly."""
+    # 1-input passthrough/negation: depend on exactly 1 axis.
+    cases_1 = {
+        0xAAAA: {"a"},
+        0xCCCC: {"b"},
+        0xF0F0: {"c"},
+        0xFF00: {"d"},
+        0x5555: {"a"},  # !a
+        0x3333: {"b"},  # !b
+        0x0F0F: {"c"},  # !c
+        0x00FF: {"d"},  # !d
+    }
+    for mask, want in cases_1.items():
+        got = lut_input_dependence(mask)
+        assert got == want, f"0x{mask:04X}: want {want}, got {got}"
+    # Constants — 0 inputs.
+    assert lut_input_dependence(0x0000) == set()
+    assert lut_input_dependence(0xFFFF) == set()
+    # 2-input AND/OR/XOR — exactly 2 axes.
+    assert lut_input_dependence(0x8888) == {"a", "b"}   # a&b
+    assert lut_input_dependence(0xEEEE) == {"a", "b"}   # a|b
+    assert lut_input_dependence(0x6666) == {"a", "b"}   # a^b
+    assert lut_input_dependence(0xA0A0) == {"a", "c"}   # a&c
+    assert lut_input_dependence(0xF000) == {"c", "d"}   # c&d
+    # 4-input XOR — all 4.
+    assert lut_input_dependence(0x6996) == {"a", "b", "c", "d"}
+
+
+def t_is_bypass_mask():
+    """Phase 4: is_bypass_mask captures the 1-input + constant cases."""
+    # All declared bypass masks classify as bypass.
+    for m in BYPASS_1INPUT_MASKS:
+        assert is_bypass_mask(m), f"declared bypass 0x{m:04X} rejected"
+    # Constants are also bypass (0-input).
+    assert is_bypass_mask(0x0000)
+    assert is_bypass_mask(0xFFFF)
+    # 2+-input masks are NOT bypass.
+    for m in (0x8888, 0xEEEE, 0x6666, 0xA0A0, 0xC0C0, 0xF000,
+              0x6996, 0x9669, 0x1234):
+        assert not is_bypass_mask(m), f"non-bypass 0x{m:04X} flagged bypass"
+    # Set has exactly the 8 1-input passthrough/negation entries.
+    assert len(BYPASS_1INPUT_MASKS) == 8
+
+
+def t_write_tt_bypass_emits_zero_tt_cells():
+    """Phase 4 fix: write_tt(..., bypass=True) for a 1-input mask must NOT
+    flip any of codec.predict_sram(mask)'s cells.  Confirms the lab_cram
+    TT-frame byte-identity gap (Pitfall #16) is closed for bypass cases.
+    """
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    for mask in sorted(BYPASS_1INPUT_MASKS):
+        out = codec.write_tt(zero, mask, bypass=True)
+        # No SRAM-region cells should have flipped.
+        for addr, bp in codec.predict_sram(mask):
+            assert ((out[addr] ^ zero[addr]) & (1 << bp)) == 0, (
+                f"bypass=True mask 0x{mask:04X}: codec emitted SRAM "
+                f"cell ({addr},{bp})")
+        # In fact, with no canon kwargs, output must equal zero bytewise.
+        assert out == zero, (
+            f"bypass=True mask 0x{mask:04X}: unexpected byte delta")
+
+
+def t_write_tt_bypass_with_canon_layer():
+    """write_tt(bypass=True, canon_to=...) applies canon cells only —
+    no SRAM cells — and matches `canon_apply_transition(zero, ...)`."""
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    for ax in ("a", "b", "c", "d"):
+        for neg in (False, True):
+            got = codec.write_tt(zero, 0xAAAA, bypass=True,
+                                 canon_from="a", canon_to=ax,
+                                 neg_from=False, neg_to=neg)
+            want = canon_apply_transition(zero, "a", ax,
+                                          from_negated=False,
+                                          to_negated=neg)
+            assert got == want, (
+                f"bypass + canon mismatch: ax={ax} neg={neg}")
+
+
+def t_write_tt_default_still_emits_sram():
+    """Critical: default behavior unchanged.  bypass=False (default) MUST
+    still XOR-emit predict_sram cells for legacy callers and round-trip.
+    """
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    for mask in (0xAAAA, 0xCCCC, 0x8888, 0x6996):
+        out = codec.write_tt(zero, mask)
+        # SRAM cells from predict_sram should be flipped.
+        for addr, bp in codec.predict_sram(mask):
+            assert ((out[addr] ^ zero[addr]) & (1 << bp)) != 0, (
+                f"legacy default broke at 0x{mask:04X}: cell ({addr},{bp}) "
+                f"not flipped")
+        # Round-trip via read_tt
+        assert codec.read_tt(out, zero) == mask
+
+
 def main():
     tests = [
         ("canon_table_shapes",           t_canon_table_shapes),
@@ -228,6 +329,12 @@ def main():
         ("write_tt_legacy_default",      t_lutcodec_write_tt_legacy_default),
         ("write_tt_with_canon",          t_lutcodec_write_tt_with_canon),
         ("tt_decoding_canon_orthogonal", t_lutcodec_tt_decoding_canon_orthogonal),
+        # Phase 4 — bypass-mode TT model.
+        ("lut_input_dependence",         t_lut_input_dependence),
+        ("is_bypass_mask",               t_is_bypass_mask),
+        ("write_tt_bypass_zero_cells",   t_write_tt_bypass_emits_zero_tt_cells),
+        ("write_tt_bypass_with_canon",   t_write_tt_bypass_with_canon_layer),
+        ("write_tt_default_emits_sram",  t_write_tt_default_still_emits_sram),
     ]
     failed = []
     for name, fn in tests:
