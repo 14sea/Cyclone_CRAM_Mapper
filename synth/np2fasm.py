@@ -516,6 +516,7 @@ def convert(
     routed_json: dict,
     baseline: str = "nv",
     legacy_iob_route: bool = False,
+    bypass_aware: bool = False,
     design_pack: str | None = None,
 ) -> tuple[list[str], list[str]]:
     """Convert routed JSON to (fasm_lines, warnings).
@@ -541,6 +542,14 @@ def convert(
     Use legacy mode for simple_led-class single-LE designs that must
     match the pre-6b6cda9 IOB_ROUTE apply-path (see CLAUDE.md
     IOB_ROUTE row + memory ``fix_a_legacy_iob_route_flag_landed.md``).
+
+    bypass_aware=True emits a ``# fasm2rbf: bypass_aware=1`` pragma
+    header.  Downstream ``fasm2rbf.bitgen`` then treats LUT masks in
+    :data:`bitstream.BYPASS_1INPUT_MASKS` (plus 0x0000 / 0xFFFF) as
+    LUT-bypass cases — skip per-minterm SRAM emit + XOR-apply the σ⁻¹
+    canon-cell layer transition for the mask's axis/negation.  Enable
+    for 1-LE passthrough/negation designs where Quartus would use LUT
+    bypass routing (see P1 of plan ``imperative-crafting-pumpkin``).
     """
     if baseline not in ("nv", "pure"):
         raise ValueError(
@@ -549,6 +558,8 @@ def convert(
     warnings: list[str] = []
     if legacy_iob_route:
         fasm.append("# fasm2rbf: legacy_iob_route=1")
+    if bypass_aware:
+        fasm.append("# fasm2rbf: bypass_aware=1")
     if baseline == "pure":
         # Reproduce nv_zero_global on top of PURE_ZERO.  Everything else
         # in the emitted FASM (IOB_IN/OUT, ROUTE, GCLK_PIN, LAB_CLK_SEL,
@@ -1357,11 +1368,12 @@ def convert(
 
 
 def main() -> None:
-    # CLI: [--base nv|pure] [--legacy-iob-route] [--design-pack TAG]
-    #      <routed.json> [output.fasm]
+    # CLI: [--base nv|pure] [--legacy-iob-route] [--bypass-aware]
+    #      [--design-pack TAG] <routed.json> [output.fasm]
     argv = list(sys.argv[1:])
     baseline = "nv"
     legacy_iob_route = False
+    bypass_aware = False
     design_pack: str | None = None
     while argv and argv[0].startswith("--"):
         if argv[0] == "--base":
@@ -1372,6 +1384,9 @@ def main() -> None:
             argv = argv[2:]
         elif argv[0] == "--legacy-iob-route":
             legacy_iob_route = True
+            argv = argv[1:]
+        elif argv[0] == "--bypass-aware":
+            bypass_aware = True
             argv = argv[1:]
         elif argv[0] == "--design-pack":
             if len(argv) < 2:
@@ -1386,7 +1401,7 @@ def main() -> None:
     if len(argv) < 1:
         print(
             f"Usage: {sys.argv[0]} [--base nv|pure] "
-            f"[--legacy-iob-route] [--design-pack TAG] "
+            f"[--legacy-iob-route] [--bypass-aware] [--design-pack TAG] "
             f"<routed.json> [output.fasm]\n"
             f"  --base pure            emit NV_BASELINE_PACK header so caller\n"
             f"                         can pass make_pure_zero_rbf() as base_rbf;\n"
@@ -1394,6 +1409,10 @@ def main() -> None:
             f"  --legacy-iob-route     emit `# fasm2rbf: legacy_iob_route=1`\n"
             f"                         pragma; callers forward to bitgen via\n"
             f"                         fasm2rbf.parse_pragmas(fasm_text).\n"
+            f"  --bypass-aware         emit `# fasm2rbf: bypass_aware=1`\n"
+            f"                         pragma so fasm2rbf treats LUT masks in\n"
+            f"                         BYPASS_1INPUT_MASKS as LUT-bypass\n"
+            f"                         (skip SRAM emit + canon-cell transition).\n"
             f"  --design-pack TAG      emit DESIGN_BLOCK_BAND_PACK <tag>;\n"
             f"                         suppresses per-site M9K_MODE emission.\n"
             f"                         Tag must exist in results/design_block_band.json\n"
@@ -1406,6 +1425,7 @@ def main() -> None:
     fasm_lines, warnings = convert(
         routed, baseline=baseline,
         legacy_iob_route=legacy_iob_route,
+        bypass_aware=bypass_aware,
         design_pack=design_pack,
     )
 

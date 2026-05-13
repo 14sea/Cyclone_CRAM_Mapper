@@ -96,7 +96,11 @@ from pathlib import Path
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
-from bitstream import LutCodec, RouteCodec, patch_rbf_crc
+from bitstream import (
+    LutCodec, RouteCodec, patch_rbf_crc,
+    BYPASS_1INPUT_MASKS, is_bypass_mask, lut_input_dependence,
+    canon_apply_transition,
+)
 from route_synth import parse_need, plan_hops, pick_li_envelope, emit_ops
 import route_signatures
 
@@ -1622,29 +1626,37 @@ def parse_pragmas(text):
     Currently recognised keys:
 
     * ``legacy_iob_route`` — boolean (``1``/``0`` / ``true``/``false``)
+    * ``bypass_aware`` — boolean.  When set, fasm2rbf treats LUT masks in
+      :data:`bitstream.BYPASS_1INPUT_MASKS` (plus 0x0000 / 0xFFFF) as
+      LUT-bypass cases: skips per-minterm SRAM emit for those LEs and
+      XOR-applies the σ⁻¹ canon-cell layer transition derived from the
+      mask's axis dependence + negation (P1 of plan
+      ``imperative-crafting-pumpkin``).
 
     Unknown keys raise ``ValueError`` so silent drift is impossible.
-    Callers that use np2fasm's ``--legacy-iob-route`` should wire this
-    through explicitly::
+    Callers that use np2fasm's ``--legacy-iob-route`` / ``--bypass-aware``
+    should wire this through explicitly::
 
         pragmas = parse_pragmas(fasm_text)
         rbf = bitgen(fasm_text, base_rbf, **pragmas)
     """
+    _BOOL_TRUE  = ("1", "true", "yes", "on")
+    _BOOL_FALSE = ("0", "false", "no", "off")
+    _BOOL_KEYS  = ("legacy_iob_route", "bypass_aware")
     out = {}
     for line in text.splitlines():
         m = _PRAGMA_RE.match(line)
         if not m:
             continue
         key, val = m.group(1), m.group(2).lower()
-        if key == "legacy_iob_route":
-            if val in ("1", "true", "yes", "on"):
-                out["legacy_iob_route"] = True
-            elif val in ("0", "false", "no", "off"):
-                out["legacy_iob_route"] = False
+        if key in _BOOL_KEYS:
+            if val in _BOOL_TRUE:
+                out[key] = True
+            elif val in _BOOL_FALSE:
+                out[key] = False
             else:
                 raise ValueError(
-                    f"parse_pragmas: legacy_iob_route={val!r} "
-                    f"must be 1/0/true/false")
+                    f"parse_pragmas: {key}={val!r} must be 1/0/true/false")
         else:
             raise ValueError(f"parse_pragmas: unknown pragma {key!r}")
     return out
@@ -1983,7 +1995,7 @@ def _load_overhead():
 
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
-           lenient=False, legacy_iob_route=False):
+           lenient=False, legacy_iob_route=False, bypass_aware=False):
     """Core entry — FASM text + base RBF → finished RBF bytes.
 
     ``legacy_iob_route=True`` restores the pre-6b6cda9 IOB_ROUTE cell
@@ -1996,6 +2008,15 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     (default ``legacy_iob_route=False``) is correct for pair-derived
     ``padnv_cells`` / ``absolute_cells`` entries consumed by two_lab /
     NEORV32 ζ flows.
+
+    ``bypass_aware=True`` (P1 of plan ``imperative-crafting-pumpkin``)
+    enables LUT-bypass handling for masks in
+    :data:`bitstream.BYPASS_1INPUT_MASKS` (plus 0x0000 / 0xFFFF
+    constants): per-LE SRAM emit is skipped (Quartus uses LUT bypass)
+    and a single σ⁻¹ canon-cell transition is XOR-applied after the
+    LUT phase based on the mask's axis dependence + negation.  Multi-
+    bypass-LUT designs assert all entries agree on (axis, neg) — silent
+    canon-state disagreement raises rather than miscompiles.
     """
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
@@ -2008,6 +2029,11 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
 
     codec = RouteCodec()
     work = bytes(base_rbf)
+
+    # P1 bypass-aware: collect canon-cell transitions across all bypass LUTs.
+    # Hoisted out of the `if all_luts:` block so the post-loop apply at the
+    # end of bitgen sees an empty list when no LUTs are present.
+    collected_canon = []  # list[(axis, neg)] populated by LUT phase
 
     # Track cells applied by design directives so IOB_ROUTE can skip
     # overlapping cells.  IOB_ROUTE sig-cache entries are absolute deltas
@@ -2430,10 +2456,38 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             lut_cache[key] = lut
             tt_cells_cache[key] = lut.predict_sram(0xFFFF)
 
+        # P1 bypass-aware: identify std_luts whose mask is bypass-eligible
+        # (Quartus uses LUT-bypass routing; emits 0 lab_cram TT cells).
+        # Skip Phase 1+2 SRAM emit for these LEs and accumulate the
+        # canon-cell layer transition to apply at the very end of bitgen.
+        # Constants 0x0000 / 0xFFFF: skip SRAM emit but no canon transition
+        # (canon='a' baseline preserved; constant is encoded via LUT bypass
+        # to VCC/GND tie-off, not via canon state).
+        _BYPASS_MASK_TO_CANON = {
+            0xAAAA: ("a", False), 0xCCCC: ("b", False),
+            0xF0F0: ("c", False), 0xFF00: ("d", False),
+            0x5555: ("a", True),  0x3333: ("b", True),
+            0x0F0F: ("c", True),  0x00FF: ("d", True),
+        }
+        bypass_keys = set()
+        # collected_canon is initialized at bitgen entry (hoisted)
+        if bypass_aware:
+            for x, y, n, mask in std_luts:
+                if (x, y, n) in arith_keys:
+                    continue
+                if not is_bypass_mask(mask):
+                    continue
+                bypass_keys.add((x, y, n))
+                if mask in _BYPASS_MASK_TO_CANON:
+                    collected_canon.append(_BYPASS_MASK_TO_CANON[mask])
+
         # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
         # predict_sram(0xFFFF) yields exactly the 16 true TT cells
         # (from_cram_model has 1 cell per minterm, no shared LAB noise).
         # SKIP for arith-mode LEs — arith has no normal-mode presence.
+        # Bypass LEs still need clearing: Quartus emits 0 TT cells for
+        # bypass, and the base RBF may have stale cells the design must
+        # zero out (Phase 2 is the no-op, not Phase 1).
         for x, y, n, mask in std_luts:
             if (x, y, n) in arith_keys:
                 continue
@@ -2441,7 +2495,12 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 buf[addr] &= ~(1 << bitpos)
 
         # Phase 2: XOR-flip true TT cells for each LUT mask.
+        # SKIP bypass LEs — Quartus uses LUT bypass routing (0 lab_cram
+        # TT cells); the canon-cell layer transition applied post-loop
+        # captures the mask's axis/negation via header + block_band cells.
         for x, y, n, mask in std_luts:
+            if (x, y, n) in bypass_keys:
+                continue
             lut = lut_cache[(x, y, n)]
             tt_only = tt_cells_cache[(x, y, n)]
             for addr, bitpos in lut.predict_sram(mask) & tt_only:
@@ -2792,6 +2851,24 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                     )
                     continue
                 raise
+
+    # P1 bypass-aware: apply collected canon-cell transition.  Canon cells
+    # live in shared config (header + block_band, 0 lab_cram), so this
+    # must happen AFTER all per-LE / per-LAB directives have settled but
+    # BEFORE CRC patching.  All bypass LUTs in the design must agree on
+    # (axis, neg) — disagreement raises rather than silently miscompiling
+    # (canon state is FPGA-global; conflicting bypass LUTs cannot coexist).
+    if collected_canon:
+        canon_set = set(collected_canon)
+        if len(canon_set) > 1:
+            raise FasmError(
+                f"bypass_aware: bypass LUTs disagree on canon state — "
+                f"got {sorted(canon_set)}.  Canon cells are FPGA-global; "
+                f"conflicting 1-input bypass masks cannot coexist."
+            )
+        axis, neg = next(iter(canon_set))
+        work = canon_apply_transition(work, "a", axis,
+                                      from_negated=False, to_negated=neg)
 
     if patch_crc:
         work = patch_rbf_crc(work)

@@ -180,10 +180,15 @@ write_json {yosys_json}
     # --- Step 4: fasm2rbf ---
     print("\n=== Step 4: fasm2rbf ===", flush=True)
     from pure_zero_rbf import make_pure_zero_rbf
-    from fasm2rbf import bitgen
+    from fasm2rbf import bitgen, parse_pragmas
 
     base_rbf = make_pure_zero_rbf()
-    result_rbf = bitgen(fasm_text, base_rbf, lenient=False)
+    # Forward `# fasm2rbf: <key>=<val>` pragmas emitted by np2fasm
+    # (e.g. legacy_iob_route, bypass_aware) into bitgen so the
+    # downstream LUT-phase guards see the right kwargs.  See plan
+    # ``imperative-crafting-pumpkin`` P1 for the bypass-aware path.
+    pragmas = parse_pragmas(fasm_text)
+    result_rbf = bitgen(fasm_text, base_rbf, lenient=False, **pragmas)
     OUT_RBF.write_bytes(result_rbf)
     print(f"  RBF: {len(result_rbf)} bytes -> {OUT_RBF}")
 
