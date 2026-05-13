@@ -121,3 +121,5 @@ output_files/
 output_files_*/
 *.qpf.bak
 *.qsf.bak
+*.md.bak
+*.md.bak.gz

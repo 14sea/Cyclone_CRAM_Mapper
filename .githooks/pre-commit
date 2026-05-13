@@ -67,3 +67,30 @@ if [[ -f "$PHASE3_TEST" ]]; then
     fi
     echo "[pre-commit] Phase 3 collision test OK"
 fi
+
+# P1 bypass_aware byte-identity gate — ~2s.  Locks the 8 BYPASS_1INPUT_MASKS
+# (+ 2 constants) against Quartus canon_*_X4Y4N0.rbf references.  Catches any
+# future codec drift that re-breaks the end-to-end open-toolchain ↔ Quartus
+# byte-identity for 1-input bypass class (P1 of plan
+# imperative-crafting-pumpkin, silicon-validated 2026-05-13 via canon_b
+# bitgen flash; memo p1_bypass_aware_silicon_validated_2026_05_13).
+#
+# Skips gracefully if Quartus canon_*_X4Y4N0.rbf cache is missing
+# (tmp/real_tt_mining/ is gitignored).
+BYPASS_TEST="$REPO_ROOT/fuzz/test_bypass_byte_identity.py"
+BYPASS_FIXTURE="$REPO_ROOT/tmp/real_tt_mining/canon_a_X4Y4N0/canon_a_X4Y4N0.rbf"
+if [[ -f "$BYPASS_TEST" && -f "$BYPASS_FIXTURE" ]]; then
+    echo "[pre-commit] running bypass byte-identity test..."
+    if ! python3 "$BYPASS_TEST" >/tmp/bypass_byte_identity.log 2>&1; then
+        echo "[pre-commit] bypass byte-identity FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/bypass_byte_identity.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] bypass byte-identity OK"
+elif [[ -f "$BYPASS_TEST" ]]; then
+    echo "[pre-commit] ⚠️  bypass byte-identity gate BYPASSED" >&2
+    echo "[pre-commit] ⚠️  fixture missing: $BYPASS_FIXTURE" >&2
+    echo "[pre-commit] ⚠️  rebuild via: scripts/sigma_inv_real_tt_mining/probe_canonicalization_cells.py 4 4 0" >&2
+fi
