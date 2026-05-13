@@ -1656,7 +1656,7 @@ class LutCodec:
                 result ^= self.patterns[bit]
         return result
 
-    def read_tt(self, rbf_data, zero_data):
+    def read_tt(self, rbf_data, zero_data, *, bypass_aware=False):
         """Read the current LUT truth table from RBF data.
 
         Uses ctrl bytes as discriminators: each TT bit has a unique ctrl byte
@@ -1664,23 +1664,64 @@ class LutCodec:
         we can directly determine each TT bit's state.
 
         Args:
-            rbf_data: bytes of the RBF to read from
-            zero_data: bytes of the zero-mask (0x0000) baseline RBF
+            rbf_data: bytes of the RBF to read from.
+            zero_data: bytes of the zero-mask (0x0000) baseline RBF.  Assumed
+                to be in canon_from='a' canonical state (the convention used
+                throughout the codec).
+            bypass_aware: when True (default False), inspect the canon-cell
+                region as well — if no SRAM TT cells are flipped but the
+                canon delta matches a recognized 1-input bypass pattern,
+                return the corresponding bypass mask.  Closes the Phase 4
+                asymmetry where ``write_tt(zero, 0xAAAA, bypass=True)``
+                round-trips to 0x0000 under the legacy path.
 
         Returns:
-            16-bit integer truth table mask
+            16-bit integer truth table mask.
+
+        Bypass-aware semantics (only when bypass_aware=True):
+          - SRAM cells flipped → return the SRAM-decoded mask (legacy).
+          - SRAM cells not flipped AND canon delta matches an enumerated
+            (axis_pair, neg) transition from the canonical 'a' baseline →
+            return the bypass mask: a/!a/b/!b/c/!c only (d≡c aliasing).
+          - Otherwise → return 0 (matches legacy default-zero behavior).
+
+        Limitations: constants 0x0000 and 0xFFFF are NOT decodable in
+        bypass-aware mode — the canon layer carries no signal for them,
+        so 0x0000 round-trips to 0xAAAA (false positive).  See
+        phase4_audit_gaps_2026_05_13 P2 + P4.
         """
         if not self.ctrl_cells:
             # Fall back to exhaustive search if ctrl cells not identified
-            return self._read_tt_bruteforce(rbf_data, zero_data)
+            mask = self._read_tt_bruteforce(rbf_data, zero_data)
+        else:
+            mask = 0
+            for bit, (addr, bitpos) in self.ctrl_cells.items():
+                rbf_bit = (rbf_data[addr] >> bitpos) & 1
+                zero_bit = (zero_data[addr] >> bitpos) & 1
+                if rbf_bit != zero_bit:
+                    mask |= (1 << bit)
+        if not bypass_aware or mask != 0:
+            return mask
 
-        mask = 0
-        for bit, (addr, bitpos) in self.ctrl_cells.items():
-            rbf_bit = (rbf_data[addr] >> bitpos) & 1
-            zero_bit = (zero_data[addr] >> bitpos) & 1
-            if rbf_bit != zero_bit:
-                mask |= (1 << bit)
-        return mask
+        # Bypass-aware path: try to recover a 1-input bypass mask from the
+        # canon-cell delta.  Assumes zero_data is the canon='a' baseline.
+        kind, pair, neg = canon_classify_transition(zero_data, rbf_data)
+        if kind != "axis_pair" or pair is None:
+            return 0
+        pair_set = set(pair)
+        pair_set.discard("a")
+        if len(pair_set) == 0:
+            to_axis = "a"
+        elif len(pair_set) == 1:
+            to_axis = next(iter(pair_set))
+        else:
+            return 0  # ambiguous (not from canon='a' baseline)
+        bypass_table = {
+            ("a", False): 0xAAAA, ("a", True): 0x5555,
+            ("b", False): 0xCCCC, ("b", True): 0x3333,
+            ("c", False): 0xF0F0, ("c", True): 0x0F0F,
+        }
+        return bypass_table.get((to_axis, neg), 0)
 
     def _read_tt_bruteforce(self, rbf_data, zero_data):
         """Fallback reader using exhaustive XOR search."""

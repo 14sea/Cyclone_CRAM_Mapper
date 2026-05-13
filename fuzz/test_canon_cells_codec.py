@@ -302,6 +302,72 @@ def t_write_tt_bypass_with_canon_layer():
                 f"bypass + canon mismatch: ax={ax} neg={neg}")
 
 
+def t_read_tt_bypass_aware_round_trip():
+    """Phase 4 P2: read_tt(bypass_aware=True) recovers the 1-input bypass mask
+    written via write_tt(..., bypass=True, canon_to=..., neg_to=...).
+
+    Covers all 8 BYPASS_1INPUT_MASKS with d→c aliasing collapsed to c.
+    """
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    # (mask, canon_to, neg_to, expected_decoded_mask)
+    # d→c aliasing: 0xFF00/0x00FF decode as 0xF0F0/0x0F0F.
+    cases = [
+        (0xAAAA, "a", False, 0xAAAA),
+        (0x5555, "a", True,  0x5555),
+        (0xCCCC, "b", False, 0xCCCC),
+        (0x3333, "b", True,  0x3333),
+        (0xF0F0, "c", False, 0xF0F0),
+        (0x0F0F, "c", True,  0x0F0F),
+        (0xFF00, "d", False, 0xF0F0),  # d≡c
+        (0x00FF, "d", True,  0x0F0F),  # d≡c
+    ]
+    for mask, ax, neg, want in cases:
+        out = codec.write_tt(zero, mask, bypass=True,
+                             canon_from="a", canon_to=ax,
+                             neg_from=False, neg_to=neg)
+        got = codec.read_tt(out, zero, bypass_aware=True)
+        assert got == want, (
+            f"bypass_aware round-trip: mask=0x{mask:04X} ax={ax} neg={neg}: "
+            f"got 0x{got:04X}, want 0x{want:04X}")
+        # Same call without bypass_aware must still return 0 (legacy).
+        got_legacy = codec.read_tt(out, zero)
+        assert got_legacy == 0, (
+            f"legacy read on bypass write should be 0: got 0x{got_legacy:04X}")
+
+
+def t_read_tt_bypass_aware_passes_through_sram():
+    """bypass_aware=True must NOT override a non-zero SRAM-decoded mask —
+    only kicks in when SRAM is silent."""
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    for mask in (0xAAAA, 0xCCCC, 0x6996, 0x8888):
+        out = codec.write_tt(zero, mask)  # legacy SRAM path, no canon
+        got = codec.read_tt(out, zero, bypass_aware=True)
+        assert got == mask, (
+            f"bypass_aware should pass SRAM mask through: "
+            f"mask=0x{mask:04X} got 0x{got:04X}")
+
+
+def t_read_tt_bypass_aware_zero_canon_decodes_as_passthrough_a():
+    """Known limitation: bypass_aware=True on a pristine zero RBF returns
+    0xAAAA, not 0x0000.
+
+    Empty SRAM + empty canon delta is structurally indistinguishable from
+    a successful bypass write of mask=0xAAAA on a canon='a' baseline
+    (both produce zero bytes against zero baseline).  Callers needing to
+    detect "no LUT activity" must check separately.  This is the documented
+    false-positive collision in the bypass_aware semantics (see
+    phase4_audit_gaps_2026_05_13 P2 / read_tt docstring limitation note).
+    """
+    zero = _load(ZERO_RBF_PATH)
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    got = codec.read_tt(zero, zero, bypass_aware=True)
+    assert got == 0xAAAA, (
+        f"pristine zero should decode as 0xAAAA collision per docstring, "
+        f"got 0x{got:04X}")
+
+
 def t_write_tt_default_still_emits_sram():
     """Critical: default behavior unchanged.  bypass=False (default) MUST
     still XOR-emit predict_sram cells for legacy callers and round-trip.
@@ -335,6 +401,12 @@ def main():
         ("write_tt_bypass_zero_cells",   t_write_tt_bypass_emits_zero_tt_cells),
         ("write_tt_bypass_with_canon",   t_write_tt_bypass_with_canon_layer),
         ("write_tt_default_emits_sram",  t_write_tt_default_still_emits_sram),
+        # Phase 4 P2 — read_tt bypass-aware path.
+        ("read_tt_bypass_round_trip",    t_read_tt_bypass_aware_round_trip),
+        ("read_tt_bypass_sram_passthrough",
+         t_read_tt_bypass_aware_passes_through_sram),
+        ("read_tt_bypass_zero_canon",
+         t_read_tt_bypass_aware_zero_canon_decodes_as_passthrough_a),
     ]
     failed = []
     for name, fn in tests:

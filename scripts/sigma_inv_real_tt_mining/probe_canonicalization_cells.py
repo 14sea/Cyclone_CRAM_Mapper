@@ -97,6 +97,26 @@ XOR2 = {
     "c^d": 0x0FF0,
 }
 
+# 2-input AND input-NEGATION variants (LED = f(±a, ±b); pin_a=KEY1, pin_b=KEY2)
+# These probe Quartus's input-negation (NOT-gate-before-LUT) canonicalization
+# layer, disjoint from the input-permutation layer covered by AND2/OR2/XOR2.
+# Per Pitfall #16 / phase4_audit_gaps_2026_05_13.md (P1), this is likely the
+# real codec-extension target for asymmetric 2-input masks.
+AND_NEG = {
+    "a&b":   0x8888,   #  a ∧  b
+    "!a&b":  0x4444,   # ¬a ∧  b
+    "a&!b":  0x2222,   #  a ∧ ¬b
+    "!a&!b": 0x1111,   # ¬a ∧ ¬b
+}
+
+# 2-input OR input-NEGATION variants (LED = f(±a, ±b))
+OR_NEG = {
+    "a|b":   0xEEEE,   #  a ∨  b
+    "!a|b":  0xDDDD,   # ¬a ∨  b
+    "a|!b":  0xBBBB,   #  a ∨ ¬b
+    "!a|!b": 0x7777,   # ¬a ∨ ¬b
+}
+
 
 def build_one(name: str, x: int, y: int, n: int, lut_mask: int,
               wire4: bool = False) -> bytes | None:
@@ -241,19 +261,115 @@ def main():
                     help="Probe 2-input AND/OR/XOR P-equivalent classes "
                          "instead of (or in addition to with --include-1input) "
                          "the 1-input passthrough/negation classes.")
+    ap.add_argument("--2input-negation", dest="two_input_neg",
+                    action="store_true",
+                    help="Probe 2-input AND/OR input-NEGATION variants "
+                         "(AND_NEG = {0x8888,0x4444,0x2222,0x1111}; "
+                         "OR_NEG = {0xEEEE,0xDDDD,0xBBBB,0x7777}).  Disjoint "
+                         "layer from --2input (which covers input-permutation).  "
+                         "Mutex with --2input.  Output saved at "
+                         "canon_cells_X{x}Y{y}N{n}_2input_neg.json.")
     ap.add_argument("--include-1input", action="store_true",
                     help="With --2input, also build/diff the 1-input classes "
                          "(default: 2-input only).")
+    ap.add_argument("--constants", action="store_true",
+                    help="Phase 4 P4: build canon_const0 (0x0000) + "
+                         "canon_const1 (0xFFFF) and verify Quartus emits 0 "
+                         "lab_cram TT cells for both (LUT bypass via VCC/GND "
+                         "tie-off).  Exclusive with other modes.")
     args = ap.parse_args()
+    modes = sum(1 for x in (args.two_input, args.two_input_neg, args.constants)
+                if x)
+    if modes > 1:
+        print("FAIL: --2input / --2input-negation / --constants are mutex",
+              file=sys.stderr)
+        sys.exit(2)
     x, y, n = args.x, args.y, args.n
 
     print(f"=== Canonicalization-Cell Probe @ X{x}Y{y}N{n} ===")
     if args.two_input:
-        scope = "2-input"
+        scope = "2-input (permutation)"
         if args.include_1input:
             scope += " + 1-input"
         print(f"  mode: {scope}")
+    elif args.two_input_neg:
+        print("  mode: 2-input (negation: AND_NEG + OR_NEG)")
+    elif args.constants:
+        print("  mode: constants (0x0000 + 0xFFFF bypass verification)")
     print()
+
+    if args.constants:
+        # Phase 4 P4: verify Quartus emits zero lab_cram TT cells for
+        # constant masks.  Builds canon_const0 + canon_const1 and compares
+        # codec.all_cells (the position-specific TT-cell set) against the
+        # zero baseline.
+        import os as _os, sys as _sys
+        REPO_PATH = Path(__file__).resolve().parents[2]
+        _sys.path.insert(0, str(REPO_PATH / "fuzz"))
+        from bitstream import LutCodec  # noqa: E402
+
+        zero_rbf_path = REPO_PATH / "results" / "rbf" / "nv_zero_global.rbf"
+        zero_rbf = zero_rbf_path.read_bytes()
+        codec = LutCodec.from_cram_model(x, y, n)
+
+        results = {}
+        for tag, mask in (("const0", 0x0000), ("const1", 0xFFFF)):
+            name = f"canon_{tag}_X{x}Y{y}N{n}"
+            if args.skip_build:
+                p = WORK / name / f"{name}.rbf"
+                if not p.exists():
+                    print(f"FAIL: --skip-build but {p} missing",
+                          file=_sys.stderr)
+                    _sys.exit(1)
+                rbf = p.read_bytes()
+            else:
+                print(f"  building {tag} (0x{mask:04X})...")
+                rbf = build_one(name, x, y, n, mask, wire4=False)
+                if rbf is None:
+                    print(f"FAIL: build {tag} (0x{mask:04X})",
+                          file=_sys.stderr)
+                    _sys.exit(1)
+            # Inspect all codec TT cells: how many flipped vs zero baseline?
+            flipped_tt = []
+            for addr, bp in codec.all_cells:
+                if (rbf[addr] ^ zero_rbf[addr]) & (1 << bp):
+                    flipped_tt.append((addr, bp))
+            # Also count total non-CRC delta cells (region breakdown).
+            full_diff = diff_cells(rbf, zero_rbf)
+            regs = {}
+            for off, bp in full_diff:
+                regs[classify_region(off)] = regs.get(classify_region(off), 0) + 1
+            print(f"  {tag} (0x{mask:04X}): {len(full_diff)} total delta cells "
+                  f"{regs}; {len(flipped_tt)} of codec.all_cells "
+                  f"({len(codec.all_cells)} total) flipped")
+            results[tag] = {
+                "mask": mask,
+                "total_delta_cells": len(full_diff),
+                "region_breakdown": regs,
+                "codec_tt_cells_flipped": len(flipped_tt),
+                "codec_tt_cells_total": len(codec.all_cells),
+            }
+
+        # Verdict.
+        any_flipped = any(r["codec_tt_cells_flipped"] > 0
+                          for r in results.values())
+        print()
+        if any_flipped:
+            print("  ❌ constant-mask build flipped codec TT cells — "
+                  "is_bypass_mask(0xFFFF) verdict NOT confirmed")
+        else:
+            print("  ✅ both constant builds emit 0 lab_cram TT cells "
+                  "(confirms is_bypass_mask(0xFFFF) + 0x0000 LUT bypass)")
+
+        if args.save:
+            OUT_DIR.mkdir(exist_ok=True)
+            out = OUT_DIR / f"canon_cells_X{x}Y{y}N{n}_constants.json"
+            out.write_text(json.dumps({"position": [x, y, n],
+                                       "results": results,
+                                       "verdict_bypass_confirmed":
+                                            not any_flipped}, indent=2))
+            print(f"  saved → {out}")
+        return
 
     # Build / load all designs
     rbfs: dict[str, bytes] = {}
@@ -261,6 +377,8 @@ def main():
         all_masks = {**AND2, **OR2, **XOR2}
         if args.include_1input:
             all_masks = {**PASSTHROUGH, **NEGATION, **all_masks}
+    elif args.two_input_neg:
+        all_masks = {**AND_NEG, **OR_NEG}
     else:
         all_masks = {**PASSTHROUGH, **NEGATION}
     def _safe(lbl: str) -> str:
@@ -279,7 +397,8 @@ def main():
             print(f"  loaded {label:>3}  (0x{mask:04X})  cached")
             continue
         print(f"  building {label:>3}  (0x{mask:04X})...")
-        rbf = build_one(name, x, y, n, mask, wire4=args.two_input)
+        rbf = build_one(name, x, y, n, mask,
+                        wire4=(args.two_input or args.two_input_neg))
         if rbf is None:
             print(f"FAIL: build for {label} (0x{mask:04X}) failed", file=sys.stderr)
             sys.exit(1)
@@ -294,7 +413,7 @@ def main():
     neg_cells: dict[str, set[tuple[int, int]]] = {}
     class_diffs: dict[str, dict[frozenset, set[tuple[int, int]]]] = {}
 
-    if not args.two_input:
+    if not args.two_input and not args.two_input_neg:
         print("--- Passthrough × Passthrough diffs (axis-canonicalization cells) ---")
         pt_keys = list(PASSTHROUGH.keys())
         for i in range(len(pt_keys)):
@@ -321,6 +440,57 @@ def main():
             print(f"  {pos_label} vs {neg_label}: {len(d):3d} cells  {regs}")
             neg_cells[ax] = d
         print()
+    elif args.two_input_neg:
+        # 2-input-negation mode: within-class pairwise for AND_NEG and OR_NEG,
+        # plus cross-class diff between the two "a&b" / "a|b" representatives.
+        for class_name, class_masks in [("AND_NEG", AND_NEG),
+                                        ("OR_NEG", OR_NEG)]:
+            ks = list(class_masks.keys())
+            print(f"--- Within-class pairwise: {class_name} ({len(ks)} masks) ---")
+            cd: dict[frozenset, set[tuple[int, int]]] = {}
+            for i in range(len(ks)):
+                for j in range(i + 1, len(ks)):
+                    a, b = ks[i], ks[j]
+                    d = diff_cells(rbfs[a], rbfs[b])
+                    regs: dict[str, int] = {}
+                    for off, bp in d:
+                        r = classify_region(off)
+                        regs[r] = regs.get(r, 0) + 1
+                    print(f"  {a:>6} vs {b:>6}: {len(d):3d} cells  {regs}")
+                    cd[frozenset([a, b])] = d
+            class_diffs[class_name] = cd
+            print()
+
+        # Cross-class: pairwise across AND_NEG × OR_NEG (16 diffs).
+        print("--- Cross-class AND_NEG × OR_NEG ---")
+        for a in AND_NEG:
+            for b in OR_NEG:
+                d = diff_cells(rbfs[a], rbfs[b])
+                regs = {}
+                for off, bp in d:
+                    r = classify_region(off)
+                    regs[r] = regs.get(r, 0) + 1
+                print(f"  {a:>6} vs {b:>6}: {len(d):3d} cells  {regs}")
+        print()
+
+        # Diff each AND_NEG/OR_NEG mask vs Phase 1 cached canon_a if present.
+        canon_a_path = WORK / f"canon_a_X{x}Y{y}N{n}" / f"canon_a_X{x}Y{y}N{n}.rbf"
+        if canon_a_path.exists():
+            ref_rbf = canon_a_path.read_bytes()
+            print("--- AND_NEG / OR_NEG vs canon_a (0xAAAA, 1-input passthrough) ---")
+            for label in list(AND_NEG.keys()) + list(OR_NEG.keys()):
+                d = diff_cells(rbfs[label], ref_rbf)
+                regs = {}
+                for off, bp in d:
+                    r = classify_region(off)
+                    regs[r] = regs.get(r, 0) + 1
+                print(f"  {label:>6} vs canon_a: {len(d):4d} cells  {regs}")
+            print()
+
+        # Flatten class_diffs into the legacy axis_cells dict for union/save.
+        for cn, cd in class_diffs.items():
+            for pair, cells in cd.items():
+                axis_cells[pair] = cells
     else:
         # 2-input mode: within-class pairwise + cross-class (per pair).
         for class_name, class_masks in [("AND", AND2), ("OR", OR2), ("XOR", XOR2)]:
@@ -417,7 +587,12 @@ def main():
 
     if args.save:
         OUT_DIR.mkdir(exist_ok=True)
-        suffix = "_2input" if args.two_input else ""
+        if args.two_input:
+            suffix = "_2input"
+        elif args.two_input_neg:
+            suffix = "_2input_neg"
+        else:
+            suffix = ""
         out = OUT_DIR / f"canon_cells_X{x}Y{y}N{n}{suffix}.json"
         # JSON-friendly serialization
         out_data = {
