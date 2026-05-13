@@ -100,6 +100,8 @@ from bitstream import (
     LutCodec, RouteCodec, patch_rbf_crc,
     BYPASS_1INPUT_MASKS, is_bypass_mask, lut_input_dependence,
     canon_apply_transition,
+    canon_2input_label_for_mask, canon_2input_cells,
+    CANON_2INPUT_ABSOLUTE,
 )
 from route_synth import parse_need, plan_hops, pick_li_envelope, emit_ops
 import route_signatures
@@ -1642,7 +1644,7 @@ def parse_pragmas(text):
     """
     _BOOL_TRUE  = ("1", "true", "yes", "on")
     _BOOL_FALSE = ("0", "false", "no", "off")
-    _BOOL_KEYS  = ("legacy_iob_route", "bypass_aware")
+    _BOOL_KEYS  = ("legacy_iob_route", "bypass_aware", "canon_2input_aware")
     out = {}
     for line in text.splitlines():
         m = _PRAGMA_RE.match(line)
@@ -1995,7 +1997,8 @@ def _load_overhead():
 
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
-           lenient=False, legacy_iob_route=False, bypass_aware=False):
+           lenient=False, legacy_iob_route=False, bypass_aware=False,
+           canon_2input_aware=False):
     """Core entry — FASM text + base RBF → finished RBF bytes.
 
     ``legacy_iob_route=True`` restores the pre-6b6cda9 IOB_ROUTE cell
@@ -2034,6 +2037,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     # Hoisted out of the `if all_luts:` block so the post-loop apply at the
     # end of bitgen sees an empty list when no LUTs are present.
     collected_canon = []  # list[(axis, neg)] populated by LUT phase
+    # P2 canon-2input-aware: collect (x, y, n, label) for each canonical
+    # 2-input mask LE; post-loop XOR-applies the absolute canon-2input
+    # cells from CANON_2INPUT_ABSOLUTE[(x,y,n)][label] per entry.
+    collected_canon_2input = []  # list[(x, y, n, label)]
 
     # Track cells applied by design directives so IOB_ROUTE can skip
     # overlapping cells.  IOB_ROUTE sig-cache entries are absolute deltas
@@ -2470,7 +2477,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
             0x0F0F: ("c", True),  0x00FF: ("d", True),
         }
         bypass_keys = set()
-        # collected_canon is initialized at bitgen entry (hoisted)
+        # collected_canon{,_2input} initialized at bitgen entry (hoisted)
         if bypass_aware:
             for x, y, n, mask in std_luts:
                 if (x, y, n) in arith_keys:
@@ -2480,6 +2487,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 bypass_keys.add((x, y, n))
                 if mask in _BYPASS_MASK_TO_CANON:
                     collected_canon.append(_BYPASS_MASK_TO_CANON[mask])
+        # P2 canon-2input-aware: identify canonical 2-input masks.  Phase 1+2
+        # still emit predict_sram normally (codec's 2-input absolute table is
+        # mined relative to nv_zero + predict_sram(M), so we must NOT skip
+        # the SRAM emit).  Post-loop applies the absolute canon-2input cells.
+        if canon_2input_aware:
+            for x, y, n, mask in std_luts:
+                if (x, y, n) in arith_keys:
+                    continue
+                if (x, y, n) in bypass_keys:
+                    continue  # already handled by bypass_aware path
+                label = canon_2input_label_for_mask(mask)
+                if label is None:
+                    continue
+                if (x, y, n) not in CANON_2INPUT_ABSOLUTE:
+                    raise FasmError(
+                        f"canon_2input_aware: position (X{x},Y{y},N{n}) "
+                        f"not mined in CANON_2INPUT_ABSOLUTE; available: "
+                        f"{sorted(CANON_2INPUT_ABSOLUTE)}.  Run "
+                        f"build_canon_2input_codec_table.py to extend "
+                        f"coverage before flashing this design.")
+                collected_canon_2input.append((x, y, n, label))
 
         # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
         # predict_sram(0xFFFF) yields exactly the 16 true TT cells
@@ -2869,6 +2897,17 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         axis, neg = next(iter(canon_set))
         work = canon_apply_transition(work, "a", axis,
                                       from_negated=False, to_negated=neg)
+
+    # P2 canon-2input-aware: apply per-LE absolute canon-2input cells.  Each
+    # entry's cells are disjoint from the 16 lab_cram TT cells codec wrote
+    # (those are at LE-specific offsets); two LEs in the same design with
+    # the same (x,y,n) is impossible (single SLICE).  Different LEs may
+    # independently apply their own canon-2input cells without conflict.
+    work_buf = bytearray(work)
+    for (x, y, n, label) in collected_canon_2input:
+        for off, bp in canon_2input_cells(x, y, n, label):
+            work_buf[off] ^= 1 << bp
+    work = bytes(work_buf)
 
     if patch_crc:
         work = patch_rbf_crc(work)

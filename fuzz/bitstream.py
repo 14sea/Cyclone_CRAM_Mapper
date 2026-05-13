@@ -1393,6 +1393,111 @@ if _os_path.exists(_canon_table_path):
     del _canon_json, _fc, _canon_data, _ct, _neg_per_axis
 
 
+# ---------------------------------------------------------------------------
+# σ⁻¹ 2-input canonicalization-cell layer (P2 of plan imperative-crafting-
+# pumpkin, 2026-05-13).  Per-position absolute table indexed by P-equivalent
+# 2-input mask label.  Codec applies CANON_2INPUT_ABSOLUTE[(x,y,n)][label]
+# on top of `predict_sram(mask)` to land byte-identical on Quartus(label).
+#
+# Mining: scripts/sigma_inv_real_tt_mining/build_canon_2input_codec_table.py
+# Data:   results/canon_2input_codec_table.json
+#
+# Position scope: currently X4Y4N0 only (P2.2 phase).  Codec hard-fails if
+# requested at an unmined position — silent fallback would silicon-flash a
+# wrong RBF.
+#
+# Lookup: 2-input canonical masks (18 perm + 6 neg = 24 labels) → cell set.
+# Constants 0x0000 / 0xFFFF and the 8 1-input BYPASS_1INPUT_MASKS use the
+# bypass path (Phase 4); other masks (3+-input dependence) fall back to
+# the legacy codec path and may not be byte-identical to Quartus.
+# ---------------------------------------------------------------------------
+CANON_2INPUT_ABSOLUTE: dict[tuple[int, int, int], dict[str, frozenset]] = {}
+# 2-input canonical mask → label mapping (used by codec to reverse-lookup
+# the table entry for a given mask).  Covers 18 permutation labels (AND/OR/
+# XOR P-equivalent classes) + 6 input-negation labels.  Codec emits these
+# from Quartus's Verilog `lut_mask(...)` directly; np2fasm chooses the
+# canonical mask from logical operator + input names.
+CANON_2INPUT_MASK_TO_LABEL: dict[int, str] = {
+    0x8888: "a&b", 0xA0A0: "a&c", 0xAA00: "a&d",
+    0xC0C0: "b&c", 0xCC00: "b&d", 0xF000: "c&d",
+    0xEEEE: "a|b", 0xFAFA: "a|c", 0xAAFF: "a|d",
+    0xFCFC: "b|c", 0xCCFF: "b|d", 0xFFF0: "c|d",
+    0x6666: "a^b", 0x5A5A: "a^c", 0x55AA: "a^d",
+    0x3C3C: "b^c", 0x33CC: "b^d", 0x0FF0: "c^d",
+    0x4444: "!a&b", 0x2222: "a&!b", 0x1111: "!a&!b",
+    0xDDDD: "!a|b", 0xBBBB: "a|!b", 0x7777: "!a|!b",
+}
+_canon_2input_path = _os_path.join(
+    _os_path.dirname(_os_path.dirname(_os_path.abspath(__file__))),
+    "results", "canon_2input_codec_table.json")
+if _os_path.exists(_canon_2input_path):
+    import json as _c2_json
+    with open(_canon_2input_path) as _f2:
+        _c2_data = _c2_json.load(_f2)
+    for _pos_key, _pos_entry in _c2_data.get("per_position", {}).items():
+        # _pos_key is "X{x}Y{y}N{n}"
+        import re as _re
+        _m = _re.match(r"X(\d+)Y(\d+)N(\d+)$", _pos_key)
+        if not _m:
+            continue
+        _xyn = (int(_m.group(1)), int(_m.group(2)), int(_m.group(3)))
+        _layer_map: dict[str, frozenset] = {}
+        for _layer in ("perm", "neg"):
+            for _label, _entry in _pos_entry.get(_layer, {}).items():
+                _layer_map[_label] = frozenset(
+                    (int(c[0]), int(c[1])) for c in _entry["cells"])
+        CANON_2INPUT_ABSOLUTE[_xyn] = _layer_map
+    del _c2_json, _f2, _c2_data, _re
+
+
+def canon_2input_label_for_mask(mask):
+    """Return the canonical 2-input label string for `mask`, or None when
+    `mask` is not in the 24-entry 2-input canonical set (use bypass path
+    for 1-input + constants; 3+-input masks have no canonical 2-input
+    representation)."""
+    return CANON_2INPUT_MASK_TO_LABEL.get(mask)
+
+
+def canon_2input_cells(x, y, n, label):
+    """Return the frozenset of (off, bp) cells the codec must XOR-apply
+    to reach Quartus(label) byte-identical at (x, y, n), starting from
+    `nv_zero_global + codec.predict_sram(mask_for(label))`.
+
+    Raises KeyError when the position has not been mined or when
+    `label` is not one of the 24 canonical 2-input labels."""
+    pos_table = CANON_2INPUT_ABSOLUTE.get((x, y, n))
+    if pos_table is None:
+        raise KeyError(
+            f"canon_2input table not mined for (X{x}, Y{y}, N{n}); "
+            f"only positions {sorted(CANON_2INPUT_ABSOLUTE)} loaded. "
+            f"Run build_canon_2input_codec_table.py with the new "
+            f"position to extend coverage.")
+    if label not in pos_table:
+        raise KeyError(
+            f"canon_2input label {label!r} not mined at "
+            f"X{x}Y{y}N{n}; available: {sorted(pos_table)}")
+    return pos_table[label]
+
+
+def canon_2input_apply(rbf_bytes, x, y, n, label):
+    """XOR-apply the canon-2input absolute cells for `label` at (x,y,n).
+
+    This bridges the codec's `predict_sram(mask)` output to Quartus's
+    fully-emitted RBF.  Use AFTER applying `predict_sram(mask)`:
+
+        result = bytearray(nv_zero_global)
+        for addr, bp in codec.predict_sram(mask): result[addr] ^= 1<<bp
+        result = canon_2input_apply(bytes(result), x, y, n, label)
+
+    See `LutCodec.write_tt(... canon_2input=label)` for the integrated
+    path.
+    """
+    out = bytearray(rbf_bytes)
+    for off, bp in canon_2input_cells(x, y, n, label):
+        out[off] ^= 1 << bp
+    return bytes(out)
+
+
 def canon_axis_diff(axis1, axis2):
     """Return frozenset of (off, bp) cells differing between two axis canon
     states. Axes are 'a' | 'b' | 'c' | 'd'; 'd' is silicon-equivalent to 'c'
@@ -1741,33 +1846,44 @@ class LutCodec:
     def write_tt(self, zero_data, mask, *,
                  canon_from="a", canon_to=None,
                  neg_from=False, neg_to=None,
-                 bypass=False):
+                 bypass=False,
+                 canon_2input=None):
         """Write a truth table mask into an RBF, starting from zero baseline.
 
         Args:
             zero_data: bytes of the zero-mask baseline RBF.
             mask: 16-bit truth table mask to write.
-            canon_from, canon_to: optional canonicalization-cell transition.
-                When canon_to is None (default), no canon cells touched —
-                legacy behavior preserved. When set, XOR-applies the canon
-                axis-pair diff between canon_from→canon_to.  Axes are
-                a/b/c/d ('d' ≡ 'c'); see canon_apply_transition.
+            canon_from, canon_to: optional 1-input canonicalization-cell
+                transition. When canon_to is None (default), no 1-input
+                canon cells touched — legacy behavior preserved.  Axes
+                are a/b/c/d ('d' ≡ 'c'); see canon_apply_transition.
             neg_from, neg_to: optional output-negation transition.  When
                 neg_to is None it defaults to neg_from (no neg flip).
             bypass: when True, skip per-minterm SRAM emission entirely —
                 use this for `is_bypass_mask(mask)` masks (≤1-input
-                dependence; LUT-bypass routing).  Phase 4 mining
-                2026-05-13 confirmed Quartus emits 0 lab_cram TT-frame
-                cells for all 8 single-input passthrough/negation masks
-                at X4Y4N0.  Default False = legacy byte-identical.
+                dependence; LUT-bypass routing).  Default False = legacy.
+            canon_2input: optional 2-input canonical label (e.g. "a&b",
+                "!a&b", "a^c").  When set, XOR-applies the absolute
+                canon-2input cells for this position from
+                CANON_2INPUT_ABSOLUTE — required to byte-identical
+                Quartus 2-input mask emission (P2 of plan
+                imperative-crafting-pumpkin).  Mutually exclusive with
+                `canon_to` (1-input canon path).  Position scope:
+                whatever's been mined into
+                results/canon_2input_codec_table.json.
 
         Returns:
             Modified RBF as bytes.
 
-        Note: the canon layer (Pitfall #16 / Phase 2 verdict 2026-05-13)
-        is only validated for 1-input passthrough masks at N=0 in LAB
-        columns.  2-input masks (Phase 4) and N>0 (Phase 5) are open.
+        Note: the 1-input canon layer is silicon-validated for passthrough
+        masks at N=0; the 2-input canon layer is mined per-position
+        (initial scope: X4Y4N0 only) — Quartus emission is not globally
+        position-invariant for 2-input.
         """
+        if canon_2input is not None and canon_to is not None:
+            raise ValueError(
+                "canon_2input is mutually exclusive with canon_to "
+                "(1-input vs 2-input canon paths)")
         result = bytearray(zero_data)
         if not bypass:
             sram_cells = self.predict_sram(mask)
@@ -1778,6 +1894,10 @@ class LutCodec:
             result = bytearray(canon_apply_transition(
                 result, canon_from, canon_to,
                 from_negated=neg_from, to_negated=_neg_to))
+        if canon_2input is not None:
+            for off, bp in canon_2input_cells(self.x, self.y, self.n,
+                                              canon_2input):
+                result[off] ^= 1 << bp
         return bytes(result)
 
     def modify_tt(self, rbf_data, zero_data, new_mask):
