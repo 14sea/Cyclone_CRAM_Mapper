@@ -1352,6 +1352,127 @@ def _sigma_inv_lookup(foff, fb8, group=None):
     return best_si
 
 
+# ---------------------------------------------------------------------------
+# σ⁻¹ canonicalization-cell layer (Pitfall #16; Phase 2 verdict 2026-05-13)
+#
+# Phase 2 probe (12 positions, X∈{4,10,16,22,28}×Y∈{2,17}+extras × N=0)
+# confirmed the 35-cell canonicalization layer is GLOBALLY POSITION-INVARIANT
+# in shared config regions (header off 41-74 + block_band off 361605-366203).
+# Quartus encodes the LUT input-axis canonicalization choice (a/b/c=d) and
+# output negation in these cells; the lab_cram TT bits are axis-agnostic.
+#
+# This module exposes the canon layer as XOR transition cell sets only —
+# state-vs-zero is intentionally NOT baked in, because the codec's TT model
+# uses a different lab_cram pattern than Quartus (codec writes 8 ctrl cells
+# for 0xAAAA; Quartus emits 0 lab_cram cells using LUT bypass routing).
+# Phase 2 invariance applies to *pair* diffs which are well-defined.
+#
+# Data: results/canon_cells_phase2_summary.json (12-pos aggregate + table).
+# Tools: scripts/sigma_inv_real_tt_mining/{probe_canonicalization_cells,
+#        analyze_canon_phase2}.py
+# ---------------------------------------------------------------------------
+CANON_AXIS_PAIR_DIFFS = {}   # frozenset key {axis1, axis2} -> frozenset of (off,bp)
+CANON_NEG_DIFF = frozenset()  # 7-cell axis-independent negation diff
+_canon_table_path = _os_path.join(
+    _os_path.dirname(_os_path.dirname(_os_path.abspath(__file__))),
+    "results", "canon_cells_phase2_summary.json")
+if _os_path.exists(_canon_table_path):
+    import json as _canon_json
+    with open(_canon_table_path) as _fc:
+        _canon_data = _canon_json.load(_fc)
+    _ct = _canon_data.get("canon_table", {})
+    for _label, _cells in _ct.get("axis_pair_diffs", {}).items():
+        _a1, _a2 = _label.split("_")
+        CANON_AXIS_PAIR_DIFFS[frozenset((_a1, _a2))] = frozenset(
+            (int(c[0]), int(c[1])) for c in _cells)
+    # neg is axis-independent (verified: neg_a == neg_b == neg_c == neg_d)
+    _neg_per_axis = _ct.get("negation_per_axis", {})
+    if _neg_per_axis:
+        _neg_a = _neg_per_axis.get("a", [])
+        CANON_NEG_DIFF = frozenset((int(c[0]), int(c[1])) for c in _neg_a)
+    del _canon_json, _fc, _canon_data, _ct, _neg_per_axis
+
+
+def canon_axis_diff(axis1, axis2):
+    """Return frozenset of (off, bp) cells differing between two axis canon
+    states. Axes are 'a' | 'b' | 'c' | 'd'; 'd' is silicon-equivalent to 'c'
+    (Phase 1 evidence at X4Y4N0; Phase 2 confirmed globally invariant).
+    Empty frozenset for same-axis (incl. c↔d)."""
+    if axis1 not in "abcd" or axis2 not in "abcd":
+        raise ValueError(f"axis must be a/b/c/d, got {axis1!r}, {axis2!r}")
+    _a1 = "c" if axis1 == "d" else axis1
+    _a2 = "c" if axis2 == "d" else axis2
+    if _a1 == _a2:
+        return frozenset()
+    return CANON_AXIS_PAIR_DIFFS[frozenset((_a1, _a2))]
+
+
+def canon_apply_transition(rbf_bytes, from_axis, to_axis,
+                           from_negated=False, to_negated=False):
+    """XOR canon cells to transition an RBF from one canon state to another.
+
+    Args:
+        rbf_bytes: source RBF bytes (or bytearray).
+        from_axis, to_axis: source/target physical-input axis in {a,b,c,d}.
+        from_negated, to_negated: source/target output-negation state.
+
+    Returns:
+        bytes — modified RBF with the transition delta XOR-applied.
+    """
+    out = bytearray(rbf_bytes)
+    for off, bp in canon_axis_diff(from_axis, to_axis):
+        out[off] ^= (1 << bp)
+    if from_negated != to_negated:
+        for off, bp in CANON_NEG_DIFF:
+            out[off] ^= (1 << bp)
+    return bytes(out)
+
+
+def _canon_all_cells():
+    out = set()
+    for cells in CANON_AXIS_PAIR_DIFFS.values():
+        out |= cells
+    return frozenset(out)
+
+
+def canon_classify_transition(rbf_a, rbf_b):
+    """Classify the canon-state delta between two RBFs.
+
+    Searches the enumerated canon-state transitions ({a,b,c=d} × {pos,neg})
+    for an exact match against the observed canon-region delta.  The
+    axis-pair sets and the neg set overlap (a_c ∩ neg = 4 cells; Phase 2
+    cell-overlap structure), so we cannot factor axis vs neg
+    independently — must match composite deltas.
+
+    Returns:
+        (kind, frozenset({a1, a2}), bool_neg_flipped) where kind is
+        "axis_pair" on a recognized transition and None otherwise.
+        For a clean no-transition delta, returns
+        ("axis_pair", frozenset({"a"}), False).
+    """
+    all_canon = CANON_NEG_DIFF | _canon_all_cells()
+    delta = set()
+    for off, bp in all_canon:
+        if (rbf_a[off] ^ rbf_b[off]) & (1 << bp):
+            delta.add((off, bp))
+    if not delta:
+        return ("axis_pair", frozenset(("a",)), False)
+    # Enumerate the 6 unordered axis-pair distances × 2 neg states.
+    axes = ("a", "b", "c")  # d ≡ c
+    candidates = []
+    for i, ax1 in enumerate(axes):
+        for ax2 in axes[i:]:
+            for neg in (False, True):
+                expected = canon_axis_diff(ax1, ax2)
+                if neg:
+                    expected = expected ^ CANON_NEG_DIFF
+                candidates.append((frozenset((ax1, ax2)), neg, expected))
+    for pair, neg, expected in candidates:
+        if delta == expected:
+            return ("axis_pair", pair, neg)
+    return (None, None, False)
+
+
 class LutCodec:
     """XOR-linear LUT truth table codec for one LE position."""
 
@@ -1531,22 +1652,38 @@ class LutCodec:
                 return mask
         return -1  # Should never happen
 
-    def write_tt(self, zero_data, mask):
+    def write_tt(self, zero_data, mask, *,
+                 canon_from="a", canon_to=None,
+                 neg_from=False, neg_to=None):
         """Write a truth table mask into an RBF, starting from zero baseline.
 
         Args:
-            zero_data: bytes of the zero-mask baseline RBF
-            mask: 16-bit truth table mask to write
+            zero_data: bytes of the zero-mask baseline RBF.
+            mask: 16-bit truth table mask to write.
+            canon_from, canon_to: optional canonicalization-cell transition.
+                When canon_to is None (default), no canon cells touched —
+                legacy behavior preserved. When set, XOR-applies the canon
+                axis-pair diff between canon_from→canon_to.  Axes are
+                a/b/c/d ('d' ≡ 'c'); see canon_apply_transition.
+            neg_from, neg_to: optional output-negation transition.  When
+                neg_to is None it defaults to neg_from (no neg flip).
 
         Returns:
-            Modified RBF as bytearray
+            Modified RBF as bytes.
+
+        Note: the canon layer (Pitfall #16 / Phase 2 verdict 2026-05-13)
+        is only validated for 1-input passthrough masks at N=0 in LAB
+        columns.  2-input masks (Phase 4) and N>0 (Phase 5) are open.
         """
         result = bytearray(zero_data)
         sram_cells = self.predict_sram(mask)
-
         for addr, bitpos in sram_cells:
             result[addr] ^= (1 << bitpos)
-
+        if canon_to is not None:
+            _neg_to = neg_from if neg_to is None else neg_to
+            result = bytearray(canon_apply_transition(
+                result, canon_from, canon_to,
+                from_negated=neg_from, to_negated=_neg_to))
         return bytes(result)
 
     def modify_tt(self, rbf_data, zero_data, new_mask):
