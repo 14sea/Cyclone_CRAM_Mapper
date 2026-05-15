@@ -1449,6 +1449,34 @@ if _os_path.exists(_canon_2input_path):
         CANON_2INPUT_ABSOLUTE[_xyn] = _layer_map
     del _c2_json, _f2, _c2_data, _re
 
+# P5c (2026-05-15) parallel sidecar: canon_unique[L] mined with wire4
+# baseline subtraction (label-invariant wire4 IOB infra cancels out).
+# Use this table when applying canon_2input on top of a codec build whose
+# design context differs from the wire4 mining context (e.g. cross-LAB
+# build_test).  Single-LE wire4 silicon-validated path keeps using the
+# absolute table above (default codec live path is unchanged).
+CANON_2INPUT_UNIQUE: dict[tuple[int, int, int], dict[str, frozenset]] = {}
+_canon_2input_unique_path = _os_path.join(
+    _os_path.dirname(_os_path.dirname(_os_path.abspath(__file__))),
+    "results", "canon_2input_codec_table_unique.json")
+if _os_path.exists(_canon_2input_unique_path):
+    import json as _cu_json
+    with open(_canon_2input_unique_path) as _fu:
+        _cu_data = _cu_json.load(_fu)
+    import re as _ure
+    for _pos_key, _pos_entry in _cu_data.get("per_position", {}).items():
+        _um = _ure.match(r"X(\d+)Y(\d+)N(\d+)$", _pos_key)
+        if not _um:
+            continue
+        _uxyn = (int(_um.group(1)), int(_um.group(2)), int(_um.group(3)))
+        _ulayer_map: dict[str, frozenset] = {}
+        for _layer in ("perm", "neg"):
+            for _label, _entry in _pos_entry.get(_layer, {}).items():
+                _ulayer_map[_label] = frozenset(
+                    (int(c[0]), int(c[1])) for c in _entry["cells"])
+        CANON_2INPUT_UNIQUE[_uxyn] = _ulayer_map
+    del _cu_json, _fu, _cu_data, _ure
+
 
 def canon_2input_label_for_mask(mask):
     """Return the canonical 2-input label string for `mask`, or None when
@@ -1494,6 +1522,53 @@ def canon_2input_apply(rbf_bytes, x, y, n, label):
     """
     out = bytearray(rbf_bytes)
     for off, bp in canon_2input_cells(x, y, n, label):
+        out[off] ^= 1 << bp
+    return bytes(out)
+
+
+def canon_2input_unique_cells(x, y, n, label):
+    """Return frozenset of (off, bp) cells for the P5c canon_unique[L]
+    table (wire4-baseline-subtracted; mined 2026-05-15).
+
+    Differs from `canon_2input_cells`:
+    - Absolute table covers single-LE wire4 byte-identity (codec emits
+      IOB_PAD_NV + OUTROUTE_G15 + LUT, then XOR-applies absolute → match
+      Quartus_wire4(L)).
+    - Unique table strips the label-invariant wire4 design context (138
+      cells of E15+M15 IOB infra + block-band wire4 cells per p5b audit).
+      Use when applying canon-2input on top of a codec build whose design
+      context already covers the design's IOB / routing / clk infra
+      separately (e.g. cross-LAB build where canon target is just one LE).
+
+    Raises KeyError when the position has not been mined or label is not
+    one of the 24 canonical 2-input labels.
+    """
+    pos_table = CANON_2INPUT_UNIQUE.get((x, y, n))
+    if pos_table is None:
+        raise KeyError(
+            f"canon_2input UNIQUE table not mined for (X{x}, Y{y}, N{n}); "
+            f"only positions {sorted(CANON_2INPUT_UNIQUE)} loaded. "
+            f"Run build_canon_2input_codec_table.py --canon-unique with "
+            f"the new position (and ensure canon_const0_X{x}Y{y}N{n}_wire4 "
+            f"baseline exists via probe_canonicalization_cells.py "
+            f"{x} {y} {n} --constants --wire4).")
+    if label not in pos_table:
+        raise KeyError(
+            f"canon_2input UNIQUE label {label!r} not mined at "
+            f"X{x}Y{y}N{n}; available: {sorted(pos_table)}")
+    return pos_table[label]
+
+
+def canon_2input_unique_apply(rbf_bytes, x, y, n, label):
+    """XOR-apply the P5c canon_unique[L] cells for `label` at (x,y,n).
+
+    Use INSTEAD OF `canon_2input_apply` when the surrounding codec build
+    differs from the wire4 single-LE mining context (e.g. cross-LAB
+    designs where IOB/CLK/ROUTE infra is emitted by other directives).
+    See `canon_2input_unique_cells` docstring for the rationale.
+    """
+    out = bytearray(rbf_bytes)
+    for off, bp in canon_2input_unique_cells(x, y, n, label):
         out[off] ^= 1 << bp
     return bytes(out)
 

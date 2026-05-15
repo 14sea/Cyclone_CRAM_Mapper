@@ -1,0 +1,33 @@
+{
+  "position": [
+    4,
+    4,
+    0
+  ],
+  "wire4": true,
+  "results": {
+    "const0": {
+      "mask": 0,
+      "total_delta_cells": 203,
+      "region_breakdown": {
+        "header": 118,
+        "block_band": 9,
+        "lab_cram": 76
+      },
+      "codec_tt_cells_flipped": 0,
+      "codec_tt_cells_total": 16
+    },
+    "const1": {
+      "mask": 65535,
+      "total_delta_cells": 204,
+      "region_breakdown": {
+        "header": 120,
+        "block_band": 8,
+        "lab_cram": 76
+      },
+      "codec_tt_cells_flipped": 0,
+      "codec_tt_cells_total": 16
+    }
+  },
+  "verdict_bypass_confirmed": true
+}

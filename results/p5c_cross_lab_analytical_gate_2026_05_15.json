@@ -1,0 +1,105 @@
+{
+  "session": "2026-05-15 P5c cross-LAB analytical gate (canon_unique wire4-baseline-subtracted)",
+  "design": "build_test.py --le-a-mask 0x4444 --canon-2input unique",
+  "cross_lab_rbf_md5": "4ec636d43acf0a219dd0623379c84d83",
+  "reference_rbf": "tmp/real_tt_mining/canon_naandb_X4Y4N0/canon_naandb_X4Y4N0.rbf",
+  "reference_rbf_md5": "bd3731390fb94365e4068a0705ff778e",
+  "p5b_baseline_mismatch_124_of_248": "absolute-table baseline from previous session",
+  "gate_abs_window": {
+    "window_cells": 248,
+    "mismatched": 149,
+    "by_region": {
+      "hdr": 113,
+      "lab_cram": 32,
+      "block_band": 4
+    }
+  },
+  "gate_unique_window": {
+    "window_cells": 61,
+    "mismatched": 41,
+    "by_region": {
+      "lab_cram": 32,
+      "hdr": 7,
+      "block_band": 2
+    },
+    "by_column_total": {
+      "X=31": 4,
+      "block_band": 7,
+      "hdr": 14,
+      "X=13": 4,
+      "X=3": 8,
+      "X=6": 1,
+      "X=22": 4,
+      "X=26": 4,
+      "X=None": 2,
+      "X=4": 11,
+      "X=7": 1,
+      "X=10": 1
+    },
+    "by_column_mismatched": {
+      "X=31": 4,
+      "X=13": 4,
+      "X=3": 8,
+      "hdr": 7,
+      "X=6": 1,
+      "X=22": 4,
+      "X=26": 4,
+      "X=None": 2,
+      "X=4": 3,
+      "block_band": 2,
+      "X=7": 1,
+      "X=10": 1
+    }
+  },
+  "verdict_threshold": "ambiguous",
+  "thresholds": {
+    "candidate_flash": "\u226430",
+    "ambiguous": "31-50",
+    "fail_dont_flash": ">50"
+  },
+  "sanity_canon_unique_flipped_in_cross_lab": {
+    "flipped": 12,
+    "total": 61,
+    "interpretation": "If less than total, codec emitted other directives that XOR-cancelled the canon_unique flip. Indicates wire4-baseline subtraction left cells that overlap cross-LAB design directives (IOB_PAD_NV, ROUTE, IOB_CLK_INPUT_E1, OUTROUTE_G15, LAB_CLK_SEL_LE)."
+  },
+  "comparison_to_p5b_session": {
+    "p5b_absolute_table_mismatch_248_window": 124,
+    "p5c_unique_table_mismatch_248_window": 149,
+    "p5c_unique_table_mismatch_61_window": 41,
+    "note": "248-window expanded mismatch count because canon_unique[L] only flips 61 cells of the 248 absolute table \u2014 the 187 cells we no longer flip are mostly the wire4 IOB baggage, but reference is still wire4 single-LE so those baggage cells appear as mismatches in the 248-cell window. The 61-cell window is the meaningful one for canon_unique."
+  },
+  "filtered_followup": {
+    "session": "2026-05-15 P5c+filter cross-LAB analytical gate",
+    "design": "build_test.py --le-a-mask 0x4444 --canon-2input unique (with overlap filter)",
+    "cross_lab_rbf_md5": "7e4b9bc098faacb492ac60b1cceefd5a",
+    "reference_rbf": "tmp/real_tt_mining/canon_naandb_X4Y4N0/canon_naandb_X4Y4N0.rbf",
+    "reference_rbf_md5": "bd3731390fb94365e4068a0705ff778e",
+    "filter_semantics": "canon_2input_unique_aware now filters out cells already touched by codec-elsewhere directives (XOR with base_rbf at canon-apply time). Eliminates double-flip cancellation that left 49/61 unique cells XOR-cancelled in the unfiltered build.",
+    "gate_61_window": {
+      "mismatched": 12,
+      "by_region": {
+        "block_band": 2,
+        "hdr": 6,
+        "lab_cram": 4
+      }
+    },
+    "gate_248_window_for_reference": {
+      "mismatched": 114,
+      "by_region": {
+        "hdr": 108,
+        "lab_cram": 4,
+        "block_band": 2
+      }
+    },
+    "uniq_cells_actually_flipped": {
+      "flipped": 61,
+      "total": 61
+    },
+    "comparison_to_unfiltered": {
+      "unfiltered_61_mismatch": 41,
+      "filtered_61_mismatch": 12,
+      "improvement": 29
+    },
+    "verdict_threshold": "candidate"
+  }
+}

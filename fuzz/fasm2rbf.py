@@ -101,7 +101,8 @@ from bitstream import (
     BYPASS_1INPUT_MASKS, is_bypass_mask, lut_input_dependence,
     canon_apply_transition,
     canon_2input_label_for_mask, canon_2input_cells,
-    CANON_2INPUT_ABSOLUTE,
+    canon_2input_unique_cells,
+    CANON_2INPUT_ABSOLUTE, CANON_2INPUT_UNIQUE,
 )
 from route_synth import parse_need, plan_hops, pick_li_envelope, emit_ops
 import route_signatures
@@ -1644,7 +1645,8 @@ def parse_pragmas(text):
     """
     _BOOL_TRUE  = ("1", "true", "yes", "on")
     _BOOL_FALSE = ("0", "false", "no", "off")
-    _BOOL_KEYS  = ("legacy_iob_route", "bypass_aware", "canon_2input_aware")
+    _BOOL_KEYS  = ("legacy_iob_route", "bypass_aware", "canon_2input_aware",
+                   "canon_2input_unique_aware")
     out = {}
     for line in text.splitlines():
         m = _PRAGMA_RE.match(line)
@@ -1998,7 +2000,7 @@ def _load_overhead():
 
 def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
            lenient=False, legacy_iob_route=False, bypass_aware=False,
-           canon_2input_aware=False):
+           canon_2input_aware=False, canon_2input_unique_aware=False):
     """Core entry — FASM text + base RBF → finished RBF bytes.
 
     ``legacy_iob_route=True`` restores the pre-6b6cda9 IOB_ROUTE cell
@@ -2041,6 +2043,13 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     # 2-input mask LE; post-loop XOR-applies the absolute canon-2input
     # cells from CANON_2INPUT_ABSOLUTE[(x,y,n)][label] per entry.
     collected_canon_2input = []  # list[(x, y, n, label)]
+    # P5c (2026-05-15) — canon_2input_unique_aware promotes the codec to
+    # the wire4-baseline-subtracted UNIQUE table.  Mutex with
+    # canon_2input_aware (single source of truth for which table runs).
+    if canon_2input_aware and canon_2input_unique_aware:
+        raise FasmError(
+            "canon_2input_aware and canon_2input_unique_aware are mutually "
+            "exclusive: pick one canon-2input table per build.")
 
     # Track cells applied by design directives so IOB_ROUTE can skip
     # overlapping cells.  IOB_ROUTE sig-cache entries are absolute deltas
@@ -2491,7 +2500,12 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # still emit predict_sram normally (codec's 2-input absolute table is
         # mined relative to nv_zero + predict_sram(M), so we must NOT skip
         # the SRAM emit).  Post-loop applies the absolute canon-2input cells.
-        if canon_2input_aware:
+        if canon_2input_aware or canon_2input_unique_aware:
+            _canon_table = (CANON_2INPUT_UNIQUE if canon_2input_unique_aware
+                            else CANON_2INPUT_ABSOLUTE)
+            _canon_kind = ("UNIQUE (P5c wire4-baseline-subtracted)"
+                           if canon_2input_unique_aware
+                           else "ABSOLUTE (P2 wire4 silicon-validated)")
             for x, y, n, mask in std_luts:
                 if (x, y, n) in arith_keys:
                     continue
@@ -2500,13 +2514,17 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 label = canon_2input_label_for_mask(mask)
                 if label is None:
                     continue
-                if (x, y, n) not in CANON_2INPUT_ABSOLUTE:
+                if (x, y, n) not in _canon_table:
+                    _flag = ("canon_2input_unique_aware"
+                             if canon_2input_unique_aware
+                             else "canon_2input_aware")
                     raise FasmError(
-                        f"canon_2input_aware: position (X{x},Y{y},N{n}) "
-                        f"not mined in CANON_2INPUT_ABSOLUTE; available: "
-                        f"{sorted(CANON_2INPUT_ABSOLUTE)}.  Run "
-                        f"build_canon_2input_codec_table.py to extend "
-                        f"coverage before flashing this design.")
+                        f"{_flag} [{_canon_kind}]: position "
+                        f"(X{x},Y{y},N{n}) not mined; available: "
+                        f"{sorted(_canon_table)}.  Run "
+                        f"build_canon_2input_codec_table.py "
+                        f"{'--canon-unique ' if canon_2input_unique_aware else ''}"
+                        f"to extend coverage before flashing this design.")
                 collected_canon_2input.append((x, y, n, label))
 
         # Phase 1: clear TRUE TT cells to 0 (nv_zero_global baseline).
@@ -2904,8 +2922,34 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     # the same (x,y,n) is impossible (single SLICE).  Different LEs may
     # independently apply their own canon-2input cells without conflict.
     work_buf = bytearray(work)
+    _canon_2input_lookup = (canon_2input_unique_cells
+                            if canon_2input_unique_aware
+                            else canon_2input_cells)
+    # P5c (2026-05-15): when unique_aware, filter out cells already
+    # flipped by codec-elsewhere directives.  canon_unique[L] is mined
+    # against a wire4 single-LE Quartus baseline; in denser designs the
+    # codec emits additional directives (IOB_PAD_NV / IOB_CLK_INPUT /
+    # ROUTE / OUTROUTE / LAB_CLK_SEL_LE / etc.) that may touch cells in
+    # canon_unique[L].  Applying both = XOR double-flip (cancellation).
+    # Filter to cells codec has NOT touched yet so the canon-unique
+    # contribution is additive on top of codec emit.  Absolute table
+    # path retains pre-P5c semantics (no filter) for the silicon-
+    # validated single-LE wire4 byte-identity case.
+    codec_touched = None
+    if canon_2input_unique_aware:
+        codec_touched = set()
+        for off in range(32, min(len(work), len(base_rbf))):
+            if off >= 367952:
+                break
+            x_byte = work[off] ^ base_rbf[off]
+            if x_byte:
+                for bp in range(8):
+                    if x_byte & (1 << bp):
+                        codec_touched.add((off, bp))
     for (x, y, n, label) in collected_canon_2input:
-        for off, bp in canon_2input_cells(x, y, n, label):
+        for off, bp in _canon_2input_lookup(x, y, n, label):
+            if codec_touched is not None and (off, bp) in codec_touched:
+                continue
             work_buf[off] ^= 1 << bp
     work = bytes(work_buf)
 
@@ -2924,7 +2968,10 @@ def main(argv):
     fasm_path, base_path, out_path = argv[1], argv[2], argv[3]
     fasm_text = Path(fasm_path).read_text()
     base_rbf = Path(base_path).read_bytes()
-    out = bitgen(fasm_text, base_rbf)
+    pragmas = parse_pragmas(fasm_text)
+    if pragmas:
+        print(f"  pragmas: {pragmas}")
+    out = bitgen(fasm_text, base_rbf, **pragmas)
     Path(out_path).write_bytes(out)
     print(f"wrote {len(out)} bytes -> {out_path}")
     return 0

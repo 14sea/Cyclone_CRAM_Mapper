@@ -277,6 +277,14 @@ def main():
                          "canon_const1 (0xFFFF) and verify Quartus emits 0 "
                          "lab_cram TT cells for both (LUT bypass via VCC/GND "
                          "tie-off).  Exclusive with other modes.")
+    ap.add_argument("--wire4", action="store_true",
+                    help="With --constants, build the constant-mask design "
+                         "with all 4 KEY pins wired (KEY1->dataa..KEY4->datad) "
+                         "instead of legacy 2-pin wiring.  Required for P5c "
+                         "wire4-context baseline subtraction (label-invariant "
+                         "IOB infra at E15+M15 must be present in baseline).  "
+                         "Cached separately at canon_const{0,1}_X<x>Y<y>N<n>"
+                         "_wire4.")
     args = ap.parse_args()
     modes = sum(1 for x in (args.two_input, args.two_input_neg, args.constants)
                 if x)
@@ -313,8 +321,9 @@ def main():
         codec = LutCodec.from_cram_model(x, y, n)
 
         results = {}
+        suffix = "_wire4" if args.wire4 else ""
         for tag, mask in (("const0", 0x0000), ("const1", 0xFFFF)):
-            name = f"canon_{tag}_X{x}Y{y}N{n}"
+            name = f"canon_{tag}_X{x}Y{y}N{n}{suffix}"
             if args.skip_build:
                 p = WORK / name / f"{name}.rbf"
                 if not p.exists():
@@ -323,8 +332,8 @@ def main():
                     _sys.exit(1)
                 rbf = p.read_bytes()
             else:
-                print(f"  building {tag} (0x{mask:04X})...")
-                rbf = build_one(name, x, y, n, mask, wire4=False)
+                print(f"  building {tag} (0x{mask:04X}, wire4={args.wire4})...")
+                rbf = build_one(name, x, y, n, mask, wire4=args.wire4)
                 if rbf is None:
                     print(f"FAIL: build {tag} (0x{mask:04X})",
                           file=_sys.stderr)
@@ -363,8 +372,12 @@ def main():
 
         if args.save:
             OUT_DIR.mkdir(exist_ok=True)
-            out = OUT_DIR / f"canon_cells_X{x}Y{y}N{n}_constants.json"
+            stem = f"canon_cells_X{x}Y{y}N{n}_constants"
+            if args.wire4:
+                stem += "_wire4"
+            out = OUT_DIR / f"{stem}.json"
             out.write_text(json.dumps({"position": [x, y, n],
+                                       "wire4": args.wire4,
                                        "results": results,
                                        "verdict_bypass_confirmed":
                                             not any_flipped}, indent=2))

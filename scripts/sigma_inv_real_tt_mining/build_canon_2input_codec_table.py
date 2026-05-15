@@ -168,6 +168,36 @@ def compute_canon_unique(codec_rbf: bytes, quartus_rbf_path: Path) -> set:
     return diff_cells(codec_rbf, quartus)
 
 
+def compute_canon_unique_v2(codec, mask: int, quartus_rbf_path: Path,
+                            wire4_baseline_rbf: bytes) -> set:
+    """P5c refactor (2026-05-15 evening loop): baseline = canon_const0_wire4
+    instead of codec_full_emit on top of nv_zero_global.
+
+    Algebra:
+        canon_unique_v2[L]
+          = (Quartus_wire4(L) XOR canon_const0_wire4) XOR codec.predict_sram(L)
+          = (Quartus(L) XOR Quartus(0x0000)) XOR predict_sram(L)
+
+    Whole wire4-design-context baggage (label-invariant IOB infra at
+    E15+E16+M16+M15 + G15 output + block-band wire4 cells) lives in
+    canon_const0_wire4 vs nv_zero diff and CANCELS in the XOR because it
+    is identical between the const0 build and the per-label build. Only
+    the per-label canonicalization layer + per-label LUT TT-bit pattern
+    remain. Subtracting codec.predict_sram(L) drops the LUT TT bits the
+    codec already emits, leaving just the σ⁻¹ canonicalization residue.
+
+    Expected at X4Y4N0 (per p5b label_invariant_baggage_audit): ~37
+    cells per label (vs ~175 with the codec_full_emit baseline) — the
+    138-cell label-invariant baggage falls out.
+    """
+    quartus = quartus_rbf_path.read_bytes()
+    # codec_out = canon_const0_wire4 XOR predict_sram(L)
+    codec_out = bytearray(wire4_baseline_rbf)
+    for addr, bp in codec.predict_sram(mask):
+        codec_out[addr] ^= 1 << bp
+    return diff_cells(quartus, bytes(codec_out))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("positions", nargs="+", type=int,
@@ -210,23 +240,30 @@ def main():
         "positions": positions,
         "per_position": {},
         "mining_model": (
-            "canon_unique[L] = codec_full_emit_rbf XOR Quartus_singleLE_wire4_rbf. "
-            "codec_full_emit = fasm2rbf( 'IOB_PAD_NV; OUTROUTE_G15 X{x}Y{y}N{n}; "
-            "X{x}Y{y}N{n}.LUT = M_L' ).  Subtracts the codec's known design-"
-            "context emissions (IOB_PAD_NV pad infra, OUTROUTE_G15, LUT "
-            "predict_sram) from the absolute mining delta.  Cells the codec "
-            "cannot reproduce for the wire4 design (PIN_E15/E16/M16/M15 -> "
-            "X{x}Y{y}N{n}.dataa/b/c/d IOB_ROUTE, single_le_cells bucket "
-            "quarantined per fasm2rbf.py L1185) remain in canon_unique."
+            "P5c (2026-05-15 evening): canon_unique[L] = "
+            "(Quartus_wire4(L) XOR canon_const0_wire4) XOR codec.predict_sram(L). "
+            "Wire4 baseline is the Quartus build with mask=0x0000 and all 4 KEY "
+            "pins wired (KEY1->dataa..KEY4->datad). Label-invariant wire4 "
+            "design-context cells (IOB infra at E15+E16+M16+M15, G15 output, "
+            "block-band wire4 cells) cancel in the XOR; only the per-label "
+            "canonicalization layer + per-label LUT TT-bit pattern remain. "
+            "Subtracting codec.predict_sram(L) drops the LUT TT bits the codec "
+            "already emits, leaving the σ⁻¹ canonicalization residue. "
+            "Supersedes P5b mining model (codec_full_emit XOR Quartus) which "
+            "retained 138 cells of label-invariant baggage per "
+            "p5b label_invariant_baggage_audit."
         ),
         "purpose": (
-            "P5b refactor (2026-05-15): isolate the canonicalization layer "
-            "from design-context infra so it can be applied on top of any "
-            "codec build, not only the wire4 mining design.  Validation: "
-            "applying canon_unique on top of the same wire4 codec_emit yields "
-            "Quartus_singleLE_wire4 byte-identical by construction.  Cross-"
-            "LAB validation deferred to next session (flash budget 1/3)."
+            "P5c refactor (2026-05-15): isolate the per-label canonicalization "
+            "layer from ALL wire4 design-context infra (including the 138 hdr "
+            "cells that P5b's codec_full_emit baseline could not subtract — "
+            "single_le IOB_ROUTE bucket quarantined per fasm2rbf.py L1185). "
+            "Cross-LAB validation: if canon_unique_v2 is truly label-only, "
+            "applying it on top of cross-LAB codec emit should yield analytical "
+            "mismatch ≤30 vs single-LE Quartus reference (per p5b "
+            "context_invariance_check bound). Flash budget 1/3 remaining."
         ),
+        "baseline_rbf": "tmp/real_tt_mining/canon_const0_X{x}Y{y}N{n}_wire4/canon_const0_X{x}Y{y}N{n}_wire4.rbf",
     } if args.canon_unique else None
 
     for (x, y, n) in positions:
@@ -235,6 +272,17 @@ def main():
         print(f"\n=== {pos_key} ===")
         pos_data: dict = {"perm": {}, "neg": {}}
         pos_unique: dict = {"perm": {}, "neg": {}} if args.canon_unique else None
+        wire4_baseline = None
+        if args.canon_unique:
+            bp = WORK / f"canon_const0_{pos_key}_wire4" / \
+                       f"canon_const0_{pos_key}_wire4.rbf"
+            if not bp.exists():
+                print(f"FAIL: --canon-unique requires wire4 baseline "
+                      f"{bp}; build with `probe_canonicalization_cells.py "
+                      f"{x} {y} {n} --constants --wire4`",
+                      file=sys.stderr)
+                sys.exit(1)
+            wire4_baseline = bp.read_bytes()
         all_labels = (("perm", PERM_LABELS), ("neg", NEG_LABELS))
         for layer_name, labels in all_labels:
             for lbl, mask, safe in labels:
@@ -256,8 +304,8 @@ def main():
                     "regions": regs,
                 }
                 if args.canon_unique:
-                    codec_rbf = compute_codec_full_emit(x, y, n, mask)
-                    uniq_cells = compute_canon_unique(codec_rbf, rbf_path)
+                    uniq_cells = compute_canon_unique_v2(
+                        codec, mask, rbf_path, wire4_baseline)
                     uniq_regs = {"header": 0, "lab_cram": 0, "block_band": 0}
                     for off, bp in uniq_cells:
                         uniq_regs[classify_region(off)] += 1

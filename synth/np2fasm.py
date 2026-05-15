@@ -518,6 +518,7 @@ def convert(
     legacy_iob_route: bool = False,
     bypass_aware: bool = False,
     canon_2input_aware: bool = False,
+    canon_2input_unique_aware: bool = False,
     design_pack: str | None = None,
 ) -> tuple[list[str], list[str]]:
     """Convert routed JSON to (fasm_lines, warnings).
@@ -563,6 +564,8 @@ def convert(
         fasm.append("# fasm2rbf: bypass_aware=1")
     if canon_2input_aware:
         fasm.append("# fasm2rbf: canon_2input_aware=1")
+    if canon_2input_unique_aware:
+        fasm.append("# fasm2rbf: canon_2input_unique_aware=1")
     if baseline == "pure":
         # Reproduce nv_zero_global on top of PURE_ZERO.  Everything else
         # in the emitted FASM (IOB_IN/OUT, ROUTE, GCLK_PIN, LAB_CLK_SEL,
@@ -1378,6 +1381,7 @@ def main() -> None:
     legacy_iob_route = False
     bypass_aware = False
     canon_2input_aware = False
+    canon_2input_unique_aware = False
     design_pack: str | None = None
     while argv and argv[0].startswith("--"):
         if argv[0] == "--base":
@@ -1394,6 +1398,9 @@ def main() -> None:
             argv = argv[1:]
         elif argv[0] == "--canon-2input-aware":
             canon_2input_aware = True
+            argv = argv[1:]
+        elif argv[0] == "--canon-2input-unique-aware":
+            canon_2input_unique_aware = True
             argv = argv[1:]
         elif argv[0] == "--design-pack":
             if len(argv) < 2:
@@ -1425,6 +1432,14 @@ def main() -> None:
             f"                         absolute canon-2input cell set per LE\n"
             f"                         whose mask is in CANON_2INPUT_ABSOLUTE\n"
             f"                         (mined positions only — KeyError elsewhere).\n"
+            f"  --canon-2input-unique-aware\n"
+            f"                         emit `# fasm2rbf: canon_2input_unique_aware=1`\n"
+            f"                         pragma; uses the P5c wire4-baseline-\n"
+            f"                         subtracted UNIQUE table.  Use when canon\n"
+            f"                         target's surrounding design context\n"
+            f"                         differs from the wire4 single-LE mining\n"
+            f"                         context (e.g. cross-LAB designs).  Mutex\n"
+            f"                         with --canon-2input-aware.\n"
             f"  --design-pack TAG      emit DESIGN_BLOCK_BAND_PACK <tag>;\n"
             f"                         suppresses per-site M9K_MODE emission.\n"
             f"                         Tag must exist in results/design_block_band.json\n"
@@ -1433,12 +1448,17 @@ def main() -> None:
         )
         sys.exit(1)
 
+    if canon_2input_aware and canon_2input_unique_aware:
+        print("--canon-2input-aware and --canon-2input-unique-aware are "
+              "mutually exclusive", file=sys.stderr)
+        sys.exit(1)
     routed = json.loads(Path(argv[0]).read_text())
     fasm_lines, warnings = convert(
         routed, baseline=baseline,
         legacy_iob_route=legacy_iob_route,
         bypass_aware=bypass_aware,
         canon_2input_aware=canon_2input_aware,
+        canon_2input_unique_aware=canon_2input_unique_aware,
         design_pack=design_pack,
     )
 
