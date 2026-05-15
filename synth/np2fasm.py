@@ -517,6 +517,7 @@ def convert(
     baseline: str = "nv",
     legacy_iob_route: bool = False,
     bypass_aware: bool = False,
+    canon_2input_aware: bool = False,
     design_pack: str | None = None,
 ) -> tuple[list[str], list[str]]:
     """Convert routed JSON to (fasm_lines, warnings).
@@ -560,6 +561,8 @@ def convert(
         fasm.append("# fasm2rbf: legacy_iob_route=1")
     if bypass_aware:
         fasm.append("# fasm2rbf: bypass_aware=1")
+    if canon_2input_aware:
+        fasm.append("# fasm2rbf: canon_2input_aware=1")
     if baseline == "pure":
         # Reproduce nv_zero_global on top of PURE_ZERO.  Everything else
         # in the emitted FASM (IOB_IN/OUT, ROUTE, GCLK_PIN, LAB_CLK_SEL,
@@ -1374,6 +1377,7 @@ def main() -> None:
     baseline = "nv"
     legacy_iob_route = False
     bypass_aware = False
+    canon_2input_aware = False
     design_pack: str | None = None
     while argv and argv[0].startswith("--"):
         if argv[0] == "--base":
@@ -1388,6 +1392,9 @@ def main() -> None:
         elif argv[0] == "--bypass-aware":
             bypass_aware = True
             argv = argv[1:]
+        elif argv[0] == "--canon-2input-aware":
+            canon_2input_aware = True
+            argv = argv[1:]
         elif argv[0] == "--design-pack":
             if len(argv) < 2:
                 print("--design-pack expects a tag", file=sys.stderr)
@@ -1401,8 +1408,8 @@ def main() -> None:
     if len(argv) < 1:
         print(
             f"Usage: {sys.argv[0]} [--base nv|pure] "
-            f"[--legacy-iob-route] [--bypass-aware] [--design-pack TAG] "
-            f"<routed.json> [output.fasm]\n"
+            f"[--legacy-iob-route] [--bypass-aware] [--canon-2input-aware] "
+            f"[--design-pack TAG] <routed.json> [output.fasm]\n"
             f"  --base pure            emit NV_BASELINE_PACK header so caller\n"
             f"                         can pass make_pure_zero_rbf() as base_rbf;\n"
             f"                         default nv assumes nv_zero_global.rbf base.\n"
@@ -1413,6 +1420,11 @@ def main() -> None:
             f"                         pragma so fasm2rbf treats LUT masks in\n"
             f"                         BYPASS_1INPUT_MASKS as LUT-bypass\n"
             f"                         (skip SRAM emit + canon-cell transition).\n"
+            f"  --canon-2input-aware   emit `# fasm2rbf: canon_2input_aware=1`\n"
+            f"                         pragma; fasm2rbf XOR-applies the P2\n"
+            f"                         absolute canon-2input cell set per LE\n"
+            f"                         whose mask is in CANON_2INPUT_ABSOLUTE\n"
+            f"                         (mined positions only — KeyError elsewhere).\n"
             f"  --design-pack TAG      emit DESIGN_BLOCK_BAND_PACK <tag>;\n"
             f"                         suppresses per-site M9K_MODE emission.\n"
             f"                         Tag must exist in results/design_block_band.json\n"
@@ -1426,6 +1438,7 @@ def main() -> None:
         routed, baseline=baseline,
         legacy_iob_route=legacy_iob_route,
         bypass_aware=bypass_aware,
+        canon_2input_aware=canon_2input_aware,
         design_pack=design_pack,
     )
 

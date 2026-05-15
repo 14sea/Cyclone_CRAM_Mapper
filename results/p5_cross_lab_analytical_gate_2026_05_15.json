@@ -1,0 +1,78 @@
+{
+  "session": "2026-05-15 P5 cross-LAB analytical gate",
+  "design": "build_test.py cross-LAB with LE_A=0x4444 @ X4Y4N0 + LE_B=0xAAAA @ X4Y21N0 + DFF + CLK=E1",
+  "codec_rbf_md5": "def01683a6ab25d90cf95d3452ea5294",
+  "quartus_singleLE_ref": "tmp/real_tt_mining/canon_naandb_X4Y4N0/canon_naandb_X4Y4N0.rbf",
+  "le_a_encoding_cells_total": 248,
+  "le_a_encoding_cells_mismatched_vs_singleLE": 124,
+  "mismatch_by_region": {
+    "hdr": 111,
+    "lab_cram": 8,
+    "block_band": 5
+  },
+  "canon_2input_absolute_cells": 248,
+  "absolute_by_region": {
+    "hdr": 120,
+    "lab_cram": 116,
+    "block_band": 12
+  },
+  "canon_2input_canceled_by_double_flip_in_codec": 120,
+  "canceled_by_region": {
+    "hdr": 111,
+    "lab_cram": 4,
+    "block_band": 5
+  },
+  "probe_overlap_with_canon": {
+    "IOB_PAD_NV": 95,
+    "IOB_CLK_INPUT_E1": 13,
+    "ROUTE_X4Y4_to_X4Y21": 21,
+    "OUTROUTE_G15_X4Y21N0": 8,
+    "LAB_CLK_SEL_LE_X4Y21N0": 2,
+    "GCLK_PIN_E1": 0,
+    "LAB_CLK_SEL_X4Y21": 0,
+    "LUT_X4Y21N0_AAAA": 0
+  },
+  "canon_unique_after_subtracting_all_probes": 123,
+  "canon_unique_by_region": {
+    "hdr": 100,
+    "lab_cram": 19,
+    "block_band": 4
+  },
+  "canon_unique_lab_cram_by_col_idx": {
+    "col_idx=1_X=4_LE_A_column": 0,
+    "col_idx=3": 2,
+    "col_idx=4": 7,
+    "col_idx=6": 1,
+    "col_idx=10": 1,
+    "col_idx=13": 4,
+    "col_idx=47": 4
+  },
+  "wire2_vs_wire4_intersection_per_label": {
+    "a&b": {
+      "w4": 242,
+      "w2": 281,
+      "intersect": 221
+    },
+    "!a&b": {
+      "w4": 248,
+      "w2": 281,
+      "intersect": 224
+    },
+    "a^b": {
+      "w4": 248,
+      "w2": 287,
+      "intersect": 224
+    },
+    "a|b": {
+      "w4": 244,
+      "w2": 283,
+      "intersect": 223
+    }
+  },
+  "verdict": "P2 canon_2input absolute table built by build_canon_2input_codec_table.py is NOT portable across design contexts.  ~50% of absolute cells overlap with cells the codec already emits via IOB_PAD_NV / IOB_CLK_INPUT / ROUTE / OUTROUTE / LAB_CLK_SEL_LE directives.  When canon_2input_aware applies the full absolute in cross-LAB, the overlap cells double-flip and cancel, leaving LE_A's canonicalization 50% broken.  Wire2 mining does NOT isolate true canon: wire2 and wire4 absolutes intersect at ~220 cells per label.  True canon-unique cells (after subtracting all probe-directive emissions) are 123/248 (100 hdr + 19 lab_cram + 4 block_band) \u2014 and ZERO of the 19 lab_cram canon-unique cells live at LE_A's own LAB column (X=4 / col_idx=1).  Conclusion: canon_2input mining captured Quartus's full design context (IOB+routing) and mislabeled it as canonicalization.  Re-mining strategy needed: subtract codec-elsewhere emissions during mining, OR mine in a minimal IOB-free design context (Quartus-internal-LE only).",
+  "recommended_next_steps": [
+    "1. Refactor build_canon_2input_codec_table.py to compute canon_unique = abs[L] - (union of codec-other-directive emissions for the wire4 design).  This requires a codec simulation step before mining.",
+    "2. Re-flash single-LE canon_naandb_X4Y4N0 via codec with canon_unique[L] (instead of full canon_abs[L]) to validate byte-identity still holds \u2014 if Quartus's emission == codec.IOB_PAD_NV + canon_unique[L], single-LE byte-identity test confirms the split is correct.",
+    "3. Then retry cross-LAB build with canon_unique[L]; analytical mismatch should drop from 124/248 to near-zero before flashing."
+  ]
+}
