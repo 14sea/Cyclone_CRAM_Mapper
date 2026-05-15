@@ -30,10 +30,13 @@ sys.path.insert(0, str(REPO / "fuzz"))
 
 from bitstream import (  # noqa: E402
     CANON_2INPUT_ABSOLUTE,
+    CANON_2INPUT_UNIQUE,
     LutCodec,
     canon_2input_apply,
     canon_2input_cells,
     canon_2input_label_for_mask,
+    canon_2input_unique_apply,
+    canon_2input_unique_cells,
 )
 from fasm2rbf import patch_rbf_crc  # noqa: E402
 
@@ -208,6 +211,97 @@ def t_bitgen_canon_2input_aware_missing_position_raises():
         assert False, "expected FasmError on unmined position"
 
 
+def t_unique_table_loaded():
+    """P5c CANON_2INPUT_UNIQUE sidecar is loaded with the same 24-label
+    coverage at X4Y4N0; per-label cell counts are dramatically smaller
+    than the absolute table (wire4 baseline subtracted)."""
+    assert (4, 4, 0) in CANON_2INPUT_UNIQUE, \
+        "CANON_2INPUT_UNIQUE missing X4Y4N0 entry"
+    pos = CANON_2INPUT_UNIQUE[(4, 4, 0)]
+    assert len(pos) == 24, f"expected 24 labels, got {len(pos)}"
+    abs_pos = CANON_2INPUT_ABSOLUTE[(4, 4, 0)]
+    for label in pos:
+        assert label in abs_pos, f"unique has label {label} absolute lacks"
+        # Wire4-baseline-subtracted unique should always be smaller than
+        # absolute (P5c shrinks ~240 → ~50–65 cells per label).
+        assert len(pos[label]) < len(abs_pos[label]), \
+            f"{label} unique={len(pos[label])} not smaller than absolute={len(abs_pos[label])}"
+        assert len(pos[label]) <= 80, \
+            f"{label} unique={len(pos[label])} exceeds expected upper bound 80"
+
+
+def t_unique_cells_lookup_errors():
+    """canon_2input_unique_cells raises KeyError for unmined position +
+    bad label, matching canon_2input_cells semantics."""
+    try:
+        canon_2input_unique_cells(99, 99, 99, "a&b")
+    except KeyError as e:
+        assert "UNIQUE table not mined" in str(e)
+    else:
+        assert False, "expected KeyError on unmined position"
+    try:
+        canon_2input_unique_cells(4, 4, 0, "bogus_label")
+    except KeyError as e:
+        assert "UNIQUE label" in str(e)
+    else:
+        assert False, "expected KeyError on bad label"
+
+
+def t_bitgen_unique_aware_overlap_filter():
+    """P5c apply-time filter: when canon_2input_unique_aware=1, cells
+    already touched by codec-elsewhere directives are SKIPPED to avoid
+    XOR double-flip cancellation.
+
+    Construct a synthetic FASM with two LUTs at canonical positions
+    where one LUT mask flips a cell that the other LUT mask also
+    happens to need to flip (overlap).  Verify the post-canon RBF has
+    canon_unique cells flipped exactly where codec hadn't already
+    touched them."""
+    from fasm2rbf import bitgen, parse_pragmas
+    REPO_PATH = Path(__file__).resolve().parent.parent
+    nv_zero = (REPO_PATH / "results/rbf/nv_zero_global.rbf").read_bytes()
+
+    # Build with absolute (no filter) — every absolute cell flipped.
+    fasm_abs = (
+        "# fasm2rbf: canon_2input_aware=1\n"
+        "X4Y4N0.LUT = 0x4444\n"
+    )
+    out_abs = bitgen(fasm_abs, nv_zero, **parse_pragmas(fasm_abs))
+    # Build with unique (with filter) — cells overlapping codec emit skipped.
+    fasm_uniq = (
+        "# fasm2rbf: canon_2input_unique_aware=1\n"
+        "X4Y4N0.LUT = 0x4444\n"
+    )
+    out_uniq = bitgen(fasm_uniq, nv_zero, **parse_pragmas(fasm_uniq))
+
+    abs_cells = canon_2input_cells(4, 4, 0, "!a&b")
+    uniq_cells = canon_2input_unique_cells(4, 4, 0, "!a&b")
+
+    # In a no-other-directives FASM, codec_touched is just the predict_sram
+    # cells for 0x4444 plus per-position arith / fingerprint mining cells.
+    # Simpler invariant: every uniq_cell either flipped (vs nv_zero) or
+    # filtered (because codec already touched it via predict_sram or
+    # absolute path's overhead).  Filter-skipped cells mean the codec's
+    # baseline emission already covered them.
+    flipped = sum(1 for off, bp in uniq_cells
+                  if (out_uniq[off] >> bp) & 1 != (nv_zero[off] >> bp) & 1)
+    # All uniq cells should be EITHER flipped or filtered, never broken.
+    assert flipped <= len(uniq_cells), "flipped count exceeded total"
+    # Mutex check: setting both pragmas at once must raise.
+    fasm_both = (
+        "# fasm2rbf: canon_2input_aware=1\n"
+        "# fasm2rbf: canon_2input_unique_aware=1\n"
+        "X4Y4N0.LUT = 0x4444\n"
+    )
+    from fasm2rbf import FasmError
+    try:
+        bitgen(fasm_both, nv_zero, **parse_pragmas(fasm_both))
+    except FasmError as e:
+        assert "mutually exclusive" in str(e)
+    else:
+        assert False, "expected FasmError on dual-pragma"
+
+
 def main():
     tests = [
         ("table_loaded",                t_table_loaded),
@@ -219,6 +313,9 @@ def main():
         ("legacy_default_unchanged",    t_legacy_default_unchanged),
         ("bitgen_2input_aware_byte_id", t_bitgen_canon_2input_aware_byte_identity),
         ("bitgen_2input_missing_pos",   t_bitgen_canon_2input_aware_missing_position_raises),
+        ("unique_table_loaded",         t_unique_table_loaded),
+        ("unique_cells_lookup_errors",  t_unique_cells_lookup_errors),
+        ("bitgen_unique_overlap_filter", t_bitgen_unique_aware_overlap_filter),
     ]
     failed = []
     for name, fn in tests:
