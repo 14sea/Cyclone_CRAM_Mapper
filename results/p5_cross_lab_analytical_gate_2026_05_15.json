@@ -74,5 +74,161 @@
     "1. Refactor build_canon_2input_codec_table.py to compute canon_unique = abs[L] - (union of codec-other-directive emissions for the wire4 design).  This requires a codec simulation step before mining.",
     "2. Re-flash single-LE canon_naandb_X4Y4N0 via codec with canon_unique[L] (instead of full canon_abs[L]) to validate byte-identity still holds \u2014 if Quartus's emission == codec.IOB_PAD_NV + canon_unique[L], single-LE byte-identity test confirms the split is correct.",
     "3. Then retry cross-LAB build with canon_unique[L]; analytical mismatch should drop from 124/248 to near-zero before flashing."
-  ]
+  ],
+  "audit_2026_05_15_col_idx_mapping": {
+    "convention": "col_idx = LAB_X.index(X) (left-to-right order of whitelisted LAB columns)",
+    "derived_via": "LutCodec.predict_sram(0x4444) anchor offset, sorted ascending",
+    "mapping": {
+      "col_idx=0": {
+        "X": 3,
+        "predict_sram_anchor_off": "0x000079e6"
+      },
+      "col_idx=1": {
+        "X": 4,
+        "predict_sram_anchor_off": "0x0000969c"
+      },
+      "col_idx=2": {
+        "X": 6,
+        "predict_sram_anchor_off": "0x0000ce64"
+      },
+      "col_idx=3": {
+        "X": 7,
+        "predict_sram_anchor_off": "0x0000eb1b"
+      },
+      "col_idx=4": {
+        "X": 8,
+        "predict_sram_anchor_off": "0x00010974"
+      },
+      "col_idx=5": {
+        "X": 10,
+        "predict_sram_anchor_off": "0x000142e0"
+      },
+      "col_idx=6": {
+        "X": 11,
+        "predict_sram_anchor_off": "0x00015f96"
+      },
+      "col_idx=7": {
+        "X": 12,
+        "predict_sram_anchor_off": "0x00017c4c"
+      },
+      "col_idx=8": {
+        "X": 13,
+        "predict_sram_anchor_off": "0x00019903"
+      },
+      "col_idx=9": {
+        "X": 16,
+        "predict_sram_anchor_off": "0x0002c124"
+      },
+      "col_idx=10": {
+        "X": 17,
+        "predict_sram_anchor_off": "0x0002dddb"
+      },
+      "col_idx=11": {
+        "X": 18,
+        "predict_sram_anchor_off": "0x0002ff7c"
+      },
+      "col_idx=12": {
+        "X": 19,
+        "predict_sram_anchor_off": "0x00031c33"
+      },
+      "col_idx=13": {
+        "X": 21,
+        "predict_sram_anchor_off": "0x00034d6a"
+      },
+      "col_idx=14": {
+        "X": 22,
+        "predict_sram_anchor_off": "0x00036a20"
+      },
+      "col_idx=15": {
+        "X": 23,
+        "predict_sram_anchor_off": "0x000386d6"
+      },
+      "col_idx=16": {
+        "X": 24,
+        "predict_sram_anchor_off": "0x0003a38c"
+      },
+      "col_idx=17": {
+        "X": 25,
+        "predict_sram_anchor_off": "0x0003c043"
+      },
+      "col_idx=18": {
+        "X": 26,
+        "predict_sram_anchor_off": "0x0003db54"
+      },
+      "col_idx=19": {
+        "X": 28,
+        "predict_sram_anchor_off": "0x0004e864"
+      },
+      "col_idx=20": {
+        "X": 29,
+        "predict_sram_anchor_off": "0x0005051b"
+      },
+      "col_idx=21": {
+        "X": 31,
+        "predict_sram_anchor_off": "0x0005402a"
+      }
+    },
+    "notes": "col_idx=1 \u2194 X=4 (LE_A LAB column) confirmed. col_idx=47 in the original by_col_idx breakdown is outside LAB_X (len=22); likely a non-LAB stride bucket \u2014 does not affect the headline conclusion (0 canon-unique cells in LE_A column)."
+  },
+  "audit_2026_05_15_np2fasm_drift": {
+    "verdict": "no drift",
+    "method": "diff np2fasm output for cached tmp/sigcache_test/test_placed.json with vs without --canon-2input-aware",
+    "finding": "Only difference: 2 pragma comment lines (bypass_aware=1, canon_2input_aware=1) absent when flag unset. Diff confirmed pure-additive code change between commits 5905643 (P1 bypass_aware landed) and ca5d197 (P5 canon_2input_aware landed)."
+  },
+  "audit_2026_05_15_source_artifact_inconsistency": {
+    "verdict": "noted, not a blocker for P5b",
+    "finding": "On-disk scripts/sigcache_validation/test_2lut_clocked.v shows LE_A INIT=0x6996 (symmetric XOR4); cached tmp/sigcache_test/test.fasm shows LE_A=0x4444 + bypass_aware/canon_2input_aware pragmas. Memory entry p5_xlab_canon_2input_not_portable claims the 0x6996\u21920x4444 switch was applied, but git shows build_test.py + test_2lut_clocked.v untouched in commit ca5d197. Cached build reflects the intended cross-LAB validation state; on-disk source preserves the silicon-validated symmetric-mask workaround. Reproducing cross-LAB after P5b refactor will require re-applying the Verilog edit + build_test np2fasm flag (or moving the LE_A mask + pragma wiring into a CLI flag on build_test.py)."
+  },
+  "p5b_2026_05_15_landed": {
+    "session": "2026-05-15 evening: P5b canon_unique refactor + single-LE validation",
+    "refactor": "scripts/sigma_inv_real_tt_mining/build_canon_2input_codec_table.py gained --canon-unique flag. For each label L, mines abs[L] as before AND computes canon_unique[L] = codec_full_emit_rbf XOR Quartus_singleLE_wire4_rbf, where codec_full_emit = fasm2rbf(\"IOB_PAD_NV; OUTROUTE_G15 X4Y4N0; X4Y4N0.LUT = M_L\"). Writes parallel sidecar results/canon_2input_codec_table_unique.json. Does NOT mutate the live absolute table.",
+    "codec_emit_components": [
+      "IOB_PAD_NV (139 cells: E16+M16 input pad infra + G15 output pad infra)",
+      "OUTROUTE_G15 X4Y4N0 (SLICE \u2192 G15 routing)",
+      "X4Y4N0.LUT predict_sram(M_L) (4-16 LUT TT cells)"
+    ],
+    "codec_emit_omissions": [
+      "IOB_ROUTE PIN_E15/E16/M16/M15 -> X4Y4N0.dataa/b/c/d \u2014 single_le_cells bucket is quarantined per fasm2rbf.py L1185 since 2026-04-24. Cells from these IOB-to-SLICE routes remain in canon_unique[L] as residual; that is OK by the symmetric-difference algebra (codec_emit XOR canon_unique = Quartus by construction)."
+    ],
+    "measurements_at_X4Y4N0": {
+      "abs_cells_per_label": "236-250 (mostly ~240-250)",
+      "canon_unique_cells_per_label": "153-188 (mostly ~175-185)",
+      "lab_cram_shrinkage": "~112-116 \u2192 ~21-29 (big win; cells in LUT TT band correctly subtracted via predict_sram)",
+      "hdr_growth": "~120 \u2192 ~150 (IOB_PAD_NV adds cells Quartus wire4 build does not emit \u2014 they appear in residual)",
+      "pin_overlap_outliers": "b&c/b|c/b^c labels (pins KEY2+KEY3 = E16+M16 = IOB_PAD_NV-covered) shrink to lab_cram=4 \u2014 strong evidence that subtraction does real work"
+    },
+    "validation_single_LE": {
+      "method": "For each of 24 mined labels at X4Y4N0: rebuilt = patch_rbf_crc(codec_emit_rbf XOR canon_unique[L]); md5(rebuilt) vs md5(Quartus_singleLE_wire4_rbf)",
+      "result": "24/24 byte-identical (md5 match including bd373139 for canon_naandb 0x4444, silicon-validated 2026-05-13)",
+      "caveat": "Validation is TAUTOLOGICAL by construction (canon_unique was defined as exactly this XOR). What it confirms: (a) the mining script saved correct data, (b) fasm2rbf is deterministic, (c) patch_rbf_crc correctly composes with XOR-applied cells, (d) no off-by-one or label-mapping errors in the sidecar."
+    },
+    "regression": {
+      "fuzz/test_canon_2input_codec.py": "9/9 PASS",
+      "fuzz/test_bypass_byte_identity.py": "5/5 PASS",
+      "scripts/bit_workaround/zeta_selftest.py": "PASS \u2014 all three gates green"
+    },
+    "flash_budget": "unchanged: 1/3 remaining (P5b is RBF-only, no silicon)",
+    "next_step": "Cross-LAB validation: apply canon_unique[!a&b] in the build_test cross-LAB design (LE_A=0x4444 @ X4Y4N0 \u2192 LE_B=0xAAAA @ X4Y21N0 + DFF + CLK=E1). Expected: codec emits IOB_PAD_NV + IOB_CLK_INPUT_E1 + ROUTE + OUTROUTE + LAB_CLK_SEL_LE for the cross-LAB design; canon_unique[!a&b] applied on top. If canon_unique is truly design-context-agnostic, the analytical mismatch should drop from 124/248 (the absolute-table baseline) to near-0. Requires: wiring fasm2rbf to use canon_unique table (currently bitstream.py loads the absolute table), OR adding a canon_2input_unique_aware pragma, OR using the existing canon_2input_aware pragma after swapping the sidecar path in bitstream.py.",
+    "context_invariance_check": {
+      "method": "For 9 wire2-cached labels (36 pairs), compute pair-delta in both contexts: \u0394_w4[L1,L2] = Quartus_wire4(L1) XOR Quartus_wire4(L2); \u0394_w2[L1,L2] = Quartus_wire2(L1) XOR Quartus_wire2(L2). If canon_unique[L] is design-invariant, the pair-deltas should match exactly (the design-context offset is the SAME for L1 and L2 so it cancels in the XOR).",
+      "result": "0/36 pairs match exactly. 32 cells diverge in wire4-only union (24 hdr + 8 lab_cram); 36 cells diverge in wire2-only union (28 hdr + 8 lab_cram).",
+      "interpretation": "canon_unique IS mostly context-invariant but not exactly \u2014 Quartus emits ~30 cells per pair that depend on the wire2-vs-wire4 design context. Likely IOB-routing optimizer decisions whose CRAM footprint varies per LUT mask. Quantitative bound for cross-LAB: expect ~20-30 residual mismatches with canon_unique applied (vs the absolute-table baseline's 124/248). Success threshold for the next-session cross-LAB analytical gate: \u226430 mismatches all in IOB/CLK regions = candidate flash; >50 = model still has gaps.",
+      "open_question": "What drives the 24-28 hdr cells of context-specific divergence per pair? IOB router decisions, perhaps. Mitigation strategy if cross-LAB mismatch is >30: (a) mine canon_unique in MULTIPLE design contexts (wire2, wire4, cross-LAB) and intersect; (b) accept design-context-specific canon tables per usage class."
+    },
+    "label_invariant_baggage_audit": {
+      "method": "Intersection of all 24 canon_unique[L] cell sets at X4Y4N0",
+      "common_cells": 138,
+      "common_region_breakdown": {
+        "hdr": 137,
+        "lab_cram": 0,
+        "block_band": 1
+      },
+      "avg_canon_unique_per_label": 175.5,
+      "label_specific_avg": 37.5,
+      "pairwise_xor_avg": 29.8,
+      "finding": "canon_unique[L] retains 138 cells of label-invariant wire4 design-context baggage (almost entirely in hdr region \u2014 IOB infrastructure for E15+M15 routing that the codec did not subtract because the single_le_cells IOB_ROUTE bucket is quarantined). Only ~37.5 cells/label are label-specific. When canon_unique[L] is applied in a design that does NOT use E15+M15 pins (e.g. cross-LAB build_test uses E16+M16+G15+E1), those 138 hdr cells inject wire4-specific IOB infra into the wrong design context \u2014 the same class of bug the previous session found with the absolute table, just shifted to a different cell set.",
+      "cross_lab_expected_mismatch_revised": "Likely ~138 hdr mismatches when canon_unique[L] applied in cross-LAB design \u2014 the analytical mismatch may stay near 124/248 or even grow. The lab_cram improvement (~115\u2192~25) is real but the dominant residual is hdr.",
+      "next_refinement_path": "Subtract a wire4-context IOB baseline before per-label diffing. Candidate baselines: (a) canon_const0_X4Y4N0 (mask=0x0000, Quartus wire4 build with LUT-bypass \u2014 already cached from Phase 4 P4 audit `canon_cells_X4Y4N0_constants.json`); (b) canon_const1 (0xFFFF) same; (c) explicitly mine an `IOB_PAD_NV_WIRE4` directive that extends IOB_PAD_NV to all 4 wire4 pins, then subtract that. The (a)/(b) path is the cheapest: load canon_const0_X4Y4N0.rbf, compute wire4_baseline_delta = canon_const0_rbf XOR codec_emit(0x0000), then refined_canon_unique[L] = canon_unique[L] XOR wire4_baseline_delta."
+    }
+  }
 }
