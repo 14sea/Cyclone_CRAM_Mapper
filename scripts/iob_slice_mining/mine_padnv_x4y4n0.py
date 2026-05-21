@@ -62,7 +62,6 @@ REPO = HERE.parent.parent
 sys.path.insert(0, str(REPO / "fuzz"))
 
 import fasm2rbf as f  # noqa: E402
-from bitstream import LutCodec  # noqa: E402
 
 QUARTUS = Path.home() / "intelFPGA_lite" / "21.1" / "quartus" / "bin"
 

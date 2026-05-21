@@ -44,6 +44,17 @@ python3 scripts/cross_lab/analyze_pl_corpus.py --save
     # 7-variant 1-LE TT corpus intersection vs probe2 shim ADDITIVE.
 python3 fuzz/nv_sig_cache_merge.py
     # Merge nv_route_cells.json + legacy → route_cells_full.json.
+python3 scripts/iob_slice_mining/mine_padnv_x4y4n0.py
+    # IOB→slice sig-cache miner for X4Y4N0 (P1/P2 pragma-driven,
+    # Track B1 2026-05-21).  Builds Quartus single_pin (mask=0xAAAA
+    # bypass) + two_pin (mask=0x8888 canon_2input 'a&b') golds, derives
+    # IOB_E16->4,4,0,dataa + IOB_M16->4,4,0,datab via padnv algebra;
+    # Step 5 verification asserts 0 byte diffs vs both Quartus golds.
+    # Re-runnable (idempotent); rollback automatic on FAIL.
+python3 scripts/sigcache_validation/build_quartus_xlab.py --le-a-mask 0x4444
+    # Build Quartus cross-LAB gold (LE_A @ X4Y4N0, LE_B @ X4Y21N0) as
+    # the byte-identity reference for build_test --canon-2input absolute
+    # output.  ~60-90 s wall.  Pre-flash audit gate.
 ```
 
 ## Directory Layout

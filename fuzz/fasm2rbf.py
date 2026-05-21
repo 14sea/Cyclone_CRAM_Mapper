@@ -2023,6 +2023,19 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     LUT phase based on the mask's axis dependence + negation.  Multi-
     bypass-LUT designs assert all entries agree on (axis, neg) — silent
     canon-state disagreement raises rather than miscompiles.
+
+    **Pragma plumbing footgun**: this function does NOT auto-parse the
+    ``# fasm2rbf: key=value`` pragma comments in ``fasm_text`` — only
+    :func:`main` (the CLI entry) does.  Direct callers that want pragma
+    semantics must invoke :func:`parse_pragmas` themselves::
+
+        pragmas = parse_pragmas(fasm_text)
+        rbf = bitgen(fasm_text, base, **pragmas)
+
+    Or use the :func:`bitgen_from_fasm` convenience wrapper which does this
+    automatically.  The latent bug at this layer was the same class as the
+    ``cf0bef7`` 2026-05-15 CLI fix but at the bitgen-caller boundary; see
+    memos ``gamma_iob_x4y4_padnv_mining_2026_05_21`` and Pitfall #16 P5d row.
     """
     (luts, lut_arith, routes, bits, srcs, dffs, dff_les, m9k_inits,
      iobs, iob_routes, gclk, gclk_pins, lab_clk_sels,
@@ -2488,6 +2501,12 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
         # Bypass LEs still need clearing: Quartus emits 0 TT cells for
         # bypass, and the base RBF may have stale cells the design must
         # zero out (Phase 2 is the no-op, not Phase 1).
+        #
+        # Track B1 (2026-05-21) interaction: `iob_routes` now applies
+        # AFTER this block (post all_luts, just before patch_crc), so
+        # Phase 1's clear no longer competes with IOB_ROUTE's intended
+        # writes at LI-aliased TT coordinates.  See the iob_routes block
+        # at end-of-bitgen for the reorder rationale.
         for x, y, n, mask in std_luts:
             if (x, y, n) in arith_keys:
                 continue
@@ -2985,6 +3004,27 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     if patch_crc:
         work = patch_rbf_crc(work)
     return bytes(work)
+
+
+def bitgen_from_fasm(fasm_text, base_rbf, **kwargs):
+    """Convenience wrapper: parse pragmas from FASM text + invoke bitgen.
+
+    Equivalent to::
+
+        pragmas = parse_pragmas(fasm_text)
+        bitgen(fasm_text, base_rbf, **pragmas, **kwargs)
+
+    Use this from direct Python callers (scripts, tests, mining tools)
+    rather than calling :func:`bitgen` directly — the latter does NOT
+    auto-parse ``# fasm2rbf: key=value`` lines, only the CLI entry does.
+    Mismatched pragma plumbing has bitten the codec twice (commit
+    ``cf0bef7`` for the CLI, Track B1 2026-05-21 for direct bitgen
+    callers).  Keyword args here take precedence over pragmas, matching
+    Python's ``dict.update`` semantics in the merge.
+    """
+    pragmas = parse_pragmas(fasm_text)
+    pragmas.update(kwargs)
+    return bitgen(fasm_text, base_rbf, **pragmas)
 
 
 def main(argv):

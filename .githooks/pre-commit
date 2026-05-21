@@ -147,3 +147,22 @@ if [[ -f "$D1PP_VERIFIER" && -f "$D1PP_TABLE" && -f "$D1PP_FIXTURE" ]]; then
     fi
     echo "[pre-commit] d1pp canon-cell verifier OK (18/18 byte-identical)"
 fi
+
+# Track B1 IOB_ROUTE reorder regression — ~1s.  Verifies that bitgen's
+# `if iob_routes:` block stays AFTER `if all_luts:` (the 2026-05-21
+# Track B1 reorder that resolves OUTROUTE_G15 × IOB_ROUTE XOR-cancel
+# at LI-aliased cells).  Structural test always runs from source;
+# byte-identity tests gracefully skip if Quartus goldens are absent
+# (work/ is gitignored — rebuild via mine_padnv_x4y4n0.py).
+REORDER_TEST="$REPO_ROOT/fuzz/test_iob_route_x4y4_reorder.py"
+if [[ -f "$REORDER_TEST" ]]; then
+    echo "[pre-commit] running Track B1 iob_route reorder regression..."
+    if ! python3 "$REORDER_TEST" >/tmp/reorder_test.log 2>&1; then
+        echo "[pre-commit] reorder regression FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/reorder_test.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] reorder regression OK"
+fi
