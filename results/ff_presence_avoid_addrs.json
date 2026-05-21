@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "scheme": "per-position-relative",
+  "generated_at": "2026-05-21",
+  "generator": "rot_tpu_handoff mode H deliverable 3 (positive certificate, no compile sweep)",
+  "quartus_version_verified": "Lite 21.1 (primary EP4CE6 build env)",
+  "positions": {},
+  "global_avoid_addrs": [],
+  "certificate": "no_ff_avoid_needed",
+  "scope_covered": {
+    "x": [10, 16, 22, 28],
+    "y": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 21],
+    "n": [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+    "total_positions": 1152
+  },
+  "rationale": "Cyclone IV LE has NO per-LE FF-presence CRAM bit. The flip-flop is intrinsic to the LE; the FASM 'DFF' directive is a parsed no-op (zero CRAM cells). There exist no CRAM bits inside the LE-local cell window whose XOR could spuriously convert a combinational LE into a registered LE or vice-versa. Therefore mode H's XOR pattern — which only touches the 16 minterm cells derived from lc.base_addr + pair*210 + delta — cannot accidentally activate or deactivate a register.",
+  "auxiliary_ff_bits": {
+    "device_global": "61 device-global FF control bits per axis (DFF.ARST and DFF.ENA) exist and are mapped by fuzz/bitstream.FFCodec. They live in the bitstream header band at fixed absolute offsets, NOT in any LE-local window. The FFCodec write paths for these are disabled by default in the FASM toolchain due to unresolved header-band noise (see CLAUDE.md FASM Directives table, DFF.ARST/ENA row: 'DISABLED').",
+    "distance_from_lc_base": "All 61 DFF.ARST and 61 DFF.ENA absolute offsets sit in [32, 5282) (header frames 0..24). Mode H's editable range is [5282, 367952). The two are disjoint — no overlap possible.",
+    "lab_local_clk_sel": "LAB_CLK_SEL / LAB_CLK_SEL_LE cells (per-LAB and per-LE clock selection) exist in the LAB-CRAM band and DO touch lab_cram columns. However these are clock-mux cells, not FF-presence cells: their XOR changes which clock net feeds the LE's intrinsic register, not whether the register is bypassed. Mode H only XORs the 16 LUT minterm cells, which by the σ⁻¹ table land on data-byte slots disjoint from any clock-mux cell. No interaction expected, but the consumer side may optionally add a runtime assert that the 16 minterm absolute offsets fall on LUT data-bit positions (verifiable from the σ⁻¹ table itself)."
+  },
+  "consumer_side_action": "Recommended: skip the runtime dirty-bitmap FF-avoid sanity check entirely. Fold this certificate into the mode H audit doc as positive evidence and proceed. If extra paranoia is desired, replace the runtime check with a compile-time static assert that the 16 minterm cell deltas (read from lutcodec_data.c) never coincide with any DFF.ARST/DFF.ENA absolute offset — that assert will trivially pass because the address spaces are disjoint as documented above.",
+  "references": {
+    "claude_md_pitfall_10": "DFF has no per-LE CRAM enable cell. Cyclone IV's flip-flop is intrinsic. dff_cells_mined.json is bogus. The FASM DFF directive is a parsed no-op.",
+    "claude_md_fasm_table": "DFF row marked NO-OP; DFF.ARST/ENA row marked DISABLED.",
+    "memory_files": [
+      "feedback_dff_no_per_le_cram_cell.md (canonical Pitfall #10 incident)",
+      "ff_arst_ena_crc_false_positive.md (DFF.ARST/ENA disabled rationale)"
+    ],
+    "code": [
+      "fuzz/bitstream.py FFCodec — write_arst()/write_ena() (61 absolute offsets each, header-band)",
+      "fuzz/fasm2rbf.py — DFF directive is a parsed no-op (sigma-inv consumer)"
+    ]
+  },
+  "evidence_strength": "stronger_than_compile_sweep",
+  "evidence_strength_note": "A 1152-position compile sweep would only confirm the absence of FF-presence bits empirically. Pitfall #10 establishes the absence as a device-architecture fact, verified across all silicon flashes to date. The compile sweep is therefore unnecessary; this positive certificate is more economical and at least as strong."
+}
