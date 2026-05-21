@@ -123,3 +123,27 @@ elif [[ -f "$CANON_2INPUT_TEST" ]]; then
     echo "[pre-commit] ⚠️  fixture missing: $CANON_2INPUT_FIXTURE" >&2
     echo "[pre-commit] ⚠️  rebuild via: scripts/sigma_inv_real_tt_mining/probe_canonicalization_cells.py 4 4 0 --2input --save  AND  --2input-negation --save" >&2
 fi
+
+# Path 5 d1pp canon-cell table reconstruction gate — ~1s.  Walks the 18
+# (x,y,n,mask) entries in results/canon_2input_codec_table_d1pp.json,
+# rebuilds each Quartus golden RBF as `baseline_mask0 XOR predict_sram(M)
+# XOR canon_cells[M]` and bit-compares against the committed gold.  Catches
+# drift in LutCodec.from_cram_model / predict_sram that would silently
+# invalidate the mined table consumed by mode H (lutcodec.c).
+#
+# Fixtures (results/golden_rbf_modeH/) are committed, so this gate runs
+# unconditionally on every clone.
+D1PP_VERIFIER="$REPO_ROOT/scripts/mode_h/verify_canon_d1pp_table.py"
+D1PP_TABLE="$REPO_ROOT/results/canon_2input_codec_table_d1pp.json"
+D1PP_FIXTURE="$REPO_ROOT/results/golden_rbf_modeH/sweep_summary.json"
+if [[ -f "$D1PP_VERIFIER" && -f "$D1PP_TABLE" && -f "$D1PP_FIXTURE" ]]; then
+    echo "[pre-commit] running Path 5 d1pp canon-cell table verifier..."
+    if ! python3 "$D1PP_VERIFIER" >/tmp/d1pp_verifier.log 2>&1; then
+        echo "[pre-commit] d1pp canon-cell verifier FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/d1pp_verifier.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] d1pp canon-cell verifier OK (18/18 byte-identical)"
+fi
