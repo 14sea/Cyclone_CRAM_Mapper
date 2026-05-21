@@ -2353,57 +2353,10 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 _iob_route_dedup.add((off, bp))
         work = bytes(buf)
 
-    if iob_routes:
-        # IOB_ROUTE sig-cache entries are XOR-delta cell sets.  Two
-        # derivation flavours exist:
-        #
-        #   padnv_cells — derived as (gold ⊕ base) minus LUT cells,
-        #       where base = nv + IOB_PAD_NV + OUTROUTE + CLK.  These
-        #       entries already account for directive overlap and compose
-        #       correctly via XOR parity WITHOUT dedup stripping.
-        #
-        #   single_le_cells / absolute_cells — legacy entries derived
-        #       against IOB_BASELINE_NV path.  They include cells shared
-        #       with other directives and NEED dedup stripping.
-        #
-        # When ``legacy_iob_route=True`` the caller is asking for the
-        # pre-6b6cda9 path: consult the legacy single_le bucket and
-        # apply cells via pure XOR parity (no dedup, no hdr-skip).  This
-        # reproduces cff800e / d48c13e HW-PASS simple_led semantics for
-        # single-LE designs that the live path breaks (443-byte drift).
-        parity = {}
-        skipped = 0
-        for pin, dx, dy, dn, port in iob_routes:
-            if legacy_iob_route:
-                cells = _load_iob_route_cells_legacy(pin, dx, dy, dn, port)
-                for off, bp in cells:
-                    key = (off, bp)
-                    parity[key] = parity.get(key, 0) ^ 1
-                continue
-            needs_dedup = _iob_route_needs_dedup(pin, dx, dy, dn, port)
-            for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
-                # Header-band skip applies to `absolute_cells` (which
-                # include IOB pad / baseline content that IOB_PAD_NV is
-                # expected to own).  `padnv_cells` entries are derived
-                # against a base that already includes IOB_PAD_NV +
-                # OUTROUTE + CLK directives, so any header cells they
-                # contain are genuinely IOB_ROUTE's responsibility —
-                # skipping them produces unowned-cell gaps in designs
-                # like build_test (4,4,0 src LAB).  Gate hdr-skip on
-                # `needs_dedup` (= absolute path) only.
-                if needs_dedup and off < 5282:
-                    skipped += 1
-                    continue
-                key = (off, bp)
-                if needs_dedup and key in _iob_route_dedup:
-                    skipped += 1
-                    continue
-                parity[key] = parity.get(key, 0) ^ 1
-        buf = bytearray(work)
-        for (off, bp), v in parity.items():
-            if v:
-                buf[off] ^= (1 << bp)
-        work = bytes(buf)
+    # IOB_ROUTE moved to post-LUT-phases (see end of bitgen) so that XOR-
+    # parity composition with OUTROUTE_G15 + LUT Phase 1/2/3 produces
+    # correct byte output at LI MUX-aliased cells (Pitfall #16 Track B1,
+    # 2026-05-21).  Same XOR semantics — only the apply position changed.
 
     if iob_oes:
         # IOB_OE PIN_X — Stage B-narrow tristate enable for the 16
@@ -2978,6 +2931,56 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                     continue
             work_buf[off] ^= 1 << bp
     work = bytes(work_buf)
+
+    if iob_routes:
+        # IOB_ROUTE sig-cache entries are XOR-delta cell sets.  Two
+        # derivation flavours exist:
+        #
+        #   padnv_cells — derived as (gold ⊕ base) where base = bitgen
+        #       through all phases except IOB_ROUTE.  These entries
+        #       compose correctly via XOR parity WITHOUT dedup stripping.
+        #
+        #   single_le_cells / absolute_cells — legacy entries derived
+        #       against IOB_BASELINE_NV path.  They include cells shared
+        #       with other directives and NEED dedup stripping.
+        #
+        # Track B1 (2026-05-21): moved from pre-all_luts position to
+        # post-all_luts (end of bitgen, before patch_crc) so that XOR
+        # composition with OUTROUTE_G15 + LUT Phase 1 produces the
+        # correct gold byte at LI MUX-aliased cells (offset 0x9354 etc.
+        # at X4Y4N0 — OUTROUTE_G15 emits there, Phase 1 clears, then
+        # IOB_ROUTE flips to the gold value).  Pitfall #16, see
+        # `gamma_iob_x4y4_padnv_mining_2026_05_21` memo.
+        #
+        # When ``legacy_iob_route=True`` the caller is asking for the
+        # pre-6b6cda9 path: consult the legacy single_le bucket and
+        # apply cells via pure XOR parity (no dedup, no hdr-skip).  This
+        # reproduces cff800e / d48c13e HW-PASS simple_led semantics for
+        # single-LE designs that the live path breaks (443-byte drift).
+        parity = {}
+        skipped = 0
+        for pin, dx, dy, dn, port in iob_routes:
+            if legacy_iob_route:
+                cells = _load_iob_route_cells_legacy(pin, dx, dy, dn, port)
+                for off, bp in cells:
+                    key = (off, bp)
+                    parity[key] = parity.get(key, 0) ^ 1
+                continue
+            needs_dedup = _iob_route_needs_dedup(pin, dx, dy, dn, port)
+            for off, bp in _load_iob_route_cells(pin, dx, dy, dn, port):
+                if needs_dedup and off < 5282:
+                    skipped += 1
+                    continue
+                key = (off, bp)
+                if needs_dedup and key in _iob_route_dedup:
+                    skipped += 1
+                    continue
+                parity[key] = parity.get(key, 0) ^ 1
+        buf = bytearray(work)
+        for (off, bp), v in parity.items():
+            if v:
+                buf[off] ^= (1 << bp)
+        work = bytes(buf)
 
     if patch_crc:
         work = patch_rbf_crc(work)

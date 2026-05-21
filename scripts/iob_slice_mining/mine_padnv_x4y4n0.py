@@ -2,15 +2,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Derive padnv-bucket IOB_ROUTE entries for X4Y4N0 (2-pin AND gate).
 
-⚠️  STATUS 2026-05-11: Step 5 VERIFICATION FAILS today (99 byte
-diffs vs gold).  Root cause: σ⁻¹ permutation at X4Y4N0 LE_0
-mis-encodes both 0x8888 (read=0xC0C0) and 0xAAAA (read=0xF0F0) —
-the mining diff is contaminated with σ⁻¹ TT-misencoding cells.
-Verification will pass once σ⁻¹ permutation re-mining lands for
-the X=4 column (Pitfall #16, memo `iob_route_hdr_skip_pivot_2026_05_11`).
-Script committed in this state so the algebra is preserved and
-re-runnable; rollback is automatic on failure so the sigcache
-isn't corrupted.
+STATUS 2026-05-21 (Track B1): σ⁻¹ TT contamination unblocked via P1/P2
+pragmas — `# fasm2rbf: bypass_aware=1` on the single-pin (mask=0xAAAA)
+stack and `# fasm2rbf: canon_2input_aware=1` on the two-pin (mask=0x8888,
+canonical label 'a&b') stack.  Both paths are silicon-validated since
+2026-05-13 (memos `p1_bypass_aware_silicon_validated_2026_05_13`,
+`p2_canon_2input_silicon_validated_2026_05_13`); the codec now emits
+byte-identical LUT TT cells via the absolute / bypass path, so the diff
+`gold ⊕ base` is pure routing — no σ⁻¹ TT noise to subtract.
+
+Historical context (pre-Track-B1, kept for forensic reference):
+the 2026-05-11 attempt failed Step 5 verification (99 byte diffs) because
+σ⁻¹ at X4Y4N0 LE_0 mis-encodes both 0x8888 (read=0xC0C0) and 0xAAAA
+(read=0xF0F0) when using the legacy predict_sram path.  The mining diff
+therefore contained σ⁻¹-misencoding cells alongside the actual routing
+cells.  We worked around it by subtracting `LutCodec.all_cells` from the
+diff, which removed contamination but also removed legitimately-coincident
+routing cells (LI MUX aliases LUT TT coordinates per the predict_sram
+audit in `p5d_per_lab_li_filter_2026_05_21`).  The P1/P2 pragma path
+sidesteps both problems.
 
 Bug #2 closure per memo `gamma_bug1_strip_fix_landed_2026_05_11`: the
 sigcache for `4,4,0->4,21,0,dataa` (and `4,4,0->4,7,0,dataa`) contains
@@ -67,7 +77,14 @@ DX, DY, DN = TARGET
 
 
 def is_crc(off: int) -> bool:
+    """True iff `off` is a per-frame CRC byte (frame[208] or frame[209])
+    of a CRC-validated frame (25..1751).  Header frames 0..24 carry no
+    CRC — their last two bytes are real data and must NOT be filtered
+    (Pitfall #11)."""
     if off < PRE or off >= CRAM_END:
+        return False
+    frame = (off - PRE) // FRAME
+    if frame < FIRST or frame > LAST:
         return False
     return (off - PRE) % FRAME >= 208
 
@@ -164,37 +181,25 @@ def gen_qsf(name: str, pins: dict[str, str], lut_loc: str) -> str:
 
 def derive_via_padnv_algebra(gold: bytes, fasm_text: str) -> tuple[
         set[tuple[int, int]], int, int]:
-    """Compute padnv route cells = (gold ⊕ base) - LUT_cells.
+    """Compute padnv route cells = gold ⊕ base.
 
-    LUT_cells = σ⁻¹.all_cells at the target LE — the 16 (off, bp) TT
-    positions the LutCodec considers TT.  We subtract these from the
-    diff because σ⁻¹'s port permutation at X4Y4N0 LE_0 doesn't match
-    Quartus's actual TT bit placement for asymmetric masks (memo
-    `gamma_bug1_strip_fix_landed_2026_05_11`'s Y-sweep table:
-    Y=4 yields σ⁻¹.read_tt(gold)=0xF0F0 when Quartus placed 0xAAAA).
-    Including those cells would contaminate the IOB_ROUTE entry with
-    σ⁻¹ encoding errors.
+    With P1 bypass_aware / P2 canon_2input_aware pragmas in `fasm_text`,
+    `bitgen` emits byte-identical LUT TT cells to Quartus (no σ⁻¹
+    contamination), so the diff is pure routing — no subtraction needed.
 
     Returns (route_cells, data_diff, crc_diff).
     """
     nv = (REPO / "results" / "rbf" / "nv_zero_global.rbf").read_bytes()
     reset_caches()
 
-    base = f.bitgen(fasm_text, nv, patch_crc=True)
+    pragmas = f.parse_pragmas(fasm_text)
+    base = f.bitgen(fasm_text, nv, patch_crc=True, **pragmas)
     assert len(base) == 368011
 
     route_xor = bytes(a ^ b for a, b in zip(gold, base))
     route_cells = {c for c in bit_cells(route_xor)
                    if not is_crc(c[0]) and c[0] < CRAM_END}
 
-    # Subtract LUT TT cells per the padnv docstring formula.  These
-    # are the 16 SRAM positions σ⁻¹ uses for the LE's TT.
-    lut = LutCodec.from_cram_model(DX, DY, DN)
-    lut_tt_cells = {tuple(c) for c in lut.all_cells}
-    contam = route_cells & lut_tt_cells
-    if contam:
-        print(f"    (filtered {len(contam)} σ⁻¹ TT cells from diff)")
-    route_cells = route_cells - lut_tt_cells
     return route_cells, len(route_cells), 0
 
 
@@ -252,8 +257,14 @@ endmodule
 
 
 def fasm_stack_single_pin(pin: str) -> str:
-    """FASM directives for the single-pin design, EXCLUDING IOB_ROUTE."""
+    """FASM directives for the single-pin design, EXCLUDING IOB_ROUTE.
+
+    mask=0xAAAA is in BYPASS_1INPUT_MASKS — Quartus encodes it as LUT-
+    bypass (no SRAM TT cells, 1 block_band canon cell), and P1
+    `bypass_aware=1` makes bitgen do the same byte-identically.
+    """
     return (
+        "# fasm2rbf: bypass_aware=1\n"
         "IOB_PAD_NV\n"
         f"IOB_CLK_INPUT PIN_E1\n"
         f"OUTROUTE_G15 X{DX}Y{DY}N{DN}\n"
@@ -265,8 +276,13 @@ def fasm_stack_single_pin(pin: str) -> str:
 
 
 def fasm_stack_two_pin() -> str:
-    """FASM directives for the 2-pin AND design, EXCLUDING IOB_ROUTE."""
+    """FASM directives for the 2-pin AND design, EXCLUDING IOB_ROUTE.
+
+    mask=0x8888 is canonical label 'a&b' — P2 canon_2input_aware applies
+    CANON_2INPUT_ABSOLUTE[(4,4,0)]['a&b'] for byte-identical LUT TT.
+    """
     return (
+        "# fasm2rbf: canon_2input_aware=1\n"
         "IOB_PAD_NV\n"
         f"IOB_CLK_INPUT PIN_E1\n"
         f"OUTROUTE_G15 X{DX}Y{DY}N{DN}\n"
@@ -359,7 +375,8 @@ def main():
         + fasm_stack_single_pin("E16")
     )
     nv = (REPO / "results" / "rbf" / "nv_zero_global.rbf").read_bytes()
-    recon_e16 = f.bitgen(fasm_e16_with_route, nv, patch_crc=True)
+    pragmas_e16 = f.parse_pragmas(fasm_e16_with_route)
+    recon_e16 = f.bitgen(fasm_e16_with_route, nv, patch_crc=True, **pragmas_e16)
     d_e16 = sum(1 for a, b in zip(recon_e16, gold_e16) if a != b)
     print(f"  E16 reconstruction vs gold_A: {d_e16} byte diffs")
 
@@ -370,7 +387,8 @@ def main():
         f"IOB_ROUTE PIN_M16 -> X{DX}Y{DY}N{DN}.datab\n"
         + fasm_stack_two_pin()
     )
-    recon_and = f.bitgen(fasm_and_with_routes, nv, patch_crc=True)
+    pragmas_and = f.parse_pragmas(fasm_and_with_routes)
+    recon_and = f.bitgen(fasm_and_with_routes, nv, patch_crc=True, **pragmas_and)
     d_and = sum(1 for a, b in zip(recon_and, gold_and) if a != b)
     print(f"  AND reconstruction vs gold_B: {d_and} byte diffs")
 
