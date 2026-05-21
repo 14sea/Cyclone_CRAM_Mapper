@@ -302,6 +302,74 @@ def t_bitgen_unique_aware_overlap_filter():
         assert False, "expected FasmError on dual-pragma"
 
 
+def t_p5d_li_lab_for_offset():
+    """P5d helper test: `li_lab_for_offset(off, bp)` correctly identifies
+    the 4 P5c-survivor cells as LI MUX cells at LAB(4,4), and returns
+    None for non-LI offsets in the same column.
+
+    Audit 2026-05-21: the per-LAB filter has a subtlety not covered by
+    end-to-end bitgen tests — Cyclone IV LUT TT data bytes can share
+    physical CRAM cells with LI MUX coordinates (same (offset, bp), two
+    semantic interpretations).  Specifically `LutCodec.from_cram_model
+    (4,4,0).predict_sram(0x4444)` emits 4 cells that ALL alias LI MUX
+    P4B0/P4B1/P6B0/P6B1 at LAB(4,4).  This means the per-LAB filter
+    fires for ANY X4Y4N0 LUT directive in `canon_2input_unique_aware`
+    mode, dropping canon_unique LI-class cells at LAB(4,4).  The
+    silicon-validated single-LE byte-identity path uses the absolute
+    table (`canon_2input_aware`), which does NOT go through the filter;
+    `canon_2input_unique_aware` is the cross-LAB safety path.
+
+    This test exercises only the helper-level primitive that P5d adds
+    (`li_lab_for_offset`), which is the load-bearing piece for the
+    per-LAB filter in `fasm2rbf.bitgen`."""
+    from bitstream import li_lab_for_offset, _LI_CELL_TO_LAB
+
+    # 4 P5c-survivor cells at LAB(4,4) bp=6, pair=0..3 base=70.
+    for off in (0x9354, 0x9426, 0x94F8, 0x95CA):
+        assert li_lab_for_offset(off, 6) == (4, 4), \
+            f"LI cell ({hex(off)}, 6) should map to LAB(4,4)"
+
+    # Adjacent base=71 cells: also LAB(4,4) (paired byte).
+    for off in (0x9355, 0x9427):
+        assert li_lab_for_offset(off, 6) == (4, 4), \
+            f"LI cell ({hex(off)}, 6) base=71 should map to LAB(4,4)"
+
+    # Different bp at same offset: not an LI cell (only bp=6 is Y=4 LI).
+    assert li_lab_for_offset(0x9354, 5) is None, \
+        "offset 0x9354 bp=5 should NOT be an LI cell"
+
+    # Total entry count: 22 LAB_X × 18 LAB_Y × 9 pair × 2 base = 7128.
+    assert len(_LI_CELL_TO_LAB) == 7128, \
+        f"LI reverse map should have 7128 entries, got {len(_LI_CELL_TO_LAB)}"
+
+
+def t_p5d_predict_sram_alias_documented():
+    """Audit 2026-05-21 finding: predict_sram cells alias LI coordinates
+    in Cyclone IV (same physical cells).  This test pins the property so
+    future code changes don't silently break the assumption.
+
+    The aliasing means the P5d per-LAB filter always fires at the LE's
+    own LAB when `canon_2input_unique_aware` is active.  For cross-LAB
+    use this is correct (canon_unique LI contribution at source LAB is
+    suppressed); for single-LE wire4 byte-identity use the absolute
+    `canon_2input_aware` path instead."""
+    from bitstream import LutCodec, li_lab_for_offset
+
+    codec = LutCodec.from_cram_model(4, 4, 0)
+    cells = list(codec.predict_sram(0x4444))
+    assert len(cells) == 4, \
+        f"predict_sram(0x4444) should emit 4 cells, got {len(cells)}"
+    # All 4 should alias LI(4,4).
+    aliases = [(o, b, li_lab_for_offset(o, b)) for o, b in cells]
+    not_li = [a for a in aliases if a[2] is None]
+    assert not not_li, \
+        (f"All predict_sram(0x4444) cells should alias LI MUX coordinates "
+         f"at LAB(4,4); non-aliased: {not_li}")
+    other_lab = [a for a in aliases if a[2] != (4, 4)]
+    assert not other_lab, \
+        f"predict_sram cells should alias LAB(4,4) only; others: {other_lab}"
+
+
 def main():
     tests = [
         ("table_loaded",                t_table_loaded),
@@ -316,6 +384,8 @@ def main():
         ("unique_table_loaded",         t_unique_table_loaded),
         ("unique_cells_lookup_errors",  t_unique_cells_lookup_errors),
         ("bitgen_unique_overlap_filter", t_bitgen_unique_aware_overlap_filter),
+        ("p5d_li_lab_for_offset",       t_p5d_li_lab_for_offset),
+        ("p5d_predict_sram_alias",      t_p5d_predict_sram_alias_documented),
     ]
     failed = []
     for name, fn in tests:

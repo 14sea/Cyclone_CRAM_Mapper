@@ -339,6 +339,9 @@ def main():
             }
 
             if m == 0x0000:
+                entry["is_baseline"] = True
+                entry["n_cells_in_diff"] = 0
+                entry["regions"] = {"header": 0, "lab_cram": 0, "block_band": 0}
                 summary["results"].append(entry)
                 continue
 
