@@ -1,0 +1,434 @@
+[
+  {
+    "addr": "0x12D11",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x12FA0",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1300A",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x131AE",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1325F",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x134D5",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x13602",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x136D6",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1394A",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1394C",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x13D64",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x13E38",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x13F08",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x13FDA",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x140AC",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1417F",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14251",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14323",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x143F5",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x144C6",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14598",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1466A",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14933",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14A5D",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14B84",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14BED",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14BFD",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14C01",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14CFB",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14E9F",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14F7C",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14F8C",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x14F93",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x151F2",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x15202",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x15209",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A3FA",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A4CC",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A50E",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A557",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A590",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A663",
+    "bit": 7,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A785",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A7CE",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x1A80A",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x2ECE9",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x2EE8C",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x35795",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x35938",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3AA70",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3AC38",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3C691",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3C720",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3C8E6",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3C9B7",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3CA69",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x3CC0C",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x50CFD",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x50DAC",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x50F62",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x51033",
+    "bit": 6,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x510E1",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x51284",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x58495",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x58566",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x588DF",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x588E4",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x588E7",
+    "bit": 3,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x5897F",
+    "bit": 4,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x590B3",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x59257",
+    "bit": 2,
+    "before": 0,
+    "after": 1
+  },
+  {
+    "addr": "0x5967B",
+    "bit": 2,
+    "before": 1,
+    "after": 0
+  }
+]

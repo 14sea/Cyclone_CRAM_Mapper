@@ -1,0 +1,551 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-21T09:44:42",
+  "quartus_version": "Lite 21.1",
+  "coverage": [
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996",
+        "0xDEAD",
+        "0xFFFF"
+      ]
+    },
+    {
+      "x": 10,
+      "y": 8,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 16,
+      "y": 2,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 16,
+      "y": 8,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 16,
+      "y": 14,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 16,
+      "y": 21,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 22,
+      "y": 2,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 22,
+      "y": 8,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 22,
+      "y": 14,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 22,
+      "y": 21,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 28,
+      "y": 8,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 28,
+      "y": 14,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996"
+      ]
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
+      "masks": [
+        "0x0000",
+        "0x6996",
+        "0xDEAD",
+        "0xFFFF"
+      ]
+    }
+  ],
+  "n_substitution_note": "Sentinel position X28_Y17_N14 from cyclone_cram_mapper_targets_modeH.txt substituted with X28_Y17_N0 \u2014 N=14 is a chain-only LE in EP4CE6 (the existing probe pipeline skips N in {14, 30}). N=0 keeps the slice standard-lut. Original N=14 can be re-requested if consumer side has host-side coverage that specifically needs it.",
+  "build_args": {
+    "wire4": true,
+    "pin_map": {
+      "KEY1": "PIN_E15",
+      "KEY2": "PIN_E16",
+      "KEY3": "PIN_M16",
+      "KEY4": "PIN_M15",
+      "LED0": "PIN_G15"
+    },
+    "qsf_seed": 1
+  },
+  "per_build_variable_ranges": [
+    [
+      "0x29",
+      "0x35"
+    ],
+    [
+      "0x49",
+      "0x4B"
+    ]
+  ],
+  "results": [
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "5d1c8e4e4e9f0a94bea41691f220f722",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 64,
+      "n_cells_in_diff": 72,
+      "regions": {
+        "header": 0,
+        "lab_cram": 63,
+        "block_band": 9
+      }
+    },
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "mask": "0xDEAD",
+      "rbf_md5": "2bd765a8a5cbf842e400dcd402c63100",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 66,
+      "n_cells_in_diff": 75,
+      "regions": {
+        "header": 0,
+        "lab_cram": 66,
+        "block_band": 9
+      }
+    },
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "mask": "0xFFFF",
+      "rbf_md5": "ceeb851d28c53cd0922f1527e57956e4",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 17,
+      "n_cells_in_diff": 1,
+      "regions": {
+        "header": 0,
+        "lab_cram": 0,
+        "block_band": 1
+      }
+    },
+    {
+      "x": 10,
+      "y": 8,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 10,
+      "y": 8,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "e613de30364675dc6eaa90d01359e9a8",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 48,
+      "n_cells_in_diff": 56,
+      "regions": {
+        "header": 0,
+        "lab_cram": 48,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "36c3359e3810cb5a34411e64f326e710",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 50,
+      "n_cells_in_diff": 58,
+      "regions": {
+        "header": 0,
+        "lab_cram": 49,
+        "block_band": 9
+      }
+    },
+    {
+      "x": 16,
+      "y": 2,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 16,
+      "y": 2,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "40f8c72d322c89f5ff55ee33d52b1555",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 56,
+      "n_cells_in_diff": 64,
+      "regions": {
+        "header": 0,
+        "lab_cram": 56,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 16,
+      "y": 8,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 16,
+      "y": 8,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "e0383669b3db53ea5abf0b5c65ee1182",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 37,
+      "n_cells_in_diff": 45,
+      "regions": {
+        "header": 0,
+        "lab_cram": 37,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 16,
+      "y": 14,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 16,
+      "y": 14,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "212b3372b6a3fe29d6f010f741770d29",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 40,
+      "n_cells_in_diff": 48,
+      "regions": {
+        "header": 0,
+        "lab_cram": 40,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 16,
+      "y": 21,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 16,
+      "y": 21,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "c6303ad7539a227a0ae4c4b1f3fdc34c",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 48,
+      "n_cells_in_diff": 56,
+      "regions": {
+        "header": 0,
+        "lab_cram": 48,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 22,
+      "y": 2,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 22,
+      "y": 2,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "f2f11589378b98518ed3c574cff5f758",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 49,
+      "n_cells_in_diff": 57,
+      "regions": {
+        "header": 0,
+        "lab_cram": 45,
+        "block_band": 12
+      }
+    },
+    {
+      "x": 22,
+      "y": 8,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 22,
+      "y": 8,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "ff9c8335de1b4ee3b64663a1a2b5a6ed",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 40,
+      "n_cells_in_diff": 48,
+      "regions": {
+        "header": 0,
+        "lab_cram": 40,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 22,
+      "y": 14,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 22,
+      "y": 14,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "59b3c7641ecf5c2babf6128dfe19a50f",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 37,
+      "n_cells_in_diff": 45,
+      "regions": {
+        "header": 0,
+        "lab_cram": 34,
+        "block_band": 11
+      }
+    },
+    {
+      "x": 22,
+      "y": 21,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 22,
+      "y": 21,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "12148e4a256c1724cb67e833c9ffbdee",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 50,
+      "n_cells_in_diff": 59,
+      "regions": {
+        "header": 0,
+        "lab_cram": 50,
+        "block_band": 9
+      }
+    },
+    {
+      "x": 28,
+      "y": 8,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 28,
+      "y": 8,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "a59e096c132d831dd920e0366161dfb3",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 38,
+      "n_cells_in_diff": 46,
+      "regions": {
+        "header": 0,
+        "lab_cram": 34,
+        "block_band": 12
+      }
+    },
+    {
+      "x": 28,
+      "y": 14,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 28,
+      "y": 14,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "5c2c41a912c4ef114d42436a6f421d15",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 35,
+      "n_cells_in_diff": 43,
+      "regions": {
+        "header": 0,
+        "lab_cram": 35,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
+      "mask": "0x0000",
+      "rbf_md5": "b0f08e31ba8fee7238e4041d07025403",
+      "byte_identity_passes_against_codec": null
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
+      "mask": "0x6996",
+      "rbf_md5": "f808ff8561af6b64466215256de5e87d",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 42,
+      "n_cells_in_diff": 50,
+      "regions": {
+        "header": 0,
+        "lab_cram": 42,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
+      "mask": "0xDEAD",
+      "rbf_md5": "b115e12a9a5dce90c9c9fbf1025afead",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 48,
+      "n_cells_in_diff": 53,
+      "regions": {
+        "header": 0,
+        "lab_cram": 45,
+        "block_band": 8
+      }
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
+      "mask": "0xFFFF",
+      "rbf_md5": "ceeb851d28c53cd0922f1527e57956e4",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 17,
+      "n_cells_in_diff": 1,
+      "regions": {
+        "header": 0,
+        "lab_cram": 0,
+        "block_band": 1
+      }
+    }
+  ],
+  "overall": {
+    "total_builds": 32,
+    "n_byte_identity_passes_against_codec": 0,
+    "n_codec_mismatches": 18,
+    "n_baseline_only": 14,
+    "wall_seconds_build": 0.0,
+    "codec_check_interpretation": "byte_identity_passes_against_codec is INFORMATIONAL ONLY for D1. D1's contract is producing Quartus golden RBFs; the consumer side runs the byte-identity gate against THEIR lutcodec.c, not this side's LutCodec.predict_sram. EP4CE6's predict_sram emits only the per-minterm lab_cram cells (16 max) and does NOT include canon-cells (per-position \u03c3\u207b\u00b9 input-axis / bypass / 2-input canonicalization layer). Per Pitfall #16 in CLAUDE.md, canon-cells are silicon-mined only at X4Y4N0 and are expected to fire at other pin-friendly positions for non-trivial masks. If consumer side's lutcodec.c is also a thin predict_sram (4x18x16 \u03c3\u207b\u00b9 entries), it will see similar mismatches and that is the empirical answer to the D2 question (canon-cells are NOT no-op at pin-friendly positions for non-symmetric masks). See sweep_summary.json results[] for per-build region breakdown."
+  }
+}

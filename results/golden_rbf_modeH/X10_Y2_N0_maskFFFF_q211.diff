@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "baseline_rbf": "X10_Y2_N0_mask0000_q211.rbf",
+  "target_rbf": "X10_Y2_N0_maskFFFF_q211.rbf",
+  "cells": [
+    {
+      "addr": "0x5967B",
+      "bit": 2,
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "region_summary": {
+    "header": 0,
+    "lab_cram": 0,
+    "block_band": 1
+  },
+  "n_cells": 1,
+  "excluded": {
+    "preamble_postamble": true,
+    "per_frame_crc_bytes": true,
+    "per_build_variable_ranges": [
+      [
+        41,
+        53
+      ],
+      [
+        73,
+        75
+      ]
+    ]
+  }
+}

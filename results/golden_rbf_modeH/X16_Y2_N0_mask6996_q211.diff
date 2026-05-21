@@ -1,0 +1,411 @@
+{
+  "schema_version": 1,
+  "baseline_rbf": "X16_Y2_N0_mask0000_q211.rbf",
+  "target_rbf": "X16_Y2_N0_mask6996_q211.rbf",
+  "cells": [
+    {
+      "addr": "0x2B017",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B0D1",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B1A3",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B1BA",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B4CA",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B5EA",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B934",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BA05",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BC7C",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BEF0",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BFC2",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C094",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C167",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C239",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C30B",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C3DD",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C4AE",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C580",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C652",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CA2C",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CA3D",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CAFF",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CBE0",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CDC5",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CED6",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CEDA",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF1F",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF5B",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF60",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF68",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF6A",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF71",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CFAD",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D0FE",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D14C",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D195",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D1D6",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D1DE",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D1E0",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D1E6",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x305CF",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x30820",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x308AA",
+      "bit": 7,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x30BCA",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x30E40",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x32726",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3544F",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x355D3",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x37063",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3709F",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x37237",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x372C4",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x50DAC",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x50DB5",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x51033",
+      "bit": 6,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x51034",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588D7",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588E7",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5897E",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5898D",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58A17",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58BBB",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58C99",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5967B",
+      "bit": 2,
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "region_summary": {
+    "header": 0,
+    "lab_cram": 56,
+    "block_band": 8
+  },
+  "n_cells": 64,
+  "excluded": {
+    "preamble_postamble": true,
+    "per_frame_crc_bytes": true,
+    "per_build_variable_ranges": [
+      [
+        41,
+        53
+      ],
+      [
+        73,
+        75
+      ]
+    ]
+  }
+}
