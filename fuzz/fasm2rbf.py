@@ -103,6 +103,7 @@ from bitstream import (
     canon_2input_label_for_mask, canon_2input_cells,
     canon_2input_unique_cells,
     CANON_2INPUT_ABSOLUTE, CANON_2INPUT_UNIQUE,
+    li_lab_for_offset,
 )
 from route_synth import parse_need, plan_hops, pick_li_envelope, emit_ops
 import route_signatures
@@ -2936,6 +2937,7 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
     # path retains pre-P5c semantics (no filter) for the silicon-
     # validated single-LE wire4 byte-identity case.
     codec_touched = None
+    codec_li_labs = None
     if canon_2input_unique_aware:
         codec_touched = set()
         for off in range(32, min(len(work), len(base_rbf))):
@@ -2946,10 +2948,34 @@ def bitgen(fasm_text, base_rbf, db_path=DB_PATH, patch_crc=True,
                 for bp in range(8):
                     if x_byte & (1 << bp):
                         codec_touched.add((off, bp))
+        # P5d (2026-05-21): per-LAB LI envelope filter.  In addition to the
+        # pointwise codec_touched drop, build a per-LAB LI cell count from
+        # codec_touched: any LAB where the codec has already emitted REAL
+        # LI MUX activity belongs to the codec's routing intent, and
+        # canon_unique's LI-class contribution at that LAB must be
+        # suppressed — otherwise the combined cell count can breach the
+        # 9-cell alternating cap inside validate_safe_for_hardware (the
+        # cross-LAB rejection at LAB(4,4) on 2026-05-15: 6 codec LI cells
+        # + 4 canon_unique LI cells = 10 cells, classifier flipped to
+        # `alternating` mode and refused to flash).  Single-LE wire4
+        # byte-identity is preserved because in that context the codec
+        # emits 0 LI cells at LAB(4,4) (no IOB->X4Y4 sig-cache yet, see
+        # the parallel blocker called out in memory
+        # p5c_canon_unique_safety_blocked_2026_05_15.md), so this filter
+        # does not fire.  Memory: p5d_per_lab_li_filter_2026_05_21.
+        codec_li_labs = set()
+        for off, bp in codec_touched:
+            lab = li_lab_for_offset(off, bp)
+            if lab is not None:
+                codec_li_labs.add(lab)
     for (x, y, n, label) in collected_canon_2input:
         for off, bp in _canon_2input_lookup(x, y, n, label):
             if codec_touched is not None and (off, bp) in codec_touched:
                 continue
+            if codec_li_labs is not None:
+                lab = li_lab_for_offset(off, bp)
+                if lab is not None and lab in codec_li_labs:
+                    continue
             work_buf[off] ^= 1 << bp
     work = bytes(work_buf)
 

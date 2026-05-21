@@ -210,6 +210,46 @@ _LI_FIRST2 = {4, 17, 27}
 _LI_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
 
+# P5d (2026-05-21): reverse map from (off, bp) -> (lx, ly) for every cell
+# that read_local_interconnect() would surface.  Used by the fasm2rbf
+# apply-time filter to drop canon_unique LI-class cells at any LAB where
+# the codec has already emitted real LI MUX activity (codec routing intent
+# wins; canon_unique contribution at that LAB is suppressed to keep the
+# per-LAB envelope inside validate_safe_for_hardware caps).  See memory
+# `p5c_canon_unique_safety_blocked_2026_05_15.md` for the cross-LAB
+# 10-cells-at-LAB(4,4) incident this map is intended to neutralize.
+def _build_li_cell_to_lab():
+    result = {}
+    for lx in LAB_X:
+        if lx not in COLUMN_BASE:
+            continue
+        col_start = COLUMN_BASE[lx] - 136
+        for ly in LAB_Y:
+            cram_row = ly - 2
+            group = cram_row // 3
+            slot = cram_row % 3
+            bp = (6 - group) if slot == 2 else (7 - group)
+            slot_off = _LI_SLOT_OFFSET[slot]
+            for pair in range(9):
+                for base in (70, 71):
+                    off = col_start + base + pair * PAIR_SPACING + slot_off + 3 * group
+                    if off >= 0:
+                        result[(off, bp)] = (lx, ly)
+    return result
+
+
+_LI_CELL_TO_LAB = _build_li_cell_to_lab()
+
+
+def li_lab_for_offset(off, bp):
+    """Return (lx, ly) if (off, bp) is an LI MUX cell, else None.
+
+    Inverse of read_local_interconnect's offset model.  Used by
+    fasm2rbf's P5d per-LAB filter.
+    """
+    return _LI_CELL_TO_LAB.get((off, bp))
+
+
 # === EP4CE6 RBF CRC-16 (reverse-engineered 2026-04-07) =====================
 # Reflected CRC-16-IBM (poly 0x8005 → right-shift 0xA001), init 0xFE54.
 # Each 210-byte frame: 208 data bytes + 2 CRC bytes (LE: low at +208, high +209).
