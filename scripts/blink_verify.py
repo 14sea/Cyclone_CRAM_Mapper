@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 import sys, json
 from pathlib import Path
 ROOT = Path("/home/test/EP4CE6")

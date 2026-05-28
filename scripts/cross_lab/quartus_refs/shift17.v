@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 // 17-stage shift register: forces Quartus into 2+ LABs (LAB max is 16 LEs).
 // led0 = (key2 & key3) shifted through 17 register stages.
 module shift17(

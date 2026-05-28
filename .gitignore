@@ -36,6 +36,9 @@ results/route_cells_full.json
 # Regenerable derived artifacts (rebuild with respective scripts)
 results/route_signatures.json
 results/chipdb_ep4ce6_data.json
+# Generated nextpnr chipdb data blobs (~23-27MB each, regenerate via
+# `python3 fuzz/chipdb_gen.py`). The small .py runner stubs stay tracked.
+results/chipdb_ep4ce6_data*.json.gz
 results/ep4ce6_chipdb.json
 results/nv_route_cells.json
 results/nv_fingerprints/
