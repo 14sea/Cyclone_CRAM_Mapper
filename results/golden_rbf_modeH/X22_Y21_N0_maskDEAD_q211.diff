@@ -1,0 +1,399 @@
+{
+  "schema_version": 1,
+  "baseline_rbf": "X22_Y21_N0_mask0000_q211.rbf",
+  "target_rbf": "X22_Y21_N0_maskDEAD_q211.rbf",
+  "cells": [
+    {
+      "addr": "0x337AB",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x33A2A",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x33B12",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x33CB4",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x33F29",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35701",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x357A0",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x357CE",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35943",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3597A",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3597A",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3597B",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x359C2",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35A0B",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35A4B",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35A4C",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35BF0",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35C39",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35C82",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35F42",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x361BA",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3628C",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3635C",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3642F",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36430",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x365D2",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x366A5",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36776",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36777",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36848",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36849",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3691A",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x369EC",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x369ED",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36B91",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36C62",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36C63",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36D34",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x37518",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x375EB",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3763B",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x377DF",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x38DBD",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3904A",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3904C",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3937D",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x395F2",
+      "bit": 0,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3A9CB",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3AC30",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3AC56",
+      "bit": 1,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3CB3E",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x510E5",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x51288",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5848D",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5855E",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588D7",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588E7",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5897E",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5898D",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x590B2",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x59257",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5967B",
+      "bit": 2,
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "region_summary": {
+    "header": 0,
+    "lab_cram": 53,
+    "block_band": 9
+  },
+  "n_cells": 62,
+  "excluded": {
+    "preamble_postamble": true,
+    "per_frame_crc_bytes": true,
+    "per_build_variable_ranges": [
+      [
+        41,
+        53
+      ],
+      [
+        73,
+        75
+      ]
+    ]
+  }
+}

@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "baseline_rbf": "X16_Y14_N0_mask0000_q211.rbf",
+  "target_rbf": "X16_Y14_N0_maskDEAD_q211.rbf",
+  "cells": [
+    {
+      "addr": "0x2B033",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B0F9",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B1CC",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B1D7",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B222",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B2C3",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B449",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B498",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B539",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B79E",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2B86D",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BBB5",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BC8A",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BD5A",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BE2B",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BE2D",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BEFD",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BFCF",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2BFD0",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C0A1",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C173",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C245",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C317",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C318",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C3E9",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C3EA",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C4BC",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C58E",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2C65F",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CA74",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CA75",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CB48",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CC17",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CDC5",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CEC8",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF68",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2CF69",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D10B",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D13E",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x2D1DF",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x32726",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3544F",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x355D3",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588D8",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588E8",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5897E",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5898C",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58A1B",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58BBF",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58D6A",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5967B",
+      "bit": 2,
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "region_summary": {
+    "header": 0,
+    "lab_cram": 43,
+    "block_band": 8
+  },
+  "n_cells": 51,
+  "excluded": {
+    "preamble_postamble": true,
+    "per_frame_crc_bytes": true,
+    "per_build_variable_ranges": [
+      [
+        41,
+        53
+      ],
+      [
+        73,
+        75
+      ]
+    ]
+  }
+}

@@ -1060,6 +1060,271 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 50,
+          "n_quartus_cells_in_diff": 59,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 43,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x13019",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1304A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13124",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x131BD",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x131EE",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x131F5",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1323C",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132B7",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132D9",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1345C",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x134A5",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x134B1",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1354E",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x137AD",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13882",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13A24",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13BC9",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13E3E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13E3F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13F0F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x143FB",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x144CE",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14672",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14A8B",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14C2F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14EF2",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x15167",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1874E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x19F42",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x19FAA",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1A1A3",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1A23D",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B049",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x305D2",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30756",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30A89",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x337A8",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33960",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37066",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37109",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x371FA",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x372C9",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x588DF",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58997",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58AE9",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BBA",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58C99",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -1173,6 +1438,281 @@
             },
             {
               "addr": "0x13F15",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14677",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14A6A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14B3B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14DDD",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14EF3",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x14F80",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x15123",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1516A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1BFDB",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1C17E",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x305D2",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30756",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3099B",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x337A8",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33960",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35856",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35929",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3AA70",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3AC38",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3CA61",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x510DE",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x51282",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x58481",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58553",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898B",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58997",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58FE1",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59257",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 52,
+          "n_quartus_cells_in_diff": 61,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 44,
+            "block_band": 8,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x1323D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132A3",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132B4",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132CB",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x132DA",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13385",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13467",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x134B4",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13519",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13541",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13551",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13612",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x137B5",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13886",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13957",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13D72",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13D73",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13E45",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x13F15",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x1425D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x144D4",
               "bit": 3,
               "region": "lab_cram"
             },
@@ -1634,6 +2174,331 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 62,
+          "n_quartus_cells_in_diff": 67,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 55,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x2B017",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B0D1",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B1A3",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B1BA",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B4CA",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B5EA",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B934",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BA05",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BC7C",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BEF0",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BFC2",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C167",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C238",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C30A",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C3DD",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C580",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C652",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA2C",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA3D",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CAFF",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CBE0",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CDC5",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CED6",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CEDA",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF1F",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF5B",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF60",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF68",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF6A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF71",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CFAD",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D0FE",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D14C",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D195",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1D6",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1DE",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1E0",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1E6",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x305CF",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30820",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x308AA",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30BCA",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30E40",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x32726",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3544F",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x355D3",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37063",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3709F",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37237",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x372C4",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x50DAC",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x50DB5",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x51033",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x51034",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897E",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58A17",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BBB",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58C99",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -1727,6 +2592,236 @@
             },
             {
               "addr": "0x2BEF7",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C65A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA37",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA63",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB09",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB35",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CEC9",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF6A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D13F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1E0",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x30A81",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35412",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35452",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x356A5",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x356DD",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x588D4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897E",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898C",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58A1B",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BBF",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58D6A",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 43,
+          "n_quartus_cells_in_diff": 48,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 36,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x2B032",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B10C",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B1DD",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B223",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B2C4",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B421",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B499",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B53A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B5F2",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B797",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B93A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BBB1",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BD54",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BE26",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BEF7",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C09B",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C16E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C311",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C3E4",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C4B5",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C4B6",
               "bit": 5,
               "region": "lab_cram"
             },
@@ -2063,6 +3158,231 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 42,
+          "n_quartus_cells_in_diff": 51,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 35,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x2B033",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B0F9",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B1CC",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B1D7",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B222",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B2C3",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B449",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B498",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B539",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B79E",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B86D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BBB5",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BC8A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BD5A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BE2B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BE2D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BEFD",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C0A2",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C3E9",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C65F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA74",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CA75",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB48",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CC17",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CDC5",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CEC8",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF68",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CF69",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D10B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D13E",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D1DF",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x32726",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3544F",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x355D3",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x588D8",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E8",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897E",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898C",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58A1B",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BBF",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58D6A",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -2136,6 +3456,271 @@
             },
             {
               "addr": "0x2BE7A",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C5DC",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C9AF",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C9EE",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB86",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB93",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CB9B",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CC3E",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CDC0",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CE93",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CED8",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CEE1",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2CEE3",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D087",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D14D",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2D158",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x32317",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3249B",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x337AB",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x337C9",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3396C",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33A2A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33CB4",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33F29",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37066",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x371FA",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D3A1",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D3AE",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D532",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D5F6",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897E",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58A42",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BE6",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x590B2",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 50,
+          "n_quartus_cells_in_diff": 59,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 43,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x2AC55",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2AEB6",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B07B",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B492",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B718",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2B71B",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BB33",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BB35",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BCD6",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BDA9",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2BE7A",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C0F0",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x2C439",
               "bit": 0,
               "region": "lab_cram"
             },
@@ -2592,6 +4177,296 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 55,
+          "n_quartus_cells_in_diff": 60,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 44,
+            "block_band": 11,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x353BA",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35412",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3560B",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x356A5",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3574B",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x358EF",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x359FC",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35A01",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35ACE",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35BA5",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35D45",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35E15",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3608C",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3615C",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36648",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x367EC",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x367ED",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x368BF",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36A62",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36B35",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36C06",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36DAB",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37063",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37184",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37257",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x372C4",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37331",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37338",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376B9",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376C3",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376C8",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376CB",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376CF",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3786C",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3786F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3792E",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37939",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37944",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3C691",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3C87B",
+              "bit": 7,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3C8E6",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3CCDE",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3CF54",
+              "bit": 6,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x58074",
+              "bit": 6,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5807D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5830B",
+              "bit": 6,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5830C",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897F",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58A10",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58BB4",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58C98",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -2814,6 +4689,231 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 42,
+          "n_quartus_cells_in_diff": 51,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 35,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x3577A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35864",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3591E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35935",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3596B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35A1C",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35B79",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35BE1",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35C92",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35D4A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36093",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36307",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x363DC",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x364AC",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3657E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3664F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36997",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36C0E",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36DB2",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x371C0",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37291",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3733F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376CF",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3789B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37944",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3CA72",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F4D1",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F5A2",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F62A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F6B0",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F6FC",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F853",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x566CE",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x56873",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x58387",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898C",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58997",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58E3D",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59257",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -2897,6 +4997,216 @@
             },
             {
               "addr": "0x36655",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36DB7",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x371C1",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37294",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37362",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37448",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x375EC",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x376D0",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3789A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37947",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3E71C",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3E8BF",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x52D94",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x52F37",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x58494",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58567",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58635",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x587DA",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D4",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588DF",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E3",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58997",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x590B3",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59257",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 39,
+          "n_quartus_cells_in_diff": 48,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 29,
+            "block_band": 10,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x35856",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35861",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3596A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3597A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35BE0",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35BF0",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35EF4",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35EF6",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3630E",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3630F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36584",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36586",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36655",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3699D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36C14",
               "bit": 3,
               "region": "lab_cram"
             },
@@ -3298,6 +5608,296 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 55,
+          "n_quartus_cells_in_diff": 62,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 47,
+            "block_band": 8,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x337AB",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33A2A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33B12",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33CB4",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x33F29",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35701",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x357A0",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x357CE",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35943",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3597A",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3597A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3597B",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x359C2",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35A0B",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35A4B",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35A4C",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35BF0",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35C39",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35C82",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x35F42",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x361BA",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3628C",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3635C",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3642F",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36430",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x365D2",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x366A4",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36849",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36ABF",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36C62",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x36D34",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x37518",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x375EB",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3763B",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x377DF",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x38DBD",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3904A",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3904C",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3937D",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x395F2",
+              "bit": 0,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3A9CB",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3AC30",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3AC56",
+              "bit": 1,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x3CB3E",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x510E5",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x51288",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x5848D",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5855E",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897E",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x590B2",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59257",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -3510,6 +6110,241 @@
               "region": "lab_cram"
             }
           ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 44,
+          "n_quartus_cells_in_diff": 49,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 33,
+            "block_band": 11,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x4D762",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D772",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D818",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D84C",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D8EA",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D906",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D916",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D91D",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D953",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D963",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D9F4",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DA04",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DA7F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DBC9",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DBD9",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DC6A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DC7A",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DE04",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E14D",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E2F1",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E3C1",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E494",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E637",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E709",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E8AE",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E97F",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4EA51",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4EB24",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4ECC7",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4ED9A",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x54A5D",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x54C01",
+              "bit": 5,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x58464",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x585BE",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58643",
+              "bit": 5,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x587E8",
+              "bit": 5,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58833",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897F",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x58F0F",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59256",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
         }
       }
     },
@@ -3633,6 +6468,226 @@
             },
             {
               "addr": "0x4E63D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4ED9F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F505",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F6A8",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4F84B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x56703",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x568A6",
+              "bit": 2,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x583B2",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588D7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x588E7",
+              "bit": 3,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5897F",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5898D",
+              "bit": 4,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x590B2",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x59256",
+              "bit": 2,
+              "region": "block_band"
+            },
+            {
+              "addr": "0x5967B",
+              "bit": 2,
+              "region": "lab_cram"
+            }
+          ]
+        },
+        "0xDEAD": {
+          "n_canon_cells": 41,
+          "n_quartus_cells_in_diff": 46,
+          "n_predict_sram": 11,
+          "n_filtered_per_build_variable": 0,
+          "n_filtered_crc": 0,
+          "regions": {
+            "header": 0,
+            "lab_cram": 34,
+            "block_band": 7,
+            "postamble": 0
+          },
+          "cells": [
+            {
+              "addr": "0x4D777",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D83E",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D952",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D962",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D9DC",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4D9F3",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DA03",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DB8F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DBC8",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DBD8",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DC51",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DC69",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DC79",
+              "bit": 4,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DEDC",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4DFAF",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E2F6",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E2F7",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E49A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E49B",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E56D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E63D",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E70F",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E8B4",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4E985",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4EB29",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4EB2A",
+              "bit": 3,
+              "region": "lab_cram"
+            },
+            {
+              "addr": "0x4ECCD",
               "bit": 3,
               "region": "lab_cram"
             },

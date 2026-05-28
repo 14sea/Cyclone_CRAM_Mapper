@@ -226,7 +226,11 @@ def main():
         (x, y, 0) for x in STRAT_X for y in STRAT_Y
         if (x, y) not in STRAT_CORNERS
     ])
-    STRAT_MASKS = [0x0000, 0x6996]
+    # 2026-05-28 (CRTM Part-3): extend the asymmetric mask 0xDEAD from the
+    # 2 sentinels to all 12 stratified positions, unlocking per-position
+    # canon-cell coverage for an asymmetric mask across all 14 D1++ sites.
+    # (0xFFFF/0x0000 are trivial constants; 0x6996 is the symmetric XOR4.)
+    STRAT_MASKS = [0x0000, 0x6996, 0xDEAD]
 
     plan: list[tuple[int, int, int, int]] = []
     sentinel_keys = set()
