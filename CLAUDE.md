@@ -139,7 +139,9 @@ All switch types use the same Y-address (slot/group/bp). Key differences:
 | R24 I=0 | **prev** LAB col | fixed byte (no slot/group adj) | 66% accuracy |
 | LOCAL_INTERCONNECT | **self** col | base 70 + pair×210 + SLOT_OFFSET | 70% cross-val, 22 cols |
 
-Sig-cache (`route_cells_full.json`) **short-circuits all formula paths** for production routing. Formulas are fallback only.
+Sig-cache (`route_cells_full.json`, **13,562 entries**) **short-circuits all formula paths** for production routing. Formulas are fallback only.
+
+> ⚠️ **WRITE-path status (verified 2026-05-28 vs `bitstream.py` `DEPRECATED 2026-04-08` comments):** the accuracy figures above are **READ-path only**. **C4 I≠0 (`_C4_FIXED_OFFSETS`, 44/44), R24 (`_R24_FIXED_OFFSETS`, 56/56), and FF ENA/ARST (`_FF_ENA_CELLS`, 168/168) write tables land entirely on frame CRC bytes → overwritten by `patch_rbf_crc` → emit NOTHING (dead code, need re-mining).** R4 = **26/37** I-indices emittable. C4 I=0 + LI are the only broadly-emittable formula classes. This is the gating data gap for any real-routing-graph work — see `routing_model_scoping_2026_05_28`.
 
 ## Route Synthesis (`fuzz/route_synth.py`)
 
@@ -233,7 +235,7 @@ Code: **GPL-3.0-or-later** (all .py/.v/.tcl must have SPDX header). Docs: **CC B
 6. LI `write_local_interconnect()` takes explicit pairs — auto-expansion is physically dangerous
 7. Disk: Phase 3 needs work-dir cleanup (`compile.clean_work_dir()`) or in-memory diff
 8. **Always cross-check codec output against Quartus's own build of the same Verilog before chasing low-level bugs.** If your open-toolchain build of design D doesn't behave as expected, build D in Quartus, flash it, and diff the two RBFs *before* patching the codec.
-9. **Self-loop sig-cache entries are unmineable with the two-LUT pair template.** The 61 self-loop entries in `route_cells_full.json` are bloated noise (90-754 cells vs corpus median 135). Avoid self-loops at synthesis level, or wait for a single-LE differential mining strategy.
+9. **Self-loop sig-cache entries are topologically irrelevant (src==dst).** `route_cells_full.json` now has **2,760 self-loop entries** (not 61). The old "bloated noise, 90-754 cells" claim is **FALSE/STALE** (verified 2026-05-28: max self-loop 156 cells, median 131 — same as cross-entries' median 131, max 159). Self-loops aren't bloated; they're just useless as inter-LAB routes (source==dest). Drop them from any routing graph; avoid at synthesis level.
 10. **DFF has no per-LE CRAM enable cell.** Cyclone IV's flip-flop is intrinsic. `dff_cells_mined.json` is bogus. The FASM `DFF` directive is a parsed no-op.
 11. **Preamble-offset bug in CRC detection**: RBF has a 32-byte preamble before CRAM data. CRC position detection must use `(off - 32) % 210 >= 208`, NOT `off % 210 >= 208`. Header CRC cells (frames 0-24) are mandatory in directive sets — excluding them causes board reset on flash.
 12. **Cross-LAB ROUTE without sig-cache is silicon-hostile** (silicon-validated 2026-05-04). When np2fasm warns `no sig-cache (cross-LAB): ...`, the formula path emits cells at structurally wrong CRAM offsets → corrupts config-controller-validated cells → FPGA reset on flash (NOT just functional incorrectness). `validate_safe_for_hardware` does NOT detect this class. `scripts/led_blink/build_open.py` has a REFUSE-TO-BUILD guard scanning np2fasm warnings; future build_open scripts should follow the same pattern. Mining tool: `scripts/sigcache_remine/mine_x4_cross_lab_route.py` (single-edge sig-cache miner via Plan D' factory pipeline). Memory: `d_i_silicon_failed_2026_05_04.md`.
