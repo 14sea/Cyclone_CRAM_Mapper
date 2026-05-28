@@ -55,7 +55,7 @@ def _first_mined_pin():
 def test_parse_iob_oe_arity_and_default_empty():
     _reset_caches()
     out = f.parse_fasm("")
-    assert len(out) == 23, f"parse_fasm arity {len(out)} != 23"
+    assert len(out) == 25, f"parse_fasm arity {len(out)} != 25"
     assert out[19] == [], (
         f"iob_oes default should be empty list, got {out[19]!r}"
     )

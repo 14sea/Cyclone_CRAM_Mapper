@@ -166,3 +166,23 @@ if [[ -f "$REORDER_TEST" ]]; then
     fi
     echo "[pre-commit] reorder regression OK"
 fi
+
+# LI-MUX composition gate regression — ~2s.  Locks the gold-anchored gate
+# (fuzz/li_mux_conflict_gate.py) that closes the P5d false-green hole: a LAB
+# whose LE input-MUX (LI) cells are co-determined by a LUT + routing
+# directive must pass gold byte-identity at those cells before flash.  Core
+# 8 checks run unconditionally from the committed nv_zero_global.rbf; the
+# real-gold checks self-skip if the (gitignored) Quartus gold is absent.
+# Memo: track_d_xlab_codec_quartus_forensic_2026_05_28.
+LI_MUX_TEST="$REPO_ROOT/fuzz/test_li_mux_conflict_gate.py"
+if [[ -f "$LI_MUX_TEST" ]]; then
+    echo "[pre-commit] running LI-MUX composition gate regression..."
+    if ! python3 "$LI_MUX_TEST" >/tmp/li_mux_gate.log 2>&1; then
+        echo "[pre-commit] LI-MUX gate regression FAILED — commit blocked."
+        echo "            bypass once with: ZETA_SKIP=1 git commit ..."
+        echo "            last log:"
+        tail -20 /tmp/li_mux_gate.log | sed 's/^/              /'
+        exit 1
+    fi
+    echo "[pre-commit] LI-MUX gate regression OK"
+fi

@@ -54,7 +54,7 @@ def test_parse_nv_directive_family():
         "MULT_BLOCK_DEFAULT_PACK\n"
     )
     out = f.parse_fasm(text)
-    assert len(out) == 23, f"parse_fasm arity {len(out)} != 23"
+    assert len(out) == 25, f"parse_fasm arity {len(out)} != 25"
     nv_buckets = out[16]
     assert nv_buckets == [
         "nv_all",
