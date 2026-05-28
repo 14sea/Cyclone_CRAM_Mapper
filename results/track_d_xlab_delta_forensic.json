@@ -1,0 +1,4497 @@
+{
+  "inputs": {
+    "baseline": "results/rbf/nv_zero_global.rbf",
+    "codec": "tmp/sigcache_test/test_4_4_0_to_4_21_0_dataa.rbf",
+    "quartus": "tmp/quartus_xlab/output_files/xlab_X4Y4_to_X4Y21_mask4444.rbf",
+    "codec_md5": "5a23fb65f72ad222db253d77d575fec9",
+    "quartus_md5": "d9d1ce61b40381c9de000561d33ba0e0"
+  },
+  "convention": "absolute set-bit, fabric region (lab_cram+block_band), non-CRC; codec_extra=codec1&quar0, quartus_missing=quar1&codec0",
+  "totals": {
+    "codec_toggle_cells_vs_base": 1594,
+    "quartus_toggle_cells_vs_base": 992,
+    "codec_extra": 207,
+    "codec_extra_base0_directive_set": 189,
+    "codec_extra_base1_baseline_residue": 18,
+    "quartus_missing": 39,
+    "quartus_missing_base0_under_emit": 37,
+    "quartus_missing_base1_codec_cleared": 2
+  },
+  "region_codec_extra": {
+    "lab_cram": 183,
+    "block_band": 24
+  },
+  "region_quartus_missing": {
+    "lab_cram": 34,
+    "block_band": 5
+  },
+  "li_codec_extra": {
+    "(not LI)": 202,
+    "LAB(4,4)": 5
+  },
+  "li_quartus_missing": {
+    "(not LI)": 38,
+    "LAB(4,4)": 1
+  },
+  "col_codec_extra": {
+    "X=3": 60,
+    "(no col)": 44,
+    "X=4": 24,
+    "X=33": 22,
+    "X=32": 9,
+    "X=12": 8,
+    "X=13": 8,
+    "X=24": 6,
+    "X=26": 4,
+    "X=17": 4,
+    "X=10": 4,
+    "X=8": 3,
+    "X=25": 2,
+    "X=9": 2,
+    "X=6": 2,
+    "X=16": 2,
+    "X=28": 2,
+    "X=5": 1
+  },
+  "col_quartus_missing": {
+    "X=4": 22,
+    "X=3": 7,
+    "X=33": 5,
+    "X=9": 2,
+    "X=17": 2,
+    "X=7": 1
+  },
+  "loo_marginal_sizes": {
+    "IOB_PAD_NV": 532,
+    "X4Y4N0.LUT = 0x4444": 886,
+    "X4Y21N0.LUT = 0xaaaa": 66,
+    "X4Y21N0.DFF": 0,
+    "GCLK_PIN PIN_E1": 16,
+    "IOB_CLK_INPUT PIN_E1": 16,
+    "LAB_CLK_SEL X4Y21": 232,
+    "LAB_CLK_SEL_LE X4Y21N0": 268,
+    "ROUTE X4Y4N0 -> X4Y21N0.dataa": 162,
+    "IOB_ROUTE PIN_M16 -> X4Y4N0.datab": 974,
+    "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa": 774,
+    "OUTROUTE_G15 X4Y21N0": 208,
+    "SRC X4Y4": 128
+  },
+  "add1_footprint_sizes": {
+    "IOB_PAD_NV": 532,
+    "X4Y4N0.LUT = 0x4444": 882,
+    "X4Y21N0.LUT = 0xaaaa": 48,
+    "X4Y21N0.DFF": 0,
+    "GCLK_PIN PIN_E1": 16,
+    "IOB_CLK_INPUT PIN_E1": 16,
+    "LAB_CLK_SEL X4Y21": 232,
+    "LAB_CLK_SEL_LE X4Y21N0": 324,
+    "ROUTE X4Y4N0 -> X4Y21N0.dataa": 488,
+    "IOB_ROUTE PIN_M16 -> X4Y4N0.datab": 974,
+    "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa": 774,
+    "OUTROUTE_G15 X4Y21N0": 244,
+    "SRC X4Y4": 440,
+    "[X4Y4N0.LUT 0x4444 TT-only]": 16,
+    "[X4Y4N0.LUT 0x4444 canon-only]": 898
+  },
+  "codec_extra_owner_tally": {
+    "LAB_CLK_SEL X4Y21": 30,
+    "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa": 58,
+    "ROUTE X4Y4N0 -> X4Y21N0.dataa": 17,
+    "[multi] IOB_ROUTE PIN_M16 -> X4Y4N0.datab & X4Y4N0.LUT = 0x4444": 10,
+    "LAB_CLK_SEL_LE X4Y21N0": 22,
+    "OUTROUTE_G15 X4Y21N0": 18,
+    "(unowned/interaction)": 17,
+    "IOB_ROUTE PIN_M16 -> X4Y4N0.datab": 2,
+    "[multi] IOB_ROUTE PIN_E16 -> X4Y4N0.dataa & IOB_ROUTE PIN_M16 -> X4Y4N0.datab": 1,
+    "X4Y21N0.LUT = 0xaaaa": 2,
+    "[multi] IOB_ROUTE PIN_M16 -> X4Y4N0.datab & SRC X4Y4 & X4Y4N0.LUT = 0x4444": 11,
+    "SRC X4Y4": 1
+  },
+  "quartus_missing_owner_tally": {
+    "[base0] IOB_ROUTE PIN_E16 -> X4Y4N0.dataa & IOB_ROUTE PIN_M16 -> X4Y4N0.datab & ROUTE X4Y4N0 -> X4Y21N0.dataa & SRC X4Y4 & X4Y4N0.LUT = 0x4444": 3,
+    "[base0] (NO codec directive \u2014 unmodeled)": 14,
+    "[base0] IOB_ROUTE PIN_E16 -> X4Y4N0.dataa & IOB_ROUTE PIN_M16 -> X4Y4N0.datab": 5,
+    "[base0] IOB_ROUTE PIN_E16 -> X4Y4N0.dataa & ROUTE X4Y4N0 -> X4Y21N0.dataa & SRC X4Y4 & X4Y4N0.LUT = 0x4444": 1,
+    "[base0] LAB_CLK_SEL_LE X4Y21N0": 2,
+    "[base0] ROUTE X4Y4N0 -> X4Y21N0.dataa": 2,
+    "[base0] LAB_CLK_SEL_LE X4Y21N0 & OUTROUTE_G15 X4Y21N0": 10,
+    "[base1] IOB_ROUTE PIN_E16 -> X4Y4N0.dataa": 2
+  },
+  "codec_extra_cells": [
+    {
+      "off": 11745,
+      "bp": 4,
+      "off_hex": "0x2DE1",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 11746,
+      "bp": 4,
+      "off_hex": "0x2DE2",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 12165,
+      "bp": 4,
+      "off_hex": "0x2F85",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 12167,
+      "bp": 4,
+      "off_hex": "0x2F87",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 13191,
+      "bp": 4,
+      "off_hex": "0x3387",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 13401,
+      "bp": 4,
+      "off_hex": "0x3459",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 13588,
+      "bp": 4,
+      "off_hex": "0x3514",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 13613,
+      "bp": 4,
+      "off_hex": "0x352D",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 14218,
+      "bp": 4,
+      "off_hex": "0x378A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 15292,
+      "bp": 4,
+      "off_hex": "0x3BBC",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 15923,
+      "bp": 4,
+      "off_hex": "0x3E33",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 17392,
+      "bp": 4,
+      "off_hex": "0x43F0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 17998,
+      "bp": 4,
+      "off_hex": "0x464E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 18001,
+      "bp": 4,
+      "off_hex": "0x4651",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 18218,
+      "bp": 2,
+      "off_hex": "0x472A",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 18416,
+      "bp": 4,
+      "off_hex": "0x47F0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 18626,
+      "bp": 4,
+      "off_hex": "0x48C2",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 18869,
+      "bp": 2,
+      "off_hex": "0x49B5",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 18893,
+      "bp": 4,
+      "off_hex": "0x49CD",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 19662,
+      "bp": 5,
+      "off_hex": "0x4CCE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 19678,
+      "bp": 4,
+      "off_hex": "0x4CDE",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 19726,
+      "bp": 2,
+      "off_hex": "0x4D0E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 20078,
+      "bp": 6,
+      "off_hex": "0x4E6E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 20082,
+      "bp": 5,
+      "off_hex": "0x4E72",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 20099,
+      "bp": 4,
+      "off_hex": "0x4E83",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 20223,
+      "bp": 0,
+      "off_hex": "0x4EFF",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 20356,
+      "bp": 2,
+      "off_hex": "0x4F84",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 26586,
+      "bp": 6,
+      "off_hex": "0x67DA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 26796,
+      "bp": 6,
+      "off_hex": "0x68AC",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 27072,
+      "bp": 4,
+      "off_hex": "0x69C0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 27703,
+      "bp": 4,
+      "off_hex": "0x6C37",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 27891,
+      "bp": 4,
+      "off_hex": "0x6CF3",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 28101,
+      "bp": 4,
+      "off_hex": "0x6DC5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 28523,
+      "bp": 4,
+      "off_hex": "0x6F6B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 28747,
+      "bp": 4,
+      "off_hex": "0x704B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 29992,
+      "bp": 4,
+      "off_hex": "0x7528",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 30007,
+      "bp": 4,
+      "off_hex": "0x7537",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30216,
+      "bp": 4,
+      "off_hex": "0x7608",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30426,
+      "bp": 4,
+      "off_hex": "0x76DA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 0,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30427,
+      "bp": 4,
+      "off_hex": "0x76DB",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 0,
+      "rel_in_pair": 131,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30623,
+      "bp": 4,
+      "off_hex": "0x779F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 1,
+      "rel_in_pair": 117,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 30636,
+      "bp": 4,
+      "off_hex": "0x77AC",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 1,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30637,
+      "bp": 4,
+      "off_hex": "0x77AD",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 1,
+      "rel_in_pair": 131,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30846,
+      "bp": 4,
+      "off_hex": "0x787E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 2,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 30847,
+      "bp": 4,
+      "off_hex": "0x787F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 2,
+      "rel_in_pair": 131,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 31056,
+      "bp": 4,
+      "off_hex": "0x7950",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 3,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 31057,
+      "bp": 4,
+      "off_hex": "0x7951",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 3,
+      "rel_in_pair": 131,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 32739,
+      "bp": 4,
+      "off_hex": "0x7FE3",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 11,
+      "rel_in_pair": 133,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 33046,
+      "bp": 0,
+      "off_hex": "0x8116",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 13,
+      "rel_in_pair": 20,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 33098,
+      "bp": 6,
+      "off_hex": "0x814A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 13,
+      "rel_in_pair": 72,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 33466,
+      "bp": 0,
+      "off_hex": "0x82BA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 15,
+      "rel_in_pair": 20,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 33518,
+      "bp": 6,
+      "off_hex": "0x82EE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 15,
+      "rel_in_pair": 72,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 33532,
+      "bp": 4,
+      "off_hex": "0x82FC",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 15,
+      "rel_in_pair": 86,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 33673,
+      "bp": 0,
+      "off_hex": "0x8389",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 16,
+      "rel_in_pair": 17,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 33784,
+      "bp": 2,
+      "off_hex": "0x83F8",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 16,
+      "rel_in_pair": 128,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 33863,
+      "bp": 0,
+      "off_hex": "0x8447",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 16,
+      "rel_in_pair": 207,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 34072,
+      "bp": 0,
+      "off_hex": "0x8518",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 17,
+      "rel_in_pair": 206,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 34092,
+      "bp": 0,
+      "off_hex": "0x852C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 18,
+      "rel_in_pair": 16,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 34112,
+      "bp": 6,
+      "off_hex": "0x8540",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 18,
+      "rel_in_pair": 36,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 34204,
+      "bp": 2,
+      "off_hex": "0x859C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 18,
+      "rel_in_pair": 128,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 34296,
+      "bp": 6,
+      "off_hex": "0x85F8",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 10,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 34300,
+      "bp": 1,
+      "off_hex": "0x85FC",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 14,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 34305,
+      "bp": 0,
+      "off_hex": "0x8601",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 34336,
+      "bp": 6,
+      "off_hex": "0x8620",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 50,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 34347,
+      "bp": 6,
+      "off_hex": "0x862B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 61,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 34378,
+      "bp": 1,
+      "off_hex": "0x864A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 92,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 34418,
+      "bp": 4,
+      "off_hex": "0x8672",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 132,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 34434,
+      "bp": 6,
+      "off_hex": "0x8682",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 148,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 34438,
+      "bp": 2,
+      "off_hex": "0x8686",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 19,
+      "rel_in_pair": 152,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 34515,
+      "bp": 0,
+      "off_hex": "0x86D3",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 20,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 34557,
+      "bp": 6,
+      "off_hex": "0x86FD",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 20,
+      "rel_in_pair": 61,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 34715,
+      "bp": 0,
+      "off_hex": "0x879B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 21,
+      "rel_in_pair": 9,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 34717,
+      "bp": 6,
+      "off_hex": "0x879D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 21,
+      "rel_in_pair": 11,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 34757,
+      "bp": 6,
+      "off_hex": "0x87C5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 21,
+      "rel_in_pair": 51,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 34838,
+      "bp": 4,
+      "off_hex": "0x8816",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 21,
+      "rel_in_pair": 132,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 34930,
+      "bp": 1,
+      "off_hex": "0x8872",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 22,
+      "rel_in_pair": 14,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 35008,
+      "bp": 1,
+      "off_hex": "0x88C0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 22,
+      "rel_in_pair": 92,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 35064,
+      "bp": 6,
+      "off_hex": "0x88F8",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 22,
+      "rel_in_pair": 148,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 35069,
+      "bp": 2,
+      "off_hex": "0x88FD",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 22,
+      "rel_in_pair": 153,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 35147,
+      "bp": 0,
+      "off_hex": "0x894B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 23,
+      "rel_in_pair": 21,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 35407,
+      "bp": 6,
+      "off_hex": "0x8A4F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 24,
+      "rel_in_pair": 71,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 35774,
+      "bp": 0,
+      "off_hex": "0x8BBE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 26,
+      "rel_in_pair": 18,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 35828,
+      "bp": 6,
+      "off_hex": "0x8BF4",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 26,
+      "rel_in_pair": 72,
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ]
+    },
+    {
+      "off": 35829,
+      "bp": 6,
+      "off_hex": "0x8BF5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 26,
+      "rel_in_pair": 73,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 35985,
+      "bp": 0,
+      "off_hex": "0x8C91",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 27,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 35986,
+      "bp": 0,
+      "off_hex": "0x8C92",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 27,
+      "rel_in_pair": 20,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 36195,
+      "bp": 0,
+      "off_hex": "0x8D63",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 28,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 36196,
+      "bp": 0,
+      "off_hex": "0x8D64",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 28,
+      "rel_in_pair": 20,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 36615,
+      "bp": 0,
+      "off_hex": "0x8F07",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 30,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 36669,
+      "bp": 6,
+      "off_hex": "0x8F3D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 30,
+      "rel_in_pair": 73,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 36826,
+      "bp": 0,
+      "off_hex": "0x8FDA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 31,
+      "rel_in_pair": 20,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 36876,
+      "bp": 6,
+      "off_hex": "0x900C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 31,
+      "rel_in_pair": 70,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 36879,
+      "bp": 6,
+      "off_hex": "0x900F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 31,
+      "rel_in_pair": 73,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 37087,
+      "bp": 6,
+      "off_hex": "0x90DF",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 32,
+      "rel_in_pair": 71,
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 37247,
+      "bp": 0,
+      "off_hex": "0x917F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 33,
+      "rel_in_pair": 21,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 37296,
+      "bp": 6,
+      "off_hex": "0x91B0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 33,
+      "rel_in_pair": 70,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 37415,
+      "bp": 0,
+      "off_hex": "0x9227",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 33,
+      "rel_in_pair": 189,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 37489,
+      "bp": 6,
+      "off_hex": "0x9271",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 34,
+      "rel_in_pair": 53,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 37926,
+      "bp": 6,
+      "off_hex": "0x9426",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 1,
+      "rel_in_pair": 70,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 38084,
+      "bp": 0,
+      "off_hex": "0x94C4",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 2,
+      "rel_in_pair": 18,
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ],
+      "add1_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 38085,
+      "bp": 0,
+      "off_hex": "0x94C5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 2,
+      "rel_in_pair": 19,
+      "loo_owners": [],
+      "add1_owners": [
+        "X4Y21N0.LUT = 0xaaaa",
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 38137,
+      "bp": 6,
+      "off_hex": "0x94F9",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 2,
+      "rel_in_pair": 71,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 38294,
+      "bp": 0,
+      "off_hex": "0x9596",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 3,
+      "rel_in_pair": 18,
+      "loo_owners": [],
+      "add1_owners": [
+        "X4Y21N0.LUT = 0xaaaa",
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 38295,
+      "bp": 0,
+      "off_hex": "0x9597",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 3,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ],
+      "add1_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 38346,
+      "bp": 6,
+      "off_hex": "0x95CA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 3,
+      "rel_in_pair": 70,
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ]
+    },
+    {
+      "off": 38556,
+      "bp": 6,
+      "off_hex": "0x969C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 4,
+      "rel_in_pair": 70,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 38557,
+      "bp": 6,
+      "off_hex": "0x969D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 4,
+      "rel_in_pair": 71,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 39304,
+      "bp": 0,
+      "off_hex": "0x9988",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 7,
+      "rel_in_pair": 188,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 39344,
+      "bp": 0,
+      "off_hex": "0x99B0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 8,
+      "rel_in_pair": 18,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 39345,
+      "bp": 0,
+      "off_hex": "0x99B1",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 8,
+      "rel_in_pair": 19,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 39515,
+      "bp": 0,
+      "off_hex": "0x9A5B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 8,
+      "rel_in_pair": 189,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 39589,
+      "bp": 6,
+      "off_hex": "0x9AA5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 9,
+      "rel_in_pair": 53,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 40029,
+      "bp": 6,
+      "off_hex": "0x9C5D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 11,
+      "rel_in_pair": 73,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 40258,
+      "bp": 4,
+      "off_hex": "0x9D42",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 12,
+      "rel_in_pair": 92,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 40302,
+      "bp": 2,
+      "off_hex": "0x9D6E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 12,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 40443,
+      "bp": 6,
+      "off_hex": "0x9DFB",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 13,
+      "rel_in_pair": 67,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 40558,
+      "bp": 1,
+      "off_hex": "0x9E6E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 13,
+      "rel_in_pair": 182,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 40704,
+      "bp": 2,
+      "off_hex": "0x9F00",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 14,
+      "rel_in_pair": 118,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 40767,
+      "bp": 1,
+      "off_hex": "0x9F3F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 14,
+      "rel_in_pair": 181,
+      "loo_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ]
+    },
+    {
+      "off": 40786,
+      "bp": 0,
+      "off_hex": "0x9F52",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 14,
+      "rel_in_pair": 200,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 40862,
+      "bp": 6,
+      "off_hex": "0x9F9E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 15,
+      "rel_in_pair": 66,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 40913,
+      "bp": 4,
+      "off_hex": "0x9FD1",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 15,
+      "rel_in_pair": 117,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 47929,
+      "bp": 0,
+      "off_hex": "0xBB39",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 5,
+      "pair": 13,
+      "rel_in_pair": 203,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 55148,
+      "bp": 6,
+      "off_hex": "0xD76C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 6,
+      "pair": 13,
+      "rel_in_pair": 72,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 55569,
+      "bp": 6,
+      "off_hex": "0xD911",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 6,
+      "pair": 15,
+      "rel_in_pair": 73,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 69757,
+      "bp": 0,
+      "off_hex": "0x1107D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 8,
+      "pair": 12,
+      "rel_in_pair": 191,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 70177,
+      "bp": 0,
+      "off_hex": "0x11221",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 8,
+      "pair": 14,
+      "rel_in_pair": 191,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 74166,
+      "bp": 0,
+      "off_hex": "0x121B6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 8,
+      "pair": 33,
+      "rel_in_pair": 190,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 76056,
+      "bp": 0,
+      "off_hex": "0x12918",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 9,
+      "pair": 7,
+      "rel_in_pair": 190,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 78051,
+      "bp": 6,
+      "off_hex": "0x130E3",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 9,
+      "pair": 17,
+      "rel_in_pair": 85,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 84275,
+      "bp": 3,
+      "off_hex": "0x14933",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 10,
+      "pair": 12,
+      "rel_in_pair": 9,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 84868,
+      "bp": 4,
+      "off_hex": "0x14B84",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 10,
+      "pair": 14,
+      "rel_in_pair": 182,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 84965,
+      "bp": 6,
+      "off_hex": "0x14BE5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 10,
+      "pair": 15,
+      "rel_in_pair": 69,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 85191,
+      "bp": 6,
+      "off_hex": "0x14CC7",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 10,
+      "pair": 16,
+      "rel_in_pair": 85,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 100117,
+      "bp": 2,
+      "off_hex": "0x18715",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 17,
+      "rel_in_pair": 101,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100326,
+      "bp": 2,
+      "off_hex": "0x187E6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 18,
+      "rel_in_pair": 100,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100462,
+      "bp": 3,
+      "off_hex": "0x1886E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 19,
+      "rel_in_pair": 26,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100523,
+      "bp": 6,
+      "off_hex": "0x188AB",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 19,
+      "rel_in_pair": 87,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100596,
+      "bp": 5,
+      "off_hex": "0x188F4",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 19,
+      "rel_in_pair": 160,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100672,
+      "bp": 3,
+      "off_hex": "0x18940",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 20,
+      "rel_in_pair": 26,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100806,
+      "bp": 5,
+      "off_hex": "0x189C6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 20,
+      "rel_in_pair": 160,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 100942,
+      "bp": 6,
+      "off_hex": "0x18A4E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 12,
+      "pair": 21,
+      "rel_in_pair": 86,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 106337,
+      "bp": 3,
+      "off_hex": "0x19F61",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 12,
+      "rel_in_pair": 21,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 106393,
+      "bp": 6,
+      "off_hex": "0x19F99",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 12,
+      "rel_in_pair": 77,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 106438,
+      "bp": 4,
+      "off_hex": "0x19FC6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 12,
+      "rel_in_pair": 122,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 106463,
+      "bp": 2,
+      "off_hex": "0x19FDF",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 12,
+      "rel_in_pair": 147,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 106848,
+      "bp": 4,
+      "off_hex": "0x1A160",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 14,
+      "rel_in_pair": 112,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 106859,
+      "bp": 2,
+      "off_hex": "0x1A16B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 14,
+      "rel_in_pair": 123,
+      "loo_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL X4Y21"
+      ]
+    },
+    {
+      "off": 106996,
+      "bp": 3,
+      "off_hex": "0x1A1F4",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 15,
+      "rel_in_pair": 50,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 107052,
+      "bp": 6,
+      "off_hex": "0x1A22C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 13,
+      "pair": 15,
+      "rel_in_pair": 106,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 183478,
+      "bp": 2,
+      "off_hex": "0x2CCB6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 16,
+      "pair": 16,
+      "rel_in_pair": 92,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 183899,
+      "bp": 2,
+      "off_hex": "0x2CE5B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 16,
+      "pair": 18,
+      "rel_in_pair": 93,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 190959,
+      "bp": 6,
+      "off_hex": "0x2E9EF",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 17,
+      "rel_in_pair": 13,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 190960,
+      "bp": 6,
+      "off_hex": "0x2E9F0",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 17,
+      "rel_in_pair": 14,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 191251,
+      "bp": 2,
+      "off_hex": "0x2EB13",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 18,
+      "rel_in_pair": 95,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 191252,
+      "bp": 2,
+      "off_hex": "0x2EB14",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 18,
+      "rel_in_pair": 96,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 211623,
+      "bp": 2,
+      "off_hex": "0x33AA7",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 240075,
+      "bp": 3,
+      "off_hex": "0x3A9CB",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 11,
+      "rel_in_pair": 199,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 240175,
+      "bp": 1,
+      "off_hex": "0x3AA2F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 12,
+      "rel_in_pair": 89,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 240688,
+      "bp": 4,
+      "off_hex": "0x3AC30",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 14,
+      "rel_in_pair": 182,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 240842,
+      "bp": 1,
+      "off_hex": "0x3ACCA",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 15,
+      "rel_in_pair": 126,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 241031,
+      "bp": 2,
+      "off_hex": "0x3AD87",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 16,
+      "rel_in_pair": 105,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 241450,
+      "bp": 2,
+      "off_hex": "0x3AF2A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 24,
+      "pair": 18,
+      "rel_in_pair": 104,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 247550,
+      "bp": 2,
+      "off_hex": "0x3C6FE",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 25,
+      "pair": 12,
+      "rel_in_pair": 114,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 248189,
+      "bp": 2,
+      "off_hex": "0x3C97D",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 25,
+      "pair": 15,
+      "rel_in_pair": 123,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 254855,
+      "bp": 6,
+      "off_hex": "0x3E387",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 26,
+      "pair": 12,
+      "rel_in_pair": 69,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 254939,
+      "bp": 4,
+      "off_hex": "0x3E3DB",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 26,
+      "pair": 12,
+      "rel_in_pair": 153,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 255247,
+      "bp": 6,
+      "off_hex": "0x3E50F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 26,
+      "pair": 14,
+      "rel_in_pair": 41,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 255598,
+      "bp": 4,
+      "off_hex": "0x3E66E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 26,
+      "pair": 15,
+      "rel_in_pair": 182,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 316321,
+      "bp": 3,
+      "off_hex": "0x4D3A1",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 316334,
+      "bp": 1,
+      "off_hex": "0x4D3AE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 316722,
+      "bp": 1,
+      "off_hex": "0x4D532",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 316918,
+      "bp": 4,
+      "off_hex": "0x4D5F6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "add1_owners": [
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 324619,
+      "bp": 2,
+      "off_hex": "0x4F40B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 28,
+      "pair": 16,
+      "rel_in_pair": 113,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 325038,
+      "bp": 2,
+      "off_hex": "0x4F5AE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 28,
+      "pair": 18,
+      "rel_in_pair": 112,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 354217,
+      "bp": 2,
+      "off_hex": "0x567A9",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 17,
+      "rel_in_pair": 101,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 354246,
+      "bp": 2,
+      "off_hex": "0x567C6",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 17,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 354426,
+      "bp": 2,
+      "off_hex": "0x5687A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 18,
+      "rel_in_pair": 100,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 354444,
+      "bp": 2,
+      "off_hex": "0x5688C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 18,
+      "rel_in_pair": 118,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 354456,
+      "bp": 2,
+      "off_hex": "0x56898",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 18,
+      "rel_in_pair": 130,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 354562,
+      "bp": 3,
+      "off_hex": "0x56902",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 19,
+      "rel_in_pair": 26,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 355191,
+      "bp": 3,
+      "off_hex": "0x56B77",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 22,
+      "rel_in_pair": 25,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 357193,
+      "bp": 2,
+      "off_hex": "0x57349",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 31,
+      "rel_in_pair": 137,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 357822,
+      "bp": 2,
+      "off_hex": "0x575BE",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 32,
+      "pair": 34,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358032,
+      "bp": 2,
+      "off_hex": "0x57690",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 0,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358033,
+      "bp": 2,
+      "off_hex": "0x57691",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 0,
+      "rel_in_pair": 137,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358242,
+      "bp": 2,
+      "off_hex": "0x57762",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 1,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358243,
+      "bp": 2,
+      "off_hex": "0x57763",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 1,
+      "rel_in_pair": 137,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358452,
+      "bp": 2,
+      "off_hex": "0x57834",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 2,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358453,
+      "bp": 2,
+      "off_hex": "0x57835",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 2,
+      "rel_in_pair": 137,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358662,
+      "bp": 2,
+      "off_hex": "0x57906",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 3,
+      "rel_in_pair": 136,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 358663,
+      "bp": 2,
+      "off_hex": "0x57907",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 3,
+      "rel_in_pair": 137,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 360345,
+      "bp": 2,
+      "off_hex": "0x57F99",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 11,
+      "rel_in_pair": 139,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 361394,
+      "bp": 2,
+      "off_hex": "0x583B2",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 16,
+      "rel_in_pair": 138,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 361815,
+      "bp": 2,
+      "off_hex": "0x58557",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 18,
+      "rel_in_pair": 139,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 362725,
+      "bp": 3,
+      "off_hex": "0x588E5",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 22,
+      "rel_in_pair": 209,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 362728,
+      "bp": 3,
+      "off_hex": "0x588E8",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 23,
+      "rel_in_pair": 2,
+      "loo_owners": [],
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 362879,
+      "bp": 4,
+      "off_hex": "0x5897F",
+      "region": "block_band",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 23,
+      "rel_in_pair": 153,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 363039,
+      "bp": 2,
+      "off_hex": "0x58A1F",
+      "region": "block_band",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 24,
+      "rel_in_pair": 103,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 363234,
+      "bp": 2,
+      "off_hex": "0x58AE2",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 25,
+      "rel_in_pair": 88,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 363236,
+      "bp": 2,
+      "off_hex": "0x58AE4",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 25,
+      "rel_in_pair": 90,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 363445,
+      "bp": 2,
+      "off_hex": "0x58BB5",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 26,
+      "rel_in_pair": 89,
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ]
+    },
+    {
+      "off": 363447,
+      "bp": 2,
+      "off_hex": "0x58BB7",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 26,
+      "rel_in_pair": 91,
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "SRC X4Y4"
+      ]
+    },
+    {
+      "off": 363459,
+      "bp": 2,
+      "off_hex": "0x58BC3",
+      "region": "block_band",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 26,
+      "rel_in_pair": 103,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 363883,
+      "bp": 2,
+      "off_hex": "0x58D6B",
+      "region": "block_band",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 28,
+      "rel_in_pair": 107,
+      "loo_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_PAD_NV",
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 364722,
+      "bp": 2,
+      "off_hex": "0x590B2",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 32,
+      "rel_in_pair": 106,
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 366203,
+      "bp": 2,
+      "off_hex": "0x5967B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": null,
+      "pair": null,
+      "rel_in_pair": null,
+      "loo_owners": [
+        "SRC X4Y4"
+      ],
+      "add1_owners": [
+        "SRC X4Y4"
+      ]
+    }
+  ],
+  "quartus_missing_cells": [
+    {
+      "off": 33705,
+      "bp": 6,
+      "off_hex": "0x83A9",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 16,
+      "rel_in_pair": 49,
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa",
+        "SRC X4Y4"
+      ],
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 34125,
+      "bp": 6,
+      "off_hex": "0x854D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 18,
+      "rel_in_pair": 49,
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa",
+        "SRC X4Y4"
+      ],
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 35199,
+      "bp": 6,
+      "off_hex": "0x897F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 23,
+      "rel_in_pair": 73,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 35617,
+      "bp": 6,
+      "off_hex": "0x8B21",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 25,
+      "rel_in_pair": 71,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 35618,
+      "bp": 6,
+      "off_hex": "0x8B22",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 25,
+      "rel_in_pair": 72,
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 36877,
+      "bp": 6,
+      "off_hex": "0x900D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 31,
+      "rel_in_pair": 71,
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa",
+        "SRC X4Y4"
+      ],
+      "loo_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 37246,
+      "bp": 0,
+      "off_hex": "0x917E",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 3,
+      "pair": 33,
+      "rel_in_pair": 20,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 37716,
+      "bp": 6,
+      "off_hex": "0x9354",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": [
+        4,
+        4
+      ],
+      "col_lab_x": 4,
+      "pair": 0,
+      "rel_in_pair": 70,
+      "add1_owners": [
+        "X4Y4N0.LUT = 0x4444",
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa",
+        "SRC X4Y4"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 38504,
+      "bp": 0,
+      "off_hex": "0x9668",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 4,
+      "rel_in_pair": 18,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 38505,
+      "bp": 0,
+      "off_hex": "0x9669",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 4,
+      "rel_in_pair": 19,
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 38714,
+      "bp": 0,
+      "off_hex": "0x973A",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 5,
+      "rel_in_pair": 18,
+      "add1_owners": [
+        "ROUTE X4Y4N0 -> X4Y21N0.dataa"
+      ],
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 38715,
+      "bp": 0,
+      "off_hex": "0x973B",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 5,
+      "rel_in_pair": 19,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0"
+      ],
+      "loo_owners": [
+        "X4Y21N0.LUT = 0xaaaa"
+      ]
+    },
+    {
+      "off": 39327,
+      "bp": 0,
+      "off_hex": "0x999F",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 8,
+      "rel_in_pair": 1,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 40383,
+      "bp": 6,
+      "off_hex": "0x9DBF",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 13,
+      "rel_in_pair": 7,
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 40430,
+      "bp": 6,
+      "off_hex": "0x9DEE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 13,
+      "rel_in_pair": 54,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 40641,
+      "bp": 6,
+      "off_hex": "0x9EC1",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 14,
+      "rel_in_pair": 55,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 40803,
+      "bp": 6,
+      "off_hex": "0x9F63",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 15,
+      "rel_in_pair": 7,
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 41025,
+      "bp": 0,
+      "off_hex": "0xA041",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 16,
+      "rel_in_pair": 19,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 41445,
+      "bp": 0,
+      "off_hex": "0xA1E5",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 18,
+      "rel_in_pair": 19,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 41635,
+      "bp": 1,
+      "off_hex": "0xA2A3",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 18,
+      "rel_in_pair": 209,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 41639,
+      "bp": 0,
+      "off_hex": "0xA2A7",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 19,
+      "rel_in_pair": 3,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 41693,
+      "bp": 5,
+      "off_hex": "0xA2DD",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 19,
+      "rel_in_pair": 57,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 41766,
+      "bp": 4,
+      "off_hex": "0xA326",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 19,
+      "rel_in_pair": 130,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 41784,
+      "bp": 6,
+      "off_hex": "0xA338",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 19,
+      "rel_in_pair": 148,
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 41846,
+      "bp": 1,
+      "off_hex": "0xA376",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 20,
+      "rel_in_pair": 0,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 41977,
+      "bp": 4,
+      "off_hex": "0xA3F9",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 20,
+      "rel_in_pair": 131,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 42269,
+      "bp": 0,
+      "off_hex": "0xA51D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 22,
+      "rel_in_pair": 3,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 42324,
+      "bp": 5,
+      "off_hex": "0xA554",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 22,
+      "rel_in_pair": 58,
+      "add1_owners": [],
+      "loo_owners": []
+    },
+    {
+      "off": 42414,
+      "bp": 6,
+      "off_hex": "0xA5AE",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 4,
+      "pair": 22,
+      "rel_in_pair": 148,
+      "add1_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_M16 -> X4Y4N0.datab",
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 63276,
+      "bp": 0,
+      "off_hex": "0xF72C",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 7,
+      "pair": 17,
+      "rel_in_pair": 10,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 76937,
+      "bp": 0,
+      "off_hex": "0x12C89",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 9,
+      "pair": 12,
+      "rel_in_pair": 21,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 77325,
+      "bp": 0,
+      "off_hex": "0x12E0D",
+      "region": "lab_cram",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 9,
+      "pair": 13,
+      "rel_in_pair": 199,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 190953,
+      "bp": 6,
+      "off_hex": "0x2E9E9",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 17,
+      "rel_in_pair": 7,
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 191245,
+      "bp": 2,
+      "off_hex": "0x2EB0D",
+      "region": "lab_cram",
+      "base_bit": 1,
+      "li_lab": null,
+      "col_lab_x": 17,
+      "pair": 18,
+      "rel_in_pair": 89,
+      "add1_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ],
+      "loo_owners": [
+        "IOB_ROUTE PIN_E16 -> X4Y4N0.dataa"
+      ]
+    },
+    {
+      "off": 361865,
+      "bp": 0,
+      "off_hex": "0x58589",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 18,
+      "rel_in_pair": 189,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 362002,
+      "bp": 2,
+      "off_hex": "0x58612",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 19,
+      "rel_in_pair": 116,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 362423,
+      "bp": 2,
+      "off_hex": "0x587B7",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 21,
+      "rel_in_pair": 117,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 362495,
+      "bp": 0,
+      "off_hex": "0x587FF",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 21,
+      "rel_in_pair": 189,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    },
+    {
+      "off": 363882,
+      "bp": 2,
+      "off_hex": "0x58D6A",
+      "region": "block_band",
+      "base_bit": 0,
+      "li_lab": null,
+      "col_lab_x": 33,
+      "pair": 28,
+      "rel_in_pair": 106,
+      "add1_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ],
+      "loo_owners": [
+        "LAB_CLK_SEL_LE X4Y21N0",
+        "OUTROUTE_G15 X4Y21N0"
+      ]
+    }
+  ]
+}
