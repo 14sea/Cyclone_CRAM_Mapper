@@ -3,7 +3,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from route_synth import parse_need, plan_hops, Hop
+from route_synth import parse_need, plan_hops, Hop, LAB_X_FULL
 
 
 def fmt(plan):
@@ -46,7 +46,9 @@ def main():
             if h.type == "C4":
                 cur_y = LAB_Y[LAB_Y.index(cur_y) + h.span]
             elif h.type in ("R4", "R24"):
-                cur_x = LAB_X[LAB_X.index(cur_x) + h.span]
+                # planner (_hop_landing_coords/plan_hops) indexes LAB_X_FULL
+                # (incl. jailbreak cols); the verification replay must match.
+                cur_x = LAB_X_FULL[LAB_X_FULL.index(cur_x) + h.span]
         ok = (cur_x == need.dx and cur_y == need.dy) or need.same_lab
         marker = "✓" if ok else "✗"
         print(f"    landed at ({cur_x},{cur_y})  expected ({need.dx},{need.dy})  {marker}")

@@ -96,11 +96,24 @@ def test_load_cells_matches_json():
     data = json.loads(ARITH_JSON.read_text())
     ml = data["multi_lab"]
     for width in (17, 20, 24, 32):
-        cells = f._arith_multi_lab_cells(width)
+        # Loader returns a (set_cells, clear_cells) 2-tuple since commit
+        # b5cbe49 (visible_blink_W23): SET cells apply via XOR, CLEAR cells
+        # via AND-clear (force 0), so the two are kept separate.  Assert
+        # each list length against its JSON count, plus the combined total.
+        set_cells, clear_cells = f._arith_multi_lab_cells(width)
         key = f"16+{width - 16}"
+        assert len(set_cells) == ml[key]["n_set"], (
+            f"width={width}: loader returned {len(set_cells)} SET cells, "
+            f"JSON says n_set={ml[key]['n_set']}"
+        )
+        assert len(clear_cells) == ml[key]["n_clear"], (
+            f"width={width}: loader returned {len(clear_cells)} CLEAR cells, "
+            f"JSON says n_clear={ml[key]['n_clear']}"
+        )
         expected = ml[key]["n_set"] + ml[key]["n_clear"]
-        assert len(cells) == expected, (
-            f"width={width}: loader returned {len(cells)} cells, "
+        assert len(set_cells) + len(clear_cells) == expected, (
+            f"width={width}: loader returned "
+            f"{len(set_cells) + len(clear_cells)} total cells, "
             f"JSON says n_set+n_clear={expected}"
         )
     print("  test_load_cells_matches_json: OK")
@@ -126,22 +139,34 @@ def test_bitgen_single_emit_flips_all_cells():
     out = f.bitgen(
         "LUT_ARITH_MULTI_LAB WIDTH=17\n", base, patch_crc=False
     )
-    cells = f._arith_multi_lab_cells(17)
-    flipped = 0
-    for off, bp in cells:
-        if ((out[off] ^ base[off]) >> bp) & 1:
-            flipped += 1
-    assert flipped == len(cells), (
-        f"expected {len(cells)} bit flips, got {flipped}"
+    # Since commit b5cbe49, SET cells apply via XOR (0->1 on a zero base)
+    # and CLEAR cells via AND-clear (force 0).  On a pure-zero base the
+    # CLEAR cells are already 0, so AND-clear is a no-op and they do NOT
+    # flip.  The flipped count therefore equals len(set_cells).
+    set_cells, clear_cells = f._arith_multi_lab_cells(17)
+    set_flipped = sum(
+        1 for off, bp in set_cells if ((out[off] ^ base[off]) >> bp) & 1
     )
-    # Cells must be unique (disjoint SET ∪ CLEAR)
-    assert len(set(cells)) == len(cells), (
-        "LUT_ARITH_MULTI_LAB SET/CLEAR cells are NOT disjoint; "
-        "XOR-parity apply would silently lose flips"
+    clear_flipped = sum(
+        1 for off, bp in clear_cells if ((out[off] ^ base[off]) >> bp) & 1
+    )
+    assert set_flipped == len(set_cells), (
+        f"expected {len(set_cells)} SET bit flips, got {set_flipped}"
+    )
+    assert clear_flipped == 0, (
+        f"CLEAR cells AND-clear a zero base (no-op); expected 0 flips, "
+        f"got {clear_flipped}"
+    )
+    # SET and CLEAR cells must be disjoint (no cell is both at a single
+    # width); otherwise CLEAR's force-0 would silently override SET.
+    all_cells = set_cells + clear_cells
+    assert len(set(all_cells)) == len(all_cells), (
+        "LUT_ARITH_MULTI_LAB SET/CLEAR cells are NOT disjoint at one "
+        "width; CLEAR force-0 would silently override SET"
     )
     print(
         f"  test_bitgen_single_emit_flips_all_cells: OK "
-        f"({flipped} flipped)"
+        f"({set_flipped} SET flipped)"
     )
 
 
@@ -171,10 +196,18 @@ def test_bitgen_two_widths_compose_as_xor_union():
     base = _zero_base()
     # Reset cache between runs so loads are independent
     f._ARITH_MULTI_LAB_CACHE = None
-    a = set(f._arith_multi_lab_cells(17))
-    b = set(f._arith_multi_lab_cells(20))
-    # Expected toggles = symmetric difference (cells in odd parity)
-    sym_diff = a ^ b
+    # Since commit b5cbe49 the apply path is NOT a pure XOR union: SET
+    # cells XOR-toggle (odd-parity wins) while CLEAR cells force 0 and
+    # OVERRIDE any SET at the same (off, bp).  Model the two phases:
+    #   1. SET symmetric difference (odd XOR parity over SET-only cells)
+    #   2. minus every cell that ANY width force-clears.
+    # This captures the silicon-validated (365143, 2) case where a cell
+    # is SET for W=17 but CLEAR for W=20 — the CLEAR force-0 wins.
+    s17, c17 = f._arith_multi_lab_cells(17)
+    s20, c20 = f._arith_multi_lab_cells(20)
+    set_sym = set(s17) ^ set(s20)
+    clear_all = set(c17) | set(c20)
+    expected = set_sym - clear_all
     out = f.bitgen(
         "LUT_ARITH_MULTI_LAB WIDTH=17\n"
         "LUT_ARITH_MULTI_LAB WIDTH=20\n",
@@ -182,14 +215,14 @@ def test_bitgen_two_widths_compose_as_xor_union():
         patch_crc=False,
     )
     flipped = set()
-    # Scan only cells in a | b — those are the only candidates
-    for off, bp in a | b:
+    # Scan over the full SET ∪ CLEAR candidate set of both widths
+    for off, bp in set(s17) | set(c17) | set(s20) | set(c20):
         if ((out[off] ^ base[off]) >> bp) & 1:
             flipped.add((off, bp))
-    assert flipped == sym_diff, (
-        f"XOR union mismatch: expected {len(sym_diff)} flips, "
+    assert flipped == expected, (
+        f"SET-XOR-minus-CLEAR mismatch: expected {len(expected)} flips, "
         f"got {len(flipped)}; diff="
-        f"{len(flipped ^ sym_diff)} cells"
+        f"{len(flipped ^ expected)} cells"
     )
     print(
         f"  test_bitgen_two_widths_compose_as_xor_union: OK "
@@ -206,7 +239,8 @@ def test_all_cells_in_cram_body():
     body_lo = PRE
     body_hi = rbf_len - POST  # exclusive
     for width in (17, 24, 32):
-        for off, bp in f._arith_multi_lab_cells(width):
+        set_cells, clear_cells = f._arith_multi_lab_cells(width)
+        for off, bp in set_cells + clear_cells:
             assert body_lo <= off < body_hi, (
                 f"width={width}: cell off={off} outside CRAM body "
                 f"[{body_lo}, {body_hi})"

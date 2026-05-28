@@ -59,11 +59,17 @@ def test_baseline_pure_header_parses_and_applies():
     pz = make_pure_zero_rbf()
     out = fasm2rbf.bitgen(fasm_text, pz)
     gold = nv_path.read_bytes()
-    assert out == gold, (
-        f"emitted NV_BASELINE_PACK + PURE_ZERO != nv_zero_global; "
-        f"{sum(1 for i in range(len(out)) if out[i] != gold[i])} byte diffs")
+    # c430c4f stripped 3 hdr-noise bytes (42,43,49) from the pack (W=23
+    # silicon byte-identity); nv_zero_global keeps them, so the pack
+    # intentionally diverges at EXACTLY those 3 bytes. Any other diff = bug.
+    _STRIPPED = {42, 43, 49}
+    diffs = [i for i in range(len(out)) if out[i] != gold[i]]
+    unexpected = [i for i in diffs if i not in _STRIPPED]
+    assert not unexpected, (
+        f"emitted NV_BASELINE_PACK + PURE_ZERO != nv_zero_global at UNEXPECTED "
+        f"bytes {unexpected[:8]} (beyond the 3 c430c4f-stripped {sorted(_STRIPPED)})")
     print("  test_baseline_pure_header_parses_and_applies: OK "
-          f"(emitter output reproduces nv_zero_global byte-for-byte)")
+          f"(reproduces nv_zero_global modulo {len(diffs)} c430c4f-strip bytes {sorted(diffs)})")
 
 
 def test_convert_rejects_bad_baseline():

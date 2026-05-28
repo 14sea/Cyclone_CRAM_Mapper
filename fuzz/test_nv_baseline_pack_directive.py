@@ -143,6 +143,11 @@ def test_bitgen_meta_plus_block_subs_cancel_blocks():
         if i in block_bytes:
             continue
         if out[i] != gold[i]:
+            # c430c4f stripped 3 hdr-noise bytes (42,43,49) from the pack
+            # (W=23 silicon byte-identity); the pack intentionally diverges
+            # from nv_zero_global there.
+            if i in (42, 43, 49):
+                continue
             # Allow CRC ripple from the cancelled bucket touching the
             # adjacent CRC pair — those get recomputed whenever any
             # data byte in the frame changed.
@@ -241,16 +246,20 @@ def test_bitgen_nv_baseline_pack_reproduces_nv_zero_global():
     gold = NV_ZERO.read_bytes()
     out = f.bitgen("NV_BASELINE_PACK\n", pz)
     assert len(out) == len(gold), f"len {len(out)} vs {len(gold)}"
-    # Full-file byte match.  Any diff is a bug.
-    if out != gold:
-        # Localise the diff for diagnostic output
-        diffs = [i for i in range(len(out)) if out[i] != gold[i]]
-        head = diffs[:8]
-        raise AssertionError(
-            f"NV_BASELINE_PACK + PURE_ZERO != nv_zero_global: "
-            f"{len(diffs)} byte diffs, first {head}")
+    # c430c4f (2026-05-03) stripped 3 hdr-noise bytes (42,43,49) from the
+    # pack to restore W=23 silicon byte-identity (905dfc85); nv_zero_global
+    # still carries those pre-strip noise bytes, so the pack INTENTIONALLY
+    # diverges from it at EXACTLY those 3 bytes. Tolerate them; any OTHER
+    # byte diff is still a real bug.
+    _STRIPPED = {42, 43, 49}
+    diffs = [i for i in range(len(out)) if out[i] != gold[i]]
+    unexpected = [i for i in diffs if i not in _STRIPPED]
+    assert not unexpected, (
+        f"NV_BASELINE_PACK + PURE_ZERO != nv_zero_global at UNEXPECTED bytes "
+        f"{unexpected[:8]} (beyond the 3 c430c4f-stripped {sorted(_STRIPPED)})")
     print("  test_bitgen_nv_baseline_pack_reproduces_nv_zero_global: OK "
-          f"({len(gold)} bytes byte-identical)")
+          f"({len(gold)} bytes; {len(diffs)} expected c430c4f-strip diffs "
+          f"at {sorted(diffs)})")
 
 
 def test_bitgen_nv_baseline_pack_double_cancels():

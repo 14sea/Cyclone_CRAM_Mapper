@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "nv_zero_global.rbf ^ pure_zero_rbf (generated)",
-    "total_cells": 21640,
+    "total_cells": 21637,
     "crc_bytes_skipped": true,
     "buckets": {
       "iob_bank_default_pack": 5068,
