@@ -7,6 +7,18 @@ Pass criterion: after XOR-applying ``predict_sram(M) ^ canon_cells[M]`` to the
 mask=0x0000 baseline and recomputing per-frame CRC, the reconstructed RBF
 matches the Quartus golden modulo per-build variable header bytes documented
 in D4.
+
+SCOPE CAVEAT — this is a *lossless encode/decode round-trip* gate, NOT an
+independent silicon/physics validation. The table is mined as
+``canon_cells := (gold ^ baseline) ^ predict_sram`` and the reconstruction is
+``baseline ^ predict_sram ^ canon_cells == gold`` by construction. So a green
+result proves the table losslessly re-encodes each gold AND that the apply/CRC/
+per-build-exclusion paths are correct (the negative control: corrupting one
+canon cell yields diff_bytes>0) — but it CANNOT detect a systematically-wrong
+canon model, because every gold checked here was also used to mine the table.
+There is no hold-out. Do not cite a green run as evidence the canon model
+generalizes to unmined masks/positions or is silicon-correct. See memory
+``path5_canon_d1pp_table_landed_2026_05_21`` caveat #5.
 """
 from __future__ import annotations
 
@@ -86,6 +98,8 @@ def main() -> int:
     n_pass = sum(1 for r in results if r["diff_bytes_non_per_build"] == 0)
     print(f"\n{n_pass}/{len(results)} builds reconstruct byte-identical to Quartus gold "
           f"(excluding per-build variable bytes).")
+    print("  [scope] lossless mine->verify round-trip on the SAME builds — "
+          "table-integrity/CRC/apply gate, NOT hold-out or silicon validation.")
     return 0 if n_pass == len(results) else 1
 
 

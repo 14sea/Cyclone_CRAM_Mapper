@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-05-28T23:28:00",
+  "generated_at": "2026-05-28T23:42:10",
   "quartus_version": "Lite 21.1",
   "coverage": [
     {
@@ -9,6 +9,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD",
         "0xFFFF"
@@ -20,6 +21,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -30,6 +32,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -40,6 +43,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -50,6 +54,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -60,6 +65,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -70,6 +76,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -80,6 +87,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -90,6 +98,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -100,6 +109,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -110,6 +120,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -120,6 +131,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -130,6 +142,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD"
       ]
@@ -140,6 +153,7 @@
       "n": 0,
       "masks": [
         "0x0000",
+        "0x4444",
         "0x6996",
         "0xDEAD",
         "0xFFFF"
@@ -182,6 +196,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 10,
+      "y": 2,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "679c956d41677f945aa58c27f2a1aba3",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 52,
+      "n_cells_in_diff": 48,
+      "regions": {
+        "header": 0,
+        "lab_cram": 41,
+        "block_band": 7
       }
     },
     {
@@ -248,6 +277,21 @@
       "x": 10,
       "y": 8,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "56bfc07dcf9a853927addfe82b585496",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 39,
+      "n_cells_in_diff": 35,
+      "regions": {
+        "header": 0,
+        "lab_cram": 29,
+        "block_band": 6
+      }
+    },
+    {
+      "x": 10,
+      "y": 8,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "e613de30364675dc6eaa90d01359e9a8",
       "byte_identity_passes_against_codec": false,
@@ -287,6 +331,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 10,
+      "y": 14,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "6a010c88e7f2d44ca0a3e615a0871dcd",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 40,
+      "n_cells_in_diff": 36,
+      "regions": {
+        "header": 0,
+        "lab_cram": 29,
+        "block_band": 7
       }
     },
     {
@@ -338,6 +397,21 @@
       "x": 16,
       "y": 2,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "65eaac6463682c1bf1f32bfeadcc4a95",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 47,
+      "n_cells_in_diff": 43,
+      "regions": {
+        "header": 0,
+        "lab_cram": 33,
+        "block_band": 10
+      }
+    },
+    {
+      "x": 16,
+      "y": 2,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "40f8c72d322c89f5ff55ee33d52b1555",
       "byte_identity_passes_against_codec": false,
@@ -377,6 +451,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 16,
+      "y": 8,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "1d2232f6ed091376e6f8f6171408a4f4",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 30,
+      "n_cells_in_diff": 30,
+      "regions": {
+        "header": 0,
+        "lab_cram": 24,
+        "block_band": 6
       }
     },
     {
@@ -428,6 +517,21 @@
       "x": 16,
       "y": 14,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "f7437996de26c5467193a9d8872ee95a",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 33,
+      "n_cells_in_diff": 29,
+      "regions": {
+        "header": 0,
+        "lab_cram": 23,
+        "block_band": 6
+      }
+    },
+    {
+      "x": 16,
+      "y": 14,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "212b3372b6a3fe29d6f010f741770d29",
       "byte_identity_passes_against_codec": false,
@@ -467,6 +571,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 16,
+      "y": 21,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "3bb5cfba9687b7e5821b3e82a697f1d1",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 39,
+      "n_cells_in_diff": 35,
+      "regions": {
+        "header": 0,
+        "lab_cram": 29,
+        "block_band": 6
       }
     },
     {
@@ -518,6 +637,21 @@
       "x": 22,
       "y": 2,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "9821c83b22d239ff90b76e127cb04b7a",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 39,
+      "n_cells_in_diff": 35,
+      "regions": {
+        "header": 0,
+        "lab_cram": 29,
+        "block_band": 6
+      }
+    },
+    {
+      "x": 22,
+      "y": 2,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "f2f11589378b98518ed3c574cff5f758",
       "byte_identity_passes_against_codec": false,
@@ -557,6 +691,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 22,
+      "y": 8,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "8115afc34edf6428de5b363f32319ab5",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 34,
+      "n_cells_in_diff": 32,
+      "regions": {
+        "header": 0,
+        "lab_cram": 26,
+        "block_band": 6
       }
     },
     {
@@ -608,6 +757,21 @@
       "x": 22,
       "y": 14,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "6bbca01e204b2ba05da4198916a425b3",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 34,
+      "n_cells_in_diff": 30,
+      "regions": {
+        "header": 0,
+        "lab_cram": 21,
+        "block_band": 9
+      }
+    },
+    {
+      "x": 22,
+      "y": 14,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "59b3c7641ecf5c2babf6128dfe19a50f",
       "byte_identity_passes_against_codec": false,
@@ -647,6 +811,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 22,
+      "y": 21,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "be91b1e0b1b22734a31ca7d2fa9a957e",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 33,
+      "n_cells_in_diff": 37,
+      "regions": {
+        "header": 0,
+        "lab_cram": 30,
+        "block_band": 7
       }
     },
     {
@@ -698,6 +877,21 @@
       "x": 28,
       "y": 8,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "85d0aae4d4812898cab2ebaf74a9c32c",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 34,
+      "n_cells_in_diff": 30,
+      "regions": {
+        "header": 0,
+        "lab_cram": 20,
+        "block_band": 10
+      }
+    },
+    {
+      "x": 28,
+      "y": 8,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "a59e096c132d831dd920e0366161dfb3",
       "byte_identity_passes_against_codec": false,
@@ -737,6 +931,21 @@
         "header": 0,
         "lab_cram": 0,
         "block_band": 0
+      }
+    },
+    {
+      "x": 28,
+      "y": 14,
+      "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "756154ef6049c3895aa1a8bbc62f2ecc",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 30,
+      "n_cells_in_diff": 26,
+      "regions": {
+        "header": 0,
+        "lab_cram": 20,
+        "block_band": 6
       }
     },
     {
@@ -788,6 +997,21 @@
       "x": 28,
       "y": 17,
       "n": 0,
+      "mask": "0x4444",
+      "rbf_md5": "9b10cfc6109574bcd4c9635aaf686238",
+      "byte_identity_passes_against_codec": false,
+      "codec_mismatch_count": 33,
+      "n_cells_in_diff": 29,
+      "regions": {
+        "header": 0,
+        "lab_cram": 23,
+        "block_band": 6
+      }
+    },
+    {
+      "x": 28,
+      "y": 17,
+      "n": 0,
       "mask": "0x6996",
       "rbf_md5": "f808ff8561af6b64466215256de5e87d",
       "byte_identity_passes_against_codec": false,
@@ -831,11 +1055,11 @@
     }
   ],
   "overall": {
-    "total_builds": 44,
+    "total_builds": 58,
     "n_byte_identity_passes_against_codec": 0,
-    "n_codec_mismatches": 30,
+    "n_codec_mismatches": 44,
     "n_baseline_only": 14,
-    "wall_seconds_build": 111.6,
+    "wall_seconds_build": 69.4,
     "codec_check_interpretation": "byte_identity_passes_against_codec is INFORMATIONAL ONLY for D1. D1's contract is producing Quartus golden RBFs; the consumer side runs the byte-identity gate against THEIR lutcodec.c, not this side's LutCodec.predict_sram. EP4CE6's predict_sram emits only the per-minterm lab_cram cells (16 max) and does NOT include canon-cells (per-position \u03c3\u207b\u00b9 input-axis / bypass / 2-input canonicalization layer). Per Pitfall #16 in CLAUDE.md, canon-cells are silicon-mined only at X4Y4N0 and are expected to fire at other pin-friendly positions for non-trivial masks. If consumer side's lutcodec.c is also a thin predict_sram (4x18x16 \u03c3\u207b\u00b9 entries), it will see similar mismatches and that is the empirical answer to the D2 question (canon-cells are NOT no-op at pin-friendly positions for non-symmetric masks). See sweep_summary.json results[] for per-build region breakdown."
   }
 }

@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "baseline_rbf": "X22_Y8_N0_mask0000_q211.rbf",
+  "target_rbf": "X22_Y8_N0_mask4444_q211.rbf",
+  "cells": [
+    {
+      "addr": "0x35864",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x35935",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36093",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36307",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3657E",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3664F",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x367F3",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x367F4",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36997",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36998",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x36DB2",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x371C0",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x37291",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3733F",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x376CF",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3789B",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x37944",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x3CA72",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F4D1",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F5A2",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F62A",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F6B0",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F6FC",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x4F853",
+      "bit": 5,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x566CE",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x56873",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58387",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x588D3",
+      "bit": 3,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5898D",
+      "bit": 4,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x58E3D",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x59257",
+      "bit": 2,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "addr": "0x5967B",
+      "bit": 2,
+      "before": 1,
+      "after": 0
+    }
+  ],
+  "region_summary": {
+    "header": 0,
+    "lab_cram": 26,
+    "block_band": 6
+  },
+  "n_cells": 32,
+  "excluded": {
+    "preamble_postamble": true,
+    "per_frame_crc_bytes": true,
+    "per_build_variable_ranges": [
+      [
+        41,
+        53
+      ],
+      [
+        73,
+        75
+      ]
+    ]
+  }
+}

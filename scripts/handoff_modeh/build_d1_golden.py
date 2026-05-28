@@ -215,7 +215,7 @@ def main():
     # (build_one skips N in {14, 30}).  Substituting N=0 keeps the slice
     # standard-lut and avoids the chain edge case.  Documented in
     # sweep_summary.json under `n_substitution_note`.
-    SENTINEL_MASKS = [0x0000, 0x6996, 0xDEAD, 0xFFFF]
+    SENTINEL_MASKS = [0x0000, 0x6996, 0xDEAD, 0xFFFF, 0x4444]
 
     # Stratified sample: 12 of 16 (X in {10,16,22,28} x Y in {2,8,14,21})
     # excluding the 4 corner-most positions.
@@ -226,11 +226,13 @@ def main():
         (x, y, 0) for x in STRAT_X for y in STRAT_Y
         if (x, y) not in STRAT_CORNERS
     ])
-    # 2026-05-28 (CRTM Part-3): extend the asymmetric mask 0xDEAD from the
-    # 2 sentinels to all 12 stratified positions, unlocking per-position
-    # canon-cell coverage for an asymmetric mask across all 14 D1++ sites.
+    # 2026-05-28 (CRTM Part-3): extend asymmetric masks to all 14 D1++ sites.
+    #   0xDEAD — generic asymmetric (from the 2 sentinels) -> all 12 strat.
+    #   0x4444 — !KEY1 & KEY2, the silicon-VALIDATED P2 family mask
+    #            (canon_2input @ X4Y4N0, 2026-05-13) -> all 14 (added to
+    #            SENTINEL_MASKS too so the 2 sentinels get it as well).
     # (0xFFFF/0x0000 are trivial constants; 0x6996 is the symmetric XOR4.)
-    STRAT_MASKS = [0x0000, 0x6996, 0xDEAD]
+    STRAT_MASKS = [0x0000, 0x6996, 0xDEAD, 0x4444]
 
     plan: list[tuple[int, int, int, int]] = []
     sentinel_keys = set()
