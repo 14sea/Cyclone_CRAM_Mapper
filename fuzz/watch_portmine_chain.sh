@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Wait for port_mine to drain, then chain downstream rebuilds.
 cd "$(dirname "$0")"    # -> fuzz/, wherever the repo lives
 export PATH=$PATH:$HOME/intelFPGA_lite/21.1/quartus/bin
