@@ -121,3 +121,44 @@ L50–52/L172/L196; R4 26/37; `apply_routing` L894–935; `write_*` L627–850),
 `synth/np2fasm.py` (path-blind L13; cross-LAB warn L1299–1300),
 `results/route_cells_full.json` (13,562 entries; max 159 cells/entry),
 `tmp/rev5_probe.log`, `tmp/rev6_probe.log` (2026-04-17; diverge ~2040).
+
+## STEP 0b — NEORV32 route-class DEMAND census (RAN 2026-05-31; gate RESOLVED → MANDATORY)
+Tool: `scripts/routing_model/step0b_route_demand.py` (+ `step0b_routing_census.tcl`).
+Software-only, NO recompile/flash. Two on-disk sources: NEORV32 `neorv32_demo.fit.rpt`
+"Routing Usage Summary" (authoritative per-class totals) + a `quartus_sta -show_routing`
+I-index distribution (4000 setup paths) on the existing DB. Emittable ground-truth taken
+from the codec itself (`_R4_BASE_PREV` keys, C4 I=0-only since `_C4_FIXED_OFFSETS` is
+100% CRC-dead, R24 dead, C16 unmodeled).
+
+**NEORV32 routing demand (fit.rpt totals, 17,964 wires):**
+| class | used | %tot | STEP-0 verdict |
+|---|---|---|---|
+| Block interconnects | 7,198 | 40.1% | REAL-aliased (= LE input MUX = codec LI) |
+| R4 | 4,018 | 22.4% | REAL-partial (24-key `_R4_BASE_PREV`) |
+| C4 | 3,456 | 19.2% | MIXED (I=0 REAL / I≠0 DEAD) |
+| Local interconnects | 2,089 | 11.6% | REAL-partial (codec LI) |
+| Direct links | 1,098 | 6.1% | UNMODELED (intra-LAB LE→LE) |
+| R24 | 72 | 0.4% | DEAD |
+| C16 | 33 | 0.2% | UNMODELED |
+
+**Per-I split (STA sample, near-critical-region biased — read as the I-distribution):**
+- **C4: only ~4% of used C4 is I=0** (emittable); the hottest C4 wires are all I≠0.
+  → projected ~3,332 / 3,456 C4 wires need from-scratch mining (the dead `_C4_FIXED_OFFSETS`).
+- **R4: ~82% of distinct used I-indices are mapped, but only ~52% BY USAGE** — the two
+  HOTTEST R4 I-indices (I=29 @2934 occ, I=24 @2448 occ) are UNMINED. Used-but-unmined:
+  {5,6,9,24,28,29,30,31,32,33,77,88}. → ~722 R4 wires need `_R4_BASE_PREV` extension.
+- R24 (72) + C16 (33) all non-emittable; Direct links (1,098) unmodeled.
+
+**VERDICT: the dead/unmodeled-class re-mining campaign is MANDATORY, not skippable.**
+~5,257 / 17,964 (**~29%**) of NEORV32's routing wires need a new or extended model
+before native route+flash is possible (~3,332 C4 I≠0 + ~722 R4 unmined-I + 1,203
+R24/C16/Direct). NEORV32 leans on exactly the DEAD classes — its single hottest C4 AND
+R4 wires are non-emittable today. This QUANTIFIES and CONFIRMS the Phase-A
+FREEZE-native / ship-ζ decision: there is no partial-coverage shortcut to native NEORV32;
+the full per-pip campaign (A2's ~10 resource types) is required. The 71% emittable today
+(Block/Local LI + C4 I=0 + mapped R4) is enough for small/medium hand-pinned designs
+(already shipping via the green-zone flow), not for NEORV32-density auto-routing.
+
+Caveat: the per-I emittable *fractions* come from a near-critical STA path sample, so the
+exact projected counts carry sampling error; the *direction* is robust (even 2–3× more
+C4 I=0 still leaves ~3,000 C4 I≠0 unmineable). The per-class TOTALS are exact (fit.rpt).
