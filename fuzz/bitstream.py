@@ -142,13 +142,15 @@ _R4_BASE_PREV = {
     26: (7210, 6791),   # delta=419, mapped 2026-04-07 via r4_mapper2
     24: (2775, 2985),   # delta=210, mined 2026-07-06 leftward sparse campaign
                         #   (scripts/routing_model/r4_leftward_campaign.py):
-                        #   cross-col 3/3 (prev=X12,X16,X24) neg=0; NEORV32
-                        #   either-pair wire-hit 32% vs doc-control I=17/20
-                        #   34%/38%, random floor 15%. First crack in the
-                        #   'STA-corpus blocked' set {5,9,24,28-33}.
+                        #   verified prev=X12,X16,X24 slot0 (holdout 4/4);
+                        #   misses left edge X4/X8 + slot1 unproven (same
+                        #   column-hole character as I=17). NEORV32 wire-hit
+                        #   32% == doc-control profile, random floor 15%.
+                        #   First crack in the blocked set {5,9,24,28-33}.
     31: (2738, 2948),   # delta=210, mined 2026-07-06 same campaign:
-                        #   cross-col 3/4 (prev=X6,X12,X24) neg=0; NEORV32 27%
-                        #   vs floor 10%. Same evidence class as I=24.
+                        #   verified prev=X6,X12,X24 (slot2 + one slot0);
+                        #   holes at X18,X21 (I=17-like 'partial column'
+                        #   entry). NEORV32 27% vs floor 10%.
 }
 _R4_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
