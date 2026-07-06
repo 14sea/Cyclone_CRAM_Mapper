@@ -1,0 +1,236 @@
+{
+ "method": "pip-conditioned column-relative discriminated voting",
+ "model": "cell = (COLUMN_BASE[x] + R + 3*group, bp(y)); universal Y-address",
+ "calibration": "C4 I=0 <- LE_BUFFER dx=0 slots 1+2 recovered 1519+_C4_SLOT_BASE",
+ "classes": {
+  "C4,I=8,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 17,
+   "neg_n": 124,
+   "candidates": [
+    [
+     4293,
+     0.882,
+     0.024
+    ]
+   ]
+  },
+  "C4,I=9,src=LE_BUFFER,dx=0,slot=1": {
+   "pos_n": 14,
+   "neg_n": 127,
+   "candidates": [
+    [
+     4358,
+     1.0,
+     0.031
+    ]
+   ]
+  },
+  "C4,I=5,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 11,
+   "neg_n": 133,
+   "candidates": [
+    [
+     3898,
+     0.909,
+     0.075
+    ],
+    [
+     4318,
+     0.909,
+     0.03
+    ]
+   ]
+  },
+  "C4,I=10,src=R4,dx=1,slot=1": {
+   "pos_n": 11,
+   "neg_n": 131,
+   "candidates": [
+    [
+     3933,
+     1.0,
+     0.031
+    ],
+    [
+     4563,
+     1.0,
+     0.031
+    ]
+   ]
+  },
+  "C4,I=5,src=LE_BUFFER,dx=0,slot=2": {
+   "pos_n": 9,
+   "neg_n": 120,
+   "candidates": [
+    [
+     4251,
+     0.889,
+     0.017
+    ]
+   ]
+  },
+  "C4,I=2,src=R4,dx=0,slot=2": {
+   "pos_n": 9,
+   "neg_n": 120,
+   "candidates": [
+    [
+     4056,
+     1.0,
+     0.008
+    ]
+   ]
+  },
+  "C4,I=7,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 9,
+   "neg_n": 134,
+   "candidates": [
+    [
+     4300,
+     0.889,
+     0.037
+    ]
+   ]
+  },
+  "C4,I=11,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 8,
+   "neg_n": 132,
+   "candidates": [
+    [
+     4277,
+     0.875,
+     0.068
+    ]
+   ]
+  },
+  "C4,I=5,src=LE_BUFFER,dx=0,slot=1": {
+   "pos_n": 8,
+   "neg_n": 135,
+   "candidates": [
+    [
+     3968,
+     1.0,
+     0.067
+    ],
+    [
+     4388,
+     1.0,
+     0.015
+    ]
+   ]
+  },
+  "C4,I=7,src=LE_BUFFER,dx=0,slot=1": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "candidates": [
+    [
+     4370,
+     1.0,
+     0.029
+    ]
+   ]
+  },
+  "C4,I=3,src=LE_BUFFER,dx=1,slot=2": {
+   "pos_n": 7,
+   "neg_n": 122,
+   "candidates": [
+    [
+     4050,
+     0.857,
+     0.057
+    ]
+   ]
+  },
+  "C4,I=7,src=R4,dx=1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "candidates": [
+    [
+     3949,
+     0.857,
+     0.066
+    ]
+   ]
+  },
+  "C4,I=11,src=R4,dx=1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 133,
+   "candidates": [
+    [
+     4067,
+     0.857,
+     0.038
+    ]
+   ]
+  },
+  "C4,I=6,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "candidates": [
+    [
+     4304,
+     1.0,
+     0.029
+    ]
+   ]
+  },
+  "C4,I=8,src=R4,dx=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 135,
+   "candidates": [
+    [
+     4364,
+     0.857,
+     0.03
+    ]
+   ]
+  },
+  "C4,I=9,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 7,
+   "neg_n": 137,
+   "candidates": [
+    [
+     4288,
+     0.857,
+     0.058
+    ]
+   ]
+  },
+  "C4,I=2,src=R4,dx=0,slot=0": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "candidates": [
+    [
+     3913,
+     0.857,
+     0.074
+    ],
+    [
+     14139,
+     0.857,
+     0.074
+    ]
+   ]
+  },
+  "C4,I=1,src=LE_BUFFER,dx=1,slot=2": {
+   "pos_n": 7,
+   "neg_n": 121,
+   "candidates": [
+    [
+     4062,
+     1.0,
+     0.041
+    ]
+   ]
+  },
+  "C4,I=10,src=LE_BUFFER,dx=0,slot=0": {
+   "pos_n": 7,
+   "neg_n": 137,
+   "candidates": [
+    [
+     4284,
+     1.0,
+     0.029
+    ]
+   ]
+  }
+ }
+}
