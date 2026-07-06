@@ -41,15 +41,22 @@ Results (2026-07-06 final, 240 builds, PHYSICAL-prev register):
   family (even 2791/2783/2775..., odd 2762/2754/2746/2738).
   NEORV32 either-pair wire-hit: I=24 32%, I=31 27% == doc-control
   profile (I=17 34%, I=20 38%; random floor 10-15%).
-OPEN — direction-alias hypothesis: far-driven I=28/30/33 vote the SAME
-byte pairs as I=29/31 under a +3-column (driver-end) anchor.  ADJUDICATED
-+ REJECTED 2026-07-06 (commit db0dbd4, r4_direction_adjudicate.py):
-rightward vs leftward single-hop differentials are largely DISJOINT
-(jaccard 0.04-0.17) -> drive direction changes the CRAM cell, keep the
-STA I-label as the write key (do NOT collapse); the "same byte pair" was
-lattice coincidence.  Still unmined: {5, 9, 28, 30, 32, 33} -- need an
-infra-cancelling design (reach-4 vs reach-8 at a common driver) to
-separate the ~2 R4 cells from the ~55 lut-infra cells.
+RESOLVED 2026-07-06 (see r4_chain_calibration.json + memo
+r4_leftward_i24_i31_landed_2026_07_06):
+  - direction-alias hypothesis ADJUDICATED + REJECTED (commit db0dbd4,
+    r4_direction_adjudicate.py): rightward vs leftward differentials are
+    largely disjoint (jaccard 0.04-0.17) -> direction changes the CRAM
+    cell; keep the STA I-label as the write key (do NOT collapse).
+  - prev_col(wire_x) anchoring CONFIRMED correct by a 198-labeled-chain
+    campaign that recovers DOC pairs of I=17/20/21/22 exactly.  A
+    "driver-end (rel+3)" reinterpretation was a CO-OCCURRENCE TRAP (rel+3
+    cells are the neighbour hop's prev-cell) — see the memo.
+Still UNMINED: {5, 9, 28, 30, 32, 33}.  The reach-4-vs-8 infra-cancel
+idea was TESTED and DISPROVEN (r4_reach_isolate.py): simple 2-LUT hops
+produce only mapped I=17/20/21, and reach changes relocate the endpoint
+LUT.  These indices need a DIFFERENT campaign (dense-design per-net STA
+diff / congestion-forced mining) — spec pending; two-LUT chains are
+exhausted for them.
 """
 import sys, os, json, glob, re, shutil, subprocess, collections
 
