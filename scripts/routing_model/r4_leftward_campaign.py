@@ -42,11 +42,14 @@ Results (2026-07-06 final, 240 builds, PHYSICAL-prev register):
   NEORV32 either-pair wire-hit: I=24 32%, I=31 27% == doc-control
   profile (I=17 34%, I=20 38%; random floor 10-15%).
 OPEN — direction-alias hypothesis: far-driven I=28/30/33 vote the SAME
-byte pairs as I=29/31 under a +3-column (driver-end) anchor, largely
-from disjoint builds.  If R4 wires are bidirectional pairs sharing
-per-column drivers, the write rule needs (driving column, track family),
-not the STA I-label.  Needs single-hop discriminating builds.
-Remaining fully open: {5, 9, 32}.
+byte pairs as I=29/31 under a +3-column (driver-end) anchor.  ADJUDICATED
++ REJECTED 2026-07-06 (commit db0dbd4, r4_direction_adjudicate.py):
+rightward vs leftward single-hop differentials are largely DISJOINT
+(jaccard 0.04-0.17) -> drive direction changes the CRAM cell, keep the
+STA I-label as the write key (do NOT collapse); the "same byte pair" was
+lattice coincidence.  Still unmined: {5, 9, 28, 30, 32, 33} -- need an
+infra-cancelling design (reach-4 vs reach-8 at a common driver) to
+separate the ~2 R4 cells from the ~55 lut-infra cells.
 """
 import sys, os, json, glob, re, shutil, subprocess, collections
 
