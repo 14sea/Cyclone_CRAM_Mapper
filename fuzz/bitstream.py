@@ -147,6 +147,14 @@ _R4_BASE_PREV = {
                         #   column-hole character as I=17). NEORV32 wire-hit
                         #   32% == doc-control profile, random floor 15%.
                         #   First crack in the blocked set {5,9,24,28-33}.
+    29: (2746, 2956),   # delta=210, mined 2026-07-06 wave-4 (240 builds),
+                        #   PHYSICAL-prev anchor (X5/X9/X14 jailbreak cols
+                        #   count as columns): slot2 g1 3/3 cols, neg=0.
+                        #   Fits the observed -8/I lattice between I=27
+                        #   (2754) and I=31 (2738). Caveat: far-driven
+                        #   aliases I=28/30 vote the same byte values under
+                        #   a +3-column anchor — direction-alias hypothesis
+                        #   open, see r4_leftward memo 2026-07-06.
     31: (2738, 2948),   # delta=210, mined 2026-07-06 same campaign:
                         #   verified prev=X6,X12,X24; wave-3 (207 builds)
                         #   independently re-derived the pair in BOTH slot2

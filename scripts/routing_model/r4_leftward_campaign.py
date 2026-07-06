@@ -30,16 +30,23 @@ same slot/group (e.g. 4903/5951/6793) are bundle-activity cells — the
 homogeneous leftward corpus uses I=17+I=20 together, blinding negatives.
 Only I-SPECIFIC candidates count.
 
-Results (2026-07-06, 120 builds):
-  I=24 slot0: (2775, 2985)  3/3 cols, neg=0  -> landed in _R4_BASE_PREV
-  I=31 slot2: (2738, 2948)  3/4 cols, neg=0  -> landed in _R4_BASE_PREV
-  NEORV32 either-pair wire-hit: I=24 32%, I=31 27% — same profile as
-  doc controls I=17 34% / I=20 38%, random-median floor 10-15%.
-Remaining {5,9,28,29,30,32,33}: instances exist but candidates blocked
-by corpus homogeneity (correlated detours) — next wave needs
-decorrelation: mixed directions/spans, different clock-pin choices
-(the unconstrained CLK fabric route is a big wire source), or per-pip
-conditioning.
+Results (2026-07-06 final, 240 builds, PHYSICAL-prev register):
+  landed in _R4_BASE_PREV:
+    I=24: (2775, 2985)  5/5 cols   I=29: (2746, 2956)  3/3 cols
+    I=31: (2738, 2948)  slot0+slot2 cross-derived
+  calibration: doc pairs of I=2/17/21/22/25/27 ALL re-derived; I=17
+  recovers 4/4 at columns that are holes under the whitelist register
+  ('misses near M9K' is partly an anchoring artifact).
+  observed lattice: base decreases 8 per +2 I-step within each parity
+  family (even 2791/2783/2775..., odd 2762/2754/2746/2738).
+  NEORV32 either-pair wire-hit: I=24 32%, I=31 27% == doc-control
+  profile (I=17 34%, I=20 38%; random floor 10-15%).
+OPEN — direction-alias hypothesis: far-driven I=28/30/33 vote the SAME
+byte pairs as I=29/31 under a +3-column (driver-end) anchor, largely
+from disjoint builds.  If R4 wires are bidirectional pairs sharing
+per-column drivers, the write rule needs (driving column, track family),
+not the STA I-label.  Needs single-hop discriminating builds.
+Remaining fully open: {5, 9, 32}.
 """
 import sys, os, json, glob, re, shutil, subprocess, collections
 
@@ -133,8 +140,28 @@ def load_builds():
     return builds
 
 
+def phys_prev(x):
+    """Nearest PHYSICAL LAB column left of x with standard 7350 width.
+
+    Differs from RouteCodec._prev_lab_x (CE6-whitelist LAB_X) by counting
+    the jailbreak columns X5/X9/X14/X30/X32 as real columns.  2026-07-06
+    finding: with this register the documented pairs of I=2/17/21/22/25/27
+    re-derive from the campaign corpus, and I=17 recovers 4/4 at columns
+    that are HOLES under the whitelist register — the R4 table's 'misses
+    near M9K' is at least partly an anchoring artifact, not fabric
+    irregularity.  Production read_r4 still uses the whitelist register;
+    migrating it needs its own regression campaign.
+    """
+    phys = sorted(CB)
+    cands = [c for c in phys if c < x]
+    if not cands:
+        return None
+    p = max(cands)
+    nxt = min((q for q in phys if q > p), default=None)
+    return p if nxt and CB[nxt] - CB[p] == 7350 else None
+
+
 def analyze():
-    rc = bitstream.RouteCodec()
     builds = load_builds()
     print(f"builds: {len(builds)}")
     alltags = set(builds)
@@ -149,8 +176,8 @@ def analyze():
             if not (2 <= y <= 21) or (x, y, i) in seen:
                 continue
             seen.add((x, y, i))
-            px = rc._prev_lab_x(x)
-            if px is None or px not in CB or CW.get(px, 7350) != 7350:
+            px = phys_prev(x)
+            if px is None:
                 continue
             g, s, bp, extra = r4_geom(y)
             cls[(i, s, g)][(px, CB[px] - 136, bp, extra)].add(tag)
