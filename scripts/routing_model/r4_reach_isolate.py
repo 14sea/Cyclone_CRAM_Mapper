@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Isolate a single leftward R4's CRAM cells by reach-4 vs reach-8 XOR.
+"""Historical negative test: reach-4 vs reach-8 did NOT isolate R4 cells.
 
 Goal (2026-07-06): crack the still-unmined R4 indices {5,9,28,30,32,33}.
 They only appear as chain-internal hops in the leftward campaign, where
@@ -26,9 +26,11 @@ common part is the dominant chunk (~lut1 infra) and the residual is small
 the STA R4 labels each reach produced so we know which I-indices this
 geometry exercises before trusting any base.
 
-Pass bar for landing a base into _R4_BASE_PREV (NOT applied in prove
-mode): the same I at >=3 physical-column anchors votes a consistent pair,
-negatives under threshold.  Do not land otherwise.
+Result: DISPROVEN as an isolation mechanism.  Simple 2-LUT reach changes
+produce only mapped I=17/20/21, not the target set, and changing the reach
+relocates endpoint LUTs enough to swamp the ~2 R4 cells.  Do not use this
+script as the next mining path; the follow-up is dense-design per-net
+differencing in docs/r4_dense_mining_campaign_spec.md.
 
 Usage: python3 scripts/routing_model/r4_reach_isolate.py prove
 Artifacts in tmp/r4_reach/ (gitignored).

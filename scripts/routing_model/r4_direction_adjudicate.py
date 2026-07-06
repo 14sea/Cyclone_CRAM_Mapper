@@ -33,10 +33,10 @@ routes (not only the R4 direction cell); the differential mixes
 lut1-output + R4 + lut2-input infra, so this is a route-LEVEL, not
 single-cell, disjointness — sufficient for the write-key decision, not a
 per-cell proof.  A per-cell far-anchor formula for the still-unmined
-{5,9,28,30,32,33} needs a design that cancels the lut infra (e.g.
-reach-4 vs reach-8 at a common driver column) so the ~2 R4 config cells
-separate from the ~55 infra cells; column-relative voting alone cannot,
-because lut1-output infra aligns to the same driver column as the R4.
+{5,9,28,30,32,33} needs a different campaign that changes exactly one
+net while keeping endpoint infra fixed.  The later reach-4-vs-8 idea was
+tested and disproven (r4_reach_isolate.py); see
+docs/r4_dense_mining_campaign_spec.md for the next pass bar.
 
 Usage: python3 scripts/routing_model/r4_direction_adjudicate.py
 Artifacts land in tmp/r4_dir/ (gitignored).

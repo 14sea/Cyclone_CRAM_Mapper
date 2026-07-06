@@ -55,8 +55,8 @@ Still UNMINED: {5, 9, 28, 30, 32, 33}.  The reach-4-vs-8 infra-cancel
 idea was TESTED and DISPROVEN (r4_reach_isolate.py): simple 2-LUT hops
 produce only mapped I=17/20/21, and reach changes relocate the endpoint
 LUT.  These indices need a DIFFERENT campaign (dense-design per-net STA
-diff / congestion-forced mining) — spec pending; two-LUT chains are
-exhausted for them.
+diff / congestion-forced mining) — see docs/r4_dense_mining_campaign_spec.md;
+two-LUT chains are exhausted for them.
 """
 import sys, os, json, glob, re, shutil, subprocess, collections
 
