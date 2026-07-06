@@ -148,9 +148,12 @@ _R4_BASE_PREV = {
                         #   32% == doc-control profile, random floor 15%.
                         #   First crack in the blocked set {5,9,24,28-33}.
     31: (2738, 2948),   # delta=210, mined 2026-07-06 same campaign:
-                        #   verified prev=X6,X12,X24 (slot2 + one slot0);
-                        #   holes at X18,X21 (I=17-like 'partial column'
-                        #   entry). NEORV32 27% vs floor 10%.
+                        #   verified prev=X6,X12,X24; wave-3 (207 builds)
+                        #   independently re-derived the pair in BOTH slot2
+                        #   g1 AND slot0 g3 (3/4 cols each) — cross-slot
+                        #   generalization confirmed. Holes at X18,X21
+                        #   (I=17-like 'partial column' entry). NEORV32 27%
+                        #   vs floor 10%.
 }
 _R4_SLOT_OFFSET = {0: 67, 1: -70, 2: 0}
 
