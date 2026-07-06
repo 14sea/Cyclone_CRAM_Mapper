@@ -1,0 +1,37 @@
+{
+ "corpus": "198 labeled leftward-chain builds (tmp/r4_chain, gitignored)",
+ "anchoring_verdict": "prev_col(wire_x) CONFIRMED correct",
+ "calibration_doc_recovery": {
+  "I=17": [
+   2802,
+   3223
+  ],
+  "I=20": [
+   2791,
+   3001
+  ],
+  "I=21": [
+   2786,
+   3207
+  ],
+  "I=22": [
+   2783,
+   2993
+  ]
+ },
+ "landed_indices_status": "I=24/29/31 (leftward campaign, prev-anchored) VINDICATED by same-method doc recovery; NOT reverted",
+ "driver_end_trap": "rel+3 'driver-end' pairs are co-occurring NEIGHBOR hops' prev-cells (index-shift pattern); NOT the wire's own cell",
+ "targets_still_blocked": [
+  5,
+  9,
+  28,
+  30,
+  32,
+  33
+ ],
+ "reason_blocked": "deep-chain hops co-occur in fixed bundles; own prev-cell not isolable to >=3 clean anchors even with 198 builds",
+ "doc_discrepancies_to_audit": {
+  "I=18": "doc (4057,4267) vs chain (2799,3009)",
+  "I=26": "doc (7210,6791) vs chain (2759,3178)"
+ }
+}
