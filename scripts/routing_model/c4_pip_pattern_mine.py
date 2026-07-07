@@ -108,9 +108,30 @@ def cells_by_bp(cells):
     return d
 
 
+def reg_geom(yb, dy):
+    """Y-address geometry of the MUX config cell -> (group, slot, bp).
+
+    Anchor-hunt (c4_downward_anchor_hunt.py, 2026-07-07): DOWNWARD C4
+    wires (driver attaches at the high end, dy>0) place the MUX cell at
+    the Y-address of the ATTACH end (yb+dy), not the wire-name end.
+    Upward/level pips keep the name-Y register — that is what produced
+    the first fresh-gold write PASS.  Falls back to name-Y if the attach
+    end leaves the 2..21 fabric.  The KEY still records the target-Y
+    slot (bijective with attach slot at fixed dy), so class partitions
+    are unchanged; only the stored (group, bp) that families A/C predict
+    on move to the attach end.
+    """
+    if dy > 0 and 2 <= yb + dy <= 21:
+        return pv.yaddr(yb + dy)
+    return pv.yaddr(yb)
+
+
 def instances_dy(pips, ctx):
     """(t, I, src_t, dx, dy, slot) -> {(ctx, x, g, bp)}; plus per-(t,I,slot)
-    wire sets (negatives stay dy-agnostic: any same-slot other-I wire)."""
+    wire sets (negatives stay dy-agnostic: any same-slot other-I wire).
+
+    (group, bp) follow reg_geom (attach-end for downward wires); the key
+    slot is the target-Y slot."""
     inst = collections.defaultdict(set)
     winst = collections.defaultdict(set)
     for a, b in pips:
@@ -121,9 +142,10 @@ def instances_dy(pips, ctx):
         ib = int(mb.group(5)) if mb.group(5) else None
         if tb != 'C4' or xb not in CB or not 2 <= yb <= 21:
             continue
-        g, s, bp = pv.yaddr(yb)
+        _, s, _ = pv.yaddr(yb)                 # key slot = target-Y slot
         dx = int(ma.group(2)) - xb
         dy = int(ma.group(3)) - yb
+        g, _, bp = reg_geom(yb, dy)            # cell geometry = attach-end
         inst[(tb, ib, ma.group(1), dx, dy, s)].add((ctx, xb, g, bp))
         winst[(tb, ib, s)].add((ctx, xb, g, bp))
     return inst, winst

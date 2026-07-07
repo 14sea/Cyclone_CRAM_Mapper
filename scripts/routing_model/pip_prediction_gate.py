@@ -66,6 +66,15 @@ def yaddr(y):
     return g, s, (6 - g) if s == 2 else (7 - g)
 
 
+def reg_geom(y, dy):
+    """MUX-cell Y-address geometry -> (group, slot, bp).  MUST stay
+    identical to c4_pip_pattern_mine.reg_geom: attach end (y+dy) for
+    downward wires (dy>0), name-Y otherwise."""
+    if dy > 0 and 2 <= y + dy <= 21:
+        return yaddr(y + dy)
+    return yaddr(y)
+
+
 def r4_geom(y):
     cr = y - 2
     g, s = cr // 3, cr % 3
@@ -116,8 +125,10 @@ def predict_c4_pip(table, prev_wire, wire):
     ma = WIRE.match(prev_wire)
     if not ma:
         return None
-    g, s, bp = yaddr(y)
-    key = (i, ma.group(1), int(ma.group(2)) - x, int(ma.group(3)) - y, s)
+    dy = int(ma.group(3)) - y
+    _, s, _ = yaddr(y)                       # key slot = target-Y slot
+    g, _, bp = reg_geom(y, dy)               # cell geometry = attach-end
+    key = (i, ma.group(1), int(ma.group(2)) - x, dy, s)
     ent = table.get(key)
     if ent is None:
         return key, None

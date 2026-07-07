@@ -45,14 +45,23 @@ Run 1 (2026-07-07 AM, dy-LESS key (I,src,dx,slot)): NOT CLEARED.
   forensic showed same-key-same-geometry pips with DISJOINT cells and
   zero-cell pips.  Verdict: key lacks context dimension(s).
 Run 2 (2026-07-07 PM, dy IN KEY after c4_mux_default_probe.py): FIRST
-  POSITIVE CLOSURE — whitelist grew to 5 classes; cf_X19Y17_to_X19Y9's
-  chain pip C4_X19_Y13_I1 -> C4_X19_Y16_I1 (class I=1,C4,dx=0,dy=-3,
-  slot=2, R=4482) emitted 1 cell, byte-identical to the fresh Quartus
-  gold: TP=1 FP=0 PASS.  Existence proof for the full loop
-  (mine -> cross-dataset holdout -> emit -> unseen-gold byte identity),
-  NOT coverage: 11/12 golds had no whitelisted pip, and the downward
-  family (dy=+3/+4, I=12/15...) is still 0-for-all (window/anchor open
-  question — see MULTI_DEFAULT-at-X33 caveat in the probe memo).
+  POSITIVE CLOSURE — whitelist 5 classes; cf_X19Y17_to_X19Y9's chain
+  pip (I=1,C4,dy=-3,slot=2, R=4482) emitted 1 cell byte-identical to
+  the fresh gold (TP=1 FP=0).  Downward family still 0.
+Run 3 (2026-07-07 PM, ATTACH-END register after c4_downward_anchor_hunt):
+  DOWNWARD FAMILY CRACKED.  For dy>0 wires the MUX cell sits at the
+  Y-address of the ATTACH end (y+dy), not the wire name — integrated in
+  reg_geom (miner + this gate, identical).  LE_BUFFER dx=0 dy=4 classes
+  went 0 -> 0.94-0.96 cross-dataset holdout (slot2 52/54, slot1 44/47);
+  whitelist grew 5 -> 8 (+3 downward I=12); fresh byte-identity now 2
+  golds PASS (cf_X10Y14 emitted 2, cf_X19Y17 emitted 4), TP=6 FP=0;
+  corpus coverage 35% -> 51%.  Upward classes unregressed.
+  STILL open (SEPARATE problem, not anchor): single-group (groups=1)
+  downward classes — I=15<-R24/C4/R4, I=12<-C4 dy4 slot2 — score 0 and
+  are flagged ambiguous_geom; they need more mining diversity (targeted
+  compiles), same limitation upward single-group classes have.  Also
+  I=12<-LE_BUFFER dx=1 dy4 slot2 carries confound A cells (9031/9032,
+  cell_rate .41) — holdout correctly keeps it OFF the whitelist.
 STANDING RULES: R24/R4 write paths stay untouched until C4 coverage is
 real; this file stays a gated experiment; nothing here may feed
 fasm2rbf/RouteCodec; DO NOT FLASH.
