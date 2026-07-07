@@ -1,0 +1,115 @@
+{
+ "whitelist": {
+  "C4,I=1,src=LE_BUFFER,dx=1,slot=2": [
+   4062
+  ],
+  "C4,I=1,src=R4,dx=-2,slot=0": [
+   4130,
+   3919
+  ]
+ },
+ "criteria": {
+  "cell_rate_min": 0.9,
+  "cell_tot_min": 4,
+  "families": [
+   "A"
+  ]
+ },
+ "builds": {
+  "cf_X10Y14_to_X10Y8": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X10Y4_to_X10Y10": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X11Y18_to_X11Y11": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X13Y5_to_X13Y12": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X16Y12_to_X16Y6": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X16Y4_to_X16Y11": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X19Y17_to_X19Y9": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X22Y8_to_X22Y14": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X25Y16_to_X25Y10": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X28Y6_to_X28Y12": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X31Y14_to_X31Y8": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  },
+  "cf_X7Y4_to_X7Y11": {
+   "emitted": 0,
+   "fp": 0,
+   "covered_pips": [],
+   "verdict": "NO-COVERED-PIP"
+  }
+ },
+ "evidence": {
+  "C4,I=12,src=LE_BUFFER,dx=1,slot=2": {
+   "cell_hit": 0,
+   "cell_tot": 12,
+   "inst_full": 0,
+   "inst_tot": 3,
+   "ambiguous_geom": false
+  },
+  "C4,I=3,src=C4,dx=0,slot=0": {
+   "cell_hit": 0,
+   "cell_tot": 2,
+   "inst_full": 0,
+   "inst_tot": 1,
+   "ambiguous_geom": false
+  },
+  "C4,I=15,src=R24,dx=-1,slot=0": {
+   "cell_hit": 0,
+   "cell_tot": 8,
+   "inst_full": 0,
+   "inst_tot": 1,
+   "ambiguous_geom": true
+  }
+ }
+}
