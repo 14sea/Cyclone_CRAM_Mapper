@@ -10,7 +10,7 @@
   "neg_max": 0.08,
   "min_n": 7
  },
- "mining_data": "both",
+ "mining_data": "all",
  "classes": {
   "C4,I=12,src=LE_BUFFER,dx=1,dy=4,slot=1": {
    "pos_n": 49,
@@ -461,22 +461,22 @@
    }
   },
   "C4,I=12,src=C4,dx=0,dy=4,slot=1": {
-   "pos_n": 36,
-   "neg_n": 580,
+   "pos_n": 27,
+   "neg_n": 24,
    "groups": 3,
    "ambiguous_geom": false,
-   "mined_from": "corpus",
+   "mined_from": "ygroup",
    "pattern": {
     "A": [
      {
-      "R": 4555,
-      "pos": 0.972,
+      "R": 3924,
+      "pos": 1.0,
       "neg": 0.0
      },
      {
-      "R": 3924,
-      "pos": 0.972,
-      "neg": 0.021
+      "R": 4555,
+      "pos": 1.0,
+      "neg": 0.0
      }
     ],
     "B": [],
@@ -721,40 +721,32 @@
    }
   },
   "C4,I=1,src=R24,dx=-2,dy=-1,slot=2": {
-   "pos_n": 17,
-   "neg_n": 564,
+   "pos_n": 7,
+   "neg_n": 97,
    "groups": 1,
    "ambiguous_geom": true,
-   "mined_from": "corpus",
+   "mined_from": "ygroup",
    "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
+    "A": [
      {
-      "R": 10923,
+      "R": 4483,
       "pos": 1.0,
-      "neg": 0.002,
-      "bp": 2
+      "neg": 0.021
      },
      {
-      "R": 11134,
+      "R": 3853,
       "pos": 1.0,
-      "neg": 0.002,
-      "bp": 2
-     },
-     {
-      "R": 11214,
-      "pos": 1.0,
-      "neg": 0.002,
-      "bp": 0
-     },
-     {
-      "R": 11634,
-      "pos": 1.0,
-      "neg": 0.002,
-      "bp": 0
+      "neg": 0.052
      }
-    ]
+    ],
+    "B": [
+     {
+      "R": 4492,
+      "pos": 1.0,
+      "neg": 0.041
+     }
+    ],
+    "C": []
    }
   },
   "C4,I=5,src=C16,dx=0,dy=-5,slot=0": {
@@ -854,52 +846,26 @@
    }
   },
   "C4,I=12,src=C4,dx=0,dy=4,slot=2": {
-   "pos_n": 16,
-   "neg_n": 619,
-   "groups": 1,
-   "ambiguous_geom": true,
-   "mined_from": "corpus",
+   "pos_n": 26,
+   "neg_n": 81,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "ygroup",
    "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
+    "A": [
      {
-      "R": 2464,
+      "R": 3991,
       "pos": 1.0,
-      "neg": 0.018,
-      "bp": 6
+      "neg": 0.0
      },
      {
-      "R": 2520,
+      "R": 4622,
       "pos": 1.0,
-      "neg": 0.018,
-      "bp": 4
-     },
-     {
-      "R": 2910,
-      "pos": 1.0,
-      "neg": 0.018,
-      "bp": 4
-     },
-     {
-      "R": 3119,
-      "pos": 1.0,
-      "neg": 0.018,
-      "bp": 6
-     },
-     {
-      "R": 4196,
-      "pos": 1.0,
-      "neg": 0.073,
-      "bp": 6
-     },
-     {
-      "R": 3987,
-      "pos": 1.0,
-      "neg": 0.079,
-      "bp": 6
+      "neg": 0.0
      }
-    ]
+    ],
+    "B": [],
+    "C": []
    }
   },
   "C4,I=15,src=R24,dx=-2,dy=4,slot=0": {
@@ -2543,24 +2509,6 @@
     "C": []
    }
   },
-  "C4,I=10,src=R4,dx=1,dy=-1,slot=1": {
-   "pos_n": 11,
-   "neg_n": 196,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4563,
-      "pos": 1.0,
-      "neg": 0.066
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
   "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
    "pos_n": 11,
    "neg_n": 126,
@@ -2584,54 +2532,36 @@
     "C": []
    }
   },
-  "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=2": {
-   "pos_n": 9,
-   "neg_n": 190,
-   "groups": 5,
+  "C4,I=10,src=R4,dx=1,dy=-1,slot=1": {
+   "pos_n": 11,
+   "neg_n": 196,
+   "groups": 4,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 4251,
-      "pos": 0.889,
-      "neg": 0.037
+      "R": 4563,
+      "pos": 1.0,
+      "neg": 0.066
      }
     ],
     "B": [],
     "C": []
    }
   },
-  "C4,I=14,src=LE_BUFFER,dx=0,dy=4,slot=1": {
-   "pos_n": 9,
-   "neg_n": 198,
-   "groups": 3,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4333,
-      "pos": 1.0,
-      "neg": 0.061
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=2,src=R4,dx=0,dy=-1,slot=2": {
+  "C4,I=14,src=LE_BUFFER,dx=0,dy=4,slot=2": {
    "pos_n": 9,
    "neg_n": 190,
-   "groups": 5,
+   "groups": 4,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 4056,
+      "R": 4400,
       "pos": 1.0,
-      "neg": 0.037
+      "neg": 0.047
      }
     ],
     "B": [],
@@ -2656,24 +2586,6 @@
     "C": []
    }
   },
-  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
-   "pos_n": 9,
-   "neg_n": 127,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4300,
-      "pos": 0.889,
-      "neg": 0.047
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
   "C4,I=20,src=LE_BUFFER,dx=1,dy=4,slot=2": {
    "pos_n": 9,
    "neg_n": 189,
@@ -2686,6 +2598,42 @@
       "R": 4152,
       "pos": 0.889,
       "neg": 0.048
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=14,src=LE_BUFFER,dx=0,dy=4,slot=1": {
+   "pos_n": 9,
+   "neg_n": 198,
+   "groups": 3,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4333,
+      "pos": 1.0,
+      "neg": 0.061
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 9,
+   "neg_n": 127,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4300,
+      "pos": 0.889,
+      "neg": 0.047
      }
     ],
     "B": [],
@@ -2710,18 +2658,36 @@
     "C": []
    }
   },
-  "C4,I=14,src=LE_BUFFER,dx=0,dy=4,slot=2": {
+  "C4,I=2,src=R4,dx=0,dy=-1,slot=2": {
    "pos_n": 9,
    "neg_n": 190,
-   "groups": 4,
+   "groups": 5,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 4400,
+      "R": 4056,
       "pos": 1.0,
-      "neg": 0.047
+      "neg": 0.037
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=2": {
+   "pos_n": 9,
+   "neg_n": 190,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4251,
+      "pos": 0.889,
+      "neg": 0.037
      }
     ],
     "B": [],
@@ -2792,145 +2758,18 @@
     "C": []
    }
   },
-  "C4,I=15,src=LE_BUFFER,dx=0,dy=4,slot=2": {
+  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=1": {
    "pos_n": 7,
-   "neg_n": 193,
-   "groups": 3,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
-     {
-      "R": 1409,
-      "pos": 0.857,
-      "neg": 0.052,
-      "bp": 1
-     }
-    ]
-   }
-  },
-  "C4,I=23,src=R4,dx=1,dy=4,slot=1": {
-   "pos_n": 7,
-   "neg_n": 198,
-   "groups": 2,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [],
-    "B": [
-     {
-      "R": -3044,
-      "pos": 0.857,
-      "neg": 0.04
-     }
-    ],
-    "C": []
-   }
-  },
-  "C4,I=13,src=LE_BUFFER,dx=1,dy=4,slot=1": {
-   "pos_n": 7,
-   "neg_n": 199,
-   "groups": 5,
+   "neg_n": 200,
+   "groups": 4,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 565,
-      "pos": 0.857,
-      "neg": 0.07
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=6,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
-   "pos_n": 7,
-   "neg_n": 129,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4304,
+      "R": 4370,
       "pos": 1.0,
-      "neg": 0.031
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=9,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
-   "pos_n": 7,
-   "neg_n": 130,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4288,
-      "pos": 0.857,
-      "neg": 0.069
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=11,src=R4,dx=1,dy=-1,slot=0": {
-   "pos_n": 7,
-   "neg_n": 128,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4067,
-      "pos": 0.857,
-      "neg": 0.047
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=1,src=LE_BUFFER,dx=1,dy=-1,slot=1": {
-   "pos_n": 7,
-   "neg_n": 201,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": -6525,
-      "pos": 0.857,
-      "neg": 0.07
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=14,src=R4,dx=0,dy=4,slot=1": {
-   "pos_n": 7,
-   "neg_n": 201,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 1909,
-      "pos": 0.857,
-      "neg": 0.065
+      "neg": 0.05
      }
     ],
     "B": [],
@@ -2955,24 +2794,6 @@
     "C": []
    }
   },
-  "C4,I=8,src=R4,dx=-1,dy=-1,slot=1": {
-   "pos_n": 7,
-   "neg_n": 199,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4364,
-      "pos": 0.857,
-      "neg": 0.04
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
   "C4,I=10,src=R4,dx=-2,dy=-1,slot=2": {
    "pos_n": 7,
    "neg_n": 192,
@@ -2990,24 +2811,6 @@
       "bp": 3
      }
     ]
-   }
-  },
-  "C4,I=3,src=LE_BUFFER,dx=1,dy=-1,slot=2": {
-   "pos_n": 7,
-   "neg_n": 192,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4050,
-      "pos": 0.857,
-      "neg": 0.073
-     }
-    ],
-    "B": [],
-    "C": []
    }
   },
   "C4,I=10,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
@@ -3035,18 +2838,109 @@
     ]
    }
   },
-  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=1": {
+  "C4,I=14,src=R4,dx=0,dy=4,slot=1": {
    "pos_n": 7,
-   "neg_n": 200,
+   "neg_n": 201,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 1909,
+      "pos": 0.857,
+      "neg": 0.065
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=6,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 129,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4304,
+      "pos": 1.0,
+      "neg": 0.031
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=11,src=R4,dx=1,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 128,
    "groups": 4,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 4370,
-      "pos": 1.0,
-      "neg": 0.05
+      "R": 4067,
+      "pos": 0.857,
+      "neg": 0.047
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=9,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 130,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4288,
+      "pos": 0.857,
+      "neg": 0.069
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=15,src=LE_BUFFER,dx=0,dy=4,slot=2": {
+   "pos_n": 7,
+   "neg_n": 193,
+   "groups": 3,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [],
+    "B": [],
+    "C": [
+     {
+      "R": 1409,
+      "pos": 0.857,
+      "neg": 0.052,
+      "bp": 1
+     }
+    ]
+   }
+  },
+  "C4,I=8,src=R4,dx=-1,dy=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 199,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4364,
+      "pos": 0.857,
+      "neg": 0.04
      }
     ],
     "B": [],
@@ -3069,6 +2963,119 @@
     ],
     "B": [],
     "C": []
+   }
+  },
+  "C4,I=23,src=R4,dx=1,dy=4,slot=1": {
+   "pos_n": 7,
+   "neg_n": 198,
+   "groups": 2,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [],
+    "B": [
+     {
+      "R": -3044,
+      "pos": 0.857,
+      "neg": 0.04
+     }
+    ],
+    "C": []
+   }
+  },
+  "C4,I=3,src=LE_BUFFER,dx=1,dy=-1,slot=2": {
+   "pos_n": 7,
+   "neg_n": 192,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4050,
+      "pos": 0.857,
+      "neg": 0.073
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=13,src=LE_BUFFER,dx=1,dy=4,slot=1": {
+   "pos_n": 7,
+   "neg_n": 199,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 565,
+      "pos": 0.857,
+      "neg": 0.07
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=1,src=LE_BUFFER,dx=1,dy=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 201,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": -6525,
+      "pos": 0.857,
+      "neg": 0.07
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=1,src=C4,dx=0,dy=-4,slot=0": {
+   "pos_n": 14,
+   "neg_n": 102,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "ygroup",
+   "pattern": {
+    "A": [
+     {
+      "R": 3919,
+      "pos": 1.0,
+      "neg": 0.0
+     },
+     {
+      "R": 4550,
+      "pos": 1.0,
+      "neg": 0.0
+     }
+    ],
+    "B": [
+     {
+      "R": 3934,
+      "pos": 1.0,
+      "neg": 0.0
+     },
+     {
+      "R": 4565,
+      "pos": 1.0,
+      "neg": 0.0
+     }
+    ],
+    "C": [
+     {
+      "R": 3847,
+      "pos": 0.929,
+      "neg": 0.039,
+      "bp": 3
+     }
+    ]
    }
   }
  }

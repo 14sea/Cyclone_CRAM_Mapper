@@ -57,6 +57,7 @@ Output: results/c4_pip_pattern_table.json
 """
 import os
 import sys
+import glob
 import json
 import sqlite3
 import argparse
@@ -75,6 +76,16 @@ SB = bitstream._C4_SLOT_BASE
 DB = os.path.join(REPO, 'results/ep4ce6_bitdb.sqlite')
 OUT = os.path.join(REPO, 'results/c4_pip_pattern_table.json')
 POS_MIN, NEG_MAX, MIN_N = 0.84, 0.08, 7
+# MIN_N_MG: minimum instances for a MULTI-group (>=2 Y-group) class.
+# EXPERIMENT 2026-07-07: tried MIN_N_MG=4 to unlock the NEORV32
+# I=15<-R4 dy4 pips (present across groups 2..6 but only 4-6 per
+# (I,src,dx,slot)).  RESULT = NET NEGATIVE: n=4 overfits (candidates
+# at out-of-range R=13336/-781, all pos=1.0 by coincidence), the class
+# count ballooned 88->179, corpus holdout cell-TP fell 68%->49%, and
+# the target I=15 classes STILL did not transfer.  Kept at 7 (no
+# relaxation): thin multi-group data needs real new compiles, not a
+# lower bar.  Memo: c4_ygroup_diversity_2026_07_07.
+MIN_N_MG = MIN_N
 R_LO, R_HI = -7350, 14700
 
 
@@ -190,6 +201,34 @@ def load_corpus():
                    {eid: cells_by_bp(cs) for eid, cs in cells.items()})
 
 
+def load_builddir(name, subdir):
+    """Mining leg from a two-LUT compile directory (wires.json + cells.json
+    per build, ctx = build tag).  Used for the targeted Y-group diversity
+    campaign (tmp/c4_ygroup) — a NEW dataset, disjoint from the
+    corpus/leftward/fresh HOLDOUT sets."""
+    root = os.path.join(REPO, subdir)
+    inst = collections.defaultdict(set)
+    winst = collections.defaultdict(set)
+    cbp = {}
+    nb = 0
+    for fn in glob.glob(os.path.join(root, '*.wires.json')):
+        cf = fn.replace('.wires.json', '.cells.json')
+        if not os.path.exists(cf):
+            continue
+        tag = os.path.basename(fn)[:-11]
+        seq = json.load(open(fn))
+        cells = set(map(tuple, json.load(open(cf))))
+        cbp[tag] = cells_by_bp(cells)
+        i2, w2 = instances_dy(zip(seq, seq[1:]), tag)
+        for k, v in i2.items():
+            inst[k] |= v
+        for k, v in w2.items():
+            winst[k] |= v
+        nb += 1
+    print(f"{name}: {nb} builds")
+    return Dataset(name, dict(inst), dict(winst), cbp)
+
+
 def scan(ds, pos, neg, family, pos_min=POS_MIN, neg_max=NEG_MAX):
     """All (R[, bp]) passing discrimination for one family."""
     def addr(x, g, bpy, R, bp_fix):
@@ -242,7 +281,12 @@ def dedupe_c(a_cells, c_cells, pos):
 
 
 def calibrate(ds):
-    ok = 0
+    """Verify the KNOWN C4 I=0 <- LE_BUFFER dx=0 law (R=1519+SB[s]) is
+    recovered on every slot the dataset has enough data for.  A slot
+    with <6 instances is UNTESTABLE (skipped), not a failure — the
+    targeted downward campaigns legitimately carry few I=0 upward pips.
+    Fails only on an actual misrecovery, or if NO slot is testable."""
+    testable = ok = 0
     for s in (1, 2):
         # dy-pooled: merge all dy variants of C4 I=0 <- LE_BUFFER dx=0
         # (the known law is dy-independent for I=0 self-column drivers)
@@ -254,6 +298,7 @@ def calibrate(ds):
         neg -= pos
         if len(pos) < 6:
             continue
+        testable += 1
         # relaxed thresholds for the KNOWN law (NEORV32 slot1 sits at
         # pos .83 / neg .125 — same values pip_voting_neorv32 gates on)
         found = scan(ds, pos, neg, 'A', pos_min=0.80, neg_max=0.15)
@@ -261,15 +306,27 @@ def calibrate(ds):
         if any(abs(r['R'] - true_r) <= 1 for r in found):
             ok += 1
             print(f"{ds.name} calibration slot {s}: true R={true_r} recovered OK")
-    if ok < 2:
-        sys.exit(f"CALIBRATION FAILED on {ds.name} — do not trust output")
+        else:
+            print(f"{ds.name} calibration slot {s}: MISRECOVERED (true {true_r})")
+    if testable == 0 or ok < testable:
+        sys.exit(f"CALIBRATION FAILED on {ds.name} "
+                 f"({ok}/{testable} testable slots) — do not trust output")
+
+
+def n_groups(pos):
+    return len({g for _, _, g, _ in pos})
+
+
+def eligible(pos):
+    n, g = len(pos), n_groups(pos)
+    return n >= MIN_N or (n >= MIN_N_MG and g >= 2)
 
 
 def mine(ds):
     calibrate(ds)
     results = {}
     keys = sorted((k for k in ds.inst if k[0] == 'C4' and k[1] != 0
-                   and len(ds.inst[k]) >= MIN_N),
+                   and eligible(ds.inst[k])),
                   key=lambda k: -len(ds.inst[k]))
     for key in keys:
         t, i, pt, dx, dy, s = key
@@ -292,18 +349,36 @@ def mine(ds):
     return results
 
 
+def merge_into(merged, new):
+    """Conflict rule: keep the entry with MORE Y-groups (better A/B/C
+    disambiguation); tie -> non-ambiguous wins; then last-writer.  This
+    lets the targeted ygroup diversity supersede a single-group corpus
+    class WITHOUT clobbering a better-sampled one."""
+    for name, ent in new.items():
+        old = merged.get(name)
+        if old is None:
+            merged[name] = ent
+            continue
+        if (ent['groups'], not ent['ambiguous_geom']) >= \
+           (old['groups'], not old['ambiguous_geom']):
+            merged[name] = ent
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--data', choices=['neorv32', 'corpus', 'both'],
-                    default='both')
+    ap.add_argument('--data', choices=['neorv32', 'corpus', 'ygroup', 'both',
+                                       'all'], default='all')
     args = ap.parse_args()
 
     merged = {}
-    if args.data in ('corpus', 'both'):
-        merged.update(mine(load_corpus()))
-    if args.data in ('neorv32', 'both'):
-        # neorv32 wins on conflict: its negatives saw far more wire diversity
-        merged.update(mine(load_neorv32()))
+    if args.data in ('corpus', 'both', 'all'):
+        merge_into(merged, mine(load_corpus()))
+    if args.data in ('neorv32', 'both', 'all'):
+        merge_into(merged, mine(load_neorv32()))
+    if args.data in ('ygroup', 'all'):
+        # targeted downward Y-group diversity campaign (tmp/c4_ygroup);
+        # disjoint from the corpus/leftward/fresh HOLDOUT sets
+        merge_into(merged, mine(load_builddir('ygroup', 'tmp/c4_ygroup')))
 
     with open(OUT, 'w') as f:
         json.dump({
