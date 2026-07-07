@@ -12,25 +12,30 @@
  },
  "mining_data": "both",
  "classes": {
-  "C4,I=1,src=LE_BUFFER,dx=1,slot=2": {
-   "pos_n": 7,
-   "neg_n": 121,
-   "groups": 3,
+  "C4,I=1,src=C4,dx=0,dy=-4,slot=2": {
+   "pos_n": 46,
+   "neg_n": 554,
+   "groups": 2,
    "ambiguous_geom": false,
-   "mined_from": "neorv32",
+   "mined_from": "corpus",
    "pattern": {
     "A": [
      {
-      "R": 4062,
-      "pos": 1.0,
-      "neg": 0.041
+      "R": 3852,
+      "pos": 0.913,
+      "neg": 0.02
+     },
+     {
+      "R": 4483,
+      "pos": 0.913,
+      "neg": 0.029
      }
     ],
     "B": [],
     "C": []
    }
   },
-  "C4,I=12,src=LE_BUFFER,dx=1,slot=2": {
+  "C4,I=12,src=LE_BUFFER,dx=1,dy=4,slot=2": {
    "pos_n": 42,
    "neg_n": 618,
    "groups": 2,
@@ -67,7 +72,7 @@
     ]
    }
   },
-  "C4,I=1,src=LE_BUFFER,dx=1,slot=0": {
+  "C4,I=1,src=LE_BUFFER,dx=1,dy=-1,slot=0": {
    "pos_n": 41,
    "neg_n": 1415,
    "groups": 3,
@@ -95,7 +100,84 @@
     "C": []
    }
   },
-  "C4,I=15,src=R4,dx=1,slot=0": {
+  "C4,I=1,src=LE_BUFFER,dx=1,dy=-1,slot=2": {
+   "pos_n": 7,
+   "neg_n": 121,
+   "groups": 3,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4062,
+      "pos": 1.0,
+      "neg": 0.041
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=2,src=C16,dx=0,dy=-5,slot=0": {
+   "pos_n": 38,
+   "neg_n": 1547,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 4203,
+      "pos": 0.947,
+      "neg": 0.004
+     },
+     {
+      "R": 3993,
+      "pos": 0.947,
+      "neg": 0.007
+     }
+    ],
+    "B": [
+     {
+      "R": 4206,
+      "pos": 0.947,
+      "neg": 0.004
+     },
+     {
+      "R": 3996,
+      "pos": 0.947,
+      "neg": 0.006
+     }
+    ],
+    "C": [
+     {
+      "R": 2475,
+      "pos": 0.947,
+      "neg": 0.0,
+      "bp": 2
+     },
+     {
+      "R": 3134,
+      "pos": 0.947,
+      "neg": 0.001,
+      "bp": 2
+     },
+     {
+      "R": 2387,
+      "pos": 0.895,
+      "neg": 0.025,
+      "bp": 4
+     },
+     {
+      "R": 2980,
+      "pos": 0.895,
+      "neg": 0.028,
+      "bp": 5
+     }
+    ]
+   }
+  },
+  "C4,I=15,src=R4,dx=1,dy=4,slot=0": {
    "pos_n": 38,
    "neg_n": 1498,
    "groups": 1,
@@ -126,7 +208,7 @@
     ]
    }
   },
-  "C4,I=15,src=R24,dx=-1,slot=0": {
+  "C4,I=15,src=R24,dx=-1,dy=4,slot=0": {
    "pos_n": 38,
    "neg_n": 1499,
    "groups": 1,
@@ -187,7 +269,7 @@
     ]
    }
   },
-  "C4,I=15,src=C4,dx=0,slot=0": {
+  "C4,I=15,src=C4,dx=0,dy=3,slot=0": {
    "pos_n": 38,
    "neg_n": 1500,
    "groups": 1,
@@ -258,7 +340,7 @@
     ]
    }
   },
-  "C4,I=3,src=R24,dx=1,slot=2": {
+  "C4,I=3,src=R24,dx=1,dy=-1,slot=2": {
    "pos_n": 37,
    "neg_n": 638,
    "groups": 1,
@@ -283,7 +365,7 @@
     ]
    }
   },
-  "C4,I=17,src=GEN_CORE_BUF,dx=1,slot=0": {
+  "C4,I=17,src=GEN_CORE_BUF,dx=1,dy=4,slot=0": {
    "pos_n": 35,
    "neg_n": 1574,
    "groups": 1,
@@ -314,7 +396,7 @@
     ]
    }
   },
-  "C4,I=16,src=R4,dx=1,slot=0": {
+  "C4,I=16,src=R4,dx=1,dy=4,slot=0": {
    "pos_n": 35,
    "neg_n": 1552,
    "groups": 1,
@@ -351,7 +433,7 @@
     ]
    }
   },
-  "C4,I=14,src=C4,dx=0,slot=0": {
+  "C4,I=14,src=C4,dx=0,dy=3,slot=0": {
    "pos_n": 34,
    "neg_n": 1436,
    "groups": 1,
@@ -398,32 +480,7 @@
     ]
    }
   },
-  "C4,I=3,src=C4,dx=0,slot=0": {
-   "pos_n": 22,
-   "neg_n": 1592,
-   "groups": 2,
-   "ambiguous_geom": false,
-   "mined_from": "corpus",
-   "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
-     {
-      "R": 3562,
-      "pos": 0.864,
-      "neg": 0.0,
-      "bp": 2
-     },
-     {
-      "R": 3772,
-      "pos": 0.864,
-      "neg": 0.0,
-      "bp": 2
-     }
-    ]
-   }
-  },
-  "C4,I=9,src=C4,dx=0,slot=0": {
+  "C4,I=9,src=C4,dx=0,dy=-4,slot=0": {
    "pos_n": 19,
    "neg_n": 1586,
    "groups": 1,
@@ -464,7 +521,74 @@
     ]
    }
   },
-  "C4,I=1,src=R24,dx=-2,slot=2": {
+  "C4,I=2,src=C16,dx=0,dy=-11,slot=0": {
+   "pos_n": 17,
+   "neg_n": 1547,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 3914,
+      "pos": 0.882,
+      "neg": 0.002
+     },
+     {
+      "R": 3955,
+      "pos": 0.882,
+      "neg": 0.003
+     },
+     {
+      "R": 4543,
+      "pos": 0.882,
+      "neg": 0.003
+     },
+     {
+      "R": 4585,
+      "pos": 0.882,
+      "neg": 0.005
+     }
+    ],
+    "B": [
+     {
+      "R": 3970,
+      "pos": 0.882,
+      "neg": 0.003
+     },
+     {
+      "R": 4558,
+      "pos": 0.882,
+      "neg": 0.005
+     },
+     {
+      "R": 4600,
+      "pos": 0.882,
+      "neg": 0.005
+     },
+     {
+      "R": 3929,
+      "pos": 0.882,
+      "neg": 0.021
+     }
+    ],
+    "C": [
+     {
+      "R": 9197,
+      "pos": 0.941,
+      "neg": 0.013,
+      "bp": 5
+     },
+     {
+      "R": 9827,
+      "pos": 0.941,
+      "neg": 0.013,
+      "bp": 5
+     }
+    ]
+   }
+  },
+  "C4,I=1,src=R24,dx=-2,dy=-1,slot=2": {
    "pos_n": 17,
    "neg_n": 554,
    "groups": 1,
@@ -501,7 +625,78 @@
     ]
    }
   },
-  "C4,I=14,src=R24,dx=-10,slot=0": {
+  "C4,I=5,src=C16,dx=0,dy=-5,slot=0": {
+   "pos_n": 16,
+   "neg_n": 1598,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": -3151,
+      "pos": 0.875,
+      "neg": 0.034
+     },
+     {
+      "R": -3360,
+      "pos": 0.875,
+      "neg": 0.036
+     }
+    ],
+    "B": [
+     {
+      "R": -3357,
+      "pos": 0.875,
+      "neg": 0.033
+     },
+     {
+      "R": -3148,
+      "pos": 0.875,
+      "neg": 0.034
+     }
+    ],
+    "C": [
+     {
+      "R": -3422,
+      "pos": 0.938,
+      "neg": 0.031,
+      "bp": 3
+     },
+     {
+      "R": -2791,
+      "pos": 0.938,
+      "neg": 0.031,
+      "bp": 3
+     },
+     {
+      "R": -2864,
+      "pos": 0.938,
+      "neg": 0.034,
+      "bp": 4
+     },
+     {
+      "R": -3495,
+      "pos": 0.938,
+      "neg": 0.035,
+      "bp": 4
+     },
+     {
+      "R": -3771,
+      "pos": 0.875,
+      "neg": 0.031,
+      "bp": 2
+     },
+     {
+      "R": -3561,
+      "pos": 0.875,
+      "neg": 0.031,
+      "bp": 2
+     }
+    ]
+   }
+  },
+  "C4,I=14,src=R24,dx=-10,dy=4,slot=0": {
    "pos_n": 16,
    "neg_n": 1434,
    "groups": 1,
@@ -526,7 +721,86 @@
     ]
    }
   },
-  "C4,I=15,src=R24,dx=-2,slot=0": {
+  "C4,I=12,src=C4,dx=0,dy=4,slot=2": {
+   "pos_n": 16,
+   "neg_n": 619,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 4202,
+      "pos": 1.0,
+      "neg": 0.003
+     },
+     {
+      "R": 3993,
+      "pos": 1.0,
+      "neg": 0.01
+     },
+     {
+      "R": 2470,
+      "pos": 1.0,
+      "neg": 0.016
+     },
+     {
+      "R": 3125,
+      "pos": 1.0,
+      "neg": 0.021
+     }
+    ],
+    "B": [
+     {
+      "R": 2470,
+      "pos": 1.0,
+      "neg": 0.0
+     },
+     {
+      "R": 3125,
+      "pos": 1.0,
+      "neg": 0.002
+     },
+     {
+      "R": 3993,
+      "pos": 1.0,
+      "neg": 0.002
+     },
+     {
+      "R": 4202,
+      "pos": 1.0,
+      "neg": 0.002
+     }
+    ],
+    "C": [
+     {
+      "R": 2526,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 4
+     },
+     {
+      "R": 2916,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 4
+     },
+     {
+      "R": 3858,
+      "pos": 1.0,
+      "neg": 0.002,
+      "bp": 4
+     },
+     {
+      "R": 4489,
+      "pos": 1.0,
+      "neg": 0.005,
+      "bp": 4
+     }
+    ]
+   }
+  },
+  "C4,I=15,src=R24,dx=-2,dy=4,slot=0": {
    "pos_n": 16,
    "neg_n": 1500,
    "groups": 1,
@@ -569,7 +843,7 @@
     ]
    }
   },
-  "C4,I=4,src=R24,dx=-6,slot=2": {
+  "C4,I=4,src=R24,dx=-6,dy=-1,slot=2": {
    "pos_n": 16,
    "neg_n": 715,
    "groups": 1,
@@ -616,7 +890,7 @@
     ]
    }
   },
-  "C4,I=6,src=R24,dx=-23,slot=0": {
+  "C4,I=6,src=R24,dx=-23,dy=-1,slot=0": {
    "pos_n": 15,
    "neg_n": 1611,
    "groups": 1,
@@ -699,7 +973,7 @@
     ]
    }
   },
-  "C4,I=8,src=C4,dx=0,slot=2": {
+  "C4,I=8,src=C4,dx=0,dy=-4,slot=2": {
    "pos_n": 15,
    "neg_n": 712,
    "groups": 1,
@@ -736,7 +1010,78 @@
     ]
    }
   },
-  "C4,I=10,src=C4,dx=0,slot=1": {
+  "C4,I=3,src=C4,dx=0,dy=-4,slot=0": {
+   "pos_n": 14,
+   "neg_n": 1592,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 3908,
+      "pos": 1.0,
+      "neg": 0.003
+     },
+     {
+      "R": 4538,
+      "pos": 1.0,
+      "neg": 0.003
+     }
+    ],
+    "B": [
+     {
+      "R": 3920,
+      "pos": 1.0,
+      "neg": 0.003
+     },
+     {
+      "R": 4550,
+      "pos": 1.0,
+      "neg": 0.004
+     }
+    ],
+    "C": [
+     {
+      "R": 3562,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 2
+     },
+     {
+      "R": 3772,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 2
+     },
+     {
+      "R": 3835,
+      "pos": 0.857,
+      "neg": 0.002,
+      "bp": 4
+     }
+    ]
+   }
+  },
+  "C4,I=1,src=C4,dx=0,dy=-3,slot=2": {
+   "pos_n": 14,
+   "neg_n": 554,
+   "groups": 3,
+   "ambiguous_geom": false,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 4482,
+      "pos": 0.929,
+      "neg": 0.002
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=10,src=C4,dx=0,dy=-4,slot=1": {
    "pos_n": 13,
    "neg_n": 725,
    "groups": 2,
@@ -759,7 +1104,7 @@
     "C": []
    }
   },
-  "C4,I=11,src=R4,dx=0,slot=0": {
+  "C4,I=11,src=R4,dx=0,dy=-1,slot=0": {
    "pos_n": 13,
    "neg_n": 1611,
    "groups": 1,
@@ -816,7 +1161,7 @@
     ]
    }
   },
-  "C4,I=29,src=R24,dx=-7,slot=1": {
+  "C4,I=29,src=R24,dx=-7,dy=8,slot=1": {
    "pos_n": 13,
    "neg_n": 732,
    "groups": 1,
@@ -841,7 +1186,7 @@
     ]
    }
   },
-  "C4,I=12,src=C16,dx=0,slot=0": {
+  "C4,I=12,src=C16,dx=0,dy=-1,slot=0": {
    "pos_n": 13,
    "neg_n": 1293,
    "groups": 1,
@@ -866,7 +1211,7 @@
     ]
    }
   },
-  "C4,I=10,src=R4,dx=1,slot=2": {
+  "C4,I=10,src=R4,dx=1,dy=-1,slot=2": {
    "pos_n": 12,
    "neg_n": 706,
    "groups": 1,
@@ -897,7 +1242,7 @@
     ]
    }
   },
-  "C4,I=23,src=C16,dx=0,slot=0": {
+  "C4,I=23,src=C16,dx=0,dy=-8,slot=0": {
    "pos_n": 12,
    "neg_n": 1612,
    "groups": 1,
@@ -934,7 +1279,7 @@
     ]
    }
   },
-  "C4,I=22,src=R24,dx=-6,slot=0": {
+  "C4,I=22,src=R24,dx=-6,dy=4,slot=0": {
    "pos_n": 12,
    "neg_n": 1606,
    "groups": 1,
@@ -971,7 +1316,7 @@
     ]
    }
   },
-  "C4,I=7,src=R4,dx=-2,slot=0": {
+  "C4,I=7,src=R4,dx=-2,dy=-1,slot=0": {
    "pos_n": 11,
    "neg_n": 1602,
    "groups": 3,
@@ -989,7 +1334,7 @@
     "C": []
    }
   },
-  "C4,I=17,src=R24,dx=-20,slot=0": {
+  "C4,I=17,src=R24,dx=-20,dy=4,slot=0": {
    "pos_n": 10,
    "neg_n": 1574,
    "groups": 1,
@@ -1044,7 +1389,7 @@
     ]
    }
   },
-  "C4,I=10,src=C4,dx=0,slot=0": {
+  "C4,I=10,src=C4,dx=0,dy=-4,slot=0": {
    "pos_n": 10,
    "neg_n": 1603,
    "groups": 2,
@@ -1067,7 +1412,7 @@
     "C": []
    }
   },
-  "C4,I=3,src=R4,dx=-2,slot=1": {
+  "C4,I=3,src=R4,dx=-2,dy=-1,slot=1": {
    "pos_n": 10,
    "neg_n": 734,
    "groups": 1,
@@ -1138,7 +1483,78 @@
     ]
    }
   },
-  "C4,I=2,src=C4,dx=0,slot=0": {
+  "C4,I=3,src=C4,dx=0,dy=-4,slot=2": {
+   "pos_n": 10,
+   "neg_n": 648,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 3841,
+      "pos": 1.0,
+      "neg": 0.002
+     },
+     {
+      "R": 4471,
+      "pos": 1.0,
+      "neg": 0.011
+     }
+    ],
+    "B": [
+     {
+      "R": 3847,
+      "pos": 1.0,
+      "neg": 0.002
+     },
+     {
+      "R": 4477,
+      "pos": 1.0,
+      "neg": 0.011
+     }
+    ],
+    "C": [
+     {
+      "R": 3568,
+      "pos": 1.0,
+      "neg": 0.002,
+      "bp": 2
+     },
+     {
+      "R": 4185,
+      "pos": 1.0,
+      "neg": 0.002,
+      "bp": 6
+     },
+     {
+      "R": 3914,
+      "pos": 1.0,
+      "neg": 0.005,
+      "bp": 3
+     },
+     {
+      "R": 4544,
+      "pos": 1.0,
+      "neg": 0.005,
+      "bp": 3
+     },
+     {
+      "R": 3975,
+      "pos": 1.0,
+      "neg": 0.008,
+      "bp": 6
+     },
+     {
+      "R": 3778,
+      "pos": 1.0,
+      "neg": 0.032,
+      "bp": 2
+     }
+    ]
+   }
+  },
+  "C4,I=2,src=C4,dx=0,dy=-3,slot=0": {
    "pos_n": 9,
    "neg_n": 1547,
    "groups": 1,
@@ -1169,7 +1585,7 @@
     ]
    }
   },
-  "C4,I=1,src=R4,dx=-2,slot=2": {
+  "C4,I=1,src=R4,dx=-2,dy=-1,slot=2": {
    "pos_n": 9,
    "neg_n": 554,
    "groups": 2,
@@ -1192,7 +1608,7 @@
     "C": []
    }
   },
-  "C4,I=21,src=R24,dx=-10,slot=1": {
+  "C4,I=21,src=R24,dx=-10,dy=4,slot=1": {
    "pos_n": 9,
    "neg_n": 731,
    "groups": 1,
@@ -1235,7 +1651,7 @@
     ]
    }
   },
-  "C4,I=14,src=R24,dx=-23,slot=0": {
+  "C4,I=14,src=R24,dx=-23,dy=4,slot=0": {
    "pos_n": 9,
    "neg_n": 1436,
    "groups": 1,
@@ -1290,7 +1706,7 @@
     ]
    }
   },
-  "C4,I=22,src=R4,dx=0,slot=0": {
+  "C4,I=22,src=R4,dx=0,dy=4,slot=0": {
    "pos_n": 9,
    "neg_n": 1606,
    "groups": 1,
@@ -1359,7 +1775,7 @@
     ]
    }
   },
-  "C4,I=1,src=R4,dx=-2,slot=0": {
+  "C4,I=1,src=R4,dx=-2,dy=-1,slot=0": {
    "pos_n": 9,
    "neg_n": 1417,
    "groups": 2,
@@ -1382,7 +1798,25 @@
     "C": []
    }
   },
-  "C4,I=9,src=C4,dx=0,slot=2": {
+  "C4,I=3,src=C4,dx=0,dy=-3,slot=0": {
+   "pos_n": 8,
+   "neg_n": 1592,
+   "groups": 2,
+   "ambiguous_geom": false,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 4328,
+      "pos": 1.0,
+      "neg": 0.001
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=9,src=C4,dx=0,dy=-4,slot=2": {
    "pos_n": 8,
    "neg_n": 707,
    "groups": 1,
@@ -1449,7 +1883,7 @@
     ]
    }
   },
-  "C4,I=8,src=C4,dx=0,slot=1": {
+  "C4,I=8,src=C4,dx=0,dy=-4,slot=1": {
    "pos_n": 8,
    "neg_n": 730,
    "groups": 1,
@@ -1483,7 +1917,56 @@
     "C": []
    }
   },
-  "C4,I=5,src=R24,dx=-12,slot=1": {
+  "C4,I=12,src=LE_BUFFER,dx=0,dy=5,slot=1": {
+   "pos_n": 8,
+   "neg_n": 581,
+   "groups": 1,
+   "ambiguous_geom": true,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [],
+    "B": [],
+    "C": [
+     {
+      "R": -3773,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 2
+     },
+     {
+      "R": -3562,
+      "pos": 1.0,
+      "neg": 0.0,
+      "bp": 2
+     },
+     {
+      "R": 1688,
+      "pos": 1.0,
+      "neg": 0.007,
+      "bp": 2
+     },
+     {
+      "R": 1687,
+      "pos": 1.0,
+      "neg": 0.009,
+      "bp": 2
+     },
+     {
+      "R": 4418,
+      "pos": 1.0,
+      "neg": 0.009,
+      "bp": 2
+     },
+     {
+      "R": 3998,
+      "pos": 1.0,
+      "neg": 0.014,
+      "bp": 2
+     }
+    ]
+   }
+  },
+  "C4,I=5,src=R24,dx=-12,dy=-1,slot=1": {
    "pos_n": 7,
    "neg_n": 736,
    "groups": 1,
@@ -1572,7 +2055,7 @@
     ]
    }
   },
-  "C4,I=8,src=R4,dx=-2,slot=1": {
+  "C4,I=8,src=R4,dx=-2,dy=-1,slot=1": {
    "pos_n": 7,
    "neg_n": 730,
    "groups": 1,
@@ -1625,7 +2108,7 @@
     ]
    }
   },
-  "C4,I=2,src=R4,dx=-2,slot=0": {
+  "C4,I=2,src=R4,dx=-2,dy=-1,slot=0": {
    "pos_n": 7,
    "neg_n": 1547,
    "groups": 2,
@@ -1648,25 +2131,7 @@
     "C": []
    }
   },
-  "C4,I=3,src=C16,dx=0,slot=0": {
-   "pos_n": 7,
-   "neg_n": 1592,
-   "groups": 2,
-   "ambiguous_geom": false,
-   "mined_from": "corpus",
-   "pattern": {
-    "A": [
-     {
-      "R": 4538,
-      "pos": 1.0,
-      "neg": 0.003
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=9,src=R4,dx=-1,slot=1": {
+  "C4,I=9,src=R4,dx=-1,dy=-1,slot=1": {
    "pos_n": 7,
    "neg_n": 728,
    "groups": 1,
@@ -1743,7 +2208,7 @@
     ]
    }
   },
-  "C4,I=9,src=R4,dx=-1,slot=2": {
+  "C4,I=9,src=R4,dx=-1,dy=-1,slot=2": {
    "pos_n": 7,
    "neg_n": 707,
    "groups": 1,
@@ -1798,7 +2263,7 @@
     ]
    }
   },
-  "C4,I=10,src=R4,dx=-1,slot=0": {
+  "C4,I=10,src=R4,dx=-1,dy=-1,slot=0": {
    "pos_n": 7,
    "neg_n": 1603,
    "groups": 2,
@@ -1826,7 +2291,25 @@
     "C": []
    }
   },
-  "C4,I=8,src=LE_BUFFER,dx=0,slot=0": {
+  "C4,I=1,src=C4,dx=0,dy=-3,slot=1": {
+   "pos_n": 7,
+   "neg_n": 643,
+   "groups": 3,
+   "ambiguous_geom": false,
+   "mined_from": "corpus",
+   "pattern": {
+    "A": [
+     {
+      "R": 4619,
+      "pos": 1.0,
+      "neg": 0.0
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=8,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
    "pos_n": 17,
    "neg_n": 124,
    "groups": 6,
@@ -1844,7 +2327,7 @@
     "C": []
    }
   },
-  "C4,I=9,src=LE_BUFFER,dx=0,slot=1": {
+  "C4,I=9,src=LE_BUFFER,dx=0,dy=-1,slot=1": {
    "pos_n": 14,
    "neg_n": 127,
    "groups": 6,
@@ -1862,7 +2345,7 @@
     "C": []
    }
   },
-  "C4,I=10,src=R4,dx=1,slot=1": {
+  "C4,I=10,src=R4,dx=1,dy=-1,slot=1": {
    "pos_n": 11,
    "neg_n": 131,
    "groups": 4,
@@ -1885,7 +2368,7 @@
     "C": []
    }
   },
-  "C4,I=5,src=LE_BUFFER,dx=0,slot=0": {
+  "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
    "pos_n": 11,
    "neg_n": 133,
    "groups": 6,
@@ -1908,7 +2391,7 @@
     "C": []
    }
   },
-  "C4,I=2,src=R4,dx=0,slot=2": {
+  "C4,I=2,src=R4,dx=0,dy=-1,slot=2": {
    "pos_n": 9,
    "neg_n": 120,
    "groups": 5,
@@ -1926,25 +2409,7 @@
     "C": []
    }
   },
-  "C4,I=7,src=LE_BUFFER,dx=0,slot=0": {
-   "pos_n": 9,
-   "neg_n": 134,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4300,
-      "pos": 0.889,
-      "neg": 0.037
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=5,src=LE_BUFFER,dx=0,slot=2": {
+  "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=2": {
    "pos_n": 9,
    "neg_n": 120,
    "groups": 5,
@@ -1962,7 +2427,43 @@
     "C": []
    }
   },
-  "C4,I=5,src=LE_BUFFER,dx=0,slot=1": {
+  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 9,
+   "neg_n": 134,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4300,
+      "pos": 0.889,
+      "neg": 0.037
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=11,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 8,
+   "neg_n": 132,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4277,
+      "pos": 0.875,
+      "neg": 0.068
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=5,src=LE_BUFFER,dx=0,dy=-1,slot=1": {
    "pos_n": 8,
    "neg_n": 135,
    "groups": 5,
@@ -1985,50 +2486,44 @@
     "C": []
    }
   },
-  "C4,I=11,src=LE_BUFFER,dx=0,slot=0": {
-   "pos_n": 8,
-   "neg_n": 132,
+  "C4,I=6,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 136,
    "groups": 5,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
     "A": [
      {
-      "R": 4277,
-      "pos": 0.875,
-      "neg": 0.068
+      "R": 4304,
+      "pos": 1.0,
+      "neg": 0.029
      }
     ],
     "B": [],
     "C": []
    }
   },
-  "C4,I=11,src=R4,dx=1,slot=0": {
+  "C4,I=16,src=R4,dx=-2,dy=4,slot=2": {
    "pos_n": 7,
-   "neg_n": 133,
+   "neg_n": 122,
    "groups": 4,
    "ambiguous_geom": false,
    "mined_from": "neorv32",
    "pattern": {
-    "A": [
-     {
-      "R": 4067,
-      "pos": 0.857,
-      "neg": 0.038
-     }
-    ],
+    "A": [],
     "B": [],
     "C": [
      {
-      "R": -3501,
+      "R": -7291,
       "pos": 0.857,
-      "neg": 0.075,
-      "bp": 4
+      "neg": 0.066,
+      "bp": 5
      }
     ]
    }
   },
-  "C4,I=15,src=LE_BUFFER,dx=0,slot=2": {
+  "C4,I=15,src=LE_BUFFER,dx=0,dy=4,slot=2": {
    "pos_n": 7,
    "neg_n": 122,
    "groups": 3,
@@ -2053,62 +2548,7 @@
     ]
    }
   },
-  "C4,I=6,src=LE_BUFFER,dx=0,slot=0": {
-   "pos_n": 7,
-   "neg_n": 136,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4304,
-      "pos": 1.0,
-      "neg": 0.029
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=7,src=LE_BUFFER,dx=0,slot=1": {
-   "pos_n": 7,
-   "neg_n": 136,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4370,
-      "pos": 1.0,
-      "neg": 0.029
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=23,src=R4,dx=1,slot=1": {
-   "pos_n": 7,
-   "neg_n": 134,
-   "groups": 2,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
-     {
-      "R": 6990,
-      "pos": 0.857,
-      "neg": 0.075,
-      "bp": 4
-     }
-    ]
-   }
-  },
-  "C4,I=10,src=LE_BUFFER,dx=0,slot=0": {
+  "C4,I=10,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
    "pos_n": 7,
    "neg_n": 137,
    "groups": 5,
@@ -2133,56 +2573,7 @@
     ]
    }
   },
-  "C4,I=9,src=LE_BUFFER,dx=0,slot=0": {
-   "pos_n": 7,
-   "neg_n": 137,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4288,
-      "pos": 0.857,
-      "neg": 0.058
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=1,src=C4,dx=0,slot=1": {
-   "pos_n": 7,
-   "neg_n": 134,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
-     {
-      "R": 8774,
-      "pos": 0.857,
-      "neg": 0.037,
-      "bp": 2
-     },
-     {
-      "R": 7569,
-      "pos": 0.857,
-      "neg": 0.075,
-      "bp": 2
-     },
-     {
-      "R": 7989,
-      "pos": 0.857,
-      "neg": 0.075,
-      "bp": 2
-     }
-    ]
-   }
-  },
-  "C4,I=3,src=LE_BUFFER,dx=1,slot=2": {
+  "C4,I=3,src=LE_BUFFER,dx=1,dy=-1,slot=2": {
    "pos_n": 7,
    "neg_n": 122,
    "groups": 4,
@@ -2200,62 +2591,7 @@
     "C": []
    }
   },
-  "C4,I=16,src=R4,dx=-2,slot=2": {
-   "pos_n": 7,
-   "neg_n": 122,
-   "groups": 4,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [],
-    "B": [],
-    "C": [
-     {
-      "R": -7291,
-      "pos": 0.857,
-      "neg": 0.066,
-      "bp": 5
-     }
-    ]
-   }
-  },
-  "C4,I=7,src=R4,dx=1,slot=1": {
-   "pos_n": 7,
-   "neg_n": 136,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 3949,
-      "pos": 0.857,
-      "neg": 0.066
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=8,src=R4,dx=-1,slot=1": {
-   "pos_n": 7,
-   "neg_n": 135,
-   "groups": 5,
-   "ambiguous_geom": false,
-   "mined_from": "neorv32",
-   "pattern": {
-    "A": [
-     {
-      "R": 4364,
-      "pos": 0.857,
-      "neg": 0.03
-     }
-    ],
-    "B": [],
-    "C": []
-   }
-  },
-  "C4,I=2,src=R4,dx=0,slot=0": {
+  "C4,I=2,src=R4,dx=0,dy=-1,slot=0": {
    "pos_n": 7,
    "neg_n": 136,
    "groups": 5,
@@ -2278,7 +2614,32 @@
     "C": []
    }
   },
-  "C4,I=10,src=R4,dx=-2,slot=2": {
+  "C4,I=11,src=R4,dx=1,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 133,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4067,
+      "pos": 0.857,
+      "neg": 0.038
+     }
+    ],
+    "B": [],
+    "C": [
+     {
+      "R": -3501,
+      "pos": 0.857,
+      "neg": 0.075,
+      "bp": 4
+     }
+    ]
+   }
+  },
+  "C4,I=10,src=R4,dx=-2,dy=-1,slot=2": {
    "pos_n": 7,
    "neg_n": 122,
    "groups": 4,
@@ -2295,6 +2656,97 @@
       "bp": 3
      }
     ]
+   }
+  },
+  "C4,I=23,src=R4,dx=1,dy=4,slot=1": {
+   "pos_n": 7,
+   "neg_n": 134,
+   "groups": 2,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [],
+    "B": [],
+    "C": [
+     {
+      "R": 6990,
+      "pos": 0.857,
+      "neg": 0.075,
+      "bp": 4
+     }
+    ]
+   }
+  },
+  "C4,I=9,src=LE_BUFFER,dx=0,dy=-1,slot=0": {
+   "pos_n": 7,
+   "neg_n": 137,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4288,
+      "pos": 0.857,
+      "neg": 0.058
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=7,src=R4,dx=1,dy=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 3949,
+      "pos": 0.857,
+      "neg": 0.066
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=7,src=LE_BUFFER,dx=0,dy=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 136,
+   "groups": 4,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4370,
+      "pos": 1.0,
+      "neg": 0.029
+     }
+    ],
+    "B": [],
+    "C": []
+   }
+  },
+  "C4,I=8,src=R4,dx=-1,dy=-1,slot=1": {
+   "pos_n": 7,
+   "neg_n": 135,
+   "groups": 5,
+   "ambiguous_geom": false,
+   "mined_from": "neorv32",
+   "pattern": {
+    "A": [
+     {
+      "R": 4364,
+      "pos": 0.857,
+      "neg": 0.03
+     }
+    ],
+    "B": [],
+    "C": []
    }
   }
  }

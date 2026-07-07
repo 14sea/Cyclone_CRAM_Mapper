@@ -1,0 +1,2763 @@
+{
+ "window": 8000,
+ "summary": {
+  "wires_scored": 37,
+  "drv_CONFIG": 49,
+  "drv_DEFAULT": 15,
+  "drv_VARIANT": 15,
+  "wire_HAS_VARIANT": 12,
+  "wire_ONE_DEFAULT": 7,
+  "wire_ALL_CONFIG": 15,
+  "wire_MULTI_DEFAULT": 3
+ },
+ "wires": {
+  "C4_X10_Y10_N0_I12": {
+   "geom": {
+    "x": 10,
+    "y": 10,
+    "I": 12,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 562,
+   "drivers": {
+    "C4_X10_Y13_N0_I12": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4204
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(12, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X10_Y14_N0_I0": {
+     "n_routes": 6,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      1,
+      1,
+      2,
+      1,
+      2,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 2)"
+    }
+   }
+  },
+  "C4_X10_Y11_N0_I11": {
+   "geom": {
+    "x": 10,
+    "y": 11,
+    "I": 11,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 533,
+   "drivers": {
+    "LE_BUFFER_X10_Y10_N0_I29": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      -2650,
+      -1808,
+      -1181,
+      -1179,
+      -759,
+      -550,
+      -341,
+      -131,
+      -130,
+      79,
+      80,
+      709,
+      710,
+      919,
+      920,
+      1550,
+      3857,
+      4487
+     ],
+     "resid_sizes": [
+      18
+     ],
+     "pip_class": "(11, 'LE_BUFFER', 0, 0)"
+    },
+    "LE_BUFFER_X10_Y10_N0_I31": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      -2654,
+      -1812,
+      -1185,
+      -1183,
+      -763,
+      -554,
+      -342,
+      -133,
+      -132,
+      77,
+      78,
+      707,
+      708,
+      917,
+      918,
+      1547,
+      3857,
+      4277
+     ],
+     "resid_sizes": [
+      18
+     ],
+     "pip_class": "(11, 'LE_BUFFER', 0, 0)"
+    }
+   }
+  },
+  "C4_X10_Y3_N0_I12": {
+   "geom": {
+    "x": 10,
+    "y": 3,
+    "I": 12,
+    "group": 0,
+    "slot": 1,
+    "bp": 7
+   },
+   "ctx_size": 72,
+   "drivers": {
+    "C4_X10_Y6_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      -3350,
+      -3139
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "C4_X10_Y7_N0_I12": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      -3350,
+      -3139
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X10_Y7_N0_I0": {
+     "n_routes": 3,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      2,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 1)"
+    }
+   }
+  },
+  "C4_X10_Y6_N0_I12": {
+   "geom": {
+    "x": 10,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 325,
+   "drivers": {
+    "C4_X10_Y10_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "C4_X10_Y9_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X10_Y10_N0_I0": {
+     "n_routes": 3,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 1)"
+    }
+   }
+  },
+  "C4_X11_Y10_N0_I1": {
+   "geom": {
+    "x": 11,
+    "y": 10,
+    "I": 1,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 468,
+   "drivers": {
+    "C4_X11_Y6_N0_I1": {
+     "n_routes": 6,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X12_Y9_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3853,
+      4062,
+      5115,
+      5534,
+      5536,
+      6796,
+      7004,
+      7215,
+      7424,
+      7635,
+      7844
+     ],
+     "resid_sizes": [
+      13,
+      13,
+      12,
+      13,
+      14
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X11_Y14_N0_I1": {
+   "geom": {
+    "x": 11,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 200,
+   "drivers": {
+    "C4_X11_Y10_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X12_Y13_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3920,
+      4129,
+      4764,
+      5602,
+      5603,
+      6654,
+      6863,
+      7071,
+      7281,
+      7282,
+      7491,
+      7492
+     ],
+     "resid_sizes": [
+      16,
+      13,
+      13,
+      16,
+      13
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X11_Y6_N0_I12": {
+   "geom": {
+    "x": 11,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 318,
+   "drivers": {
+    "C4_X11_Y9_N0_I12": {
+     "n_routes": 2,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X12_Y10_N0_I1": {
+     "n_routes": 5,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      3,
+      5,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X12_Y14_N0_I1": {
+   "geom": {
+    "x": 12,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 180,
+   "drivers": {
+    "C4_X12_Y10_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X13_Y13_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3920,
+      4129,
+      4492,
+      4508,
+      4763,
+      4972,
+      6231,
+      6652,
+      6653,
+      6861,
+      6863,
+      7071,
+      7281,
+      7282,
+      7701,
+      7702
+     ],
+     "resid_sizes": [
+      19,
+      18
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X13_Y10_N0_I3": {
+   "geom": {
+    "x": 13,
+    "y": 10,
+    "I": 3,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 234,
+   "drivers": {
+    "C4_X13_Y6_N0_I3": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3841,
+      4471
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(3, 'C4', 0, 2)"
+    },
+    "C4_X13_Y7_N0_I3": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4261
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(3, 'C4', 0, 2)"
+    },
+    "R4_X11_Y9_N0_I3": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3841,
+      4051
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(3, 'R4', -2, 2)"
+    }
+   }
+  },
+  "C4_X13_Y11_N0_I3": {
+   "geom": {
+    "x": 13,
+    "y": 11,
+    "I": 3,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 234,
+   "drivers": {
+    "C4_X13_Y8_N0_I3": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4328
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(3, 'C4', 0, 0)"
+    },
+    "R4_X11_Y10_N0_I3": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3908,
+      4118
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(3, 'R4', -2, 0)"
+    },
+    "R4_X11_Y10_N0_I4": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3907,
+      4118
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(3, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X13_Y11_N0_I7": {
+   "geom": {
+    "x": 13,
+    "y": 11,
+    "I": 7,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 236,
+   "drivers": {
+    "R4_X11_Y10_N0_I10": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4299
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(7, 'R4', -2, 0)"
+    },
+    "R4_X11_Y10_N0_I9": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      4090
+     ],
+     "resid_sizes": [
+      1
+     ],
+     "pip_class": "(7, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X13_Y12_N0_I8": {
+   "geom": {
+    "x": 13,
+    "y": 12,
+    "I": 8,
+    "group": 3,
+    "slot": 1,
+    "bp": 4
+   },
+   "ctx_size": 236,
+   "drivers": {
+    "C4_X13_Y8_N0_I8": {
+     "n_routes": 8,
+     "class": "CONFIG",
+     "iso_R": [
+      3944,
+      4573
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(8, 'C4', 0, 1)"
+    },
+    "R4_X11_Y11_N0_I11": {
+     "n_routes": 7,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(8, 'R4', -2, 1)"
+    }
+   }
+  },
+  "C4_X13_Y14_N0_I3": {
+   "geom": {
+    "x": 13,
+    "y": 14,
+    "I": 3,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 161,
+   "drivers": {
+    "C4_X13_Y10_N0_I3": {
+     "n_routes": 9,
+     "class": "CONFIG",
+     "iso_R": [
+      3908,
+      4538
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(3, 'C4', 0, 0)"
+    },
+    "C4_X13_Y11_N0_I3": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      4328
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(3, 'C4', 0, 0)"
+    }
+   }
+  },
+  "C4_X13_Y7_N0_I1": {
+   "geom": {
+    "x": 13,
+    "y": 7,
+    "I": 1,
+    "group": 1,
+    "slot": 2,
+    "bp": 5
+   },
+   "ctx_size": 227,
+   "drivers": {
+    "C4_X13_Y3_N0_I1": {
+     "n_routes": 6,
+     "class": "CONFIG",
+     "iso_R": [
+      4483
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "R4_X11_Y6_N0_I1": {
+     "n_routes": 7,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'R4', -2, 2)"
+    }
+   }
+  },
+  "C4_X13_Y8_N0_I8": {
+   "geom": {
+    "x": 13,
+    "y": 8,
+    "I": 8,
+    "group": 2,
+    "slot": 0,
+    "bp": 5
+   },
+   "ctx_size": 225,
+   "drivers": {
+    "C4_X13_Y4_N0_I8": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      3874,
+      4503
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(8, 'C4', 0, 0)"
+    },
+    "R4_X11_Y7_N0_I11": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3873,
+      4084
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(8, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X16_Y10_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 10,
+    "I": 1,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 240,
+   "drivers": {
+    "C4_X16_Y6_N0_I1": {
+     "n_routes": 12,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "C4_X16_Y7_N0_I1": {
+     "n_routes": 9,
+     "class": "CONFIG",
+     "iso_R": [
+      4482
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X17_Y9_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3432,
+      3642,
+      3853,
+      4062,
+      5745,
+      6166,
+      6795,
+      7004,
+      7214,
+      7215
+     ],
+     "resid_sizes": [
+      19,
+      15,
+      15,
+      15,
+      15
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X16_Y11_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 11,
+    "I": 1,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 239,
+   "drivers": {
+    "C4_X16_Y8_N0_I1": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      4549
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X17_Y10_N0_I1": {
+     "n_routes": 9,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      17,
+      17,
+      17,
+      19,
+      18,
+      17,
+      0,
+      0,
+      17
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X16_Y13_N0_I12": {
+   "geom": {
+    "x": 16,
+    "y": 13,
+    "I": 12,
+    "group": 3,
+    "slot": 2,
+    "bp": 3
+   },
+   "ctx_size": 236,
+   "drivers": {
+    "LE_BUFFER_X16_Y17_N0_I0": {
+     "n_routes": 11,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      5,
+      7,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 2)"
+    },
+    "LE_BUFFER_X17_Y17_N0_I1": {
+     "n_routes": 12,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      1,
+      1,
+      1,
+      1,
+      7,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X16_Y14_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 224,
+   "drivers": {
+    "C4_X16_Y10_N0_I1": {
+     "n_routes": 25,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X17_Y13_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3229,
+      3649,
+      3920,
+      4129,
+      4322,
+      6022,
+      6652,
+      7071,
+      7282
+     ],
+     "resid_sizes": [
+      21,
+      21,
+      20,
+      19,
+      18
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X16_Y15_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 15,
+    "I": 1,
+    "group": 4,
+    "slot": 1,
+    "bp": 3
+   },
+   "ctx_size": 258,
+   "drivers": {
+    "C4_X16_Y11_N0_I1": {
+     "n_routes": 12,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 1)"
+    },
+    "C4_X16_Y12_N0_I1": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      4619
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 1)"
+    }
+   }
+  },
+  "C4_X16_Y18_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 18,
+    "I": 1,
+    "group": 5,
+    "slot": 1,
+    "bp": 2
+   },
+   "ctx_size": 216,
+   "drivers": {
+    "C4_X16_Y14_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3989,
+      4620
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 1)"
+    },
+    "C4_X16_Y15_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      4619
+     ],
+     "resid_sizes": [
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X17_Y17_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3990,
+      4199
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X16_Y6_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 6,
+    "I": 1,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 269,
+   "drivers": {
+    "C4_X16_Y3_N0_I1": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      4619
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X17_Y5_N0_I1": {
+     "n_routes": 11,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      19,
+      19,
+      16,
+      17,
+      18,
+      16,
+      0,
+      0,
+      0,
+      0,
+      17
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X16_Y6_N0_I12": {
+   "geom": {
+    "x": 16,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 306,
+   "drivers": {
+    "C4_X16_Y9_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X17_Y10_N0_I1": {
+     "n_routes": 8,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X16_Y7_N0_I1": {
+   "geom": {
+    "x": 16,
+    "y": 7,
+    "I": 1,
+    "group": 1,
+    "slot": 2,
+    "bp": 5
+   },
+   "ctx_size": 247,
+   "drivers": {
+    "C4_X16_Y4_N0_I1": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      4482
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X17_Y6_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3853,
+      4062,
+      5746,
+      5955,
+      6585,
+      6795,
+      7004,
+      7215,
+      7424,
+      7635,
+      7844
+     ],
+     "resid_sizes": [
+      14,
+      14,
+      19,
+      14,
+      15
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X21_Y14_N0_I1": {
+   "geom": {
+    "x": 21,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 126,
+   "drivers": {
+    "C4_X21_Y10_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X22_Y13_N0_I1": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      5602,
+      5604,
+      6233,
+      7071,
+      7281,
+      7282,
+      7491,
+      7492
+     ],
+     "resid_sizes": [
+      15,
+      13,
+      13
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X22_Y2_N0_I12": {
+   "geom": {
+    "x": 22,
+    "y": 2,
+    "I": 12,
+    "group": 0,
+    "slot": 0,
+    "bp": 7
+   },
+   "ctx_size": 48,
+   "drivers": {
+    "C4_X22_Y5_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 0)"
+    },
+    "C4_X22_Y6_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 0)"
+    }
+   }
+  },
+  "C4_X22_Y6_N0_I12": {
+   "geom": {
+    "x": 22,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 302,
+   "drivers": {
+    "C4_X22_Y9_N0_I12": {
+     "n_routes": 2,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X22_Y10_N0_I0": {
+     "n_routes": 7,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      2,
+      2,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 1)"
+    }
+   }
+  },
+  "C4_X24_Y10_N0_I1": {
+   "geom": {
+    "x": 24,
+    "y": 10,
+    "I": 1,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 201,
+   "drivers": {
+    "C4_X24_Y6_N0_I1": {
+     "n_routes": 8,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X25_Y9_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3218,
+      3853,
+      4062,
+      5114,
+      6585,
+      6795,
+      7004,
+      7215,
+      7635
+     ],
+     "resid_sizes": [
+      18,
+      18,
+      15,
+      15,
+      17
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 2)"
+    },
+    "R4_X22_Y9_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3001,
+      4063
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(1, 'R4', -2, 2)"
+    }
+   }
+  },
+  "C4_X24_Y14_N0_I1": {
+   "geom": {
+    "x": 24,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 162,
+   "drivers": {
+    "C4_X24_Y10_N0_I1": {
+     "n_routes": 14,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X25_Y13_N0_I1": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      3229,
+      3285,
+      3649,
+      3920,
+      4129,
+      5181,
+      6022,
+      6652,
+      7071,
+      7282,
+      7702
+     ],
+     "resid_sizes": [
+      16,
+      16,
+      19,
+      20
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    },
+    "R4_X22_Y13_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4130
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(1, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X24_Y6_N0_I12": {
+   "geom": {
+    "x": 24,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 286,
+   "drivers": {
+    "C4_X24_Y9_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X25_Y10_N0_I1": {
+     "n_routes": 4,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      5,
+      2,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X25_Y10_N0_I1": {
+   "geom": {
+    "x": 25,
+    "y": 10,
+    "I": 1,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 272,
+   "drivers": {
+    "C4_X25_Y6_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3852,
+      4483
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X26_Y9_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3222,
+      3853,
+      4062,
+      4904,
+      5957,
+      6165,
+      6585,
+      6586,
+      7004,
+      7215,
+      7424,
+      7635,
+      7844
+     ],
+     "resid_sizes": [
+      15,
+      15
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X25_Y14_N0_I1": {
+   "geom": {
+    "x": 25,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 206,
+   "drivers": {
+    "C4_X25_Y10_N0_I1": {
+     "n_routes": 7,
+     "class": "CONFIG",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X26_Y13_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3289,
+      3455,
+      3665,
+      3917,
+      3920,
+      4129,
+      4547,
+      4761,
+      5183,
+      5812,
+      6233,
+      6863,
+      7071,
+      7281,
+      7282,
+      7701,
+      7702
+     ],
+     "resid_sizes": [
+      17
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X25_Y6_N0_I12": {
+   "geom": {
+    "x": 25,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 303,
+   "drivers": {
+    "C4_X25_Y9_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      -3490,
+      -3293,
+      -2861,
+      -2239,
+      2801
+     ],
+     "resid_sizes": [
+      5
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X25_Y10_N0_I0": {
+     "n_routes": 4,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      4,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 0, 1)"
+    }
+   }
+  },
+  "C4_X32_Y14_N0_I2": {
+   "geom": {
+    "x": 32,
+    "y": 14,
+    "I": 2,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 53,
+   "drivers": {
+    "R24_X16_Y13_N0_I0": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4543
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(2, 'R24', -16, 0)"
+    },
+    "R24_X24_Y13_N0_I0": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      3914,
+      4543
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(2, 'R24', -8, 0)"
+    }
+   }
+  },
+  "C4_X32_Y14_N0_I5": {
+   "geom": {
+    "x": 32,
+    "y": 14,
+    "I": 5,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 51,
+   "drivers": {
+    "C4_X32_Y10_N0_I5": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3897,
+      4317
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(5, 'C4', 0, 0)"
+    },
+    "R24_X20_Y13_N0_I0": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3898,
+      4527
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(5, 'R24', -12, 0)"
+    }
+   }
+  },
+  "C4_X33_Y10_N0_I1": {
+   "geom": {
+    "x": 33,
+    "y": 10,
+    "I": 1,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 38,
+   "drivers": {
+    "C4_X33_Y6_N0_I1": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3852,
+      4483
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 2)"
+    },
+    "R4_X32_Y9_N0_I1": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      4272
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(1, 'R4', -1, 2)"
+    }
+   }
+  },
+  "C4_X33_Y10_N0_I10": {
+   "geom": {
+    "x": 33,
+    "y": 10,
+    "I": 10,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 41,
+   "drivers": {
+    "C4_X33_Y6_N0_I10": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(10, 'C4', 0, 2)"
+    },
+    "R4_X31_Y9_N0_I14": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(10, 'R4', -2, 2)"
+    }
+   }
+  },
+  "C4_X33_Y10_N0_I9": {
+   "geom": {
+    "x": 33,
+    "y": 10,
+    "I": 9,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 41,
+   "drivers": {
+    "C4_X33_Y6_N0_I9": {
+     "n_routes": 7,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(9, 'C4', 0, 2)"
+    },
+    "R4_X32_Y9_N0_I12": {
+     "n_routes": 7,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(9, 'R4', -1, 2)"
+    }
+   }
+  },
+  "C4_X33_Y11_N0_I2": {
+   "geom": {
+    "x": 33,
+    "y": 11,
+    "I": 2,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 38,
+   "drivers": {
+    "R24_X25_Y10_N0_I0": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3914,
+      4543
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(2, 'R24', -8, 0)"
+    },
+    "R4_X31_Y10_N0_I2": {
+     "n_routes": 5,
+     "class": "CONFIG",
+     "iso_R": [
+      3914,
+      4333
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(2, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I1": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 1,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 71,
+   "drivers": {
+    "C4_X33_Y10_N0_I1": {
+     "n_routes": 7,
+     "class": "CONFIG",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "R4_X32_Y13_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      4339
+     ],
+     "resid_sizes": [
+      1
+     ],
+     "pip_class": "(1, 'R4', -1, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I10": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 10,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 69,
+   "drivers": {
+    "C4_X33_Y10_N0_I10": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3863,
+      4494
+     ],
+     "resid_sizes": [
+      2,
+      2
+     ],
+     "pip_class": "(10, 'C4', 0, 0)"
+    },
+    "R4_X31_Y13_N0_I14": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3863,
+      4073
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(10, 'R4', -2, 0)"
+    },
+    "R4_X33_Y13_N0_I14": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      -3901,
+      3863,
+      4283
+     ],
+     "resid_sizes": [
+      3
+     ],
+     "pip_class": "(10, 'R4', 0, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I18": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 18,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 74,
+   "drivers": {
+    "R24_X19_Y18_N0_I0": {
+     "n_routes": 2,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0
+     ],
+     "pip_class": "(18, 'R24', -14, 0)"
+    },
+    "R24_X27_Y18_N0_I0": {
+     "n_routes": 5,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(18, 'R24', -6, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I5": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 5,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 70,
+   "drivers": {
+    "C16_X33_Y8_N0_I0": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      3898,
+      4527
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(5, 'C16', 0, 0)"
+    },
+    "R24_X12_Y13_N0_I0": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      3897,
+      4527
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(5, 'R24', -21, 0)"
+    },
+    "R4_X32_Y13_N0_I6": {
+     "n_routes": 3,
+     "class": "CONFIG",
+     "iso_R": [
+      4318
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(5, 'R4', -1, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I7": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 7,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 70,
+   "drivers": {
+    "R4_X31_Y13_N0_I10": {
+     "n_routes": 7,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(7, 'R4', -2, 0)"
+    },
+    "R4_X32_Y13_N0_I10": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3879,
+      4510
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(7, 'R4', -1, 0)"
+    },
+    "R4_X33_Y13_N0_I9": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      -4107,
+      4300
+     ],
+     "resid_sizes": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(7, 'R4', 0, 0)"
+    }
+   }
+  },
+  "C4_X33_Y14_N0_I8": {
+   "geom": {
+    "x": 33,
+    "y": 14,
+    "I": 8,
+    "group": 4,
+    "slot": 0,
+    "bp": 3
+   },
+   "ctx_size": 68,
+   "drivers": {
+    "C4_X33_Y10_N0_I8": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3874,
+      4503
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(8, 'C4', 0, 0)"
+    },
+    "R4_X32_Y13_N0_I11": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3873,
+      4294
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(8, 'R4', -1, 0)"
+    },
+    "R4_X33_Y13_N0_I11": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      -3904,
+      -3695,
+      4503
+     ],
+     "resid_sizes": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "pip_class": "(8, 'R4', 0, 0)"
+    }
+   }
+  },
+  "C4_X33_Y15_N0_I18": {
+   "geom": {
+    "x": 33,
+    "y": 15,
+    "I": 18,
+    "group": 4,
+    "slot": 1,
+    "bp": 3
+   },
+   "ctx_size": 74,
+   "drivers": {
+    "C4_X33_Y18_N0_I18": {
+     "n_routes": 2,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0
+     ],
+     "pip_class": "(18, 'C4', 0, 1)"
+    },
+    "R24_X27_Y19_N0_I0": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(18, 'R24', -6, 1)"
+    }
+   }
+  },
+  "C4_X33_Y15_N0_I21": {
+   "geom": {
+    "x": 33,
+    "y": 15,
+    "I": 21,
+    "group": 4,
+    "slot": 1,
+    "bp": 3
+   },
+   "ctx_size": 74,
+   "drivers": {
+    "R24_X15_Y19_N0_I0": {
+     "n_routes": 5,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(21, 'R24', -18, 1)"
+    },
+    "R24_X23_Y19_N0_I0": {
+     "n_routes": 9,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(21, 'R24', -10, 1)"
+    }
+   }
+  },
+  "C4_X33_Y15_N0_I5": {
+   "geom": {
+    "x": 33,
+    "y": 15,
+    "I": 5,
+    "group": 4,
+    "slot": 1,
+    "bp": 3
+   },
+   "ctx_size": 73,
+   "drivers": {
+    "R24_X13_Y14_N0_I0": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3967
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(5, 'R24', -20, 1)"
+    },
+    "R24_X21_Y14_N0_I0": {
+     "n_routes": 7,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(5, 'R24', -12, 1)"
+    }
+   }
+  },
+  "C4_X33_Y17_N0_I17": {
+   "geom": {
+    "x": 33,
+    "y": 17,
+    "I": 17,
+    "group": 5,
+    "slot": 0,
+    "bp": 2
+   },
+   "ctx_size": 194,
+   "drivers": {
+    "R24_X12_Y21_N0_I0": {
+     "n_routes": 6,
+     "class": "CONFIG",
+     "iso_R": [
+      3963
+     ],
+     "resid_sizes": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     "pip_class": "(17, 'R24', -21, 0)"
+    },
+    "R4_X31_Y21_N0_I7": {
+     "n_routes": 2,
+     "class": "CONFIG",
+     "iso_R": [
+      3963
+     ],
+     "resid_sizes": [
+      1,
+      1
+     ],
+     "pip_class": "(17, 'R4', -2, 0)"
+    }
+   }
+  },
+  "C4_X9_Y10_N0_I12": {
+   "geom": {
+    "x": 9,
+    "y": 10,
+    "I": 12,
+    "group": 2,
+    "slot": 2,
+    "bp": 4
+   },
+   "ctx_size": 398,
+   "drivers": {
+    "C4_X9_Y13_N0_I12": {
+     "n_routes": 3,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(12, 'C4', 0, 2)"
+    },
+    "LE_BUFFER_X10_Y14_N0_I1": {
+     "n_routes": 6,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      2,
+      1,
+      2,
+      2,
+      6
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 2)"
+    }
+   }
+  },
+  "C4_X9_Y11_N0_I2": {
+   "geom": {
+    "x": 9,
+    "y": 11,
+    "I": 2,
+    "group": 3,
+    "slot": 0,
+    "bp": 4
+   },
+   "ctx_size": 384,
+   "drivers": {
+    "LE_BUFFER_X10_Y10_N0_I3": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3914,
+      4544,
+      4758,
+      5600,
+      6227,
+      6229,
+      6649,
+      6858,
+      7070,
+      7279,
+      7280,
+      7489,
+      7490
+     ],
+     "resid_sizes": [
+      13
+     ],
+     "pip_class": "(2, 'LE_BUFFER', 1, 0)"
+    },
+    "LE_BUFFER_X10_Y10_N0_I5": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3914,
+      4124,
+      4754,
+      5596,
+      6223,
+      6225,
+      6645,
+      6854,
+      7063,
+      7273,
+      7274,
+      7483,
+      7484
+     ],
+     "resid_sizes": [
+      13
+     ],
+     "pip_class": "(2, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X9_Y15_N0_I12": {
+   "geom": {
+    "x": 9,
+    "y": 15,
+    "I": 12,
+    "group": 4,
+    "slot": 1,
+    "bp": 3
+   },
+   "ctx_size": 100,
+   "drivers": {
+    "C16_X9_Y6_N0_I0": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C16', 0, 1)"
+    },
+    "LE_BUFFER_X10_Y19_N0_I1": {
+     "n_routes": 6,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X9_Y3_N0_I12": {
+   "geom": {
+    "x": 9,
+    "y": 3,
+    "I": 12,
+    "group": 0,
+    "slot": 1,
+    "bp": 7
+   },
+   "ctx_size": 92,
+   "drivers": {
+    "C4_X9_Y6_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "C4_X9_Y7_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [],
+     "resid_sizes": [
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X10_Y7_N0_I1": {
+     "n_routes": 2,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X9_Y5_N0_I12": {
+   "geom": {
+    "x": 9,
+    "y": 5,
+    "I": 12,
+    "group": 1,
+    "slot": 0,
+    "bp": 6
+   },
+   "ctx_size": 228,
+   "drivers": {
+    "C4_X9_Y8_N0_I12": {
+     "n_routes": 38,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      2,
+      0,
+      9,
+      4,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 0)"
+    },
+    "C4_X9_Y9_N0_I12": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3360,
+      3780
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(12, 'C4', 0, 0)"
+    }
+   }
+  },
+  "C4_X9_Y6_N0_I12": {
+   "geom": {
+    "x": 9,
+    "y": 6,
+    "I": 12,
+    "group": 1,
+    "slot": 1,
+    "bp": 6
+   },
+   "ctx_size": 242,
+   "drivers": {
+    "C4_X9_Y10_N0_I12": {
+     "n_routes": 3,
+     "class": "DEFAULT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'C4', 0, 1)"
+    },
+    "LE_BUFFER_X10_Y10_N0_I1": {
+     "n_routes": 5,
+     "class": "VARIANT",
+     "iso_R": [],
+     "resid_sizes": [
+      0,
+      3,
+      0,
+      0,
+      0
+     ],
+     "pip_class": "(12, 'LE_BUFFER', 1, 1)"
+    }
+   }
+  },
+  "C4_X9_Y8_N0_I1": {
+   "geom": {
+    "x": 9,
+    "y": 8,
+    "I": 1,
+    "group": 2,
+    "slot": 0,
+    "bp": 5
+   },
+   "ctx_size": 202,
+   "drivers": {
+    "C4_X9_Y4_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3919,
+      4550
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(1, 'C4', 0, 0)"
+    },
+    "LE_BUFFER_X10_Y7_N0_I1": {
+     "n_routes": 1,
+     "class": "LOW_SUPPORT",
+     "iso_R": [
+      3920,
+      4129
+     ],
+     "resid_sizes": [
+      2
+     ],
+     "pip_class": "(1, 'LE_BUFFER', 1, 0)"
+    }
+   }
+  },
+  "C4_X9_Y9_N0_I10": {
+   "geom": {
+    "x": 9,
+    "y": 9,
+    "I": 10,
+    "group": 2,
+    "slot": 1,
+    "bp": 5
+   },
+   "ctx_size": 183,
+   "drivers": {
+    "C4_X9_Y5_N0_I10": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      3933,
+      4564
+     ],
+     "resid_sizes": [
+      4,
+      2,
+      2,
+      2
+     ],
+     "pip_class": "(10, 'C4', 0, 1)"
+    },
+    "R4_X8_Y8_N0_I14": {
+     "n_routes": 4,
+     "class": "CONFIG",
+     "iso_R": [
+      -7629,
+      -7419,
+      -7418,
+      -6579,
+      -6578,
+      -5738,
+      2496,
+      2912,
+      4353
+     ],
+     "resid_sizes": [
+      14,
+      14,
+      14,
+      16
+     ],
+     "pip_class": "(10, 'R4', -1, 1)"
+    }
+   }
+  }
+ },
+ "class_invariance": {
+  "(1, 'C4', 0, 0)": {
+   "n_wires": 6,
+   "distinct_R_sets": 2,
+   "R_sets": {
+    "[3919, 4550]": 5,
+    "[4549]": 1
+   }
+  },
+  "(1, 'C4', 0, 1)": {
+   "n_wires": 2,
+   "distinct_R_sets": 1,
+   "R_sets": {
+    "[4619]": 2
+   }
+  },
+  "(1, 'C4', 0, 2)": {
+   "n_wires": 5,
+   "distinct_R_sets": 3,
+   "R_sets": {
+    "[4482]": 2,
+    "[3852, 4483]": 2,
+    "[4483]": 1
+   }
+  },
+  "(1, 'LE_BUFFER', 1, 0)": {
+   "n_wires": 5,
+   "distinct_R_sets": 5,
+   "R_sets": {
+    "[3920, 4129, 4764, 5602, 5603, 6654, 6863, 7071, 7281, 7282, 7491, 7492]": 1,
+    "[3920, 4129, 4492, 4508, 4763, 4972, 6231, 6652, 6653, 6861, 6863, 7071, 7281, 7282, 7701, 7702]": 1,
+    "[3229, 3649, 3920, 4129, 4322, 6022, 6652, 7071, 7282]": 1,
+    "[5602, 5604, 6233, 7071, 7281, 7282, 7491, 7492]": 1,
+    "[3229, 3285, 3649, 3920, 4129, 5181, 6022, 6652, 7071, 7282, 7702]": 1
+   }
+  },
+  "(1, 'LE_BUFFER', 1, 2)": {
+   "n_wires": 5,
+   "distinct_R_sets": 5,
+   "R_sets": {
+    "[3853, 4062, 5115, 5534, 5536, 6796, 7004, 7215, 7424, 7635, 7844]": 1,
+    "[3432, 3642, 3853, 4062, 5745, 6166, 6795, 7004, 7214, 7215]": 1,
+    "[3853, 4062, 5746, 5955, 6585, 6795, 7004, 7215, 7424, 7635, 7844]": 1,
+    "[3218, 3853, 4062, 5114, 6585, 6795, 7004, 7215, 7635]": 1,
+    "[3222, 3853, 4062, 4904, 5957, 6165, 6585, 6586, 7004, 7215, 7424, 7635, 7844]": 1
+   }
+  },
+  "(2, 'R24', -8, 0)": {
+   "n_wires": 2,
+   "distinct_R_sets": 1,
+   "R_sets": {
+    "[3914, 4543]": 2
+   }
+  },
+  "(3, 'C4', 0, 0)": {
+   "n_wires": 3,
+   "distinct_R_sets": 2,
+   "R_sets": {
+    "[4328]": 2,
+    "[3908, 4538]": 1
+   }
+  },
+  "(3, 'C4', 0, 2)": {
+   "n_wires": 2,
+   "distinct_R_sets": 2,
+   "R_sets": {
+    "[3841, 4471]": 1,
+    "[4261]": 1
+   }
+  }
+ },
+ "leftward_replication": []
+}

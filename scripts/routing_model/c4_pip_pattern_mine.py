@@ -4,8 +4,19 @@
 
 Extends pip_voting_neorv32.py from "top 1-2 candidate cells" to the
 COMPLETE per-class cell pattern, which is what a write path must emit.
-Class key: (I, src_type, dx, slot) — pip-conditioned (Pitfall: MUX config
-is per-DRIVER, not per-wire; see dead_class_pip_conditioned_remine memo).
+Class key: (I, src_type, dx, DY, slot) — pip-conditioned (Pitfall: MUX
+config is per-DRIVER, not per-wire; dead_class_pip_conditioned_remine).
+
+DY = prev_y - y (the driver's attach offset along the wire) was added
+2026-07-07 after the c4_mux_default_probe.py multi-driver analysis showed
+R sets are dy-conditioned: e.g. class (1,C4,dx=0,slot0) dy=-4 ->
+{3919,4550} invariant across 5 columns while dy=-3 -> {4549}; slot2 shows
+the same shape shifted by 67.  Without dy the classes mix attach points
+(and mix default-input pips that need ZERO cells), which poisoned pos
+coverage and produced the fresh-gate failure (memo
+c4_pip_write_loop_closed_2026_07_07).  Default pips are expected to
+surface as dy-classes with NO candidates — that is correct write-side
+behaviour (emit nothing), not a mining failure.
 
 Three geometric families are scanned per class (all column-relative,
 candidate byte = COLUMN_BASE[x] + ...):
@@ -82,7 +93,7 @@ class Dataset:
         self.cbp = cbp_of_ctx     # ctx -> {bp: set(off)}
 
     def negatives(self, key):
-        t, i, pt, dx, s = key
+        t, i, pt, dx, dy, s = key
         neg = set()
         for (tt, ii, ss), ws in self.winst.items():
             if tt == t and ss == s and ii != i:
@@ -97,13 +108,33 @@ def cells_by_bp(cells):
     return d
 
 
+def instances_dy(pips, ctx):
+    """(t, I, src_t, dx, dy, slot) -> {(ctx, x, g, bp)}; plus per-(t,I,slot)
+    wire sets (negatives stay dy-agnostic: any same-slot other-I wire)."""
+    inst = collections.defaultdict(set)
+    winst = collections.defaultdict(set)
+    for a, b in pips:
+        ma, mb = pv.WPARSE.match(a), pv.WPARSE.match(b)
+        if not ma or not mb:
+            continue
+        tb, xb, yb = mb.group(1), int(mb.group(2)), int(mb.group(3))
+        ib = int(mb.group(5)) if mb.group(5) else None
+        if tb != 'C4' or xb not in CB or not 2 <= yb <= 21:
+            continue
+        g, s, bp = pv.yaddr(yb)
+        dx = int(ma.group(2)) - xb
+        dy = int(ma.group(3)) - yb
+        inst[(tb, ib, ma.group(1), dx, dy, s)].add((ctx, xb, g, bp))
+        winst[(tb, ib, s)].add((ctx, xb, g, bp))
+    return inst, winst
+
+
 def load_neorv32():
     cells = pv.xor_cells()
     print(f"neorv32: XOR CRAM cells {len(cells)}")
-    inst0, winst0 = pv.build_instances(pv.parse_pips())
-    inst = {k: {(None, x, g, bp) for x, g, bp in v} for k, v in inst0.items()}
-    winst = {k: {(None, x, g, bp) for x, g, bp in v} for k, v in winst0.items()}
-    return Dataset('neorv32', inst, winst, {None: cells_by_bp(cells)})
+    inst, winst = instances_dy(pv.parse_pips(), None)
+    return Dataset('neorv32', dict(inst), dict(winst),
+                   {None: cells_by_bp(cells)})
 
 
 def load_corpus():
@@ -127,16 +158,11 @@ def load_corpus():
             loc = e.get('location', '')
             if pv.WPARSE.match(loc) and (not seq or seq[-1] != loc):
                 seq.append(loc)
-        for a, b in zip(seq, seq[1:]):
-            ma, mb = pv.WPARSE.match(a), pv.WPARSE.match(b)
-            tb, xb, yb = mb.group(1), int(mb.group(2)), int(mb.group(3))
-            ib = int(mb.group(5)) if mb.group(5) else None
-            if tb != 'C4' or xb not in CB or not 2 <= yb <= 21:
-                continue
-            g, s, bp = pv.yaddr(yb)
-            inst[(tb, ib, ma.group(1), int(ma.group(2)) - xb, s)].add(
-                (eid, xb, g, bp))
-            winst[(tb, ib, s)].add((eid, xb, g, bp))
+        i2, w2 = instances_dy(zip(seq, seq[1:]), eid)
+        for k, v in i2.items():
+            inst[k] |= v
+        for k, v in w2.items():
+            winst[k] |= v
     print(f"corpus: {nroutes} routes with cells")
     return Dataset('corpus', dict(inst), dict(winst),
                    {eid: cells_by_bp(cs) for eid, cs in cells.items()})
@@ -196,14 +222,19 @@ def dedupe_c(a_cells, c_cells, pos):
 def calibrate(ds):
     ok = 0
     for s in (1, 2):
-        key = ('C4', 0, 'LE_BUFFER', 0, s)
-        pos = ds.inst.get(key, set())
+        # dy-pooled: merge all dy variants of C4 I=0 <- LE_BUFFER dx=0
+        # (the known law is dy-independent for I=0 self-column drivers)
+        pos, neg = set(), set()
+        for k in ds.inst:
+            if k[:4] == ('C4', 0, 'LE_BUFFER', 0) and k[5] == s:
+                pos |= ds.inst[k]
+                neg |= ds.negatives(k)
+        neg -= pos
         if len(pos) < 6:
             continue
         # relaxed thresholds for the KNOWN law (NEORV32 slot1 sits at
         # pos .83 / neg .125 — same values pip_voting_neorv32 gates on)
-        found = scan(ds, pos, ds.negatives(key), 'A',
-                     pos_min=0.80, neg_max=0.15)
+        found = scan(ds, pos, neg, 'A', pos_min=0.80, neg_max=0.15)
         true_r = 1519 + SB[s]
         if any(abs(r['R'] - true_r) <= 1 for r in found):
             ok += 1
@@ -219,7 +250,7 @@ def mine(ds):
                    and len(ds.inst[k]) >= MIN_N),
                   key=lambda k: -len(ds.inst[k]))
     for key in keys:
-        t, i, pt, dx, s = key
+        t, i, pt, dx, dy, s = key
         pos, neg = ds.inst[key], ds.negatives(key)
         groups = len({g for _, _, g, _ in pos})
         a = scan(ds, pos, neg, 'A')
@@ -227,7 +258,7 @@ def mine(ds):
         c = dedupe_c(a, scan(ds, pos, neg, 'C'), pos)
         if not (a or b or c):
             continue
-        name = f"C4,I={i},src={pt},dx={dx},slot={s}"
+        name = f"C4,I={i},src={pt},dx={dx},dy={dy},slot={s}"
         results[name] = {
             'pos_n': len(pos), 'neg_n': len(neg), 'groups': groups,
             'ambiguous_geom': groups < 2, 'mined_from': ds.name,

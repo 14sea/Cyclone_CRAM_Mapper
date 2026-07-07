@@ -39,24 +39,23 @@ would write are exactly Quartus's bits at those addresses.  It does NOT
 mean the emitted set is COMPLETE (other cells of the route — C4 I=0, LI,
 LUT, R4 — are out of scope here), and it is NOT silicon evidence.
 
-================= FRESH-GATE VERDICT (2026-07-07): NOT CLEARED ==========
-Ran against 12 fresh vertical golds (tmp/c4_fresh/):
-  - whitelist survivors after 3-way holdout = only 2 classes
-    (I=1<-LE_BUFFER dx=1 slot2 R=4062; I=1<-R4 dx=-2 slot0 R=4130/3919);
-    neither pip class occurs in vertical designs -> byte-identity leg
-    VACUOUS (12x NO-COVERED-PIP, 0 FP but also 0 TP).
-  - full-table evidence leg: 0/22 cells — corpus-mined classes do not
-    transfer to fresh designs at all.
-  - forensic (c4_fresh_forensic.py): identical pip geometry (same key,
-    same driver dy/N) yields DISJOINT cell sets across builds, and some
-    pips have ZERO cells at the matched bp in a +-8000 window (probable
-    MUX default-input = no-bits semantics).  Production C4 I=0 law
-    itself scores 12/18 on these builds — the read law is incomplete.
-CONCLUSION: the (I, src_type, dx, slot) pip key LACKS at least one
-context dimension (default-input selection state, and possibly
-driver-end/N structure).  Per the campaign plan, R24/R4 write paths are
-NOT to be attempted until the C4 read law closes.  This file stays a
-gated experiment; nothing here may feed fasm2rbf/RouteCodec.
+=========== FRESH-GATE HISTORY (both runs on the same 12 golds) ==========
+Run 1 (2026-07-07 AM, dy-LESS key (I,src,dx,slot)): NOT CLEARED.
+  Whitelist (2 classes) never fired (vacuous); full-table evidence 0/22;
+  forensic showed same-key-same-geometry pips with DISJOINT cells and
+  zero-cell pips.  Verdict: key lacks context dimension(s).
+Run 2 (2026-07-07 PM, dy IN KEY after c4_mux_default_probe.py): FIRST
+  POSITIVE CLOSURE — whitelist grew to 5 classes; cf_X19Y17_to_X19Y9's
+  chain pip C4_X19_Y13_I1 -> C4_X19_Y16_I1 (class I=1,C4,dx=0,dy=-3,
+  slot=2, R=4482) emitted 1 cell, byte-identical to the fresh Quartus
+  gold: TP=1 FP=0 PASS.  Existence proof for the full loop
+  (mine -> cross-dataset holdout -> emit -> unseen-gold byte identity),
+  NOT coverage: 11/12 golds had no whitelisted pip, and the downward
+  family (dy=+3/+4, I=12/15...) is still 0-for-all (window/anchor open
+  question — see MULTI_DEFAULT-at-X33 caveat in the probe memo).
+STANDING RULES: R24/R4 write paths stay untouched until C4 coverage is
+real; this file stays a gated experiment; nothing here may feed
+fasm2rbf/RouteCodec; DO NOT FLASH.
 ==========================================================================
 """
 import sys, os, json, glob, re, shutil, subprocess, collections

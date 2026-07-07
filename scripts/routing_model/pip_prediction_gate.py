@@ -11,11 +11,10 @@ safety validator (use validate_safe_for_hardware + li_mux_gate for that).
 
 Covered laws:
   - C4 I!=0 FULL pip patterns from results/c4_pip_pattern_table.json
-    (families A/B/C; falls back to the older 1-2-cell candidates file
-    results/c4_inz_pip_voting_candidates.json if the pattern table is
-    absent).  Classes carry a 'mined_from' tag (neorv32 | corpus); the
-    gate NEVER scores a class on the dataset it was mined from — every
-    number printed is held out.
+    (families A/B/C; key includes dy since 2026-07-07 — dy-less tables
+    are refused).  Classes carry a 'mined_from' tag (neorv32 | corpus);
+    the gate NEVER scores a class on the dataset it was mined from —
+    every number printed is held out.
   - R4 via production _R4_BASE_PREV incl. the 2026-07-06 additions
     I=24/29/31 (wire-conditioned pair bases in the prev column).
 
@@ -56,7 +55,7 @@ BASE = bitstream._R4_BASE_PREV
 PATTERN_PATH = os.path.join(REPO, 'results/c4_pip_pattern_table.json')
 LEGACY_PATH = os.path.join(REPO, 'results/c4_inz_pip_voting_candidates.json')
 SCORES_PATH = os.path.join(REPO, 'results/c4_pip_gate_scores.json')
-CK = re.compile(r'C4,I=(\d+),src=(\w+),dx=(-?\d+),slot=(\d+)')
+CK = re.compile(r'C4,I=(\d+),src=(\w+),dx=(-?\d+),dy=(-?\d+),slot=(\d+)')
 WIRE = re.compile(r'^(R24|R4|C16|C4|LOCAL_INTERCONNECT|LOCAL_LINE|LE_BUFFER)'
                   r'_X(\d+)_Y(\d+)_N(\d+)(?:_I(\d+))?$')
 
@@ -76,30 +75,33 @@ def r4_geom(y):
 
 
 def load_c4_table():
-    """(I, src, dx, slot) -> {'pattern': {'A': [R..], 'B': [R..],
-    'C': [(R, bp)..]}, 'ambiguous': bool, 'mined_from': str}"""
+    """(I, src, dx, dy, slot) -> {'pattern': {'A': [R..], 'B': [R..],
+    'C': [(R, bp)..]}, 'ambiguous': bool, 'mined_from': str}
+
+    The dy-less legacy candidates file (results/
+    c4_inz_pip_voting_candidates.json) is NOT loadable any more — the
+    2026-07-07 probe showed dy-less classes mix attach points and
+    default pips; scoring them would repeat the closed negative."""
     table = {}
-    if os.path.exists(PATTERN_PATH):
-        for k, v in json.load(open(PATTERN_PATH))['classes'].items():
-            m = CK.match(k)
-            key = (int(m.group(1)), m.group(2), int(m.group(3)), int(m.group(4)))
-            table[key] = {
-                'A': [r['R'] for r in v['pattern']['A']],
-                'B': [r['R'] for r in v['pattern']['B']],
-                'C': [(r['R'], r['bp']) for r in v['pattern']['C']],
-                'ambiguous': v.get('ambiguous_geom', False),
-                'mined_from': v.get('mined_from', 'neorv32')}
-        return table, 'pattern'
-    for k, v in json.load(open(LEGACY_PATH))['classes'].items():
+    for k, v in json.load(open(PATTERN_PATH))['classes'].items():
         m = CK.match(k)
-        key = (int(m.group(1)), m.group(2), int(m.group(3)), int(m.group(4)))
-        table[key] = {'A': [c[0] for c in v['candidates']], 'B': [], 'C': [],
-                      'ambiguous': False, 'mined_from': 'neorv32'}
-    return table, 'legacy'
+        if not m:
+            sys.exit(f"pattern table has dy-less key '{k}' — re-run "
+                     "c4_pip_pattern_mine.py (post-2026-07-07, dy in key)")
+        key = (int(m.group(1)), m.group(2), int(m.group(3)),
+               int(m.group(4)), int(m.group(5)))
+        table[key] = {
+            'A': [r['R'] for r in v['pattern']['A']],
+            'B': [r['R'] for r in v['pattern']['B']],
+            'C': [(r['R'], r['bp']) for r in v['pattern']['C']],
+            'ambiguous': v.get('ambiguous_geom', False),
+            'mined_from': v.get('mined_from', 'neorv32')}
+    return table, 'pattern'
 
 
 def class_name(key):
-    return f"C4,I={key[0]},src={key[1]},dx={key[2]},slot={key[3]}"
+    return (f"C4,I={key[0]},src={key[1]},dx={key[2]},dy={key[3]},"
+            f"slot={key[4]}")
 
 
 def predict_c4_pip(table, prev_wire, wire):
@@ -115,7 +117,7 @@ def predict_c4_pip(table, prev_wire, wire):
     if not ma:
         return None
     g, s, bp = yaddr(y)
-    key = (i, ma.group(1), int(ma.group(2)) - x, s)
+    key = (i, ma.group(1), int(ma.group(2)) - x, int(ma.group(3)) - y, s)
     ent = table.get(key)
     if ent is None:
         return key, None

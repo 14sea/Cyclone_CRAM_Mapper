@@ -1,11 +1,21 @@
 {
  "whitelist": {
-  "C4,I=1,src=LE_BUFFER,dx=1,slot=2": [
+  "C4,I=1,src=LE_BUFFER,dx=1,dy=-1,slot=2": [
    4062
   ],
-  "C4,I=1,src=R4,dx=-2,slot=0": [
+  "C4,I=1,src=C4,dx=0,dy=-3,slot=2": [
+   4482
+  ],
+  "C4,I=10,src=C4,dx=0,dy=-4,slot=0": [
+   3863,
+   4494
+  ],
+  "C4,I=1,src=R4,dx=-2,dy=-1,slot=0": [
    4130,
    3919
+  ],
+  "C4,I=1,src=C4,dx=0,dy=-3,slot=1": [
+   4619
   ]
  },
  "criteria": {
@@ -53,10 +63,15 @@
    "verdict": "NO-COVERED-PIP"
   },
   "cf_X19Y17_to_X19Y9": {
-   "emitted": 0,
+   "emitted": 1,
    "fp": 0,
-   "covered_pips": [],
-   "verdict": "NO-COVERED-PIP"
+   "covered_pips": [
+    [
+     "C4,I=1,src=C4,dx=0,dy=-3,slot=2",
+     "C4_X19_Y16_N0_I1"
+    ]
+   ],
+   "verdict": "PASS"
   },
   "cf_X22Y8_to_X22Y14": {
    "emitted": 0,
@@ -90,26 +105,40 @@
   }
  },
  "evidence": {
-  "C4,I=12,src=LE_BUFFER,dx=1,slot=2": {
+  "C4,I=12,src=LE_BUFFER,dx=1,dy=4,slot=2": {
    "cell_hit": 0,
    "cell_tot": 12,
    "inst_full": 0,
    "inst_tot": 3,
    "ambiguous_geom": false
   },
-  "C4,I=3,src=C4,dx=0,slot=0": {
-   "cell_hit": 0,
-   "cell_tot": 2,
+  "C4,I=3,src=C4,dx=0,dy=-4,slot=0": {
+   "cell_hit": 2,
+   "cell_tot": 7,
    "inst_full": 0,
    "inst_tot": 1,
-   "ambiguous_geom": false
+   "ambiguous_geom": true
   },
-  "C4,I=15,src=R24,dx=-1,slot=0": {
+  "C4,I=2,src=C16,dx=0,dy=-5,slot=0": {
    "cell_hit": 0,
    "cell_tot": 8,
    "inst_full": 0,
    "inst_tot": 1,
    "ambiguous_geom": true
+  },
+  "C4,I=15,src=R24,dx=-1,dy=4,slot=0": {
+   "cell_hit": 0,
+   "cell_tot": 8,
+   "inst_full": 0,
+   "inst_tot": 1,
+   "ambiguous_geom": true
+  },
+  "C4,I=1,src=C4,dx=0,dy=-3,slot=2": {
+   "cell_hit": 1,
+   "cell_tot": 1,
+   "inst_full": 1,
+   "inst_tot": 1,
+   "ambiguous_geom": false
   }
  }
 }
