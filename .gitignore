@@ -126,3 +126,6 @@ output_files_*/
 *.qsf.bak
 *.md.bak
 *.md.bak.gz
+
+# regenerated iostd summary codec (content-free; produce via iostd_codec_mine.py --analyze)
+results/iostd_codec.json

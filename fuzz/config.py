@@ -6,7 +6,7 @@ import os
 # --- Paths ---
 QUARTUS_BIN = os.path.expanduser("~/intelFPGA_lite/21.1/quartus/bin")
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WORK_DIR = os.path.join(PROJECT_ROOT, "work")
+WORK_DIR = os.environ.get("FUZZ_WORK_DIR") or os.path.join(PROJECT_ROOT, "work")
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 RBF_DIR = os.path.join(RESULTS_DIR, "rbf")
 TEMPLATE_DIR = os.path.join(PROJECT_ROOT, "templates")
