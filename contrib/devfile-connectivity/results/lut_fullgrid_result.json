@@ -1,0 +1,53 @@
+{
+ "target.rbf": {
+  "used_le_total": 5822,
+  "used_le_ce6cols": 4781,
+  "used_le_jailbreak_cols": 1041,
+  "tt_cells_claimed": 93152,
+  "cell_disjoint_violations": 0,
+  "roundtrip_bad_cells": 0,
+  "roundtrip_bad_masks": 0,
+  "arity_hist": {
+   "1": 1125,
+   "2": 339,
+   "3": 1744,
+   "4": 2614
+  }
+ },
+ "specimenA.rbf": {
+  "used_le_total": 2,
+  "used_le_ce6cols": 2,
+  "used_le_jailbreak_cols": 0,
+  "tt_cells_claimed": 32,
+  "cell_disjoint_violations": 0,
+  "roundtrip_bad_cells": 0,
+  "roundtrip_bad_masks": 0,
+  "arity_hist": {
+   "2": 2
+  }
+ },
+ "specimenB.rbf": {
+  "used_le_total": 3,
+  "used_le_ce6cols": 3,
+  "used_le_jailbreak_cols": 0,
+  "tt_cells_claimed": 48,
+  "cell_disjoint_violations": 0,
+  "roundtrip_bad_cells": 0,
+  "roundtrip_bad_masks": 0,
+  "arity_hist": {
+   "2": 3
+  }
+ },
+ "specimenC.rbf": {
+  "used_le_total": 8,
+  "used_le_ce6cols": 8,
+  "used_le_jailbreak_cols": 0,
+  "tt_cells_claimed": 128,
+  "cell_disjoint_violations": 0,
+  "roundtrip_bad_cells": 0,
+  "roundtrip_bad_masks": 0,
+  "arity_hist": {
+   "2": 8
+  }
+ }
+}

@@ -1,0 +1,197 @@
+{
+ "_doc": "INVERTED decode-or-refuse table for the pll-m9k-clock CRAM-resident settings (harvest_pll-m9k-clock.jsonl).  aux/CFF-plane multiply/duty fields excluded (not rbf-serialized -> REFUSED).",
+ "device": "EP4CE10F17C8 / EP4CE6-die rbf geometry",
+ "n_settings": 6,
+ "n_ambiguous_signatures": 0,
+ "settings": {
+  "PLL_AUX_SETTING:PLL_AUX_SETTING:1597465": {
+   "group": "pll",
+   "name": "PLL_AUX_SETTING",
+   "scope": "PLL_AUX_SETTING",
+   "arch": 743,
+   "blockty": 43,
+   "field_bits": 1,
+   "instance": "PLL_AUX_SETTING@1597465",
+   "flats": [
+    1597465
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "1": {
+     "codeword": 3,
+     "meaning": "PLL block aux/enable setting present (arch743 blockty43 codeword 3, 1-bit)"
+    }
+   }
+  },
+  "PLL_CLKOUT_COUNTER_SELECT:PLL_CLKOUT[0]:2706188": {
+   "group": "pll",
+   "name": "PLL_CLKOUT_COUNTER_SELECT",
+   "scope": "PLL_CLKOUT[0]",
+   "arch": 761,
+   "blockty": 43,
+   "field_bits": 16,
+   "instance": "PLL_CLKOUT[0]@2706188",
+   "flats": [
+    2706188,
+    2706189,
+    2706190,
+    2706191,
+    2706192,
+    2706193,
+    2706194,
+    2707915,
+    2707916,
+    2707917,
+    2707918,
+    2707919,
+    2707920,
+    2707921,
+    2707922,
+    2706195
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "0000000000001010": {
+     "codeword": 4,
+     "meaning": "PLL clk-output[0] output-counter SELECT = codeword 4 (16-bit encoded selector)"
+    }
+   }
+  },
+  "PLL_CLKOUT_COUNTER_SELECT:PLL_CLKOUT[1]:2730366": {
+   "group": "pll",
+   "name": "PLL_CLKOUT_COUNTER_SELECT",
+   "scope": "PLL_CLKOUT[1]",
+   "arch": 761,
+   "blockty": 43,
+   "field_bits": 16,
+   "instance": "PLL_CLKOUT[1]@2730366",
+   "flats": [
+    2730366,
+    2730367,
+    2730368,
+    2730369,
+    2730370,
+    2730371,
+    2730372,
+    2732093,
+    2732094,
+    2732095,
+    2732096,
+    2732097,
+    2732098,
+    2732099,
+    2730373,
+    2732100
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "0000000001000010": {
+     "codeword": 21,
+     "meaning": "PLL clk-output[1] output-counter SELECT = codeword 21 (16-bit encoded selector)"
+    }
+   }
+  },
+  "PLL_CLKOUT_COUNTER_SELECT:PLL_CLKOUT[2]:2775268": {
+   "group": "pll",
+   "name": "PLL_CLKOUT_COUNTER_SELECT",
+   "scope": "PLL_CLKOUT[2]",
+   "arch": 761,
+   "blockty": 43,
+   "field_bits": 16,
+   "instance": "PLL_CLKOUT[2]@2775268",
+   "flats": [
+    2775268,
+    2775269,
+    2775270,
+    2775271,
+    2775272,
+    2775273,
+    2775274,
+    2776995,
+    2776996,
+    2776997,
+    2776998,
+    2776999,
+    2777000,
+    2777001,
+    2775275,
+    2777002
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "0000000100000001": {
+     "codeword": 41,
+     "meaning": "PLL clk-output[2] output-counter SELECT = codeword 41 (16-bit encoded selector)"
+    }
+   }
+  },
+  "CLOCK_ROUTING_BLOCK_MUX:CLOCK_ROUTING_BLOCK_MUX:1531828": {
+   "group": "clock",
+   "name": "CLOCK_ROUTING_BLOCK_MUX",
+   "scope": "CLOCK_ROUTING_BLOCK_MUX",
+   "arch": 2338,
+   "blockty": 73,
+   "field_bits": 16,
+   "instance": "CLOCK_ROUTING_BLOCK_MUX@1531828",
+   "flats": [
+    1531828,
+    1531829,
+    1531830,
+    1531831,
+    1531832,
+    1531833,
+    1531834,
+    1533555,
+    1533556,
+    1533557,
+    1533558,
+    1533559,
+    1533560,
+    1533561,
+    1533562,
+    1531835
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "1000000000000001": {
+     "codeword": 41,
+     "meaning": "clock-routing block-mux source = codeword 41 (row/global clock net; G1 clk-pin carrier)"
+    }
+   }
+  },
+  "CLOCK_ROUTING_BLOCK_MUX:CLOCK_ROUTING_BLOCK_MUX:1556006": {
+   "group": "clock",
+   "name": "CLOCK_ROUTING_BLOCK_MUX",
+   "scope": "CLOCK_ROUTING_BLOCK_MUX",
+   "arch": 2338,
+   "blockty": 73,
+   "field_bits": 16,
+   "instance": "CLOCK_ROUTING_BLOCK_MUX@1556006",
+   "flats": [
+    1556006,
+    1556007,
+    1556008,
+    1556009,
+    1556010,
+    1556011,
+    1556012,
+    1557733,
+    1557734,
+    1557735,
+    1557736,
+    1557737,
+    1557738,
+    1557739,
+    1557740,
+    1556013
+   ],
+   "confidence": "harvested-bit-exact (assembler own emitted DB_BIT_SETTING)",
+   "decode": {
+    "0000010000000001": {
+     "codeword": 7,
+     "meaning": "clock-routing block-mux source = codeword 7 (M9K clock net carrier)"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,6253 @@
+{
+ "provenance": {
+  "source": "quartus_asm live gdb intercept (DYGR_ROUTE_ASM_INFO::get_bits_from_source_to_dest) \u2014 VERIFIED (>=2/3 lenses real, bit-exact encode).",
+  "specimens": {
+   "A": "specimenA (EP4CE10F17C8, 3-cell, seed1, pinned IO) \u2014 23 arcs",
+   "B": "specimenB (EP4CE10F17C8, 4-cell, seed2, unpinned IO) \u2014 28 arcs"
+  },
+  "device": "EP4CE10F17C8 (EP4CE6-die base cycloneive1), rbf 368011B",
+  "key": "(source_node,dest_node) -> {select_code, codeword bits}; the consistent device table proven identical across independent compiles (T1: 8/8 overlap arcs byte-identical select_code AND CRAM bits).",
+  "decode_rule": "DECODE-OR-REFUSE. Bind an edge only when its FULL recorded codeword (every {flat,value} bit) is present in the target rbf. Hardwired 0-bit LEIM arcs carry no CRAM evidence and are NOT bit-decodable (connectivity-only records).",
+  "flat_transform": "bitpos_to_rbf.flat_to_rbf (proven flat<->rbf)."
+ },
+ "lattices": {
+  "C4": "node(I,X,Y)=70654+798*(I-12)+24*(X-10)+(Y-2)  (exact I>=12; fixed per-I hole below)",
+  "R4": "node(I,X,Y)=44198+760*(I-17)+23*(X-15)+(Y-8)",
+  "R24": "node(I,X,Y)=59111+23*X+Y"
+ },
+ "stats": {
+  "unique_arcs": 43,
+  "overlap_arcs_identical_across_compiles": 8,
+  "overlap_conflicts": 0,
+  "wall_arcs_LI_plus_LEIM": 16,
+  "LI_arcs": 13,
+  "LEIM_arcs": 3,
+  "bit_detectable_arcs": 40,
+  "hardwired_0bit_arcs": 3,
+  "distinct_dest_muxes": 41,
+  "by_dest_class": {
+   "interconnect": 27,
+   "LI": 13,
+   "LEIM": 3
+  },
+  "node_names": 53
+ },
+ "node_names": {
+  "26739": "LE_BUFFER:X16Y18S0I25",
+  "68335": "C4:X16Y19S0I9",
+  "93801": "LOCAL_INTERCONNECT:X16Y22S0I12",
+  "68339": "C4:X16Y23S0I9",
+  "84783": "LOCAL_INTERCONNECT:X16Y24S0I1",
+  "123131": "BLOCK_INPUT_MUX:X16Y24S0I5",
+  "10618": "LE_BUFFER:X16Y22S0I0",
+  "60851": "C4:X16Y23S0I0",
+  "91368": "LOCAL_INTERCONNECT:X17Y24S0I9",
+  "122603": "BLOCK_INPUT_MUX:X17Y24S0I0",
+  "118902": "IO_DATAIN:X16Y24S1I0",
+  "82931": "C16:X16Y21S0I1",
+  "70813": "C4:X16Y17S0I12",
+  "83957": "LOCAL_INTERCONNECT:X16Y18S0I0",
+  "118896": "IO_DATAIN:X9Y0S1I0",
+  "83520": "C16:X8Y1S0I7",
+  "82373": "C16:X8Y5S0I0",
+  "34950": "R4:X9Y18S0I5",
+  "38082": "R4:X13Y18S0I9",
+  "91337": "LOCAL_INTERCONNECT:X16Y18S0I9",
+  "119088": "IO_DATAIN:X9Y0S3I0",
+  "83384": "C16:X8Y1S0I5",
+  "82372": "C16:X8Y3S0I0",
+  "40270": "R4:X9Y18S0I12",
+  "39602": "R4:X13Y18S0I11",
+  "103953": "LOCAL_INTERCONNECT:X16Y18S0I25",
+  "119145": "IO_DATAIN:X16Y24S3I1",
+  "71614": "C4:X16Y20S0I13",
+  "94621": "LOCAL_INTERCONNECT:X16Y22S0I13",
+  "10604": "LE_BUFFER:X16Y8S0I0",
+  "60837": "C4:X16Y9S0I0",
+  "83951": "LOCAL_INTERCONNECT:X16Y12S0I0",
+  "10608": "LE_BUFFER:X16Y12S0I0",
+  "70804": "C4:X16Y8S0I12",
+  "70800": "C4:X16Y4S0I12",
+  "63324": "C4:X16Y0S0I3",
+  "83939": "LOCAL_INTERCONNECT:X16Y0S0I0",
+  "123968": "BLOCK_INPUT_MUX:X16Y0S0I13",
+  "118991": "IO_DATAIN:X16Y24S2I0",
+  "82926": "C16:X16Y11S0I1",
+  "78793": "C4:X16Y17S0I22",
+  "74793": "C4:X16Y7S0I17",
+  "94617": "LOCAL_INTERCONNECT:X16Y18S0I13",
+  "89687": "LOCAL_INTERCONNECT:X16Y8S0I7",
+  "119095": "IO_DATAIN:X16Y24S3I0",
+  "118941": "IO_DATAIN:X16Y0S1I1",
+  "83332": "C16:X16Y1S0I4",
+  "67493": "C4:X16Y9S0I8",
+  "92971": "LOCAL_INTERCONNECT:X16Y12S0I11",
+  "118990": "IO_DATAIN:X16Y0S2I0",
+  "83264": "C16:X16Y1S0I3",
+  "60833": "C4:X16Y5S0I0",
+  "83947": "LOCAL_INTERCONNECT:X16Y8S0I0"
+ },
+ "arcs": [
+  {
+   "dest_node": 68335,
+   "dest_wire": "C4:X16Y19S0I9",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 26739,
+   "source_wire": "LE_BUFFER:X16Y18S0I25",
+   "source_type": "LE_BUFFER",
+   "source_class": "LE_out",
+   "select_code": 4,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     740029,
+     1
+    ],
+    [
+     740031,
+     0
+    ],
+    [
+     741758,
+     1
+    ],
+    [
+     740028,
+     0
+    ],
+    [
+     740030,
+     0
+    ],
+    [
+     741755,
+     0
+    ],
+    [
+     741756,
+     0
+    ],
+    [
+     741757,
+     0
+    ]
+   ],
+   "hot_flat": [
+    740029,
+    741758
+   ],
+   "cold_flat": [
+    740031,
+    740028,
+    740030,
+    741755,
+    741756,
+    741757
+   ],
+   "cell_rbf": [
+    [
+     184605,
+     2
+    ],
+    [
+     184185,
+     2
+    ],
+    [
+     184184,
+     2
+    ],
+    [
+     184815,
+     2
+    ],
+    [
+     184395,
+     2
+    ],
+    [
+     184814,
+     2
+    ],
+    [
+     184604,
+     2
+    ],
+    [
+     184394,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184605,
+     2
+    ],
+    [
+     184184,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 93801,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I12",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 68335,
+   "source_wire": "C4:X16Y19S0I9",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 9,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     259930,
+     1
+    ],
+    [
+     261658,
+     0
+    ],
+    [
+     259931,
+     1
+    ],
+    [
+     259929,
+     0
+    ],
+    [
+     261656,
+     0
+    ],
+    [
+     261657,
+     0
+    ]
+   ],
+   "hot_flat": [
+    259930,
+    259931
+   ],
+   "cold_flat": [
+    261658,
+    259929,
+    261656,
+    261657
+   ],
+   "cell_rbf": [
+    [
+     182999,
+     0
+    ],
+    [
+     182788,
+     0
+    ],
+    [
+     182789,
+     0
+    ],
+    [
+     183209,
+     0
+    ],
+    [
+     183208,
+     0
+    ],
+    [
+     182998,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     182999,
+     0
+    ],
+    [
+     182789,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 68339,
+   "dest_wire": "C4:X16Y23S0I9",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 68335,
+   "source_wire": "C4:X16Y19S0I9",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 7,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     256470,
+     1
+    ],
+    [
+     256471,
+     1
+    ],
+    [
+     258198,
+     0
+    ],
+    [
+     256468,
+     0
+    ],
+    [
+     256469,
+     0
+    ],
+    [
+     258195,
+     0
+    ],
+    [
+     258196,
+     0
+    ],
+    [
+     258197,
+     0
+    ]
+   ],
+   "hot_flat": [
+    256470,
+    256471
+   ],
+   "cold_flat": [
+    258198,
+    256468,
+    256469,
+    258195,
+    258196,
+    258197
+   ],
+   "cell_rbf": [
+    [
+     184261,
+     0
+    ],
+    [
+     184051,
+     0
+    ],
+    [
+     184050,
+     0
+    ],
+    [
+     184681,
+     0
+    ],
+    [
+     184471,
+     0
+    ],
+    [
+     184680,
+     0
+    ],
+    [
+     184470,
+     0
+    ],
+    [
+     184260,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184261,
+     0
+    ],
+    [
+     184051,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 84783,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y24S0I1",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 68339,
+   "source_wire": "C4:X16Y23S0I9",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 2,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     12969,
+     1
+    ],
+    [
+     11243,
+     1
+    ],
+    [
+     12970,
+     0
+    ],
+    [
+     11241,
+     0
+    ],
+    [
+     11242,
+     0
+    ],
+    [
+     12968,
+     0
+    ]
+   ],
+   "hot_flat": [
+    12969,
+    11243
+   ],
+   "cold_flat": [
+    12970,
+    11241,
+    11242,
+    12968
+   ],
+   "cell_rbf": [
+    [
+     183142,
+     0
+    ],
+    [
+     182933,
+     0
+    ],
+    [
+     182932,
+     0
+    ],
+    [
+     183353,
+     0
+    ],
+    [
+     183143,
+     0
+    ],
+    [
+     183352,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183142,
+     0
+    ],
+    [
+     182933,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 123131,
+   "dest_wire": "BLOCK_INPUT_MUX:X16Y24S0I5",
+   "dest_type": "BLOCK_INPUT_MUX",
+   "dest_class": "LEIM",
+   "is_wall": true,
+   "source_node": 84783,
+   "source_wire": "LOCAL_INTERCONNECT:X16Y24S0I1",
+   "source_type": "LOCAL_INTERCONNECT",
+   "source_class": "LI",
+   "select_code": null,
+   "hardwired": true,
+   "n_bits": 0,
+   "codeword": [],
+   "hot_flat": [],
+   "cold_flat": [],
+   "cell_rbf": [],
+   "hot_rbf": [],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 60851,
+   "dest_wire": "C4:X16Y23S0I0",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 10618,
+   "source_wire": "LE_BUFFER:X16Y22S0I0",
+   "source_type": "LE_BUFFER",
+   "source_class": "LE_out",
+   "select_code": 2,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     161484,
+     1
+    ],
+    [
+     161486,
+     0
+    ],
+    [
+     159759,
+     1
+    ],
+    [
+     159756,
+     0
+    ],
+    [
+     159757,
+     0
+    ],
+    [
+     159758,
+     0
+    ],
+    [
+     161483,
+     0
+    ],
+    [
+     161485,
+     0
+    ]
+   ],
+   "hot_flat": [
+    161484,
+    159759
+   ],
+   "cold_flat": [
+    161486,
+    159756,
+    159757,
+    159758,
+    161483,
+    161485
+   ],
+   "cell_rbf": [
+    [
+     184526,
+     0
+    ],
+    [
+     184106,
+     0
+    ],
+    [
+     184107,
+     0
+    ],
+    [
+     184737,
+     0
+    ],
+    [
+     184527,
+     0
+    ],
+    [
+     184317,
+     0
+    ],
+    [
+     184736,
+     0
+    ],
+    [
+     184316,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184526,
+     0
+    ],
+    [
+     184107,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 91368,
+   "dest_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 60851,
+   "source_wire": "C4:X16Y23S0I0",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 1,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     7786,
+     1
+    ],
+    [
+     9511,
+     0
+    ],
+    [
+     7784,
+     1
+    ],
+    [
+     7785,
+     0
+    ],
+    [
+     9512,
+     0
+    ],
+    [
+     9513,
+     0
+    ]
+   ],
+   "hot_flat": [
+    7786,
+    7784
+   ],
+   "cold_flat": [
+    9511,
+    7785,
+    9512,
+    9513
+   ],
+   "cell_rbf": [
+    [
+     183565,
+     0
+    ],
+    [
+     183984,
+     0
+    ],
+    [
+     183985,
+     0
+    ],
+    [
+     183775,
+     0
+    ],
+    [
+     183774,
+     0
+    ],
+    [
+     183564,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183565,
+     0
+    ],
+    [
+     183985,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 122603,
+   "dest_wire": "BLOCK_INPUT_MUX:X17Y24S0I0",
+   "dest_type": "BLOCK_INPUT_MUX",
+   "dest_class": "LEIM",
+   "is_wall": true,
+   "source_node": 91368,
+   "source_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+   "source_type": "LOCAL_INTERCONNECT",
+   "source_class": "LI",
+   "select_code": null,
+   "hardwired": true,
+   "n_bits": 0,
+   "codeword": [],
+   "hot_flat": [],
+   "cold_flat": [],
+   "cell_rbf": [],
+   "hot_rbf": [],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 82931,
+   "dest_wire": "C16:X16Y21S0I1",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118902,
+   "source_wire": "IO_DATAIN:X16Y24S1I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 6,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     35426,
+     1
+    ],
+    [
+     37153,
+     0
+    ],
+    [
+     33699,
+     0
+    ],
+    [
+     31972,
+     0
+    ],
+    [
+     30245,
+     0
+    ],
+    [
+     28518,
+     0
+    ]
+   ],
+   "hot_flat": [
+    35426
+   ],
+   "cold_flat": [
+    37153,
+    33699,
+    31972,
+    30245,
+    28518
+   ],
+   "cell_rbf": [
+    [
+     181869,
+     0
+    ],
+    [
+     181868,
+     0
+    ],
+    [
+     181870,
+     0
+    ],
+    [
+     181871,
+     0
+    ],
+    [
+     181872,
+     0
+    ],
+    [
+     181873,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     181869,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 70813,
+   "dest_wire": "C4:X16Y17S0I12",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 82931,
+   "source_wire": "C16:X16Y21S0I1",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 6,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     285827,
+     1
+    ],
+    [
+     284103,
+     0
+    ],
+    [
+     285830,
+     1
+    ],
+    [
+     284100,
+     0
+    ],
+    [
+     284101,
+     0
+    ],
+    [
+     284102,
+     0
+    ],
+    [
+     285828,
+     0
+    ],
+    [
+     285829,
+     0
+    ]
+   ],
+   "hot_flat": [
+    285827,
+    285830
+   ],
+   "cold_flat": [
+    284103,
+    284100,
+    284101,
+    284102,
+    285828,
+    285829
+   ],
+   "cell_rbf": [
+    [
+     184664,
+     0
+    ],
+    [
+     184035,
+     0
+    ],
+    [
+     184034,
+     0
+    ],
+    [
+     184665,
+     0
+    ],
+    [
+     184455,
+     0
+    ],
+    [
+     184245,
+     0
+    ],
+    [
+     184454,
+     0
+    ],
+    [
+     184244,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184664,
+     0
+    ],
+    [
+     184034,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83957,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I0",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 70813,
+   "source_wire": "C4:X16Y17S0I12",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 12,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     648504,
+     1
+    ],
+    [
+     646779,
+     0
+    ],
+    [
+     648506,
+     1
+    ],
+    [
+     646777,
+     0
+    ],
+    [
+     646778,
+     0
+    ],
+    [
+     648505,
+     0
+    ]
+   ],
+   "hot_flat": [
+    648504,
+    648506
+   ],
+   "cold_flat": [
+    646779,
+    646777,
+    646778,
+    648505
+   ],
+   "cell_rbf": [
+    [
+     183191,
+     1
+    ],
+    [
+     182772,
+     1
+    ],
+    [
+     182771,
+     1
+    ],
+    [
+     183192,
+     1
+    ],
+    [
+     182982,
+     1
+    ],
+    [
+     182981,
+     1
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183191,
+     1
+    ],
+    [
+     182771,
+     1
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83520,
+   "dest_wire": "C16:X8Y1S0I7",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118896,
+   "source_wire": "IO_DATAIN:X9Y0S1I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 23,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     2838870,
+     1
+    ],
+    [
+     2837143,
+     0
+    ],
+    [
+     2840597,
+     0
+    ],
+    [
+     2842324,
+     0
+    ],
+    [
+     2844051,
+     0
+    ],
+    [
+     2845778,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2838870
+   ],
+   "cold_flat": [
+    2837143,
+    2840597,
+    2842324,
+    2844051,
+    2845778
+   ],
+   "cell_rbf": [
+    [
+     71864,
+     7
+    ],
+    [
+     71865,
+     7
+    ],
+    [
+     71863,
+     7
+    ],
+    [
+     71862,
+     7
+    ],
+    [
+     71861,
+     7
+    ],
+    [
+     71860,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     71864,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 82373,
+   "dest_wire": "C16:X8Y5S0I0",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 83520,
+   "source_wire": "C16:X8Y1S0I7",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 7,
+   "hardwired": false,
+   "n_bits": 18,
+   "codeword": [
+    [
+     2341505,
+     1
+    ],
+    [
+     2400221,
+     1
+    ],
+    [
+     2348413,
+     0
+    ],
+    [
+     2355321,
+     0
+    ],
+    [
+     2362229,
+     0
+    ],
+    [
+     2369137,
+     0
+    ],
+    [
+     2376045,
+     0
+    ],
+    [
+     2382953,
+     0
+    ],
+    [
+     2389861,
+     0
+    ],
+    [
+     2401950,
+     0
+    ],
+    [
+     2408858,
+     0
+    ],
+    [
+     2415766,
+     0
+    ],
+    [
+     2422674,
+     0
+    ],
+    [
+     2429582,
+     0
+    ],
+    [
+     2436490,
+     0
+    ],
+    [
+     2443398,
+     0
+    ],
+    [
+     2450306,
+     0
+    ],
+    [
+     2400220,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2341505,
+    2400221
+   ],
+   "cold_flat": [
+    2348413,
+    2355321,
+    2362229,
+    2369137,
+    2376045,
+    2382953,
+    2389861,
+    2401950,
+    2408858,
+    2415766,
+    2422674,
+    2429582,
+    2436490,
+    2443398,
+    2450306,
+    2400220
+   ],
+   "cell_rbf": [
+    [
+     69636,
+     6
+    ],
+    [
+     70022,
+     6
+    ],
+    [
+     69632,
+     6
+    ],
+    [
+     69628,
+     6
+    ],
+    [
+     69624,
+     6
+    ],
+    [
+     69620,
+     6
+    ],
+    [
+     69616,
+     6
+    ],
+    [
+     69612,
+     6
+    ],
+    [
+     69608,
+     6
+    ],
+    [
+     69601,
+     6
+    ],
+    [
+     69597,
+     6
+    ],
+    [
+     69593,
+     6
+    ],
+    [
+     69589,
+     6
+    ],
+    [
+     69585,
+     6
+    ],
+    [
+     69581,
+     6
+    ],
+    [
+     69577,
+     6
+    ],
+    [
+     69573,
+     6
+    ],
+    [
+     70232,
+     6
+    ]
+   ],
+   "hot_rbf": [
+    [
+     69636,
+     6
+    ],
+    [
+     70022,
+     6
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 34950,
+   "dest_wire": "R4:X9Y18S0I5",
+   "dest_type": "R4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 82373,
+   "source_wire": "C16:X8Y5S0I0",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 2,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     688761,
+     1
+    ],
+    [
+     688760,
+     0
+    ],
+    [
+     690487,
+     0
+    ],
+    [
+     688762,
+     0
+    ],
+    [
+     690488,
+     0
+    ],
+    [
+     690489,
+     0
+    ]
+   ],
+   "hot_flat": [
+    688761
+   ],
+   "cold_flat": [
+    688760,
+    690487,
+    688762,
+    690488,
+    690489
+   ],
+   "cell_rbf": [
+    [
+     70608,
+     1
+    ],
+    [
+     70818,
+     1
+    ],
+    [
+     70817,
+     1
+    ],
+    [
+     70398,
+     1
+    ],
+    [
+     70607,
+     1
+    ],
+    [
+     70397,
+     1
+    ]
+   ],
+   "hot_rbf": [
+    [
+     70608,
+     1
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 38082,
+   "dest_wire": "R4:X13Y18S0I9",
+   "dest_type": "R4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 34950,
+   "source_wire": "R4:X9Y18S0I5",
+   "source_type": "R4",
+   "source_class": "interconnect",
+   "select_code": 0,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     683440,
+     1
+    ],
+    [
+     681712,
+     1
+    ],
+    [
+     683439,
+     0
+    ],
+    [
+     681713,
+     0
+    ],
+    [
+     681714,
+     0
+    ],
+    [
+     683441,
+     0
+    ]
+   ],
+   "hot_flat": [
+    683440,
+    681712
+   ],
+   "cold_flat": [
+    683439,
+    681713,
+    681714,
+    683441
+   ],
+   "cell_rbf": [
+    [
+     100011,
+     1
+    ],
+    [
+     100222,
+     1
+    ],
+    [
+     100221,
+     1
+    ],
+    [
+     100012,
+     1
+    ],
+    [
+     99802,
+     1
+    ],
+    [
+     99801,
+     1
+    ]
+   ],
+   "hot_rbf": [
+    [
+     100011,
+     1
+    ],
+    [
+     100222,
+     1
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 91337,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I9",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 38082,
+   "source_wire": "R4:X13Y18S0I9",
+   "source_type": "R4",
+   "source_class": "interconnect",
+   "select_code": 3,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     717584,
+     1
+    ],
+    [
+     717586,
+     0
+    ],
+    [
+     715859,
+     0
+    ],
+    [
+     715857,
+     0
+    ],
+    [
+     715858,
+     0
+    ],
+    [
+     717585,
+     0
+    ]
+   ],
+   "hot_flat": [
+    717584
+   ],
+   "cold_flat": [
+    717586,
+    715859,
+    715857,
+    715858,
+    717585
+   ],
+   "cell_rbf": [
+    [
+     183358,
+     2
+    ],
+    [
+     182938,
+     2
+    ],
+    [
+     182732,
+     1
+    ],
+    [
+     183152,
+     1
+    ],
+    [
+     182942,
+     1
+    ],
+    [
+     183148,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183358,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 83384,
+   "dest_wire": "C16:X8Y1S0I5",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 119088,
+   "source_wire": "IO_DATAIN:X9Y0S3I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 20,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     2825054,
+     1
+    ],
+    [
+     2819873,
+     0
+    ],
+    [
+     2821600,
+     0
+    ],
+    [
+     2823327,
+     0
+    ],
+    [
+     2826781,
+     0
+    ],
+    [
+     2828508,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2825054
+   ],
+   "cold_flat": [
+    2819873,
+    2821600,
+    2823327,
+    2826781,
+    2828508
+   ],
+   "cell_rbf": [
+    [
+     71872,
+     7
+    ],
+    [
+     71875,
+     7
+    ],
+    [
+     71874,
+     7
+    ],
+    [
+     71873,
+     7
+    ],
+    [
+     71871,
+     7
+    ],
+    [
+     71870,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     71872,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 82372,
+   "dest_wire": "C16:X8Y3S0I0",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 83384,
+   "source_wire": "C16:X8Y1S0I5",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 2,
+   "hardwired": false,
+   "n_bits": 18,
+   "codeword": [
+    [
+     2678270,
+     1
+    ],
+    [
+     2642000,
+     1
+    ],
+    [
+     2583285,
+     0
+    ],
+    [
+     2590193,
+     0
+    ],
+    [
+     2597101,
+     0
+    ],
+    [
+     2604009,
+     0
+    ],
+    [
+     2610917,
+     0
+    ],
+    [
+     2617825,
+     0
+    ],
+    [
+     2624733,
+     0
+    ],
+    [
+     2631641,
+     0
+    ],
+    [
+     2643730,
+     0
+    ],
+    [
+     2650638,
+     0
+    ],
+    [
+     2657546,
+     0
+    ],
+    [
+     2664454,
+     0
+    ],
+    [
+     2671362,
+     0
+    ],
+    [
+     2685178,
+     0
+    ],
+    [
+     2692086,
+     0
+    ],
+    [
+     2642001,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2678270,
+    2642000
+   ],
+   "cold_flat": [
+    2583285,
+    2590193,
+    2597101,
+    2604009,
+    2610917,
+    2617825,
+    2624733,
+    2631641,
+    2643730,
+    2650638,
+    2657546,
+    2664454,
+    2671362,
+    2685178,
+    2692086,
+    2642001
+   ],
+   "cell_rbf": [
+    [
+     69647,
+     7
+    ],
+    [
+     70298,
+     7
+    ],
+    [
+     69702,
+     7
+    ],
+    [
+     69698,
+     7
+    ],
+    [
+     69694,
+     7
+    ],
+    [
+     69690,
+     7
+    ],
+    [
+     69686,
+     7
+    ],
+    [
+     69682,
+     7
+    ],
+    [
+     69678,
+     7
+    ],
+    [
+     69674,
+     7
+    ],
+    [
+     69667,
+     7
+    ],
+    [
+     69663,
+     7
+    ],
+    [
+     69659,
+     7
+    ],
+    [
+     69655,
+     7
+    ],
+    [
+     69651,
+     7
+    ],
+    [
+     69643,
+     7
+    ],
+    [
+     69639,
+     7
+    ],
+    [
+     70088,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     69647,
+     7
+    ],
+    [
+     70298,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 40270,
+   "dest_wire": "R4:X9Y18S0I12",
+   "dest_type": "R4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 82372,
+   "source_wire": "C16:X8Y3S0I0",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 1,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     744025,
+     1
+    ],
+    [
+     745751,
+     1
+    ],
+    [
+     744024,
+     0
+    ],
+    [
+     744026,
+     0
+    ],
+    [
+     745752,
+     0
+    ],
+    [
+     745753,
+     0
+    ]
+   ],
+   "hot_flat": [
+    744025,
+    745751
+   ],
+   "cold_flat": [
+    744024,
+    744026,
+    745752,
+    745753
+   ],
+   "cell_rbf": [
+    [
+     70783,
+     2
+    ],
+    [
+     70992,
+     2
+    ],
+    [
+     70993,
+     2
+    ],
+    [
+     70573,
+     2
+    ],
+    [
+     70782,
+     2
+    ],
+    [
+     70572,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     70783,
+     2
+    ],
+    [
+     70992,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 39602,
+   "dest_wire": "R4:X13Y18S0I11",
+   "dest_type": "R4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 40270,
+   "source_wire": "R4:X9Y18S0I12",
+   "source_type": "R4",
+   "source_class": "interconnect",
+   "select_code": 0,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     738705,
+     1
+    ],
+    [
+     738703,
+     1
+    ],
+    [
+     736976,
+     0
+    ],
+    [
+     736977,
+     0
+    ],
+    [
+     736978,
+     0
+    ],
+    [
+     738704,
+     0
+    ]
+   ],
+   "hot_flat": [
+    738705,
+    738703
+   ],
+   "cold_flat": [
+    736976,
+    736977,
+    736978,
+    738704
+   ],
+   "cell_rbf": [
+    [
+     99976,
+     2
+    ],
+    [
+     100396,
+     2
+    ],
+    [
+     100397,
+     2
+    ],
+    [
+     100187,
+     2
+    ],
+    [
+     99977,
+     2
+    ],
+    [
+     100186,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     99976,
+     2
+    ],
+    [
+     100396,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 103953,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I25",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 39602,
+   "source_wire": "R4:X13Y18S0I11",
+   "source_type": "R4",
+   "source_class": "interconnect",
+   "select_code": 4,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     733161,
+     1
+    ],
+    [
+     733159,
+     1
+    ],
+    [
+     734886,
+     0
+    ],
+    [
+     733160,
+     0
+    ],
+    [
+     734887,
+     0
+    ],
+    [
+     734888,
+     0
+    ]
+   ],
+   "hot_flat": [
+    733161,
+    733159
+   ],
+   "cold_flat": [
+    734886,
+    733160,
+    734887,
+    734888
+   ],
+   "cell_rbf": [
+    [
+     176209,
+     2
+    ],
+    [
+     176629,
+     2
+    ],
+    [
+     176628,
+     2
+    ],
+    [
+     176419,
+     2
+    ],
+    [
+     176418,
+     2
+    ],
+    [
+     176208,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     176209,
+     2
+    ],
+    [
+     176629,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 71614,
+   "dest_wire": "C4:X16Y20S0I13",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 119145,
+   "source_wire": "IO_DATAIN:X16Y24S3I1",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 9,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     12961,
+     1
+    ],
+    [
+     19869,
+     0
+    ],
+    [
+     18142,
+     0
+    ],
+    [
+     16415,
+     0
+    ],
+    [
+     14688,
+     0
+    ],
+    [
+     11234,
+     0
+    ]
+   ],
+   "hot_flat": [
+    12961
+   ],
+   "cold_flat": [
+    19869,
+    18142,
+    16415,
+    14688,
+    11234
+   ],
+   "cell_rbf": [
+    [
+     184822,
+     0
+    ],
+    [
+     184818,
+     0
+    ],
+    [
+     184819,
+     0
+    ],
+    [
+     184820,
+     0
+    ],
+    [
+     184821,
+     0
+    ],
+    [
+     184823,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184822,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A"
+   ]
+  },
+  {
+   "dest_node": 94621,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I13",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 71614,
+   "source_wire": "C4:X16Y20S0I13",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 11,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     266838,
+     1
+    ],
+    [
+     268566,
+     1
+    ],
+    [
+     266839,
+     0
+    ],
+    [
+     266837,
+     0
+    ],
+    [
+     268564,
+     0
+    ],
+    [
+     268565,
+     0
+    ]
+   ],
+   "hot_flat": [
+    266838,
+    268566
+   ],
+   "cold_flat": [
+    266839,
+    266837,
+    268564,
+    268565
+   ],
+   "cell_rbf": [
+    [
+     182995,
+     0
+    ],
+    [
+     182784,
+     0
+    ],
+    [
+     182785,
+     0
+    ],
+    [
+     183205,
+     0
+    ],
+    [
+     183204,
+     0
+    ],
+    [
+     182994,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     182995,
+     0
+    ],
+    [
+     182784,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "A",
+    "B"
+   ]
+  },
+  {
+   "dest_node": 60837,
+   "dest_wire": "C4:X16Y9S0I0",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 10604,
+   "source_wire": "LE_BUFFER:X16Y8S0I0",
+   "source_type": "LE_BUFFER",
+   "source_class": "LE_out",
+   "select_code": 2,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     1853944,
+     1
+    ],
+    [
+     1853946,
+     0
+    ],
+    [
+     1852219,
+     1
+    ],
+    [
+     1852216,
+     0
+    ],
+    [
+     1852217,
+     0
+    ],
+    [
+     1852218,
+     0
+    ],
+    [
+     1853943,
+     0
+    ],
+    [
+     1853945,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1853944,
+    1852219
+   ],
+   "cold_flat": [
+    1853946,
+    1852216,
+    1852217,
+    1852218,
+    1853943,
+    1853945
+   ],
+   "cell_rbf": [
+    [
+     184581,
+     5
+    ],
+    [
+     184161,
+     5
+    ],
+    [
+     184162,
+     5
+    ],
+    [
+     184792,
+     5
+    ],
+    [
+     184582,
+     5
+    ],
+    [
+     184372,
+     5
+    ],
+    [
+     184791,
+     5
+    ],
+    [
+     184371,
+     5
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184581,
+     5
+    ],
+    [
+     184162,
+     5
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83951,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y12S0I0",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 60837,
+   "source_wire": "C4:X16Y9S0I0",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 10,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     1373844,
+     1
+    ],
+    [
+     1372119,
+     1
+    ],
+    [
+     1373846,
+     0
+    ],
+    [
+     1372117,
+     0
+    ],
+    [
+     1372118,
+     0
+    ],
+    [
+     1373845,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1373844,
+    1372119
+   ],
+   "cold_flat": [
+    1373846,
+    1372117,
+    1372118,
+    1373845
+   ],
+   "cell_rbf": [
+    [
+     183185,
+     3
+    ],
+    [
+     182766,
+     3
+    ],
+    [
+     182765,
+     3
+    ],
+    [
+     183186,
+     3
+    ],
+    [
+     182976,
+     3
+    ],
+    [
+     182975,
+     3
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183185,
+     3
+    ],
+    [
+     182766,
+     3
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 70804,
+   "dest_wire": "C4:X16Y8S0I12",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 10608,
+   "source_wire": "LE_BUFFER:X16Y12S0I0",
+   "source_type": "LE_BUFFER",
+   "source_class": "LE_out",
+   "select_code": 3,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     1372111,
+     1
+    ],
+    [
+     1372113,
+     1
+    ],
+    [
+     1373840,
+     0
+    ],
+    [
+     1372110,
+     0
+    ],
+    [
+     1372112,
+     0
+    ],
+    [
+     1373837,
+     0
+    ],
+    [
+     1373838,
+     0
+    ],
+    [
+     1373839,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1372111,
+    1372113
+   ],
+   "cold_flat": [
+    1373840,
+    1372110,
+    1372112,
+    1373837,
+    1373838,
+    1373839
+   ],
+   "cell_rbf": [
+    [
+     184446,
+     3
+    ],
+    [
+     184026,
+     3
+    ],
+    [
+     184025,
+     3
+    ],
+    [
+     184656,
+     3
+    ],
+    [
+     184236,
+     3
+    ],
+    [
+     184655,
+     3
+    ],
+    [
+     184445,
+     3
+    ],
+    [
+     184235,
+     3
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184446,
+     3
+    ],
+    [
+     184026,
+     3
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 70800,
+   "dest_wire": "C4:X16Y4S0I12",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 70804,
+   "source_wire": "C4:X16Y8S0I12",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 18,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     1855670,
+     1
+    ],
+    [
+     1855673,
+     0
+    ],
+    [
+     1857400,
+     1
+    ],
+    [
+     1855671,
+     0
+    ],
+    [
+     1855672,
+     0
+    ],
+    [
+     1857397,
+     0
+    ],
+    [
+     1857398,
+     0
+    ],
+    [
+     1857399,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1855670,
+    1857400
+   ],
+   "cold_flat": [
+    1855673,
+    1855671,
+    1855672,
+    1857397,
+    1857398,
+    1857399
+   ],
+   "cell_rbf": [
+    [
+     184790,
+     5
+    ],
+    [
+     184160,
+     5
+    ],
+    [
+     184159,
+     5
+    ],
+    [
+     184580,
+     5
+    ],
+    [
+     184370,
+     5
+    ],
+    [
+     184789,
+     5
+    ],
+    [
+     184579,
+     5
+    ],
+    [
+     184369,
+     5
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184790,
+     5
+    ],
+    [
+     184159,
+     5
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 63324,
+   "dest_wire": "C4:X16Y0S0I3",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 70800,
+   "source_wire": "C4:X16Y4S0I12",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 18,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     2339230,
+     1
+    ],
+    [
+     2339233,
+     0
+    ],
+    [
+     2340960,
+     1
+    ],
+    [
+     2339231,
+     0
+    ],
+    [
+     2339232,
+     0
+    ],
+    [
+     2340957,
+     0
+    ],
+    [
+     2340958,
+     0
+    ],
+    [
+     2340959,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2339230,
+    2340960
+   ],
+   "cold_flat": [
+    2339233,
+    2339231,
+    2339232,
+    2340957,
+    2340958,
+    2340959
+   ],
+   "cell_rbf": [
+    [
+     184717,
+     6
+    ],
+    [
+     184087,
+     6
+    ],
+    [
+     184086,
+     6
+    ],
+    [
+     184507,
+     6
+    ],
+    [
+     184297,
+     6
+    ],
+    [
+     184716,
+     6
+    ],
+    [
+     184506,
+     6
+    ],
+    [
+     184296,
+     6
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184717,
+     6
+    ],
+    [
+     184086,
+     6
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83939,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y0S0I0",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 63324,
+   "source_wire": "C4:X16Y0S0I3",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 18,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     2848703,
+     1
+    ],
+    [
+     2846977,
+     0
+    ],
+    [
+     2848704,
+     1
+    ],
+    [
+     2848702,
+     0
+    ],
+    [
+     2846975,
+     0
+    ],
+    [
+     2846976,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2848703,
+    2848704
+   ],
+   "cold_flat": [
+    2846977,
+    2848702,
+    2846975,
+    2846976
+   ],
+   "cell_rbf": [
+    [
+     182948,
+     7
+    ],
+    [
+     182739,
+     7
+    ],
+    [
+     182738,
+     7
+    ],
+    [
+     183158,
+     7
+    ],
+    [
+     183159,
+     7
+    ],
+    [
+     182949,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     182948,
+     7
+    ],
+    [
+     182738,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 123968,
+   "dest_wire": "BLOCK_INPUT_MUX:X16Y0S0I13",
+   "dest_type": "BLOCK_INPUT_MUX",
+   "dest_class": "LEIM",
+   "is_wall": true,
+   "source_node": 83939,
+   "source_wire": "LOCAL_INTERCONNECT:X16Y0S0I0",
+   "source_type": "LOCAL_INTERCONNECT",
+   "source_class": "LI",
+   "select_code": null,
+   "hardwired": true,
+   "n_bits": 0,
+   "codeword": [],
+   "hot_flat": [],
+   "cold_flat": [],
+   "cell_rbf": [],
+   "hot_rbf": [],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 71614,
+   "dest_wire": "C4:X16Y20S0I13",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118991,
+   "source_wire": "IO_DATAIN:X16Y24S2I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 8,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     19869,
+     1
+    ],
+    [
+     18142,
+     0
+    ],
+    [
+     16415,
+     0
+    ],
+    [
+     14688,
+     0
+    ],
+    [
+     12961,
+     0
+    ],
+    [
+     11234,
+     0
+    ]
+   ],
+   "hot_flat": [
+    19869
+   ],
+   "cold_flat": [
+    18142,
+    16415,
+    14688,
+    12961,
+    11234
+   ],
+   "cell_rbf": [
+    [
+     184818,
+     0
+    ],
+    [
+     184819,
+     0
+    ],
+    [
+     184820,
+     0
+    ],
+    [
+     184821,
+     0
+    ],
+    [
+     184822,
+     0
+    ],
+    [
+     184823,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184818,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 82926,
+   "dest_wire": "C16:X16Y11S0I1",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118902,
+   "source_wire": "IO_DATAIN:X16Y24S1I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 21,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     18140,
+     1
+    ],
+    [
+     19867,
+     0
+    ],
+    [
+     16413,
+     0
+    ],
+    [
+     14686,
+     0
+    ],
+    [
+     12959,
+     0
+    ],
+    [
+     11232,
+     0
+    ]
+   ],
+   "hot_flat": [
+    18140
+   ],
+   "cold_flat": [
+    19867,
+    16413,
+    14686,
+    12959,
+    11232
+   ],
+   "cell_rbf": [
+    [
+     185239,
+     0
+    ],
+    [
+     185238,
+     0
+    ],
+    [
+     185240,
+     0
+    ],
+    [
+     185241,
+     0
+    ],
+    [
+     185242,
+     0
+    ],
+    [
+     185243,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     185239,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 78793,
+   "dest_wire": "C4:X16Y17S0I22",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 82926,
+   "source_wire": "C16:X16Y11S0I1",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 10,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     392901,
+     1
+    ],
+    [
+     391177,
+     0
+    ],
+    [
+     392904,
+     1
+    ],
+    [
+     391174,
+     0
+    ],
+    [
+     391175,
+     0
+    ],
+    [
+     391176,
+     0
+    ],
+    [
+     392902,
+     0
+    ],
+    [
+     392903,
+     0
+    ]
+   ],
+   "hot_flat": [
+    392901,
+    392904
+   ],
+   "cold_flat": [
+    391177,
+    391174,
+    391175,
+    391176,
+    392902,
+    392903
+   ],
+   "cell_rbf": [
+    [
+     184809,
+     1
+    ],
+    [
+     184180,
+     1
+    ],
+    [
+     184179,
+     1
+    ],
+    [
+     184810,
+     1
+    ],
+    [
+     184600,
+     1
+    ],
+    [
+     184390,
+     1
+    ],
+    [
+     184599,
+     1
+    ],
+    [
+     184389,
+     1
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184809,
+     1
+    ],
+    [
+     184179,
+     1
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 74793,
+   "dest_wire": "C4:X16Y7S0I17",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 82926,
+   "source_wire": "C16:X16Y11S0I1",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 19,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     1537902,
+     1
+    ],
+    [
+     1539632,
+     0
+    ],
+    [
+     1537905,
+     1
+    ],
+    [
+     1537903,
+     0
+    ],
+    [
+     1537904,
+     0
+    ],
+    [
+     1539629,
+     0
+    ],
+    [
+     1539630,
+     0
+    ],
+    [
+     1539631,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1537902,
+    1537905
+   ],
+   "cold_flat": [
+    1539632,
+    1537903,
+    1537904,
+    1539629,
+    1539630,
+    1539631
+   ],
+   "cell_rbf": [
+    [
+     184767,
+     4
+    ],
+    [
+     184136,
+     4
+    ],
+    [
+     184137,
+     4
+    ],
+    [
+     184557,
+     4
+    ],
+    [
+     184347,
+     4
+    ],
+    [
+     184766,
+     4
+    ],
+    [
+     184556,
+     4
+    ],
+    [
+     184346,
+     4
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184767,
+     4
+    ],
+    [
+     184137,
+     4
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 94617,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I13",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 78793,
+   "source_wire": "C4:X16Y17S0I22",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 10,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     752124,
+     1
+    ],
+    [
+     752126,
+     0
+    ],
+    [
+     750399,
+     0
+    ],
+    [
+     750397,
+     0
+    ],
+    [
+     750398,
+     0
+    ],
+    [
+     752125,
+     0
+    ]
+   ],
+   "hot_flat": [
+    752124
+   ],
+   "cold_flat": [
+    752126,
+    750399,
+    750397,
+    750398,
+    752125
+   ],
+   "cell_rbf": [
+    [
+     183338,
+     2
+    ],
+    [
+     182918,
+     2
+    ],
+    [
+     182919,
+     2
+    ],
+    [
+     183339,
+     2
+    ],
+    [
+     183129,
+     2
+    ],
+    [
+     183128,
+     2
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183338,
+     2
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 89687,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y8S0I7",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 74793,
+   "source_wire": "C4:X16Y7S0I17",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 8,
+   "hardwired": false,
+   "n_bits": 9,
+   "codeword": [
+    [
+     1905760,
+     1
+    ],
+    [
+     1904035,
+     0
+    ],
+    [
+     1905762,
+     0
+    ],
+    [
+     1904033,
+     0
+    ],
+    [
+     1904034,
+     0
+    ],
+    [
+     1905761,
+     0
+    ],
+    [
+     1907491,
+     0
+    ],
+    [
+     1907490,
+     0
+    ],
+    [
+     1907489,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1905760
+   ],
+   "cold_flat": [
+    1904035,
+    1905762,
+    1904033,
+    1904034,
+    1905761,
+    1907491,
+    1907490,
+    1907489
+   ],
+   "cell_rbf": [
+    [
+     183291,
+     5
+    ],
+    [
+     182872,
+     5
+    ],
+    [
+     182871,
+     5
+    ],
+    [
+     183292,
+     5
+    ],
+    [
+     183082,
+     5
+    ],
+    [
+     183081,
+     5
+    ],
+    [
+     182450,
+     5
+    ],
+    [
+     182660,
+     5
+    ],
+    [
+     182870,
+     5
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183291,
+     5
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 82931,
+   "dest_wire": "C16:X16Y21S0I1",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 119095,
+   "source_wire": "IO_DATAIN:X16Y24S3I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 6,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     31972,
+     1
+    ],
+    [
+     37153,
+     0
+    ],
+    [
+     35426,
+     0
+    ],
+    [
+     33699,
+     0
+    ],
+    [
+     30245,
+     0
+    ],
+    [
+     28518,
+     0
+    ]
+   ],
+   "hot_flat": [
+    31972
+   ],
+   "cold_flat": [
+    37153,
+    35426,
+    33699,
+    30245,
+    28518
+   ],
+   "cell_rbf": [
+    [
+     181871,
+     0
+    ],
+    [
+     181868,
+     0
+    ],
+    [
+     181869,
+     0
+    ],
+    [
+     181870,
+     0
+    ],
+    [
+     181872,
+     0
+    ],
+    [
+     181873,
+     0
+    ]
+   ],
+   "hot_rbf": [
+    [
+     181871,
+     0
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83332,
+   "dest_wire": "C16:X16Y1S0I4",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118941,
+   "source_wire": "IO_DATAIN:X16Y0S1I1",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 8,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     2841801,
+     1
+    ],
+    [
+     2836620,
+     0
+    ],
+    [
+     2838347,
+     0
+    ],
+    [
+     2840074,
+     0
+    ],
+    [
+     2843528,
+     0
+    ],
+    [
+     2845255,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2841801
+   ],
+   "cold_flat": [
+    2836620,
+    2838347,
+    2840074,
+    2843528,
+    2845255
+   ],
+   "cell_rbf": [
+    [
+     181692,
+     7
+    ],
+    [
+     181695,
+     7
+    ],
+    [
+     181694,
+     7
+    ],
+    [
+     181693,
+     7
+    ],
+    [
+     181691,
+     7
+    ],
+    [
+     181690,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     181692,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 67493,
+   "dest_wire": "C4:X16Y9S0I8",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 83332,
+   "source_wire": "C16:X16Y1S0I4",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 6,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     1938566,
+     1
+    ],
+    [
+     1940296,
+     1
+    ],
+    [
+     1938569,
+     0
+    ],
+    [
+     1938567,
+     0
+    ],
+    [
+     1938568,
+     0
+    ],
+    [
+     1940293,
+     0
+    ],
+    [
+     1940294,
+     0
+    ],
+    [
+     1940295,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1938566,
+    1940296
+   ],
+   "cold_flat": [
+    1938569,
+    1938567,
+    1938568,
+    1940293,
+    1940294,
+    1940295
+   ],
+   "cell_rbf": [
+    [
+     184742,
+     5
+    ],
+    [
+     184111,
+     5
+    ],
+    [
+     184112,
+     5
+    ],
+    [
+     184532,
+     5
+    ],
+    [
+     184322,
+     5
+    ],
+    [
+     184741,
+     5
+    ],
+    [
+     184531,
+     5
+    ],
+    [
+     184321,
+     5
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184742,
+     5
+    ],
+    [
+     184111,
+     5
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 92971,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y12S0I11",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 67493,
+   "source_wire": "C4:X16Y9S0I8",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 10,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     1456741,
+     1
+    ],
+    [
+     1456742,
+     0
+    ],
+    [
+     1455015,
+     1
+    ],
+    [
+     1455013,
+     0
+    ],
+    [
+     1455014,
+     0
+    ],
+    [
+     1456740,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1456741,
+    1455015
+   ],
+   "cold_flat": [
+    1456742,
+    1455013,
+    1455014,
+    1456740
+   ],
+   "cell_rbf": [
+    [
+     183134,
+     4
+    ],
+    [
+     182924,
+     4
+    ],
+    [
+     182925,
+     4
+    ],
+    [
+     183345,
+     4
+    ],
+    [
+     183135,
+     4
+    ],
+    [
+     183344,
+     4
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183134,
+     4
+    ],
+    [
+     182925,
+     4
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83264,
+   "dest_wire": "C16:X16Y1S0I3",
+   "dest_type": "C16",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 118990,
+   "source_wire": "IO_DATAIN:X16Y0S2I0",
+   "source_type": "IO_DATAIN",
+   "source_class": "IO_in",
+   "select_code": 6,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     2836605,
+     1
+    ],
+    [
+     2838332,
+     0
+    ],
+    [
+     2840059,
+     0
+    ],
+    [
+     2841786,
+     0
+    ],
+    [
+     2843513,
+     0
+    ],
+    [
+     2845240,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2836605
+   ],
+   "cold_flat": [
+    2838332,
+    2840059,
+    2841786,
+    2843513,
+    2845240
+   ],
+   "cell_rbf": [
+    [
+     184845,
+     7
+    ],
+    [
+     184844,
+     7
+    ],
+    [
+     184843,
+     7
+    ],
+    [
+     184842,
+     7
+    ],
+    [
+     184841,
+     7
+    ],
+    [
+     184840,
+     7
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184845,
+     7
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 60833,
+   "dest_wire": "C4:X16Y5S0I0",
+   "dest_type": "C4",
+   "dest_class": "interconnect",
+   "is_wall": false,
+   "source_node": 83264,
+   "source_wire": "C16:X16Y1S0I3",
+   "source_type": "C16",
+   "source_class": "interconnect",
+   "select_code": 8,
+   "hardwired": false,
+   "n_bits": 8,
+   "codeword": [
+    [
+     2335776,
+     1
+    ],
+    [
+     2337506,
+     1
+    ],
+    [
+     2335779,
+     0
+    ],
+    [
+     2335777,
+     0
+    ],
+    [
+     2335778,
+     0
+    ],
+    [
+     2337503,
+     0
+    ],
+    [
+     2337504,
+     0
+    ],
+    [
+     2337505,
+     0
+    ]
+   ],
+   "hot_flat": [
+    2335776,
+    2337506
+   ],
+   "cold_flat": [
+    2335779,
+    2335777,
+    2335778,
+    2337503,
+    2337504,
+    2337505
+   ],
+   "cell_rbf": [
+    [
+     184719,
+     6
+    ],
+    [
+     184088,
+     6
+    ],
+    [
+     184089,
+     6
+    ],
+    [
+     184509,
+     6
+    ],
+    [
+     184299,
+     6
+    ],
+    [
+     184718,
+     6
+    ],
+    [
+     184508,
+     6
+    ],
+    [
+     184298,
+     6
+    ]
+   ],
+   "hot_rbf": [
+    [
+     184719,
+     6
+    ],
+    [
+     184088,
+     6
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  },
+  {
+   "dest_node": 83947,
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y8S0I0",
+   "dest_type": "LOCAL_INTERCONNECT",
+   "dest_class": "LI",
+   "is_wall": true,
+   "source_node": 60833,
+   "source_wire": "C4:X16Y5S0I0",
+   "source_type": "C4",
+   "source_class": "interconnect",
+   "select_code": 10,
+   "hardwired": false,
+   "n_bits": 6,
+   "codeword": [
+    [
+     1857404,
+     1
+    ],
+    [
+     1855679,
+     1
+    ],
+    [
+     1857406,
+     0
+    ],
+    [
+     1855677,
+     0
+    ],
+    [
+     1855678,
+     0
+    ],
+    [
+     1857405,
+     0
+    ]
+   ],
+   "hot_flat": [
+    1857404,
+    1855679
+   ],
+   "cold_flat": [
+    1857406,
+    1855677,
+    1855678,
+    1857405
+   ],
+   "cell_rbf": [
+    [
+     183319,
+     5
+    ],
+    [
+     182900,
+     5
+    ],
+    [
+     182899,
+     5
+    ],
+    [
+     183320,
+     5
+    ],
+    [
+     183110,
+     5
+    ],
+    [
+     183109,
+     5
+    ]
+   ],
+   "hot_rbf": [
+    [
+     183319,
+     5
+    ],
+    [
+     182900,
+     5
+    ]
+   ],
+   "map_failures": 0,
+   "specimens": [
+    "B"
+   ]
+  }
+ ],
+ "dest_mux_index": {
+  "68335": {
+   "entries": [
+    {
+     "source_node": 26739,
+     "source_wire": "LE_BUFFER:X16Y18S0I25",
+     "select_code": 4,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       740029,
+       1
+      ],
+      [
+       740031,
+       0
+      ],
+      [
+       741758,
+       1
+      ],
+      [
+       740028,
+       0
+      ],
+      [
+       740030,
+       0
+      ],
+      [
+       741755,
+       0
+      ],
+      [
+       741756,
+       0
+      ],
+      [
+       741757,
+       0
+      ]
+     ],
+     "hot_flat": [
+      740029,
+      741758
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y19S0I9",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "93801": {
+   "entries": [
+    {
+     "source_node": 68335,
+     "source_wire": "C4:X16Y19S0I9",
+     "select_code": 9,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       259930,
+       1
+      ],
+      [
+       261658,
+       0
+      ],
+      [
+       259931,
+       1
+      ],
+      [
+       259929,
+       0
+      ],
+      [
+       261656,
+       0
+      ],
+      [
+       261657,
+       0
+      ]
+     ],
+     "hot_flat": [
+      259930,
+      259931
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I12",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "68339": {
+   "entries": [
+    {
+     "source_node": 68335,
+     "source_wire": "C4:X16Y19S0I9",
+     "select_code": 7,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       256470,
+       1
+      ],
+      [
+       256471,
+       1
+      ],
+      [
+       258198,
+       0
+      ],
+      [
+       256468,
+       0
+      ],
+      [
+       256469,
+       0
+      ],
+      [
+       258195,
+       0
+      ],
+      [
+       258196,
+       0
+      ],
+      [
+       258197,
+       0
+      ]
+     ],
+     "hot_flat": [
+      256470,
+      256471
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y23S0I9",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "84783": {
+   "entries": [
+    {
+     "source_node": 68339,
+     "source_wire": "C4:X16Y23S0I9",
+     "select_code": 2,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       12969,
+       1
+      ],
+      [
+       11243,
+       1
+      ],
+      [
+       12970,
+       0
+      ],
+      [
+       11241,
+       0
+      ],
+      [
+       11242,
+       0
+      ],
+      [
+       12968,
+       0
+      ]
+     ],
+     "hot_flat": [
+      12969,
+      11243
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y24S0I1",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "123131": {
+   "entries": [
+    {
+     "source_node": 84783,
+     "source_wire": "LOCAL_INTERCONNECT:X16Y24S0I1",
+     "select_code": null,
+     "hardwired": true,
+     "n_bits": 0,
+     "codeword": [],
+     "hot_flat": []
+    }
+   ],
+   "dest_wire": "BLOCK_INPUT_MUX:X16Y24S0I5",
+   "dest_class": "LEIM",
+   "is_wall": true
+  },
+  "60851": {
+   "entries": [
+    {
+     "source_node": 10618,
+     "source_wire": "LE_BUFFER:X16Y22S0I0",
+     "select_code": 2,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       161484,
+       1
+      ],
+      [
+       161486,
+       0
+      ],
+      [
+       159759,
+       1
+      ],
+      [
+       159756,
+       0
+      ],
+      [
+       159757,
+       0
+      ],
+      [
+       159758,
+       0
+      ],
+      [
+       161483,
+       0
+      ],
+      [
+       161485,
+       0
+      ]
+     ],
+     "hot_flat": [
+      161484,
+      159759
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y23S0I0",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "91368": {
+   "entries": [
+    {
+     "source_node": 60851,
+     "source_wire": "C4:X16Y23S0I0",
+     "select_code": 1,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       7786,
+       1
+      ],
+      [
+       9511,
+       0
+      ],
+      [
+       7784,
+       1
+      ],
+      [
+       7785,
+       0
+      ],
+      [
+       9512,
+       0
+      ],
+      [
+       9513,
+       0
+      ]
+     ],
+     "hot_flat": [
+      7786,
+      7784
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "122603": {
+   "entries": [
+    {
+     "source_node": 91368,
+     "source_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+     "select_code": null,
+     "hardwired": true,
+     "n_bits": 0,
+     "codeword": [],
+     "hot_flat": []
+    }
+   ],
+   "dest_wire": "BLOCK_INPUT_MUX:X17Y24S0I0",
+   "dest_class": "LEIM",
+   "is_wall": true
+  },
+  "82931": {
+   "entries": [
+    {
+     "source_node": 118902,
+     "source_wire": "IO_DATAIN:X16Y24S1I0",
+     "select_code": 6,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       35426,
+       1
+      ],
+      [
+       37153,
+       0
+      ],
+      [
+       33699,
+       0
+      ],
+      [
+       31972,
+       0
+      ],
+      [
+       30245,
+       0
+      ],
+      [
+       28518,
+       0
+      ]
+     ],
+     "hot_flat": [
+      35426
+     ]
+    },
+    {
+     "source_node": 119095,
+     "source_wire": "IO_DATAIN:X16Y24S3I0",
+     "select_code": 6,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       31972,
+       1
+      ],
+      [
+       37153,
+       0
+      ],
+      [
+       35426,
+       0
+      ],
+      [
+       33699,
+       0
+      ],
+      [
+       30245,
+       0
+      ],
+      [
+       28518,
+       0
+      ]
+     ],
+     "hot_flat": [
+      31972
+     ]
+    }
+   ],
+   "dest_wire": "C16:X16Y21S0I1",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "70813": {
+   "entries": [
+    {
+     "source_node": 82931,
+     "source_wire": "C16:X16Y21S0I1",
+     "select_code": 6,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       285827,
+       1
+      ],
+      [
+       284103,
+       0
+      ],
+      [
+       285830,
+       1
+      ],
+      [
+       284100,
+       0
+      ],
+      [
+       284101,
+       0
+      ],
+      [
+       284102,
+       0
+      ],
+      [
+       285828,
+       0
+      ],
+      [
+       285829,
+       0
+      ]
+     ],
+     "hot_flat": [
+      285827,
+      285830
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y17S0I12",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "83957": {
+   "entries": [
+    {
+     "source_node": 70813,
+     "source_wire": "C4:X16Y17S0I12",
+     "select_code": 12,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       648504,
+       1
+      ],
+      [
+       646779,
+       0
+      ],
+      [
+       648506,
+       1
+      ],
+      [
+       646777,
+       0
+      ],
+      [
+       646778,
+       0
+      ],
+      [
+       648505,
+       0
+      ]
+     ],
+     "hot_flat": [
+      648504,
+      648506
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I0",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "83520": {
+   "entries": [
+    {
+     "source_node": 118896,
+     "source_wire": "IO_DATAIN:X9Y0S1I0",
+     "select_code": 23,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       2838870,
+       1
+      ],
+      [
+       2837143,
+       0
+      ],
+      [
+       2840597,
+       0
+      ],
+      [
+       2842324,
+       0
+      ],
+      [
+       2844051,
+       0
+      ],
+      [
+       2845778,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2838870
+     ]
+    }
+   ],
+   "dest_wire": "C16:X8Y1S0I7",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "82373": {
+   "entries": [
+    {
+     "source_node": 83520,
+     "source_wire": "C16:X8Y1S0I7",
+     "select_code": 7,
+     "hardwired": false,
+     "n_bits": 18,
+     "codeword": [
+      [
+       2341505,
+       1
+      ],
+      [
+       2400221,
+       1
+      ],
+      [
+       2348413,
+       0
+      ],
+      [
+       2355321,
+       0
+      ],
+      [
+       2362229,
+       0
+      ],
+      [
+       2369137,
+       0
+      ],
+      [
+       2376045,
+       0
+      ],
+      [
+       2382953,
+       0
+      ],
+      [
+       2389861,
+       0
+      ],
+      [
+       2401950,
+       0
+      ],
+      [
+       2408858,
+       0
+      ],
+      [
+       2415766,
+       0
+      ],
+      [
+       2422674,
+       0
+      ],
+      [
+       2429582,
+       0
+      ],
+      [
+       2436490,
+       0
+      ],
+      [
+       2443398,
+       0
+      ],
+      [
+       2450306,
+       0
+      ],
+      [
+       2400220,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2341505,
+      2400221
+     ]
+    }
+   ],
+   "dest_wire": "C16:X8Y5S0I0",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "34950": {
+   "entries": [
+    {
+     "source_node": 82373,
+     "source_wire": "C16:X8Y5S0I0",
+     "select_code": 2,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       688761,
+       1
+      ],
+      [
+       688760,
+       0
+      ],
+      [
+       690487,
+       0
+      ],
+      [
+       688762,
+       0
+      ],
+      [
+       690488,
+       0
+      ],
+      [
+       690489,
+       0
+      ]
+     ],
+     "hot_flat": [
+      688761
+     ]
+    }
+   ],
+   "dest_wire": "R4:X9Y18S0I5",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "38082": {
+   "entries": [
+    {
+     "source_node": 34950,
+     "source_wire": "R4:X9Y18S0I5",
+     "select_code": 0,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       683440,
+       1
+      ],
+      [
+       681712,
+       1
+      ],
+      [
+       683439,
+       0
+      ],
+      [
+       681713,
+       0
+      ],
+      [
+       681714,
+       0
+      ],
+      [
+       683441,
+       0
+      ]
+     ],
+     "hot_flat": [
+      683440,
+      681712
+     ]
+    }
+   ],
+   "dest_wire": "R4:X13Y18S0I9",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "91337": {
+   "entries": [
+    {
+     "source_node": 38082,
+     "source_wire": "R4:X13Y18S0I9",
+     "select_code": 3,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       717584,
+       1
+      ],
+      [
+       717586,
+       0
+      ],
+      [
+       715859,
+       0
+      ],
+      [
+       715857,
+       0
+      ],
+      [
+       715858,
+       0
+      ],
+      [
+       717585,
+       0
+      ]
+     ],
+     "hot_flat": [
+      717584
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I9",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "83384": {
+   "entries": [
+    {
+     "source_node": 119088,
+     "source_wire": "IO_DATAIN:X9Y0S3I0",
+     "select_code": 20,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       2825054,
+       1
+      ],
+      [
+       2819873,
+       0
+      ],
+      [
+       2821600,
+       0
+      ],
+      [
+       2823327,
+       0
+      ],
+      [
+       2826781,
+       0
+      ],
+      [
+       2828508,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2825054
+     ]
+    }
+   ],
+   "dest_wire": "C16:X8Y1S0I5",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "82372": {
+   "entries": [
+    {
+     "source_node": 83384,
+     "source_wire": "C16:X8Y1S0I5",
+     "select_code": 2,
+     "hardwired": false,
+     "n_bits": 18,
+     "codeword": [
+      [
+       2678270,
+       1
+      ],
+      [
+       2642000,
+       1
+      ],
+      [
+       2583285,
+       0
+      ],
+      [
+       2590193,
+       0
+      ],
+      [
+       2597101,
+       0
+      ],
+      [
+       2604009,
+       0
+      ],
+      [
+       2610917,
+       0
+      ],
+      [
+       2617825,
+       0
+      ],
+      [
+       2624733,
+       0
+      ],
+      [
+       2631641,
+       0
+      ],
+      [
+       2643730,
+       0
+      ],
+      [
+       2650638,
+       0
+      ],
+      [
+       2657546,
+       0
+      ],
+      [
+       2664454,
+       0
+      ],
+      [
+       2671362,
+       0
+      ],
+      [
+       2685178,
+       0
+      ],
+      [
+       2692086,
+       0
+      ],
+      [
+       2642001,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2678270,
+      2642000
+     ]
+    }
+   ],
+   "dest_wire": "C16:X8Y3S0I0",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "40270": {
+   "entries": [
+    {
+     "source_node": 82372,
+     "source_wire": "C16:X8Y3S0I0",
+     "select_code": 1,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       744025,
+       1
+      ],
+      [
+       745751,
+       1
+      ],
+      [
+       744024,
+       0
+      ],
+      [
+       744026,
+       0
+      ],
+      [
+       745752,
+       0
+      ],
+      [
+       745753,
+       0
+      ]
+     ],
+     "hot_flat": [
+      744025,
+      745751
+     ]
+    }
+   ],
+   "dest_wire": "R4:X9Y18S0I12",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "39602": {
+   "entries": [
+    {
+     "source_node": 40270,
+     "source_wire": "R4:X9Y18S0I12",
+     "select_code": 0,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       738705,
+       1
+      ],
+      [
+       738703,
+       1
+      ],
+      [
+       736976,
+       0
+      ],
+      [
+       736977,
+       0
+      ],
+      [
+       736978,
+       0
+      ],
+      [
+       738704,
+       0
+      ]
+     ],
+     "hot_flat": [
+      738705,
+      738703
+     ]
+    }
+   ],
+   "dest_wire": "R4:X13Y18S0I11",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "103953": {
+   "entries": [
+    {
+     "source_node": 39602,
+     "source_wire": "R4:X13Y18S0I11",
+     "select_code": 4,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       733161,
+       1
+      ],
+      [
+       733159,
+       1
+      ],
+      [
+       734886,
+       0
+      ],
+      [
+       733160,
+       0
+      ],
+      [
+       734887,
+       0
+      ],
+      [
+       734888,
+       0
+      ]
+     ],
+     "hot_flat": [
+      733161,
+      733159
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I25",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "71614": {
+   "entries": [
+    {
+     "source_node": 119145,
+     "source_wire": "IO_DATAIN:X16Y24S3I1",
+     "select_code": 9,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       12961,
+       1
+      ],
+      [
+       19869,
+       0
+      ],
+      [
+       18142,
+       0
+      ],
+      [
+       16415,
+       0
+      ],
+      [
+       14688,
+       0
+      ],
+      [
+       11234,
+       0
+      ]
+     ],
+     "hot_flat": [
+      12961
+     ]
+    },
+    {
+     "source_node": 118991,
+     "source_wire": "IO_DATAIN:X16Y24S2I0",
+     "select_code": 8,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       19869,
+       1
+      ],
+      [
+       18142,
+       0
+      ],
+      [
+       16415,
+       0
+      ],
+      [
+       14688,
+       0
+      ],
+      [
+       12961,
+       0
+      ],
+      [
+       11234,
+       0
+      ]
+     ],
+     "hot_flat": [
+      19869
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y20S0I13",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "94621": {
+   "entries": [
+    {
+     "source_node": 71614,
+     "source_wire": "C4:X16Y20S0I13",
+     "select_code": 11,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       266838,
+       1
+      ],
+      [
+       268566,
+       1
+      ],
+      [
+       266839,
+       0
+      ],
+      [
+       266837,
+       0
+      ],
+      [
+       268564,
+       0
+      ],
+      [
+       268565,
+       0
+      ]
+     ],
+     "hot_flat": [
+      266838,
+      268566
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I13",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "60837": {
+   "entries": [
+    {
+     "source_node": 10604,
+     "source_wire": "LE_BUFFER:X16Y8S0I0",
+     "select_code": 2,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       1853944,
+       1
+      ],
+      [
+       1853946,
+       0
+      ],
+      [
+       1852219,
+       1
+      ],
+      [
+       1852216,
+       0
+      ],
+      [
+       1852217,
+       0
+      ],
+      [
+       1852218,
+       0
+      ],
+      [
+       1853943,
+       0
+      ],
+      [
+       1853945,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1853944,
+      1852219
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y9S0I0",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "83951": {
+   "entries": [
+    {
+     "source_node": 60837,
+     "source_wire": "C4:X16Y9S0I0",
+     "select_code": 10,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       1373844,
+       1
+      ],
+      [
+       1372119,
+       1
+      ],
+      [
+       1373846,
+       0
+      ],
+      [
+       1372117,
+       0
+      ],
+      [
+       1372118,
+       0
+      ],
+      [
+       1373845,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1373844,
+      1372119
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y12S0I0",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "70804": {
+   "entries": [
+    {
+     "source_node": 10608,
+     "source_wire": "LE_BUFFER:X16Y12S0I0",
+     "select_code": 3,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       1372111,
+       1
+      ],
+      [
+       1372113,
+       1
+      ],
+      [
+       1373840,
+       0
+      ],
+      [
+       1372110,
+       0
+      ],
+      [
+       1372112,
+       0
+      ],
+      [
+       1373837,
+       0
+      ],
+      [
+       1373838,
+       0
+      ],
+      [
+       1373839,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1372111,
+      1372113
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y8S0I12",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "70800": {
+   "entries": [
+    {
+     "source_node": 70804,
+     "source_wire": "C4:X16Y8S0I12",
+     "select_code": 18,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       1855670,
+       1
+      ],
+      [
+       1855673,
+       0
+      ],
+      [
+       1857400,
+       1
+      ],
+      [
+       1855671,
+       0
+      ],
+      [
+       1855672,
+       0
+      ],
+      [
+       1857397,
+       0
+      ],
+      [
+       1857398,
+       0
+      ],
+      [
+       1857399,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1855670,
+      1857400
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y4S0I12",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "63324": {
+   "entries": [
+    {
+     "source_node": 70800,
+     "source_wire": "C4:X16Y4S0I12",
+     "select_code": 18,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       2339230,
+       1
+      ],
+      [
+       2339233,
+       0
+      ],
+      [
+       2340960,
+       1
+      ],
+      [
+       2339231,
+       0
+      ],
+      [
+       2339232,
+       0
+      ],
+      [
+       2340957,
+       0
+      ],
+      [
+       2340958,
+       0
+      ],
+      [
+       2340959,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2339230,
+      2340960
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y0S0I3",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "83939": {
+   "entries": [
+    {
+     "source_node": 63324,
+     "source_wire": "C4:X16Y0S0I3",
+     "select_code": 18,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       2848703,
+       1
+      ],
+      [
+       2846977,
+       0
+      ],
+      [
+       2848704,
+       1
+      ],
+      [
+       2848702,
+       0
+      ],
+      [
+       2846975,
+       0
+      ],
+      [
+       2846976,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2848703,
+      2848704
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y0S0I0",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "123968": {
+   "entries": [
+    {
+     "source_node": 83939,
+     "source_wire": "LOCAL_INTERCONNECT:X16Y0S0I0",
+     "select_code": null,
+     "hardwired": true,
+     "n_bits": 0,
+     "codeword": [],
+     "hot_flat": []
+    }
+   ],
+   "dest_wire": "BLOCK_INPUT_MUX:X16Y0S0I13",
+   "dest_class": "LEIM",
+   "is_wall": true
+  },
+  "82926": {
+   "entries": [
+    {
+     "source_node": 118902,
+     "source_wire": "IO_DATAIN:X16Y24S1I0",
+     "select_code": 21,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       18140,
+       1
+      ],
+      [
+       19867,
+       0
+      ],
+      [
+       16413,
+       0
+      ],
+      [
+       14686,
+       0
+      ],
+      [
+       12959,
+       0
+      ],
+      [
+       11232,
+       0
+      ]
+     ],
+     "hot_flat": [
+      18140
+     ]
+    }
+   ],
+   "dest_wire": "C16:X16Y11S0I1",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "78793": {
+   "entries": [
+    {
+     "source_node": 82926,
+     "source_wire": "C16:X16Y11S0I1",
+     "select_code": 10,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       392901,
+       1
+      ],
+      [
+       391177,
+       0
+      ],
+      [
+       392904,
+       1
+      ],
+      [
+       391174,
+       0
+      ],
+      [
+       391175,
+       0
+      ],
+      [
+       391176,
+       0
+      ],
+      [
+       392902,
+       0
+      ],
+      [
+       392903,
+       0
+      ]
+     ],
+     "hot_flat": [
+      392901,
+      392904
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y17S0I22",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "74793": {
+   "entries": [
+    {
+     "source_node": 82926,
+     "source_wire": "C16:X16Y11S0I1",
+     "select_code": 19,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       1537902,
+       1
+      ],
+      [
+       1539632,
+       0
+      ],
+      [
+       1537905,
+       1
+      ],
+      [
+       1537903,
+       0
+      ],
+      [
+       1537904,
+       0
+      ],
+      [
+       1539629,
+       0
+      ],
+      [
+       1539630,
+       0
+      ],
+      [
+       1539631,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1537902,
+      1537905
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y7S0I17",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "94617": {
+   "entries": [
+    {
+     "source_node": 78793,
+     "source_wire": "C4:X16Y17S0I22",
+     "select_code": 10,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       752124,
+       1
+      ],
+      [
+       752126,
+       0
+      ],
+      [
+       750399,
+       0
+      ],
+      [
+       750397,
+       0
+      ],
+      [
+       750398,
+       0
+      ],
+      [
+       752125,
+       0
+      ]
+     ],
+     "hot_flat": [
+      752124
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I13",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "89687": {
+   "entries": [
+    {
+     "source_node": 74793,
+     "source_wire": "C4:X16Y7S0I17",
+     "select_code": 8,
+     "hardwired": false,
+     "n_bits": 9,
+     "codeword": [
+      [
+       1905760,
+       1
+      ],
+      [
+       1904035,
+       0
+      ],
+      [
+       1905762,
+       0
+      ],
+      [
+       1904033,
+       0
+      ],
+      [
+       1904034,
+       0
+      ],
+      [
+       1905761,
+       0
+      ],
+      [
+       1907491,
+       0
+      ],
+      [
+       1907490,
+       0
+      ],
+      [
+       1907489,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1905760
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y8S0I7",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "83332": {
+   "entries": [
+    {
+     "source_node": 118941,
+     "source_wire": "IO_DATAIN:X16Y0S1I1",
+     "select_code": 8,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       2841801,
+       1
+      ],
+      [
+       2836620,
+       0
+      ],
+      [
+       2838347,
+       0
+      ],
+      [
+       2840074,
+       0
+      ],
+      [
+       2843528,
+       0
+      ],
+      [
+       2845255,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2841801
+     ]
+    }
+   ],
+   "dest_wire": "C16:X16Y1S0I4",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "67493": {
+   "entries": [
+    {
+     "source_node": 83332,
+     "source_wire": "C16:X16Y1S0I4",
+     "select_code": 6,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       1938566,
+       1
+      ],
+      [
+       1940296,
+       1
+      ],
+      [
+       1938569,
+       0
+      ],
+      [
+       1938567,
+       0
+      ],
+      [
+       1938568,
+       0
+      ],
+      [
+       1940293,
+       0
+      ],
+      [
+       1940294,
+       0
+      ],
+      [
+       1940295,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1938566,
+      1940296
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y9S0I8",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "92971": {
+   "entries": [
+    {
+     "source_node": 67493,
+     "source_wire": "C4:X16Y9S0I8",
+     "select_code": 10,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       1456741,
+       1
+      ],
+      [
+       1456742,
+       0
+      ],
+      [
+       1455015,
+       1
+      ],
+      [
+       1455013,
+       0
+      ],
+      [
+       1455014,
+       0
+      ],
+      [
+       1456740,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1456741,
+      1455015
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y12S0I11",
+   "dest_class": "LI",
+   "is_wall": true
+  },
+  "83264": {
+   "entries": [
+    {
+     "source_node": 118990,
+     "source_wire": "IO_DATAIN:X16Y0S2I0",
+     "select_code": 6,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       2836605,
+       1
+      ],
+      [
+       2838332,
+       0
+      ],
+      [
+       2840059,
+       0
+      ],
+      [
+       2841786,
+       0
+      ],
+      [
+       2843513,
+       0
+      ],
+      [
+       2845240,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2836605
+     ]
+    }
+   ],
+   "dest_wire": "C16:X16Y1S0I3",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "60833": {
+   "entries": [
+    {
+     "source_node": 83264,
+     "source_wire": "C16:X16Y1S0I3",
+     "select_code": 8,
+     "hardwired": false,
+     "n_bits": 8,
+     "codeword": [
+      [
+       2335776,
+       1
+      ],
+      [
+       2337506,
+       1
+      ],
+      [
+       2335779,
+       0
+      ],
+      [
+       2335777,
+       0
+      ],
+      [
+       2335778,
+       0
+      ],
+      [
+       2337503,
+       0
+      ],
+      [
+       2337504,
+       0
+      ],
+      [
+       2337505,
+       0
+      ]
+     ],
+     "hot_flat": [
+      2335776,
+      2337506
+     ]
+    }
+   ],
+   "dest_wire": "C4:X16Y5S0I0",
+   "dest_class": "interconnect",
+   "is_wall": false
+  },
+  "83947": {
+   "entries": [
+    {
+     "source_node": 60833,
+     "source_wire": "C4:X16Y5S0I0",
+     "select_code": 10,
+     "hardwired": false,
+     "n_bits": 6,
+     "codeword": [
+      [
+       1857404,
+       1
+      ],
+      [
+       1855679,
+       1
+      ],
+      [
+       1857406,
+       0
+      ],
+      [
+       1855677,
+       0
+      ],
+      [
+       1855678,
+       0
+      ],
+      [
+       1857405,
+       0
+      ]
+     ],
+     "hot_flat": [
+      1857404,
+      1855679
+     ]
+    }
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y8S0I0",
+   "dest_class": "LI",
+   "is_wall": true
+  }
+ },
+ "overlaps": [
+  {
+   "key": [
+    26739,
+    68335
+   ],
+   "dest_wire": "C4:X16Y19S0I9",
+   "source_wire": "LE_BUFFER:X16Y18S0I25",
+   "class": "interconnect",
+   "select_code": 4,
+   "identical": true
+  },
+  {
+   "key": [
+    68335,
+    93801
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I12",
+   "source_wire": "C4:X16Y19S0I9",
+   "class": "LI",
+   "select_code": 9,
+   "identical": true
+  },
+  {
+   "key": [
+    10618,
+    60851
+   ],
+   "dest_wire": "C4:X16Y23S0I0",
+   "source_wire": "LE_BUFFER:X16Y22S0I0",
+   "class": "interconnect",
+   "select_code": 2,
+   "identical": true
+  },
+  {
+   "key": [
+    60851,
+    91368
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+   "source_wire": "C4:X16Y23S0I0",
+   "class": "LI",
+   "select_code": 1,
+   "identical": true
+  },
+  {
+   "key": [
+    91368,
+    122603
+   ],
+   "dest_wire": "BLOCK_INPUT_MUX:X17Y24S0I0",
+   "source_wire": "LOCAL_INTERCONNECT:X17Y24S0I9",
+   "class": "LEIM",
+   "select_code": null,
+   "identical": true
+  },
+  {
+   "key": [
+    71614,
+    94621
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y22S0I13",
+   "source_wire": "C4:X16Y20S0I13",
+   "class": "LI",
+   "select_code": 11,
+   "identical": true
+  },
+  {
+   "key": [
+    82931,
+    70813
+   ],
+   "dest_wire": "C4:X16Y17S0I12",
+   "source_wire": "C16:X16Y21S0I1",
+   "class": "interconnect",
+   "select_code": 6,
+   "identical": true
+  },
+  {
+   "key": [
+    70813,
+    83957
+   ],
+   "dest_wire": "LOCAL_INTERCONNECT:X16Y18S0I0",
+   "source_wire": "C4:X16Y17S0I12",
+   "class": "LI",
+   "select_code": 12,
+   "identical": true
+  }
+ ]
+}
