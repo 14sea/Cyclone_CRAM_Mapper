@@ -1,0 +1,181 @@
+{
+  "step": "[0-LEDGER]",
+  "target": "<target>.rbf",
+  "device": "EP4CE10 / cycloneive1 / Quartus 21.1.0 Build 842",
+  "policy": "from-blank, decode-or-refuse, no-implicit-zero-as-owned; two-background write-mask.",
+  "note_supersedes": "An earlier set-bit snapshot predates the asmdb_calc_reloc (calculate_bits relocation) + cfgres wiring now live in the encoder; this ledger measures the CURRENT model.",
+  "geometry": {
+    "image_bytes": 368011,
+    "total_positions": 2944088,
+    "total_set_bits": 194948
+  },
+  "TERNARY_LEDGER_all_positions": {
+    "KNOWN": 272590,
+    "DERIVED_emitted": 8117,
+    "DERIVED_pending": 6823,
+    "OPAQUE_PRESERVED": 0,
+    "DONTCARE_PROVEN": 0,
+    "UNKNOWN_SET": 7942,
+    "UNKNOWN_CLEAR": 2648510,
+    "INVALID_REFUSE": 106,
+    "INVENTED": 0,
+    "WRONG_CLEAR": 0,
+    "_sum": 2944088
+  },
+  "OWNERSHIP": {
+    "owned_positions": 280707,
+    "total_positions": 2944088,
+    "ownership_pct_all_positions_STRICT": 9.5346,
+    "reachable_if_derived_pending_closes": 9.7664,
+    "invented_positions": 0,
+    "invented_must_be_zero": true
+  },
+  "SET_BIT_CONTINUITY_VIEW": {
+    "note": "prior campaign metric (SET bits only), for reconciliation.",
+    "total_set_bits": 194948,
+    "owned_set_bits": 180077,
+    "residual_set_bits": 14871,
+    "ownership_pct_set_bits": 92.3718,
+    "breakdown": {
+      "UNKNOWN_SET(EU)": 7942,
+      "DERIVED_pending(crc.data)": 6823,
+      "INVALID_REFUSE(crc.header)": 106
+    }
+  },
+  "residual_by_class": {
+    "explicit_unknown_cram_set_bits": 7942,
+    "by_region": {
+      "cram.header": 3143,
+      "cram.data": 4799
+    },
+    "classes_ranked": [
+      {
+        "class": "unmodeled-arch-residual",
+        "cells": 5292,
+        "share_pct": 66.63,
+        "by_region": {
+          "cram.header": 3007,
+          "cram.data": 2285
+        },
+        "manifest": "residual/unmodeled-arch-residual.json"
+      },
+      {
+        "class": "routing-source-ungrounded",
+        "cells": 1197,
+        "share_pct": 15.07,
+        "by_region": {
+          "cram.data": 1197
+        },
+        "manifest": "residual/routing-source-ungrounded.json"
+      },
+      {
+        "class": "leim-interior-unbound",
+        "cells": 1099,
+        "share_pct": 13.84,
+        "by_region": {
+          "cram.data": 1099
+        },
+        "manifest": "residual/leim-interior-unbound.json"
+      },
+      {
+        "class": "codec-disagreement-unreproduced",
+        "cells": 218,
+        "share_pct": 2.74,
+        "by_region": {
+          "cram.data": 218
+        },
+        "manifest": "residual/codec-disagreement-unreproduced.json"
+      },
+      {
+        "class": "cff-aux-control-CALC-unvalued",
+        "cells": 136,
+        "share_pct": 1.71,
+        "by_region": {
+          "cram.header": 136
+        },
+        "manifest": "residual/cff-aux-control-CALC-unvalued.json"
+      }
+    ],
+    "crc.data_DERIVED_PENDING": 6823,
+    "crc.header_INVALID_REFUSE": 106
+  },
+  "per_region_detail": {
+    "cram.data": {
+      "owned_set": 168457,
+      "owned_clear": 92090,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 4799,
+      "unwritten_clr": 2608382
+    },
+    "cram.header": {
+      "owned_set": 2716,
+      "owned_clear": 8527,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 3143,
+      "unwritten_clr": 27142
+    },
+    "crc.data": {
+      "owned_set": 8117,
+      "owned_clear": 0,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 6823,
+      "unwritten_clr": 12692
+    },
+    "crc.header": {
+      "owned_set": 0,
+      "owned_clear": 0,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 106,
+      "unwritten_clr": 294
+    },
+    "preamble": {
+      "owned_set": 256,
+      "owned_clear": 0,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 0,
+      "unwritten_clr": 0
+    },
+    "sync": {
+      "owned_set": 59,
+      "owned_clear": 13,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 0,
+      "unwritten_clr": 0
+    },
+    "tail": {
+      "owned_set": 472,
+      "owned_clear": 0,
+      "invented": 0,
+      "wrong_clear": 0,
+      "unwritten_set": 0,
+      "unwritten_clr": 0
+    }
+  },
+  "invariants": {
+    "ternary_sum_eq_total_positions": true,
+    "invented_is_zero": true,
+    "wrong_clear_is_zero": true,
+    "setbit_owned_plus_residual_eq_total_set": true,
+    "class_sum_eq_eu": true,
+    "written_eq_owned_plus_invented_plus_wrongclear": true
+  },
+  "artifacts": {
+    "per_class_manifests": [
+      "residual/cff-aux-control-CALC-unvalued.json",
+      "residual/codec-disagreement-unreproduced.json",
+      "residual/crc.data-DERIVED_PENDING.json",
+      "residual/crc.header-INVALID_REFUSE.json",
+      "residual/leim-interior-unbound.json",
+      "residual/lifted_netlist.json",
+      "residual/physical_config_ir.json",
+      "residual/routing-source-ungrounded.json",
+      "residual/unmodeled-arch-residual.json"
+    ]
+  }
+}

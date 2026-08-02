@@ -1,0 +1,80 @@
+{
+ "title": "Header integrity field: general floor function pinned by LIVE TRACE; per-frame crc8-poly premise refuted by ground truth",
+ "device": "EP4CE10 / cycloneive1 / Quartus 21.1.0 Build 842 uncompressed .rbf; validation image <target>.rbf",
+ "method": "dynamic ground truth: gdb-intercepted quartus_cpf (sof->rbf) and quartus_asm on a real M9K-memory-block-bearing design. 0-invented; every value is a counted/dumped trace fact or a data-side recomputation. No commit.",
+ "ground_truth_trace": {
+  "target_cpf": {
+   "cmd": "quartus_cpf -c <design>.sof <rbf>",
+   "crc_family_call_counts": {
+    "PGMIO_F2P::calculate_crc (dispatcher @0x36eb00)": 3470,
+    "PGM_COMMON::calculate_crc16 (poly 0xA001)": 1735,
+    "PGMIO_F2P::calculate_crc8 (poly 0x88 @0x36e8d0)": 0,
+    "PGMIO_F2P::calculate_crc32_reverse": 0
+   },
+   "dispatch_crc_type_all": 0,
+   "dispatch_crc_type_note": "every one of the 3470 dispatches passed crc_type=0 (crc16 branch) in $r8; the crc8/default branch was never selected",
+   "dispatch_arg_classes": [
+    {"start_bit": 8, "num_bits": 1656, "bytes": 207, "count": 3466, "meaning": "data-frame CRC16; all-zero frame returns 0x7D9A == crc16(zeros,0xFE54)"},
+    {"start_bit": 264, "num_bits": 320, "bytes": 40, "count": 4, "meaning": "two distinct option-block CRC16s (0x0F84, 0x06D6), each doubled; header/option-structure block CRCs, NOT the 25 per-frame fields"}
+   ],
+   "doubling": "3470 = 2 dispatches per crc'd frame (each frame CRC computed twice); 1735 distinct crc16 computations"
+  },
+  "target_asm": {
+   "cmd": "quartus_asm --read_settings_files=on --write_settings_files=off <design> -c <design>",
+   "result": "Assembler was successful",
+   "crc_family_call_counts": {"dispatcher": 0, "crc8": 0, "crc16": 0, "crc32": 0},
+   "meaning": "the assembler emits the .sof without any CRC call; the 25 header 8-bit fields are option/header-structure data, not a computed checksum"
+  }
+ },
+ "refutation": {
+  "prior_claim": "an earlier static disassembly pinned the header floor engine = crc8 reflected poly 0x88, init 0xFF (PGMIO_F2P::calculate_crc8 @0x36e8d0)",
+  "ground_truth": "PGMIO_F2P::calculate_crc8 EXISTS in libpgm_pgmio.so but is DEAD CODE for Cyclone IV E: 0 calls across the full cpf run AND the full asm run. The dispatcher always selects crc16. The 25 header 8-bit 'fields' are not CRC-computed (neither crc8 nor crc16; data-side test: the header field matches a crc16 low/high byte in only 1/25 frames, coincidental at a 1-bit field).",
+  "conclusion": "the header integrity floor is NOT a per-frame checksum; it is configuration option / header-structure bytes. The 'general per-frame polynomial' the closure gate asks for does not exist."
+ },
+ "data_frame_crc16": {
+  "engine": "PGM_COMMON::calculate_crc16, reflected poly 0xA001",
+  "effective_init_over_208_payload": "0xFE54",
+  "dispatcher_init_over_prefix": "0xFFFF over a constant 2-byte 0xCCE8 header prefix (reconciles to 0xFE54)",
+  "zero_frame_constant": "0x7D9A",
+  "coverage": "all 1727 data frames (F>=25), bit-exact; this is the closed-form generator header_field.emit_frame_crcs uses",
+  "generality": "GENERAL closed-form"
+ },
+ "general_floor_function": {
+  "structure": "25 header frames x 8-bit field byte-doubled into bytes[208],[209] -> 53 logical setbits x 2 copies = 106 physical",
+  "duplication_law": {"statement": "byte[209]==byte[208] per header frame", "proven_designs": 471, "mismatches": 0, "generality": "GENERAL", "derives_physical_bits": 53},
+  "affine_frames": {
+   "frames": [0,1,2,4,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],
+   "count": 22,
+   "form": "field_F = M_F . payload_F (xor) c_F  over GF(2), per-frame linear map of the frame's own 208-byte payload (option bits linearly encoded)",
+   "proven_designs": 471,
+   "held_out": "bit-exact where the corpus exercises the input direction",
+   "generality": "GENERAL derived function of payload_F for ANY design (per-frame maps recovered from the corpus, not shipped here)"
+  },
+  "design_input_frames": {
+   "frames": [3,5,9],
+   "form": "field_F = affine(payload_F) (xor) (opt_M9K ? delta_F : 0)",
+   "delta": {"3": "0x04", "5": "0x40", "9": "0x10"},
+   "opt_M9K": "an option-register M9K-memory-block-usage flag; a DESIGN INPUT that lives OUTSIDE the frame payload (correlation search over all 25x1664 header-payload bits: 0 bits set in exactly the residual-carrying designs)",
+   "residual_designs": "the extra bit appears only on designs that instantiate an M9K memory block (design names stripped; provenance-only)",
+   "validation_image": "opt_M9K=0 in these frames -> affine(payload_F) predicts the field exactly -> DERIVED bit-exact (already owned)",
+   "foreign_general": "EXPLICIT_UNKNOWN / REFUSED: the extra bit is only knowable from the design's own M9K usage, not from the static device file. Not a polynomial term; no-bluff."
+  }
+ },
+ "gate": {
+  "statement": "a recovered general polynomial predicts F3/F5/F9 for held-out payloads exactly",
+  "status": "NOT MEETABLE AS FRAMED",
+  "reason": "no per-payload polynomial governs F3/F5/F9; their determinant is a non-payload design-feature input. Correctly reported, not fabricated."
+ },
+ "seu_crc32": {
+  "status": "ABSENT from this passive-serial image; LOCATED but NOT CLOSED",
+  "evidence": "postamble = 59 x 0xFF, constant across the 471-design corpus; the Cyclone IV 32-bit whole-configuration SEU CRC is emitted into an option register only when error-detection is enabled",
+  "conclusion": "the SEU CRC is NOT one of the 106 floor bits; the only integrity in the image is per-frame (crc16 on 1727 data frames + the 8-bit byte-doubled option field on 25 header frames)"
+ },
+ "ledger_impact": {
+  "floor_bits_total": 106,
+  "validation_image_status": "106/106 DERIVED bit-exact (53 duplication copies + 50 affine low-byte bits + 3 affine-predicted low-byte bits x their copies)",
+  "f3f5f9_general_status": "correctly REFUSED as design-input-bound. Not derivable from the static device file for a foreign design.",
+  "wrong_clear": 0,
+  "invented": 0
+ }
+}

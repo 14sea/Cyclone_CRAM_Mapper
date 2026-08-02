@@ -141,6 +141,75 @@ Coordinates use this repo's `(X,Y)` convention (see `docs/coordinate_reconciliat
 - **How validated.** `decode_rbf.py selftest` round-trips 1277/1277 cells,
   0 mismatch, ALL PASS; each region encode→decode is bit-for-bit on decoded cells.
 
+### 8. Header integrity field — byte-doubled option floor + data-frame CRC-16
+`scripts/header_field.py`, `docs/header_integrity_field.md`,
+`results/header_integrity_decomp.json`.
+
+- **What.** Decodes the config-image header region the fork treats as an opaque
+  "no CRC" band (frames 0..24) and pins the two integrity engines over the whole
+  368011-byte image: the **data-frame CRC-16** (reflected poly `0xA001`, effective
+  init `0xFE54` over the 208 payload bytes; `PGM_COMMON::calculate_crc16` via the
+  dispatcher `PGMIO_F2P::calculate_crc` @`0x36eb00`) and the **106-bit header
+  integrity floor** — 25 header frames each carrying an 8-bit option field
+  **byte-doubled** into bytes 208/209 (`byte[209]==byte[208]`), of which 22 frames'
+  low bytes are a per-frame GF(2)-affine function of their own payload. `header_field.py`
+  is a standalone decoder/emitter (no Quartus needed): `emit_frame_crcs` +
+  `enforce_duplication` write a valid whole-image header.
+- **Why device-general.** Frame geometry + the two engine parameterisations are
+  die/binary constants; the duplication law and 22 affine maps are proven across a
+  471-design same-die corpus.
+- **How validated.** Data-frame CRC-16 **1727/1727 bit-exact** (all-zero frame →
+  `0x7D9A`, a device constant asserted in the self-test); duplication law 471/471
+  designs, 0 mismatch; 22 affine frames held-out bit-exact on 471 designs → the
+  validation image's whole 106-bit floor DERIVED. `calculate_crc8` @`0x36e8d0` is
+  **refuted as dead code** by a live gdb trace (3470 cpf dispatches, all crc16, 0 crc8
+  calls; asm run 0 CRC calls). **Honest limits:** the F3/F5/F9-class low bytes are
+  **design-input-bound** (an M9K-memory-block option feature) and correctly **REFUSED**
+  for foreign designs; the documented 32-bit whole-config SEU CRC is **located but not
+  closed** (absent from this passive-serial image — postamble 59×`0xFF`).
+
+### 9. Two-background ternary-ownership completeness oracle
+`scripts/ledger.py`, `docs/ownership_completeness_oracle.md`,
+`results/ownership_ledger_report.json`.
+
+- **What.** A rigorous from-blank ownership metric over **all 2,944,088** serialized
+  positions. The from-blank encoder is run onto BOTH a `0x00` and a `0xFF` background;
+  a position is **OWNED only where it is written the SAME value on both** (deterministic
+  set OR clear). A position merely left at blank-0 is **UNKNOWN**, never owned. Every
+  position is classified `KNOWN / DERIVED / DONTCARE_PROVEN / UNKNOWN` with an explicit
+  write-mask, and the all-position ownership is reported (not the set-bit-only count,
+  which over-counts by treating implicit zeros as owned).
+- **Why device-general.** The metric, the two-background write-mask, and the ternary
+  census are design/target-independent by construction; the only device-file content is
+  the encoder being measured.
+- **How validated.** On the validation image: KNOWN 272,590 + DERIVED-emitted 8,117 =
+  **280,707 owned = 9.5346 %** strict all-position, **INVENTED 0 / WRONG_CLEAR 0**
+  (asserted), all census invariants pass; the set-bit view reconciles at 180,077/194,948
+  = 92.3718 %. It is a **stricter completeness gate** than set-bit counting and separates
+  the two real gaps: un-enumerated clear-plane resources (UNKNOWN_CLEAR 2,648,510) vs
+  genuinely-unknown set bits (UNKNOWN_SET 7,942).
+
+### 10. Clear-plane full-field-mask resource enumeration
+`scripts/routing_fullfield_codec.py`, `scripts/logic_fullfield.py`,
+`scripts/io_fullfield.py`, `docs/full_field_mask_enumeration.md`.
+
+- **What.** To OWN the vast off-state (clear) plane, each enumerated resource's codec
+  writes its **complete field mask** — the decoded value where set AND 0 for every
+  unselected/unused cell in that resource's device-file footprint — so off-resources
+  become provably KNOWN-0. Applied to routing off-muxes (device-wide via the routing.ddb
+  load-order permutation), LE/LAB-secondary + LUT off-fields, and IOE/PLL off-fields.
+- **Why device-general.** Every footprint is fixed device geometry (the permutation is
+  disasm-pinned, not oracle-fit; the LE/LAB/LUT/IOE/PLL fields are the assembler's
+  resolved tables); the off-test reads the real image but the footprints are die-level.
+- **How validated.** Two-background ledger deltas, each with `wrong_clear == invented ==
+  0` asserted: routing+LUT off-fields **+51,885** clears (9.5346 %→11.2969 %),
+  device-wide routing off-mux **+68,476** via the permutation (binding 30,205 of 135,117
+  nodes; 12.6877 %→15.0135 %), IOE+PLL **+1,368**, LE/LAB-secondary **+240**. Plan stats
+  confirm decode-or-refuse (routing 1,822 refused; LE/LAB-secondary 19 refused, 56 set
+  bits left UNKNOWN). **Honest limit:** interior LE_BUFFER / local-interconnect geometry
+  (104,817 `no_template` nodes) and device-wide per-site LE secondary/mode geometry
+  remain **un-enumerated and declared, not bluffed**.
+
 ---
 
 ## How this composes with the existing pipeline
@@ -162,6 +231,18 @@ Coordinates use this repo's `(X,Y)` convention (see `docs/coordinate_reconciliat
   regions`) that can back a stricter `rbf2fasm`, and its per-feature `encode()`
   re-emits exact cells for a FASM→RBF write path. The config codecs (item 5) add
   named le/lab/IOE/PLL fields to that FASM vocabulary where they are CRAM-resident.
+- **Whole-image header for `fasm2rbf` (item 8).** The data-frame CRC-16 generator and
+  the header duplication law give the fork a **valid whole-image header** emit path —
+  not just frame CRCs — so a synthesized `.rbf` passes configuration integrity; the
+  design-input-bound header bits are refused, never invented.
+- **Stricter completeness gate for the codecs (item 9).** The two-background ternary
+  ledger is a harder ownership oracle than the set-bit count for the whole pipeline: it
+  never credits an implicit zero, and its INVENTED/WRONG_CLEAR invariants guarantee a
+  newly-merged codec can only raise proven ownership, never silently corrupt a claim.
+- **Resource-enumeration path toward a complete chipdb (item 10).** The full-field-mask
+  codecs convert the off-state plane of routing / LE-LAB / LUT / IOE / PLL resources to
+  provable KNOWN-0, which is the device-wide resource-footprint enumeration the chipdb
+  needs to reach all-position coverage; un-enumerated classes are declared, not bluffed.
 - **Decode-or-refuse discipline.** Every layer here reports proven cells only and
   refuses the rest, so merging it can never silently corrupt an existing codec's
   claims — a REFUSED region is an explicit gap, not a wrong bit.
