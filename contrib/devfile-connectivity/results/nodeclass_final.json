@@ -1,0 +1,521 @@
+{
+ "provenance": "K2 NODE-CLASS FINALIZE. Node->class codec harvested from the compiler's OWN device-file classifier DYGR_DIE_INFO_BODY::get_element_enum(gid) @libddb_dygr.so 0x127aa0, swept live (quartus_asm gdb intercept) over ALL 135,117 routing node ids. Design-independent (device-file). Supersedes R1_corrected_node_class_codec.json (verified byte-identical) and the pre-R1 'min..max node-id SEEN' codec that UNDERSHOT every class extent.",
+ "die": "cycloneive1 (EP4CE6 / EP4CE10; identical 368011-B rbf incl. target.rbf)",
+ "num_router_nodes": 135117,
+ "router_id_rule": "is_router_id(gid) = bit31 set; node_index = gid & 0x7fffffff (DYGR_DIE_INFO_BODY::is_router_id @0x227920 / get_node_index_of_id @0x228120).",
+ "classifier": "DYGR_DIE_INFO_BODY::get_element_enum(gid) @libddb_dygr.so 0x127aa0 -> DEV_ELEMENT enum -> class.",
+ "enum_to_class": {
+  "45": "LE_BUFFER",
+  "268": "R4",
+  "273": "R24",
+  "275": "C4",
+  "281": "C16",
+  "282": "LOCAL_INTERCONNECT",
+  "307": "IO_DATAIN",
+  "540": "BLOCK_INPUT_MUX"
+ },
+ "named_class_extents": {
+  "LE_BUFFER": {
+   "count": 20640,
+   "lo": 10320,
+   "hi": 30959,
+   "enum": 45
+  },
+  "R4": {
+   "count": 28186,
+   "lo": 30971,
+   "hi": 59156,
+   "enum": 268
+  },
+  "R24": {
+   "count": 1289,
+   "lo": 59157,
+   "hi": 60445,
+   "enum": 273
+  },
+  "C4": {
+   "count": 21816,
+   "lo": 60446,
+   "hi": 82261,
+   "enum": 275
+  },
+  "C16": {
+   "count": 1326,
+   "lo": 82262,
+   "hi": 83587,
+   "enum": 281
+  },
+  "LOCAL_INTERCONNECT": {
+   "count": 32401,
+   "lo": 83588,
+   "hi": 115988,
+   "enum": 282
+  },
+  "IO_DATAIN": {
+   "count": 370,
+   "lo": 118799,
+   "hi": 119168,
+   "enum": 307
+  },
+  "BLOCK_INPUT_MUX": {
+   "count": 2332,
+   "lo": 122549,
+   "hi": 124880,
+   "enum": 540
+  }
+ },
+ "all_enum_blocks": [
+  {
+   "lo": 0,
+   "hi": 10319,
+   "count": 10320,
+   "enum": 43,
+   "class": null
+  },
+  {
+   "lo": 10320,
+   "hi": 30959,
+   "count": 20640,
+   "enum": 45,
+   "class": "LE_BUFFER"
+  },
+  {
+   "lo": 30960,
+   "hi": 30960,
+   "count": 1,
+   "enum": 57,
+   "class": null
+  },
+  {
+   "lo": 30961,
+   "hi": 30970,
+   "count": 10,
+   "enum": 69,
+   "class": null
+  },
+  {
+   "lo": 30971,
+   "hi": 59156,
+   "count": 28186,
+   "enum": 268,
+   "class": "R4"
+  },
+  {
+   "lo": 59157,
+   "hi": 60445,
+   "count": 1289,
+   "enum": 273,
+   "class": "R24"
+  },
+  {
+   "lo": 60446,
+   "hi": 82261,
+   "count": 21816,
+   "enum": 275,
+   "class": "C4"
+  },
+  {
+   "lo": 82262,
+   "hi": 83587,
+   "count": 1326,
+   "enum": 281,
+   "class": "C16"
+  },
+  {
+   "lo": 83588,
+   "hi": 115988,
+   "count": 32401,
+   "enum": 282,
+   "class": "LOCAL_INTERCONNECT"
+  },
+  {
+   "lo": 115989,
+   "hi": 117644,
+   "count": 1656,
+   "enum": 284,
+   "class": null
+  },
+  {
+   "lo": 117645,
+   "hi": 118472,
+   "count": 828,
+   "enum": 286,
+   "class": null
+  },
+  {
+   "lo": 118473,
+   "hi": 118480,
+   "count": 8,
+   "enum": 295,
+   "class": null
+  },
+  {
+   "lo": 118481,
+   "hi": 118490,
+   "count": 10,
+   "enum": 298,
+   "class": null
+  },
+  {
+   "lo": 118491,
+   "hi": 118510,
+   "count": 20,
+   "enum": 299,
+   "class": null
+  },
+  {
+   "lo": 118511,
+   "hi": 118786,
+   "count": 276,
+   "enum": 300,
+   "class": null
+  },
+  {
+   "lo": 118787,
+   "hi": 118798,
+   "count": 12,
+   "enum": 304,
+   "class": null
+  },
+  {
+   "lo": 118799,
+   "hi": 119168,
+   "count": 370,
+   "enum": 307,
+   "class": "IO_DATAIN"
+  },
+  {
+   "lo": 119169,
+   "hi": 119176,
+   "count": 8,
+   "enum": 308,
+   "class": null
+  },
+  {
+   "lo": 119177,
+   "hi": 119180,
+   "count": 4,
+   "enum": 309,
+   "class": null
+  },
+  {
+   "lo": 119181,
+   "hi": 119184,
+   "count": 4,
+   "enum": 335,
+   "class": null
+  },
+  {
+   "lo": 119185,
+   "hi": 119186,
+   "count": 2,
+   "enum": 336,
+   "class": null
+  },
+  {
+   "lo": 119187,
+   "hi": 119188,
+   "count": 2,
+   "enum": 343,
+   "class": null
+  },
+  {
+   "lo": 119189,
+   "hi": 119190,
+   "count": 2,
+   "enum": 346,
+   "class": null
+  },
+  {
+   "lo": 119191,
+   "hi": 119194,
+   "count": 4,
+   "enum": 350,
+   "class": null
+  },
+  {
+   "lo": 119195,
+   "hi": 119196,
+   "count": 2,
+   "enum": 351,
+   "class": null
+  },
+  {
+   "lo": 119197,
+   "hi": 119198,
+   "count": 2,
+   "enum": 353,
+   "class": null
+  },
+  {
+   "lo": 119199,
+   "hi": 119200,
+   "count": 2,
+   "enum": 356,
+   "class": null
+  },
+  {
+   "lo": 119201,
+   "hi": 119202,
+   "count": 2,
+   "enum": 357,
+   "class": null
+  },
+  {
+   "lo": 119203,
+   "hi": 119204,
+   "count": 2,
+   "enum": 358,
+   "class": null
+  },
+  {
+   "lo": 119205,
+   "hi": 119206,
+   "count": 2,
+   "enum": 359,
+   "class": null
+  },
+  {
+   "lo": 119207,
+   "hi": 121786,
+   "count": 2580,
+   "enum": 364,
+   "class": null
+  },
+  {
+   "lo": 121787,
+   "hi": 121787,
+   "count": 1,
+   "enum": 367,
+   "class": null
+  },
+  {
+   "lo": 121788,
+   "hi": 121788,
+   "count": 1,
+   "enum": 368,
+   "class": null
+  },
+  {
+   "lo": 121789,
+   "hi": 121789,
+   "count": 1,
+   "enum": 369,
+   "class": null
+  },
+  {
+   "lo": 121790,
+   "hi": 121790,
+   "count": 1,
+   "enum": 370,
+   "class": null
+  },
+  {
+   "lo": 121791,
+   "hi": 121791,
+   "count": 1,
+   "enum": 371,
+   "class": null
+  },
+  {
+   "lo": 121792,
+   "hi": 121792,
+   "count": 1,
+   "enum": 372,
+   "class": null
+  },
+  {
+   "lo": 121793,
+   "hi": 121793,
+   "count": 1,
+   "enum": 373,
+   "class": null
+  },
+  {
+   "lo": 121794,
+   "hi": 121794,
+   "count": 1,
+   "enum": 374,
+   "class": null
+  },
+  {
+   "lo": 121795,
+   "hi": 122346,
+   "count": 552,
+   "enum": 377,
+   "class": null
+  },
+  {
+   "lo": 122347,
+   "hi": 122461,
+   "count": 115,
+   "enum": 380,
+   "class": null
+  },
+  {
+   "lo": 122462,
+   "hi": 122462,
+   "count": 1,
+   "enum": 408,
+   "class": null
+  },
+  {
+   "lo": 122463,
+   "hi": 122463,
+   "count": 1,
+   "enum": 409,
+   "class": null
+  },
+  {
+   "lo": 122464,
+   "hi": 122464,
+   "count": 1,
+   "enum": 416,
+   "class": null
+  },
+  {
+   "lo": 122465,
+   "hi": 122536,
+   "count": 72,
+   "enum": 521,
+   "class": null
+  },
+  {
+   "lo": 122537,
+   "hi": 122548,
+   "count": 12,
+   "enum": 523,
+   "class": null
+  },
+  {
+   "lo": 122549,
+   "hi": 124880,
+   "count": 2332,
+   "enum": 540,
+   "class": "BLOCK_INPUT_MUX"
+  },
+  {
+   "lo": 124881,
+   "hi": 124888,
+   "count": 8,
+   "enum": 541,
+   "class": null
+  },
+  {
+   "lo": 124889,
+   "hi": 124892,
+   "count": 4,
+   "enum": 564,
+   "class": null
+  },
+  {
+   "lo": 124893,
+   "hi": 124896,
+   "count": 4,
+   "enum": 566,
+   "class": null
+  },
+  {
+   "lo": 124897,
+   "hi": 129636,
+   "count": 4740,
+   "enum": 568,
+   "class": null
+  },
+  {
+   "lo": 129637,
+   "hi": 129637,
+   "count": 1,
+   "enum": 650,
+   "class": null
+  },
+  {
+   "lo": 129638,
+   "hi": 129638,
+   "count": 1,
+   "enum": 651,
+   "class": null
+  },
+  {
+   "lo": 129639,
+   "hi": 129642,
+   "count": 4,
+   "enum": 659,
+   "class": null
+  },
+  {
+   "lo": 129643,
+   "hi": 129646,
+   "count": 4,
+   "enum": 664,
+   "class": null
+  },
+  {
+   "lo": 129647,
+   "hi": 134386,
+   "count": 4740,
+   "enum": 665,
+   "class": null
+  },
+  {
+   "lo": 134387,
+   "hi": 135116,
+   "count": 730,
+   "enum": 667,
+   "class": null
+  }
+ ],
+ "num_enum_blocks": 57,
+ "num_named_classes": 8,
+ "num_nodes_named": 108360,
+ "num_nodes_unlabeled_enum": 26757,
+ "validation": {
+  "vs_oracle_element_enum_dump": "135117/135117 node->enum reproduced, 0 mismatch (element_enum_dump.jsonl)",
+  "vs_holdout_fresh_compile": "135117/135117, 0 mismatch (R1_holdout_oracle.jsonl, independent compile)",
+  "vs_exact_devfile_name_table": "5339/5339 grounded cdb<->ddb names agree with block class, 0 conflicts (phase2 devwide C4/R4/R24/C16 + traceA/B back_annotate names)",
+  "vs_trace_oracle": "22 distinct trace source nodes + 22 dest nodes: every block-class label matches the back_annotate wire type; the 2 LE_BUFFER-source arcs (26739->68335, 10618->60851) bind bit-exact (8 bits each)",
+  "decode_rbf_selftest": "ALL PASS (node-class codec consumed via node_id.block_of; routing.c4/r4/li/directlinks codecs recover LE_BUFFER-source arcs bit-exact; full round-trip 1277/1277 cells, 0 mismatch)"
+ },
+ "le_buffer_finalize": {
+  "class": "LE_BUFFER",
+  "enum": 45,
+  "extent": [
+   10320,
+   30959
+  ],
+  "count": 20640,
+  "role": "LUT / LAB-cell OUTPUT buffer -> the SOURCE of the LUT-output routing hop (feeds C4/R4/R24/C16/LI arcs).",
+  "node_kind_split": {
+   "new": 11251,
+   "backref": 9389
+  },
+  "array_index_range": [
+   17,
+   11267
+  ],
+  "allocator_valid_rotation_window": [
+   20044,
+   41747
+  ],
+  "array_index_in_valid_window": 0,
+  "rotated_pool_slot_range": [
+   2529,
+   13779
+  ],
+  "on_disk_nonempty_slot_region": [
+   22556,
+   44259
+  ],
+  "rotated_slots_in_nonempty_region": 0,
+  "allocator_sim_grounded": 0,
+  "mis_classification_fixed": "The pdb allocator-sim (RouteFanoutDdb._simulate_allocator, node_slot=(array_index+2512)%44260) is only valid for array_index in [20044,41747]. ALL 20640 LE_BUFFER nodes have array_index in [17,11267] -- ENTIRELY below that window -- so their rotated slot lands in the on-disk EMPTY region and the sim REFUSES all of them (0 grounded). If the linear rotation were extended (bluffed) past its window, LE_BUFFER back-ref sources would rotate onto OTHER nodes' templates -- predominantly C4/R4/R24/C16 metal -- mis-tagging the LUT-output source as metal. The enum codec labels these 20640 nodes LE_BUFFER authoritatively and design-independently, so classification no longer depends on the broken rotation: the metal mis-tag is eliminated by construction (decode-or-refuse).",
+  "binding_path": "With the source correctly typed LE_BUFFER, the LUT-output hop binds via the device-file route resolver DYGR_DIE_INFO_BODY::get_fanout @0x127e90 + DYGR_ROUTE_ASM_INFO::get_bits_from_source_to_dest @0x228d60 (NOT the allocator sim). Proven where fanout is grounded: the 2 trace LE_BUFFER-source arcs reproduce bit-exact (8 selector bits each). Device-wide realization of all 20640 is the T2 edge sweep (sweep_le_fanout.py) -- a distinct target; this codec is its enabling classifier."
+ },
+ "integration": {
+  "node_id_blocks": "node_id.BLOCKS == this codec's all_enum_blocks (57 blocks, 0 class mismatch); block_of(n) returns the class for every node.",
+  "connectivity_builder": "build_connectivity_full.py cls_of() = node_id.block_of()[0]; dygr_connectivity_full.json src/dest classes derive from this codec.",
+  "decoder": "decode_rbf.py + connectivity_codec.py consume it; selftest ALL PASS.",
+  "gate": "decode-or-refuse: the 49 unlabeled enum blocks (26757 nodes: clock/global/direct-link/IO-sub/placer-adjacent) keep class=null and are REFUSED, never guessed. Ranges/enums are exact."
+ },
+ "note_unlabeled": "enum ids without a class label are real device element classes not grounded by a back_annotate anchor; ranges/enums are exact, labels left UNKNOWN (decode-or-refuse)."
+}

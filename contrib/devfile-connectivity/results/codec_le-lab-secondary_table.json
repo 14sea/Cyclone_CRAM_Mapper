@@ -1,0 +1,951 @@
+{
+ "meta": {
+  "group": "le-lab-secondary",
+  "desc": "INVERSION of the harvested le/lab-secondary forward table -> decode-or-refuse codec {emit-order value tuple -> codeword sel -> named meaning}.",
+  "method": "emit-order value tuple is the device-invariant field signature (verified consistent across 8 independent compiles; distinct across codewords => unique inversion). Instances = per-block ordered CRAM cell lists from the compiler's OWN DB_BIT_SETTING emit; only fields fully in the main-CRAM plane (bit31=0, rbf-serialized) are kept, the aux/dummy-plane SRC/CLK muxes are REFUSED.",
+  "placement": "bitpos_to_rbf.flat_to_rbf (proven device geometry)",
+  "captures": [
+   "specimenR1",
+   "d_mbase",
+   "d_mce",
+   "d_maclr",
+   "d_msclr",
+   "d_msload",
+   "d_mcarry",
+   "labmix"
+  ],
+  "vendor_bin": "target.rbf"
+ },
+ "settings": {
+  "316_6": {
+   "arch": 316,
+   "blockty": 6,
+   "name": "LE_REGISTER_SECONDARY_CONTROL_FIELD",
+   "encoding": "encoded-binary-MSB",
+   "width": 3,
+   "confidence": "high",
+   "role": "LE-local 3-bit secondary-control field: register consumes >=1 secondary control (ce/aclr/sclr/sload)",
+   "codeword_meaning_note": "encoded-binary: any 2^w pattern is a structurally valid codeword, but only OBSERVED codewords carry an attributed meaning -> unobserved patterns REFUSED, never bluffed",
+   "decode": {
+    "110": {
+     "sel": 6,
+     "meaning": "register present, consumes >=1 secondary control (ce/aclr/sclr/sload); TYPE enum-collapsed here",
+     "sources": [
+      "d_maclr",
+      "d_mbase",
+      "d_mcarry",
+      "d_mce",
+      "d_msclr",
+      "d_msload",
+      "labmix",
+      "specimenR1"
+     ]
+    }
+   },
+   "n_instances": 23,
+   "instances": [
+    {
+     "flats": [
+      614,
+      617,
+      616
+     ]
+    },
+    {
+     "flats": [
+      628,
+      631,
+      630
+     ]
+    },
+    {
+     "flats": [
+      649,
+      652,
+      651
+     ]
+    },
+    {
+     "flats": [
+      793,
+      796,
+      795
+     ]
+    },
+    {
+     "flats": [
+      814,
+      817,
+      816
+     ]
+    },
+    {
+     "flats": [
+      853,
+      856,
+      855
+     ]
+    },
+    {
+     "flats": [
+      867,
+      870,
+      869
+     ]
+    },
+    {
+     "flats": [
+      888,
+      891,
+      890
+     ]
+    },
+    {
+     "flats": [
+      902,
+      905,
+      904
+     ]
+    },
+    {
+     "flats": [
+      4046,
+      4048,
+      4047
+     ]
+    },
+    {
+     "flats": [
+      4116,
+      4118,
+      4117
+     ]
+    },
+    {
+     "flats": [
+      4246,
+      4248,
+      4247
+     ]
+    },
+    {
+     "flats": [
+      4267,
+      4269,
+      4268
+     ]
+    },
+    {
+     "flats": [
+      4281,
+      4283,
+      4282
+     ]
+    },
+    {
+     "flats": [
+      4355,
+      4357,
+      4356
+     ]
+    },
+    {
+     "flats": [
+      2851422,
+      2851424,
+      2851423
+     ]
+    },
+    {
+     "flats": [
+      2851436,
+      2851438,
+      2851437
+     ]
+    },
+    {
+     "flats": [
+      2851471,
+      2851473,
+      2851472
+     ]
+    },
+    {
+     "flats": [
+      2854842,
+      2854845,
+      2854844
+     ]
+    },
+    {
+     "flats": [
+      2854912,
+      2854915,
+      2854914
+     ]
+    },
+    {
+     "flats": [
+      2854961,
+      2854964,
+      2854963
+     ]
+    },
+    {
+     "flats": [
+      2855324,
+      2855327,
+      2855326
+     ]
+    },
+    {
+     "flats": [
+      2855545,
+      2855548,
+      2855547
+     ]
+    }
+   ]
+  },
+  "316_5": {
+   "arch": 316,
+   "blockty": 5,
+   "name": "LAB_SECONDARY_CONTROL_FIELD",
+   "encoding": "encoded-binary-MSB",
+   "width": 3,
+   "confidence": "high",
+   "role": "LAB-scope companion of the LE secondary-control field",
+   "codeword_meaning_note": "encoded-binary: any 2^w pattern is a structurally valid codeword, but only OBSERVED codewords carry an attributed meaning -> unobserved patterns REFUSED, never bluffed",
+   "decode": {
+    "110": {
+     "sel": 6,
+     "meaning": "LAB secondary-control field engaged",
+     "sources": [
+      "labmix",
+      "specimenR1"
+     ]
+    }
+   },
+   "n_instances": 15,
+   "instances": [
+    {
+     "flats": [
+      405848,
+      405845,
+      405846
+     ]
+    },
+    {
+     "flats": [
+      708073,
+      708070,
+      708071
+     ]
+    },
+    {
+     "flats": [
+      785788,
+      785786,
+      785787
+     ]
+    },
+    {
+     "flats": [
+      846233,
+      846231,
+      846232
+     ]
+    },
+    {
+     "flats": [
+      858322,
+      858319,
+      858320
+     ]
+    },
+    {
+     "flats": [
+      1511128,
+      1511126,
+      1511127
+     ]
+    },
+    {
+     "flats": [
+      1614748,
+      1614745,
+      1614746
+     ]
+    },
+    {
+     "flats": [
+      1813353,
+      1813351,
+      1813352
+     ]
+    },
+    {
+     "flats": [
+      1903157,
+      1903155,
+      1903156
+     ]
+    },
+    {
+     "flats": [
+      2006777,
+      2006774,
+      2006775
+     ]
+    },
+    {
+     "flats": [
+      2037863,
+      2037860,
+      2037861
+     ]
+    },
+    {
+     "flats": [
+      2067222,
+      2067219,
+      2067220
+     ]
+    },
+    {
+     "flats": [
+      2279643,
+      2279640,
+      2279641
+     ]
+    },
+    {
+     "flats": [
+      2417803,
+      2417801,
+      2417802
+     ]
+    },
+    {
+     "flats": [
+      2429892,
+      2429889,
+      2429890
+     ]
+    }
+   ]
+  },
+  "252_6": {
+   "arch": 252,
+   "blockty": 6,
+   "name": "LE_MODE_FIELD",
+   "encoding": "mapped-LUT",
+   "width": 8,
+   "confidence": "high",
+   "role": "LE register / data-select mode (sel9=normal-reg, sel7=arith/carry-chain, sel10=sync-load)",
+   "codeword_meaning_note": "mapped-LUT: sel->field-value is a device-file lookup; only observed codewords decodable",
+   "decode": {
+    "00000110": {
+     "sel": 1,
+     "meaning": "data/mode-select 0x60",
+     "sources": [
+      "specimenR1"
+     ]
+    },
+    "00001000": {
+     "sel": 6,
+     "meaning": "data/mode-select 0x10",
+     "sources": [
+      "specimenR1"
+     ]
+    },
+    "00001001": {
+     "sel": 8,
+     "meaning": "data/mode-select 0x90",
+     "sources": [
+      "specimenR1"
+     ]
+    },
+    "00001010": {
+     "sel": 7,
+     "meaning": "arithmetic/carry-chain mode",
+     "sources": [
+      "d_mcarry",
+      "specimenR1"
+     ]
+    },
+    "00010000": {
+     "sel": 12,
+     "meaning": "data/mode-select 0x08",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "00010001": {
+     "sel": 14,
+     "meaning": "data/mode-select 0x88",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "00100000": {
+     "sel": 3,
+     "meaning": "data/mode-select 0x04",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "00100001": {
+     "sel": 5,
+     "meaning": "data/mode-select 0x84",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "00100010": {
+     "sel": 4,
+     "meaning": "data/mode-select 0x44",
+     "sources": [
+      "specimenR1"
+     ]
+    },
+    "01000000": {
+     "sel": 9,
+     "meaning": "normal register",
+     "sources": [
+      "d_mbase",
+      "specimenR1"
+     ]
+    },
+    "01000001": {
+     "sel": 11,
+     "meaning": "data/mode-select 0x82",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "01000010": {
+     "sel": 10,
+     "meaning": "sync-load/data-input mode",
+     "sources": [
+      "d_msload"
+     ]
+    },
+    "10000000": {
+     "sel": 15,
+     "meaning": "data/mode-select 0x01",
+     "sources": [
+      "specimenR1"
+     ]
+    },
+    "10000010": {
+     "sel": 16,
+     "meaning": "data/mode-select 0x41",
+     "sources": [
+      "specimenR1"
+     ]
+    }
+   },
+   "n_instances": 16,
+   "instances": [
+    {
+     "flats": [
+      7456,
+      7457,
+      7458,
+      9183,
+      9184,
+      9185,
+      9186,
+      7459
+     ]
+    },
+    {
+     "flats": [
+      7596,
+      7597,
+      7598,
+      9323,
+      9324,
+      9325,
+      9326,
+      7599
+     ]
+    },
+    {
+     "flats": [
+      7765,
+      7766,
+      7767,
+      9492,
+      9493,
+      9494,
+      9495,
+      7768
+     ]
+    },
+    {
+     "flats": [
+      26125,
+      26126,
+      26127,
+      24398,
+      24399,
+      24400,
+      24401,
+      26128
+     ]
+    },
+    {
+     "flats": [
+      26132,
+      26131,
+      26130,
+      24405,
+      24404,
+      24403,
+      24402,
+      26129
+     ]
+    },
+    {
+     "flats": [
+      26488,
+      26489,
+      26490,
+      24761,
+      24762,
+      24763,
+      24764,
+      26491
+     ]
+    },
+    {
+     "flats": [
+      26797,
+      26798,
+      26799,
+      25070,
+      25071,
+      25072,
+      25073,
+      26800
+     ]
+    },
+    {
+     "flats": [
+      28187,
+      28186,
+      28185,
+      29914,
+      29913,
+      29912,
+      29911,
+      28184
+     ]
+    },
+    {
+     "flats": [
+      28327,
+      28326,
+      28325,
+      30054,
+      30053,
+      30052,
+      30051,
+      28324
+     ]
+    },
+    {
+     "flats": [
+      28422,
+      28421,
+      28420,
+      30149,
+      30148,
+      30147,
+      30146,
+      28419
+     ]
+    },
+    {
+     "flats": [
+      28496,
+      28495,
+      28494,
+      30223,
+      30222,
+      30221,
+      30220,
+      28493
+     ]
+    },
+    {
+     "flats": [
+      2827221,
+      2827220,
+      2827219,
+      2825494,
+      2825493,
+      2825492,
+      2825491,
+      2827218
+     ]
+    },
+    {
+     "flats": [
+      2827654,
+      2827653,
+      2827652,
+      2825927,
+      2825926,
+      2825925,
+      2825924,
+      2827651
+     ]
+    },
+    {
+     "flats": [
+      2829046,
+      2829047,
+      2829048,
+      2830773,
+      2830774,
+      2830775,
+      2830776,
+      2829049
+     ]
+    },
+    {
+     "flats": [
+      2829409,
+      2829410,
+      2829411,
+      2831136,
+      2831137,
+      2831138,
+      2831139,
+      2829412
+     ]
+    },
+    {
+     "flats": [
+      2848371,
+      2848372,
+      2848373,
+      2846644,
+      2846645,
+      2846646,
+      2846647,
+      2848374
+     ]
+    }
+   ]
+  },
+  "252_5": {
+   "arch": 252,
+   "blockty": 5,
+   "name": "LAB_LE_MODE_AGG",
+   "encoding": "mapped-LUT",
+   "width": 16,
+   "confidence": "medium",
+   "role": "LAB-scope LE-mode aggregate/replica field",
+   "codeword_meaning_note": "mapped-LUT: sel->field-value is a device-file lookup; only observed codewords decodable",
+   "decode": {
+    "0000000000001000": {
+     "sel": 38,
+     "meaning": "LAB-agg mode codeword 38",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000000000001010": {
+     "sel": 33,
+     "meaning": "LAB-agg mode codeword 33",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000000001000010": {
+     "sel": 21,
+     "meaning": "LAB-agg mode codeword 21",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000000010000001": {
+     "sel": 18,
+     "meaning": "LAB-agg mode codeword 18",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000000100000001": {
+     "sel": 11,
+     "meaning": "LAB-agg mode codeword 11",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000001000000001": {
+     "sel": 36,
+     "meaning": "LAB-agg mode codeword 36",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000010000000001": {
+     "sel": 32,
+     "meaning": "LAB-agg mode codeword 32",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0000100000000001": {
+     "sel": 28,
+     "meaning": "LAB-agg mode codeword 28",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0001000000000001": {
+     "sel": 24,
+     "meaning": "LAB-agg mode codeword 24",
+     "sources": [
+      "labmix"
+     ]
+    },
+    "0100000000000001": {
+     "sel": 16,
+     "meaning": "LAB-agg mode codeword 16",
+     "sources": [
+      "labmix"
+     ]
+    }
+   },
+   "n_instances": 11,
+   "instances": [
+    {
+     "flats": [
+      604464,
+      604465,
+      604466,
+      604467,
+      604468,
+      604469,
+      604470,
+      606191,
+      606192,
+      606193,
+      606194,
+      606195,
+      606196,
+      606197,
+      604463,
+      606190
+     ]
+    },
+    {
+     "flats": [
+      1533590,
+      1533591,
+      1533592,
+      1533593,
+      1533594,
+      1533595,
+      1533596,
+      1535317,
+      1535318,
+      1535319,
+      1535320,
+      1535321,
+      1535322,
+      1535323,
+      1533589,
+      1535316
+     ]
+    },
+    {
+     "flats": [
+      1654480,
+      1654481,
+      1654482,
+      1654483,
+      1654484,
+      1654485,
+      1654486,
+      1656207,
+      1656208,
+      1656209,
+      1656210,
+      1656211,
+      1656212,
+      1656213,
+      1654479,
+      1656206
+     ]
+    },
+    {
+     "flats": [
+      1747738,
+      1747739,
+      1747740,
+      1747741,
+      1747742,
+      1747743,
+      1747744,
+      1749465,
+      1749466,
+      1749467,
+      1749468,
+      1749469,
+      1749470,
+      1749471,
+      1747737,
+      1749464
+     ]
+    },
+    {
+     "flats": [
+      1775370,
+      1775371,
+      1775372,
+      1775373,
+      1775374,
+      1775375,
+      1775376,
+      1777097,
+      1777098,
+      1777099,
+      1777100,
+      1777101,
+      1777102,
+      1777103,
+      1775369,
+      1777096
+     ]
+    },
+    {
+     "flats": [
+      1840996,
+      1840997,
+      1840998,
+      1840999,
+      1841000,
+      1841001,
+      1841002,
+      1842723,
+      1842724,
+      1842725,
+      1842726,
+      1842727,
+      1842728,
+      1842729,
+      1840995,
+      1842722
+     ]
+    },
+    {
+     "flats": [
+      1934254,
+      1934255,
+      1934256,
+      1934257,
+      1934258,
+      1934259,
+      1934260,
+      1935981,
+      1935982,
+      1935983,
+      1935984,
+      1935985,
+      1935986,
+      1935987,
+      1934253,
+      1935980
+     ]
+    },
+    {
+     "flats": [
+      1961886,
+      1961887,
+      1961888,
+      1961889,
+      1961890,
+      1961891,
+      1961892,
+      1963613,
+      1963614,
+      1963615,
+      1963616,
+      1963617,
+      1963618,
+      1963619,
+      1961885,
+      1963612
+     ]
+    },
+    {
+     "flats": [
+      2176034,
+      2176035,
+      2176036,
+      2176037,
+      2176038,
+      2176039,
+      2176040,
+      2177761,
+      2177762,
+      2177763,
+      2177764,
+      2177765,
+      2177766,
+      2177767,
+      2176033,
+      2177760
+     ]
+    },
+    {
+     "flats": [
+      2324556,
+      2324557,
+      2324558,
+      2324559,
+      2324560,
+      2324561,
+      2324562,
+      2326283,
+      2326284,
+      2326285,
+      2326286,
+      2326287,
+      2326288,
+      2326289,
+      2324555,
+      2326282
+     ]
+    },
+    {
+     "flats": [
+      2566336,
+      2566337,
+      2566338,
+      2566339,
+      2566340,
+      2566341,
+      2566342,
+      2568063,
+      2568064,
+      2568065,
+      2568066,
+      2568067,
+      2568068,
+      2568069,
+      2566335,
+      2568062
+     ]
+    }
+   ]
+  }
+ }
+}
