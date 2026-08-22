@@ -50,7 +50,8 @@ import bitstream as bs  # noqa: E402
 
 DEFAULT_FIT = Path(
     "/home/test/see_neorv32_run_linux/quartus/neorv32_demo.fit.rpt")
-DEFAULT_STA = Path("/tmp/step0b_sta_routing.rpt")
+DEFAULT_STA = REPO / "tmp" / "step0b" / "step0b_sta_routing.rpt"
+_LEGACY_STA = Path("/tmp/step0b_sta_routing.rpt")   # pre-2026-08-22 location
 
 # Class -> (codec verdict, is-emittable predicate over I-index).
 # None predicate means "no per-I emittable subset" (whole class dead/unmodeled).
@@ -146,6 +147,8 @@ def main() -> int:
     print("-" * 74)
     print(f"{'TOTAL routing wires':<22}{grand:>7}\n")
 
+    if not args.sta.exists() and _LEGACY_STA.exists():
+        args.sta = _LEGACY_STA
     if not args.sta.exists():
         print(f"(per-I split skipped: STA report {args.sta} not present;")
         print(" regenerate via: quartus_sta -t scripts/routing_model/step0b_routing_census.tcl)")
