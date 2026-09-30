@@ -1,0 +1,35 @@
+{
+ "rcf": "/home/test/EP4CE6/tmp/nv_ba/neorv32_demo.rcf",
+ "rbf": "/home/test/EP4CE6/tmp/nv_ba/neorv32_demo.rbf",
+ "li_wires": 7406,
+ "local_line_wires": 2077,
+ "out_of_domain_wires": 2786,
+ "demand": {
+  "driver_mux": 7352,
+  "driver_classes": {
+   "LE_BUFFER": 1134,
+   "C4": 3120,
+   "R4": 3089,
+   "R24": 8,
+   "C16": 1
+  },
+  "le_input_mux": 13650,
+  "total": 21002
+ },
+ "codec": {
+  "cells_per_lab": 18,
+  "labs_in_domain_used": 258,
+  "mean_demand_per_lab": 59.8,
+  "labs_over_18": 238,
+  "corr_li_vs_active": 0.171,
+  "labs_zero_active": 131,
+  "active_cells_gold": 884
+ },
+ "validator_violations": {
+  "gold": 92,
+  "hw_validated": 104
+ },
+ "emittable_per_wire": 0,
+ "rollup_wires_after": 3638,
+ "grand": 18735
+}
