@@ -126,3 +126,6 @@ output_files_*/
 *.qsf.bak
 *.md.bak
 *.md.bak.gz
+
+# Spare-board (EP4CE6E22C8N) photos, local reference only
+docs/Board.0*.jpeg
