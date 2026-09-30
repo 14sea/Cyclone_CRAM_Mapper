@@ -85,6 +85,14 @@ def sinks(rcf: Path):
             last = rc.norm(mw)
 
 
+def rel(p: Path) -> str:
+    """Repo-relative path for the JSON record (no local absolute paths)."""
+    try:
+        return str(p.resolve().relative_to(REPO))
+    except ValueError:
+        return p.name
+
+
 def xy(w):
     return tuple(map(int, XY.match(w).groups()))
 
@@ -173,7 +181,7 @@ def main() -> int:
           "(C4/R4/R24/C16 only), and LI demand is the largest single gap.")
 
     res = {
-        "rcf": str(a.rcf), "rbf": str(a.rbf),
+        "rcf": rel(a.rcf), "rbf": rel(a.rbf),
         "li_wires": len(li), "local_line_wires": len(ll),
         "out_of_domain_wires": out_dom,
         "demand": {"driver_mux": n_drv, "driver_classes": dict(drv_cls),

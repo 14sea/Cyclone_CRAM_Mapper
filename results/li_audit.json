@@ -1,15 +1,15 @@
 {
- "rcf": "/home/test/EP4CE6/tmp/nv_ba/neorv32_demo.rcf",
- "rbf": "/home/test/EP4CE6/tmp/nv_ba/neorv32_demo.rbf",
+ "rcf": "tmp/nv_ba/neorv32_demo.rcf",
+ "rbf": "tmp/nv_ba/neorv32_demo.rbf",
  "li_wires": 7406,
  "local_line_wires": 2077,
  "out_of_domain_wires": 2786,
  "demand": {
   "driver_mux": 7352,
   "driver_classes": {
+   "R4": 3089,
    "LE_BUFFER": 1134,
    "C4": 3120,
-   "R4": 3089,
    "R24": 8,
    "C16": 1
   },

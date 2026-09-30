@@ -119,9 +119,15 @@ def main() -> int:
     # ground-truth pin table for the new package
     pin = WORK / "pkg_e22c8" / "output_files" / "pkg_e22c8.pin"
     if pin.exists():
-        dest = ROOT / "results" / "ep4ce6e22c8.pin"
-        dest.write_text(pin.read_text(errors="replace"))
-        print(f"\n[pin] EQFP-144 pin table -> {dest.relative_to(ROOT)}")
+        # raw .pin carries Intel's license header -> keep it local
+        # (gitignored *.pin); commit only the facts-only CSV
+        raw = ROOT / "results" / "ep4ce6e22c8.pin"
+        raw.write_text(pin.read_text(errors="replace"))
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import pin_facts
+        dest = ROOT / "results" / "ep4ce6e22c8_pins.csv"
+        n = pin_facts.write_csv(raw, dest)
+        print(f"\n[pin] EQFP-144 pin table ({n} pins) -> {dest.relative_to(ROOT)}")
     return 0
 
 
